@@ -1,14 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import candyReference from "@/assets/candy-cascade/reference.webp";
 import { formatCoins } from "@/lib/arcade/format";
 import { playSound } from "@/lib/arcade/sound";
 import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store";
 import { cn } from "@/lib/utils";
 
 import "./CandyCascadeReference.css";
-
-const candyReference = "https://raw.githubusercontent.com/danilo760/neon-fortune-arcade/a8882b17430f8073e4547a77a53effc3b7e8d9e3/src/assets/candy-cascade/reference.webp";
 
 type SymbolId = "lollipop" | "star" | "jelly" | "candy" | "cupcake" | "sprinkle" | "heart" | "diamond";
 type SymbolDef = { id: SymbolId; weight: number; pay: number };
