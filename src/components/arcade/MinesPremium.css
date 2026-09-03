@@ -1,5 +1,7 @@
 .mines-premium {
-  width: min(100%, 430px);
+  width: min(100%, 430px) !important;
+  max-width: 430px;
+  margin-inline: auto;
   padding: .35rem;
 }
 
