@@ -1,0 +1,1 @@
+HQ Candy binary asset is stored as a Git blob and linked at src/assets/candy-cascade/reference-hq.webp. This note only documents the source.
