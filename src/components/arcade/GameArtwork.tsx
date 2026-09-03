@@ -1,8 +1,6 @@
 import {
   Anchor,
   Bomb,
-  Candy,
-  CircleDot,
   Crown,
   Dices,
   Flame,
@@ -13,11 +11,15 @@ import {
   Sparkles,
   Spade,
   Star,
-  Zap,
 } from "lucide-react";
 
+import candyReference from "@/assets/candy-cascade/reference.webp";
+import goldenTigerHero from "@/assets/golden-tiger/hero.webp";
+import { olympusStormReferenceBase64 } from "@/assets/olympus-storm/referenceData";
 import type { GameEntry } from "@/lib/arcade/catalog";
 import { cn } from "@/lib/utils";
+
+import "./GameArtworkPremium.css";
 
 export function TigerCubMascot({ className }: { className?: string }) {
   return (
@@ -78,51 +80,65 @@ export function TigerCubMascot({ className }: { className?: string }) {
   );
 }
 
-function IconCluster({ game }: { game: GameEntry }) {
-  const common = "size-9 sm:size-12";
+const olympusReference = `data:image/webp;base64,${olympusStormReferenceBase64}`;
+
+function ReferenceCover({ src, className }: { src: string; className: string }) {
+  return (
+    <div className={cn("game-cover-reference", className)}>
+      <img src={src} alt="" className="game-cover-reference__blur" aria-hidden />
+      <img src={src} alt="" className="game-cover-reference__main" aria-hidden />
+      <div className="game-cover-reference__shine" aria-hidden />
+    </div>
+  );
+}
+
+function PlayableCover({ game }: { game: GameEntry }) {
   switch (game.slug) {
     case "golden-tiger":
       return (
-        <>
-          <TigerCubMascot className="absolute -bottom-8 left-1/2 w-[62%] -translate-x-1/2 drop-shadow-[0_18px_30px_rgba(0,0,0,.55)]" />
-          <Gem className={cn(common, "absolute right-[12%] top-[22%] text-emerald-300")} />
-          <Sparkles className="absolute left-[13%] top-[17%] size-8 text-amber-200" />
-        </>
+        <div className="game-cover-premium game-cover-premium--tiger">
+          <img src={goldenTigerHero} alt="" className="game-cover-tiger__image" aria-hidden />
+          <div className="game-cover-tiger__glow" aria-hidden />
+        </div>
       );
     case "olympus-storm":
-      return (
-        <>
-          <Crown className={cn(common, "absolute left-[14%] top-[22%] text-amber-300")} />
-          <Zap className="absolute left-1/2 top-[18%] size-20 -translate-x-1/2 text-sky-200 drop-shadow-[0_0_22px_rgba(56,189,248,.9)]" />
-          <Gem className={cn(common, "absolute right-[13%] top-[50%] text-blue-300")} />
-        </>
-      );
+      return <ReferenceCover src={olympusReference} className="game-cover-reference--olympus" />;
     case "candy-cascade":
-      return (
-        <>
-          <Candy className="absolute left-[12%] top-[24%] size-14 rotate-[-18deg] text-pink-200" />
-          <Star className="absolute left-1/2 top-[16%] size-16 -translate-x-1/2 text-yellow-200" />
-          <CircleDot className="absolute right-[13%] top-[44%] size-14 text-cyan-200" />
-        </>
-      );
+      return <ReferenceCover src={candyReference} className="game-cover-reference--candy" />;
     case "neon-mines":
       return (
-        <>
-          <Gem className="absolute left-[18%] top-[20%] size-20 text-emerald-300 drop-shadow-[0_0_24px_rgba(52,211,153,.8)]" />
-          <Bomb className="absolute right-[16%] top-[35%] size-20 text-rose-400 drop-shadow-[0_0_24px_rgba(251,113,133,.7)]" />
-        </>
+        <div className="game-cover-premium game-cover-premium--mines">
+          <div className="game-cover-mines__header"><Gem /><span>CRYSTAL VAULT</span></div>
+          <div className="game-cover-mines__grid" aria-hidden>
+            {Array.from({ length: 15 }, (_, index) => (
+              <span key={index} className={cn("game-cover-mines__tile", index === 12 && "is-danger", index === 7 && "is-gem")}>
+                {index === 12 ? <Bomb /> : index === 7 ? <Gem /> : <i />}
+              </span>
+            ))}
+          </div>
+          <div className="game-cover-mines__rail" aria-hidden />
+        </div>
       );
     case "neon-plinko":
       return (
-        <>
-          <div className="absolute inset-x-[18%] top-[16%] grid grid-cols-7 gap-2 opacity-90">
-            {Array.from({ length: 21 }, (_, index) => (
-              <span key={index} className="aspect-square rounded-full bg-amber-300 shadow-[0_0_8px_rgba(251,191,36,.8)]" />
-            ))}
+        <div className="game-cover-premium game-cover-premium--plinko">
+          <div className="game-cover-plinko__portal" aria-hidden><span /></div>
+          <div className="game-cover-plinko__pegs" aria-hidden>
+            {Array.from({ length: 28 }, (_, index) => <span key={index} />)}
           </div>
-          <CircleDot className="absolute left-1/2 top-[23%] size-11 -translate-x-1/2 text-fuchsia-300 drop-shadow-[0_0_16px_rgba(232,121,249,.95)]" />
-        </>
+          <div className="game-cover-plinko__ball" aria-hidden />
+          <div className="game-cover-plinko__slots" aria-hidden>
+            {[14, 3, 0.6, 0.3, 2, 14].map((value, index) => <span key={`${value}-${index}`}>{value}×</span>)}
+          </div>
+        </div>
       );
+    default:
+      return null;
+  }
+}
+
+function ComingSoonIcon({ game }: { game: GameEntry }) {
+  switch (game.slug) {
     case "dragon-fortune":
       return <Flame className="size-24 text-orange-300 drop-shadow-[0_0_24px_rgba(251,146,60,.75)]" />;
     case "lucky-ox":
@@ -147,13 +163,17 @@ function IconCluster({ game }: { game: GameEntry }) {
 }
 
 export function GameArtwork({ game, compact = false }: { game: GameEntry; compact?: boolean }) {
+  const playableCover = game.playable ? <PlayableCover game={game} /> : null;
+
   return (
-    <div className={cn("game-artwork", `game-artwork--${game.accent}`, compact && "game-artwork--compact")}>
-      <div className="game-artwork__stars" aria-hidden />
-      <div className="game-artwork__halo" aria-hidden />
-      <div className="game-artwork__icons" aria-hidden>
-        <IconCluster game={game} />
-      </div>
+    <div className={cn("game-artwork", `game-artwork--${game.accent}`, compact && "game-artwork--compact", game.playable && "game-artwork--premium-cover")}>
+      {playableCover ?? (
+        <>
+          <div className="game-artwork__stars" aria-hidden />
+          <div className="game-artwork__halo" aria-hidden />
+          <div className="game-artwork__icons" aria-hidden><ComingSoonIcon game={game} /></div>
+        </>
+      )}
       <div className="game-artwork__title">
         <span>{game.name}</span>
         <small>{game.playable ? "PRIVATE ARCADE" : "COMING SOON"}</small>
