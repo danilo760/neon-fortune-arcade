@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import candyReference from "@/assets/candy-cascade/reference.webp";
+import candyReference from "@/assets/candy-cascade/reference-hd.webp";
 import { formatCoins } from "@/lib/arcade/format";
 import { playSound } from "@/lib/arcade/sound";
 import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store";
@@ -23,6 +23,8 @@ type SymbolDef = { id: SymbolId; weight: number; pay: number };
 type Crop = { x: number; y: number; w: number; h: number };
 type Cluster = { symbol: SymbolId; indexes: number[] };
 
+// The HD machine keeps the original 600:1066 layout, so these logical
+// coordinates remain stable while the browser receives a much sharper asset.
 const FULL_W = 600;
 const FULL_H = 1066;
 const COLS = 6;

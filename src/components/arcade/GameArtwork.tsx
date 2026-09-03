@@ -13,7 +13,7 @@ import {
   Star,
 } from "lucide-react";
 
-import candyReference from "@/assets/candy-cascade/reference.webp";
+import candyReference from "@/assets/candy-cascade/reference-hd.webp";
 import { goldenTigerReferenceBase64 } from "@/assets/golden-tiger/referenceData";
 import { olympusStormReferenceBase64 } from "@/assets/olympus-storm/referenceData";
 import type { GameEntry } from "@/lib/arcade/catalog";
