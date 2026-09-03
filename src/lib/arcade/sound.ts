@@ -70,7 +70,16 @@ function noise(duration: number, gain: number, delay = 0, cutoff = 1800) {
   source.stop(start + duration + 0.02);
 }
 
-export type SoundName = "spin" | "tick" | "win" | "bigWin" | "lose" | "click" | "cash" | "bonus";
+export type SoundName =
+  | "spin"
+  | "tick"
+  | "anticipation"
+  | "win"
+  | "bigWin"
+  | "lose"
+  | "click"
+  | "cash"
+  | "bonus";
 
 export function playSound(name: SoundName, enabled: boolean) {
   if (!enabled) return;
@@ -83,6 +92,12 @@ export function playSound(name: SoundName, enabled: boolean) {
     case "tick":
       tone(980, 0.045, "square", 0.018, 0, 720);
       tone(1450, 0.035, "sine", 0.012, 0.008, 1050);
+      break;
+    case "anticipation":
+      tone(132, 0.34, "sine", 0.042, 0, 168);
+      tone(264, 0.2, "triangle", 0.028, 0.08, 352);
+      tone(420, 0.16, "sine", 0.025, 0.18, 620);
+      noise(0.25, 0.008, 0.08, 900);
       break;
     case "click":
       tone(560, 0.055, "triangle", 0.03, 0, 720);
