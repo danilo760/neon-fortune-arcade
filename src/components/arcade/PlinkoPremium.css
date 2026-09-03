@@ -1,0 +1,559 @@
+.plinko-premium {
+  width: min(100%, 60rem);
+  padding: .35rem;
+}
+
+.plinko-premium__cabinet {
+  isolation: isolate;
+  overflow: visible;
+  border: 1px solid rgba(255, 214, 88, .46);
+  background:
+    radial-gradient(circle at 50% -6%, rgba(44, 225, 255, .18), transparent 25%),
+    radial-gradient(circle at 50% 38%, rgba(218, 53, 255, .12), transparent 38%),
+    linear-gradient(180deg, #070d20 0%, #090a1d 55%, #04050c 100%);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 211, 78, .1),
+    inset 0 0 55px rgba(38, 214, 255, .045),
+    0 30px 80px rgba(0, 0, 0, .68),
+    0 0 48px rgba(43, 205, 255, .08);
+}
+
+.plinko-premium__cabinet::before,
+.plinko-premium__cabinet::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 7.2rem;
+  bottom: 1.25rem;
+  width: .6rem;
+  border: 1px solid rgba(255, 230, 126, .38);
+  border-radius: .5rem;
+  background: linear-gradient(180deg, #ffdb55 0%, #8b6410 15%, #10204b 45%, #714818 79%, #ffe574 100%);
+  box-shadow: 0 0 20px rgba(255, 210, 62, .13);
+}
+
+.plinko-premium__cabinet::before { left: -.38rem; }
+.plinko-premium__cabinet::after { right: -.38rem; }
+
+.plinko-premium__ambient {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.plinko-premium__ambient::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 9rem;
+  width: 92%;
+  height: 32rem;
+  transform: translateX(-50%);
+  background:
+    radial-gradient(ellipse at 50% 26%, rgba(45, 226, 255, .16), transparent 40%),
+    radial-gradient(ellipse at 50% 60%, rgba(229, 48, 255, .12), transparent 45%);
+  filter: blur(12px);
+}
+
+.plinko-premium__ambient::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: .08;
+  background-image:
+    linear-gradient(rgba(84, 229, 255, .35) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(84, 229, 255, .26) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: linear-gradient(to bottom, transparent 2%, #000 23%, transparent 88%);
+}
+
+.plinko-premium__side-light {
+  position: absolute;
+  z-index: 1;
+  top: 11rem;
+  bottom: 11rem;
+  width: 2px;
+  background: linear-gradient(transparent, #37dcff 12%, #ff53e5 52%, #ffd65b 88%, transparent);
+  box-shadow: 0 0 12px currentColor;
+  opacity: .6;
+}
+
+.plinko-premium__side-light--left { left: 1rem; color: #37dcff; }
+.plinko-premium__side-light--right { right: 1rem; color: #ff53e5; }
+
+.plinko-premium__masthead {
+  position: relative;
+  z-index: 3;
+  min-height: 8.6rem;
+  padding: .85rem 1rem 1rem;
+  border-bottom: 1px solid rgba(255, 216, 89, .24);
+  background:
+    linear-gradient(90deg, rgba(3, 7, 19, .92), rgba(12, 24, 57, .9) 50%, rgba(3, 7, 19, .92)),
+    radial-gradient(circle at 35% 0, rgba(52, 223, 255, .14), transparent 45%);
+  box-shadow: inset 0 -14px 24px rgba(0,0,0,.36);
+}
+
+.plinko-premium__brand {
+  position: relative;
+  padding: .35rem .6rem;
+}
+
+.plinko-premium__brand::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14rem;
+  height: 6rem;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(72, 219, 255, .12);
+  border-radius: 50%;
+  box-shadow: 0 0 34px rgba(48, 211, 255, .08), inset 0 0 28px rgba(227, 53, 255, .04);
+}
+
+.plinko-premium__brand-kicker {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .28rem;
+  margin-bottom: .15rem;
+  color: rgba(125, 234, 255, .7);
+  font-size: .46rem;
+  font-weight: 900;
+  letter-spacing: .2em;
+}
+
+.plinko-premium__brand-kicker svg { width: .7rem; height: .7rem; }
+
+.plinko-premium__brand span,
+.plinko-premium__brand strong,
+.plinko-premium__brand small { position: relative; z-index: 2; }
+
+.plinko-premium__brand span {
+  color: #66e9ff;
+  letter-spacing: .13em;
+  text-shadow: 0 0 18px rgba(62, 224, 255, .58);
+}
+
+.plinko-premium__brand strong {
+  color: #ffe36a;
+  letter-spacing: .02em;
+  text-shadow: 0 2px 0 #6a4700, 0 5px 0 #2c1c00, 0 0 22px rgba(255, 208, 58, .28);
+}
+
+.plinko-premium__brand small {
+  margin-top: .32rem;
+  color: rgba(255,255,255,.44);
+  letter-spacing: .2em;
+}
+
+.plinko-premium__jackpots > div {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(255, 221, 99, .18);
+  background: linear-gradient(180deg, rgba(18, 23, 51, .94), rgba(4, 6, 18, .94));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 6px 15px rgba(0,0,0,.18);
+}
+
+.plinko-premium__jackpots > div::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 20%, rgba(255,255,255,.05), transparent 65%);
+}
+
+.plinko-premium__jackpots small { color: #f476df; }
+.plinko-premium__jackpots strong { color: #fff0a3; text-shadow: 0 0 8px rgba(255,217,83,.18); }
+
+.plinko-premium__status-strip {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  margin: .62rem 2.1rem -.18rem;
+  overflow: hidden;
+  border: 1px solid rgba(76, 221, 255, .2);
+  border-radius: .65rem;
+  background: rgba(70, 218, 255, .14);
+  box-shadow: 0 8px 22px rgba(0,0,0,.28);
+}
+
+.plinko-premium__status-strip > div {
+  padding: .42rem .35rem;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(12, 19, 43, .96), rgba(4, 7, 18, .98));
+}
+
+.plinko-premium__status-strip small {
+  display: block;
+  color: rgba(255,255,255,.35);
+  font-size: .4rem;
+  font-weight: 900;
+  letter-spacing: .15em;
+}
+
+.plinko-premium__status-strip strong {
+  display: block;
+  margin-top: .08rem;
+  color: #74eaff;
+  font-family: var(--font-display);
+  font-size: .78rem;
+  text-shadow: 0 0 8px rgba(55, 220, 255, .26);
+}
+
+.plinko-premium[data-risk="alto"] .plinko-premium__status-strip strong:first-of-type { color: #ff7ee8; }
+
+.plinko-premium__board {
+  z-index: 2;
+  height: clamp(29rem, 68vh, 43rem);
+  margin: .7rem 1.55rem .65rem;
+  overflow: hidden;
+  border: 1px solid rgba(105, 226, 255, .4);
+  border-radius: 1.15rem;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(70, 233, 255, .16), transparent 25%),
+    radial-gradient(circle at 50% 67%, rgba(237, 66, 220, .12), transparent 32%),
+    linear-gradient(180deg, #08132f 0%, #0d0a29 55%, #050711 100%);
+  box-shadow:
+    inset 0 0 0 3px rgba(5, 14, 33, .65),
+    inset 0 0 55px rgba(0,0,0,.58),
+    0 14px 36px rgba(0,0,0,.42),
+    0 0 28px rgba(45, 219, 255, .08);
+}
+
+.plinko-premium__board::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: .55rem;
+  border: 1px solid rgba(255, 211, 72, .11);
+  border-radius: .8rem;
+  pointer-events: none;
+}
+
+.plinko-premium__sky-grid {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  opacity: .18;
+  background-image:
+    linear-gradient(rgba(72, 218, 255, .14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(72, 218, 255, .1) 1px, transparent 1px);
+  background-size: 38px 38px;
+  transform: perspective(500px) rotateX(18deg) scale(1.1);
+  transform-origin: center bottom;
+  mask-image: linear-gradient(to bottom, transparent 3%, #000 28%, #000 76%, transparent 98%);
+}
+
+.plinko-premium__city {
+  z-index: 0;
+  inset: 44% 0 0;
+  opacity: .22;
+  filter: drop-shadow(0 0 8px rgba(44, 214, 255, .18));
+}
+
+.plinko-premium__tower-line {
+  position: absolute;
+  z-index: 1;
+  top: 9%;
+  bottom: 13%;
+  width: 1px;
+  background: linear-gradient(transparent, rgba(61,224,255,.52) 20%, rgba(231,65,225,.38) 68%, transparent);
+  box-shadow: 0 0 12px currentColor;
+  opacity: .55;
+}
+.plinko-premium__tower-line--left { left: 8%; color: #52e7ff; }
+.plinko-premium__tower-line--right { right: 8%; color: #ed5fe1; }
+
+.plinko-premium__launch-ring {
+  z-index: 7;
+  top: 3%;
+  width: 7.6rem;
+  height: 3rem;
+  border: 2px solid #ff5be1;
+  background: radial-gradient(ellipse, rgba(55, 223, 255, .1), rgba(1,4,13,.64) 63%);
+  box-shadow:
+    0 0 0 4px rgba(67,224,255,.08),
+    0 0 22px rgba(255, 75, 222, .55),
+    inset 0 0 18px rgba(58, 224, 255, .35);
+}
+
+.plinko-premium__launch-ring span {
+  position: absolute;
+  inset: 22%;
+  border: 1px dashed rgba(255, 225, 99, .68);
+  border-radius: 50%;
+  animation: plinkoPortalSpin 7s linear infinite;
+}
+
+.plinko-premium__launch-label {
+  position: absolute;
+  z-index: 8;
+  left: 50%;
+  top: 8.2%;
+  transform: translateX(-50%);
+  color: rgba(128, 235, 255, .58);
+  font-size: .42rem;
+  font-weight: 900;
+  letter-spacing: .22em;
+}
+
+.plinko-premium__pegs {
+  z-index: 4;
+  inset: 10% 8% 16%;
+}
+
+.plinko-premium__peg-row {
+  gap: clamp(.23rem, 1.35vw, .75rem);
+}
+
+.plinko-premium__peg {
+  position: relative;
+  width: clamp(.38rem, 1vw, .58rem);
+  border: 1px solid rgba(255, 243, 184, .78);
+  background: radial-gradient(circle at 35% 28%, #fff7c6 0 16%, #ffd548 32%, #c27312 72%, #583000 100%);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.7),
+    0 0 8px rgba(255,209,63,.62),
+    0 3px 4px rgba(0,0,0,.48);
+}
+
+.plinko-premium__peg i {
+  position: absolute;
+  inset: -60%;
+  border: 1px solid rgba(56, 220, 255, .09);
+  border-radius: 50%;
+}
+
+.plinko-premium__ball {
+  z-index: 12;
+  width: 1.8rem;
+  height: 1.8rem;
+}
+
+.plinko-premium__ball::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -55%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 225, 90, .28), rgba(65, 220, 255, .11) 38%, transparent 68%);
+  filter: blur(4px);
+}
+
+.plinko-premium__ball span {
+  border: 2px solid #fff2a8;
+  background: radial-gradient(circle at 32% 25%, #fffbe1 0 10%, #ffe363 24%, #ffad24 54%, #b6520c 83%, #512004 100%);
+  box-shadow:
+    inset 0 0 8px rgba(255,255,255,.48),
+    0 0 14px rgba(255, 216, 75, .9),
+    0 0 28px rgba(48, 220, 255, .28);
+}
+
+.plinko-premium__ball--dropping span {
+  animation: plinkoPremiumBall .32s linear infinite;
+}
+
+.plinko-premium__buckets {
+  z-index: 6;
+  inset-inline: .48rem;
+  bottom: .48rem;
+  gap: 2px;
+  padding: .18rem;
+  border: 1px solid rgba(255, 211, 74, .16);
+  border-radius: .6rem;
+  background: rgba(3, 5, 14, .8);
+  box-shadow: 0 -8px 26px rgba(0,0,0,.34);
+}
+
+.plinko-premium__bucket {
+  position: relative;
+  min-width: 0;
+  min-height: 3rem;
+  flex-direction: column;
+  gap: .04rem;
+  overflow: hidden;
+  border-radius: .35rem;
+  border-color: rgba(105, 230, 255, .16);
+  background: linear-gradient(180deg, #153d70 0%, #0b1d3c 60%, #071126 100%);
+  box-shadow: inset 0 0 10px rgba(60, 214, 255, .06);
+}
+
+.plinko-premium__bucket:nth-child(odd) {
+  background: linear-gradient(180deg, #5a1b78 0%, #2c103f 60%, #14091f 100%);
+}
+
+.plinko-premium__bucket small {
+  color: rgba(255,255,255,.24);
+  font-size: clamp(.27rem, .65vw, .42rem);
+  font-weight: 800;
+}
+
+.plinko-premium__bucket strong {
+  color: #c9f6ff;
+  font-size: clamp(.38rem, 1.25vw, .72rem);
+  text-shadow: 0 0 6px rgba(71, 222, 255, .22);
+}
+
+.plinko-premium__bucket--high {
+  border-color: rgba(255, 208, 75, .35);
+  background: linear-gradient(180deg, #8a3416, #4a1408 60%, #250803) !important;
+}
+
+.plinko-premium__bucket--high strong { color: #ffe06a; }
+
+.plinko-premium__bucket--winner {
+  z-index: 3;
+  transform: translateY(-5px) scale(1.05);
+  border-color: #fff0a0;
+  box-shadow: 0 0 18px rgba(255, 222, 86, .58), inset 0 0 15px rgba(255,255,255,.12);
+}
+
+.plinko-premium__result {
+  position: relative;
+  z-index: 4;
+  grid-template-columns: minmax(5rem, .75fr) 1.4fr minmax(5rem, .75fr);
+  margin: 0 1.55rem .65rem;
+  padding: .58rem .8rem;
+  border-color: rgba(72, 223, 255, .2);
+  background:
+    radial-gradient(circle at 50% 0, rgba(255, 211, 70, .08), transparent 55%),
+    linear-gradient(180deg, rgba(10, 17, 39, .94), rgba(4, 7, 17, .96));
+  box-shadow: inset 0 0 22px rgba(57, 216, 255, .04), 0 8px 22px rgba(0,0,0,.24);
+}
+
+.plinko-premium__result-label,
+.plinko-premium__result-meta { display: flex; flex-direction: column; }
+.plinko-premium__result-label { text-align: left; }
+.plinko-premium__result-meta { text-align: right; }
+.plinko-premium__result-label span,
+.plinko-premium__result-meta small { color: rgba(97, 228, 255, .5); font-size: .42rem; font-weight: 900; letter-spacing: .13em; }
+.plinko-premium__result strong { color: #ffe064; text-shadow: 0 0 15px rgba(255, 211, 70, .24); }
+
+.plinko-premium__controls {
+  position: relative;
+  z-index: 4;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: .6rem;
+  padding: 0 1.55rem 1rem;
+}
+
+.plinko-premium__control-card {
+  border-color: rgba(78, 224, 255, .12);
+  background: linear-gradient(180deg, rgba(13, 19, 43, .88), rgba(4, 7, 17, .9));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+.plinko-premium__control-card small { color: rgba(133, 233, 255, .46); }
+.plinko-premium__control-card button { border-color: rgba(99, 225, 255, .13); }
+
+.plinko-premium__drop-zone {
+  min-width: 8.2rem;
+}
+
+.plinko-premium__mascot-chip {
+  width: 3.6rem;
+  height: 3.6rem;
+  margin-bottom: -1.15rem;
+  border: 2px solid #ffe16d;
+  background: linear-gradient(145deg, #76150e, #280807);
+  box-shadow: 0 0 0 3px rgba(255, 207, 54, .08), 0 0 22px rgba(255, 203, 56, .18);
+}
+
+.plinko-premium__drop-button {
+  min-width: 8.2rem !important;
+  min-height: 5.3rem !important;
+  border: 2px solid #ffe370 !important;
+  border-radius: 1.15rem !important;
+  background:
+    radial-gradient(circle at 36% 20%, rgba(255,255,255,.18), transparent 22%),
+    linear-gradient(145deg, #16b7d9 0%, #1167b9 38%, #6e178b 100%) !important;
+  box-shadow:
+    inset 0 0 0 3px rgba(2, 9, 26, .45),
+    inset 0 -10px 18px rgba(0,0,0,.22),
+    0 8px 0 #210d3c,
+    0 15px 24px rgba(0,0,0,.4),
+    0 0 24px rgba(57, 218, 255, .16) !important;
+  transition: transform .15s ease, filter .15s ease, box-shadow .15s ease !important;
+}
+
+.plinko-premium__drop-button:not(:disabled):hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+.plinko-premium__drop-button:not(:disabled):active {
+  transform: translateY(4px);
+  box-shadow: inset 0 0 0 3px rgba(2,9,26,.45), 0 3px 0 #210d3c, 0 8px 14px rgba(0,0,0,.34) !important;
+}
+
+.plinko-premium__drop-button span {
+  color: #fff4a8;
+  font-size: 1.02rem;
+  letter-spacing: .08em;
+  text-shadow: 0 2px 0 rgba(0,0,0,.45);
+}
+
+.plinko-premium__drop-button small { color: rgba(255,255,255,.67); }
+
+.plinko-premium__bet > * {
+  border: 1px solid rgba(81, 224, 255, .1) !important;
+  border-radius: .85rem !important;
+  background: linear-gradient(180deg, rgba(11, 18, 39, .88), rgba(4, 7, 17, .9)) !important;
+}
+
+.plinko-premium__note {
+  border-color: rgba(71, 221, 255, .1);
+  background: rgba(4, 7, 17, .68);
+}
+
+@keyframes plinkoPortalSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes plinkoPremiumBall {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(.88); filter: brightness(1.25); }
+}
+
+@media (max-width: 760px) {
+  .plinko-premium { padding: 0; }
+  .plinko-premium__cabinet { border-radius: 1.15rem; }
+  .plinko-premium__cabinet::before,
+  .plinko-premium__cabinet::after { display: none; }
+  .plinko-premium__masthead { grid-template-columns: 1fr; min-height: 8rem; padding-inline: .55rem; }
+  .plinko-premium__brand::before { width: 12rem; }
+  .plinko-premium__jackpots { width: 100%; max-width: 28rem; margin-inline: auto; }
+  .plinko-premium__status-strip { margin-inline: .65rem; }
+  .plinko-premium__board { height: min(65vh, 36rem); min-height: 28rem; margin-inline: .5rem; }
+  .plinko-premium__result { margin-inline: .5rem; }
+  .plinko-premium__controls { grid-template-columns: 1fr 1fr; padding-inline: .5rem; }
+  .plinko-premium__drop-zone { grid-column: 1 / -1; grid-row: 1; }
+  .plinko-premium__bet { grid-column: 1 / -1; }
+  .plinko-premium__drop-button { min-width: 9rem !important; }
+}
+
+@media (max-width: 390px) {
+  .plinko-premium__brand strong { font-size: 1.65rem; }
+  .plinko-premium__brand span { font-size: 1.05rem; }
+  .plinko-premium__status-strip { margin-inline: .35rem; }
+  .plinko-premium__board { min-height: 25rem; margin-inline: .3rem; }
+  .plinko-premium__pegs { inset-inline: 5%; }
+  .plinko-premium__bucket { min-height: 2.6rem; }
+  .plinko-premium__result { grid-template-columns: .8fr 1.25fr .8fr; margin-inline: .3rem; padding-inline: .5rem; }
+  .plinko-premium__controls { padding-inline: .3rem; gap: .4rem; }
+  .plinko-premium__control-card { padding: .4rem; }
+  .plinko-premium__control-card button { padding-inline: .25rem; font-size: .62rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plinko-premium__launch-ring span,
+  .plinko-premium__ball--dropping span,
+  .plinko-premium__drop-button { animation: none !important; transition: none !important; }
+}
