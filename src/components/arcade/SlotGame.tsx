@@ -19,7 +19,8 @@ import { cn } from "@/lib/utils";
 
 import { BetControls } from "./BetControls";
 import { PaytableModal } from "./PaytableModal";
-import { WinOverlay } from "./WinOverlay";
+import { SlotSymbolArt } from "./SlotSymbolArt";
+import { TigerCubMascot } from "./GameArtwork";
 
 const delay = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 
@@ -43,11 +44,7 @@ export function SlotGame({ config }: { config: SlotConfig }) {
       for (const win of result.wins) for (const [row, col] of win.cells) cells.add(`${row}:${col}`);
     } else {
       const lastWinning = [...result.steps].reverse().find((step) => step.wins.length > 0);
-      if (lastWinning) {
-        for (const win of lastWinning.wins) {
-          for (const [row, col] of win.cells) cells.add(`${row}:${col}`);
-        }
-      }
+      if (lastWinning) for (const win of lastWinning.wins) for (const [row, col] of win.cells) cells.add(`${row}:${col}`);
     }
     return cells;
   }, [result]);
@@ -68,16 +65,16 @@ export function SlotGame({ config }: { config: SlotConfig }) {
     setResult(null);
     playSound("spin", soundEnabled);
 
-    // The complete outcome is generated now; the following delays only reveal it.
     const nextResult = spin(config, bet, createRng());
     if (nextResult.kind === "cluster") {
       for (const step of nextResult.steps) {
         setGrid(step.grid);
-        await delay(180);
+        playSound("tick", soundEnabled);
+        await delay(185);
       }
       setGrid(nextResult.finalGrid);
     } else {
-      await delay(650);
+      await delay(680);
       setGrid(nextResult.grid);
     }
 
@@ -99,10 +96,7 @@ export function SlotGame({ config }: { config: SlotConfig }) {
     setResult(nextResult);
     setSpinning(false);
     busyRef.current = false;
-    playSound(
-      nextResult.payout >= bet * 10 ? "bigWin" : nextResult.payout > 0 ? "win" : "lose",
-      soundEnabled,
-    );
+    playSound(nextResult.payout >= bet * 10 ? "bigWin" : nextResult.payout > 0 ? "win" : "lose", soundEnabled);
     return true;
   }, [bet, config, soundEnabled]);
 
@@ -122,127 +116,92 @@ export function SlotGame({ config }: { config: SlotConfig }) {
   const insufficient = freeSpins === 0 && bet > balance;
   const multiplier = result?.totalMultiplier ?? 0;
   const payout = result?.payout ?? 0;
+  const theme = config.slug === "golden-tiger" ? "tiger" : config.slug === "olympus-storm" ? "storm" : "candy";
 
   return (
-    <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-[minmax(0,1fr)_19rem]">
-      <section className="relative overflow-hidden rounded-3xl border border-primary/25 bg-ink/80 p-3 shadow-2xl sm:p-5">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <div>
-            <p className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-              {config.mode === "lines" ? "5 linhas fixas" : "Clusters e cascatas"}
-            </p>
-            <p className="font-display text-sm font-bold text-primary">
-              {freeSpins > 0 ? `${freeSpins} giros grátis` : "Simulação fictícia"}
-            </p>
+    <div className={cn("slot-machine", `slot-machine--${theme}`)}>
+      <section className="slot-machine__cabinet">
+        <div className="slot-machine__masthead">
+          {theme === "tiger" && <TigerCubMascot className="slot-machine__mascot" />}
+          <div className="slot-machine__brand">
+            <small>{theme === "tiger" ? "GOLDEN PRIVATE ARCADE" : theme === "storm" ? "TEMPLE OF LIGHTNING" : "SUGAR KINGDOM"}</small>
+            <h2>{config.name}</h2>
+            <span>{config.mode === "lines" ? "5 LINHAS FIXAS" : "CASCATAS & MULTIPLICADORES"}</span>
           </div>
-          {result && (
-            <div className="text-right">
-              <p className="text-[0.62rem] uppercase tracking-widest text-muted-foreground">
-                Último ganho
-              </p>
-              <p className="font-display font-bold tabular-nums text-jade">
-                {formatCoins(payout)} · {formatMultiplier(multiplier)}
-              </p>
-            </div>
-          )}
+          <div className="slot-machine__jackpot">
+            <small>{theme === "candy" ? "SUGAR JACKPOT" : "GRAND JACKPOT"}</small>
+            <strong>1.250.000</strong>
+          </div>
         </div>
 
-        <div
-          className={cn(
-            "relative grid overflow-hidden rounded-2xl border border-primary/20 bg-background/65 p-2 sm:p-3",
-            spinning && "opacity-90",
-          )}
-          style={{ gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))` }}
-          aria-label={`Grade de ${config.cols} por ${config.rows}`}
-        >
-          {grid.flatMap((row, rowIndex) =>
-            row.map((symbolId, colIndex) => {
-              const symbol = symbolById(config, symbolId);
-              const won = winningCells.has(`${rowIndex}:${colIndex}`);
-              return (
-                <div
-                  key={`${rowIndex}:${colIndex}`}
-                  className={cn(
-                    "m-0.5 flex aspect-square min-w-0 items-center justify-center rounded-lg border border-border/50 bg-ink-soft/80 text-xl shadow-inner sm:m-1 sm:rounded-xl sm:text-3xl",
-                    won &&
-                      "border-primary motion-safe:animate-[win-pulse_900ms_ease-in-out_infinite]",
-                    spinning && "motion-safe:animate-[symbol-drop_260ms_ease-out]",
-                  )}
-                  title={symbol.label}
-                >
-                  <span className="drop-shadow-lg" aria-hidden>
-                    {symbol.glyph}
-                  </span>
-                  <span className="sr-only">{symbol.label}</span>
-                </div>
-              );
-            }),
-          )}
+        <div className="slot-machine__reel-frame">
+          <div
+            className={cn("slot-grid", spinning && "slot-grid--spinning")}
+            style={{ gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))` }}
+            aria-label={`Grade de ${config.cols} por ${config.rows}`}
+          >
+            {grid.flatMap((row, rowIndex) =>
+              row.map((symbolId, colIndex) => {
+                const symbol = symbolById(config, symbolId);
+                const won = winningCells.has(`${rowIndex}:${colIndex}`);
+                return (
+                  <div
+                    key={`${rowIndex}:${colIndex}`}
+                    className={cn("slot-cell", won && "slot-cell--win", spinning && "slot-cell--spinning")}
+                    title={symbol.label}
+                  >
+                    <SlotSymbolArt game={config.slug} symbolId={symbolId} />
+                    <span className="sr-only">{symbol.label}</span>
+                  </div>
+                );
+              }),
+            )}
+          </div>
         </div>
-        {!spinning && result && <WinOverlay payout={payout} multiplier={multiplier} />}
+
+        <div className="slot-win-panel" role="status" aria-live="polite">
+          <small>WIN</small>
+          <strong>{formatCoins(payout)}</strong>
+          <span>{result ? formatMultiplier(multiplier) : freeSpins > 0 ? `${freeSpins} giros grátis` : "Boa sorte"}</span>
+        </div>
+
+        <div className="slot-machine__controls">
+          <div className="slot-machine__bet"><BetControls value={bet} onChange={setBet} disabled={spinning || autoLeft > 0 || freeSpins > 0} /></div>
+          <div className="slot-machine__action-row">
+            {autoLeft > 0 ? (
+              <Button size="lg" variant="destructive" className="slot-side-button" onClick={() => { stopAuto.current = true; }}>
+                <Pause className="size-5" aria-hidden /> Parar {autoLeft}
+              </Button>
+            ) : (
+              <Button size="lg" variant="secondary" className="slot-side-button" disabled={spinning || insufficient} onClick={() => void startAuto()}>
+                <Play className="size-5" aria-hidden /> Auto 10
+              </Button>
+            )}
+
+            <Button
+              size="lg"
+              variant="gold"
+              className="slot-spin-button"
+              disabled={spinning || autoLeft > 0 || insufficient}
+              onClick={() => void performSpin()}
+              aria-label={freeSpins > 0 ? "Usar giro grátis" : "Girar rolos"}
+            >
+              <RotateCw className={cn("size-8", spinning && "animate-spin")} aria-hidden />
+              <span>{freeSpins > 0 ? "FREE" : "SPIN"}</span>
+            </Button>
+
+            <PaytableModal config={config} />
+          </div>
+          {insufficient && <p className="slot-machine__warning" role="alert">Saldo insuficiente. Recarregue moedas fictícias no topo.</p>}
+        </div>
       </section>
 
-      <aside className="grid content-start gap-3">
-        <BetControls
-          value={bet}
-          onChange={setBet}
-          disabled={spinning || autoLeft > 0 || freeSpins > 0}
-        />
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            size="lg"
-            variant="gold"
-            className="min-h-14 rounded-2xl text-base font-black"
-            disabled={spinning || autoLeft > 0 || insufficient}
-            onClick={() => void performSpin()}
-          >
-            <RotateCw className={cn("size-5", spinning && "animate-spin")} aria-hidden />
-            {freeSpins > 0 ? "Giro grátis" : "Girar"}
-          </Button>
-          {autoLeft > 0 ? (
-            <Button
-              size="lg"
-              variant="destructive"
-              className="min-h-14 rounded-2xl"
-              onClick={() => {
-                stopAuto.current = true;
-              }}
-            >
-              <Pause className="size-5" aria-hidden /> Parar {autoLeft}
-            </Button>
-          ) : (
-            <Button
-              size="lg"
-              variant="secondary"
-              className="min-h-14 rounded-2xl"
-              disabled={spinning || insufficient}
-              onClick={() => void startAuto()}
-            >
-              <Play className="size-5" aria-hidden /> Auto 10
-            </Button>
-          )}
-        </div>
-        {insufficient && (
-          <p
-            className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-center text-sm text-destructive-foreground"
-            role="alert"
-          >
-            Saldo insuficiente. Recarregue moedas grátis no topo.
-          </p>
-        )}
-        <PaytableModal config={config} />
-        <div className="rounded-2xl border border-border/70 bg-ink/60 p-3 text-xs text-muted-foreground">
-          <p className="mb-1 flex items-center gap-1 font-bold uppercase tracking-wider text-primary">
-            <Sparkles className="size-4" aria-hidden /> Como funciona
-          </p>
-          <p>{config.paytableNote}</p>
-          {config.mode === "cluster" && (
-            <p className="mt-2 flex items-center gap-1 text-jade">
-              <Zap className="size-4" aria-hidden /> Cada vitória pode iniciar outra cascata.
-            </p>
-          )}
-        </div>
-      </aside>
+      <section className="slot-machine__info">
+        <p className="flex items-center gap-1 font-bold uppercase tracking-wider text-primary"><Sparkles className="size-4" aria-hidden /> Como funciona</p>
+        <p>{config.paytableNote}</p>
+        {config.mode === "cluster" && <p className="mt-2 flex items-center gap-1 text-jade"><Zap className="size-4" aria-hidden /> Cada vitória pode disparar outra cascata.</p>}
+        <p className="mt-2 text-[0.7rem] uppercase tracking-wider text-white/35">Simulação fictícia — sem valor real</p>
+      </section>
     </div>
   );
 }
