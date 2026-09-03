@@ -2,6 +2,7 @@ import { Bomb, Gem, Play, ShieldCheck, Sparkles, Trophy } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import neonMinesReference from "@/assets/neon-mines-reference.webp";
 import { formatCoins, formatMultiplier } from "@/lib/arcade/format";
 import { createMineField, minesMultiplier, nextMinesMultiplier } from "@/lib/arcade/mines";
 import { createRng } from "@/lib/arcade/rng";
@@ -102,6 +103,7 @@ export function MinesGame() {
   return (
     <div className="mines-machine mines-premium">
       <section className="mines-machine__cabinet mines-premium__cabinet">
+        <img className="mines-premium__machine-art" src={neonMinesReference} alt="" aria-hidden />
         <div className="mines-premium__aurora" aria-hidden />
         <div className="mines-premium__rail mines-premium__rail--left" aria-hidden />
         <div className="mines-premium__rail mines-premium__rail--right" aria-hidden />

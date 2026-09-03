@@ -1,10 +1,8 @@
 import {
   Anchor,
-  Bomb,
   Crown,
   Dices,
   Flame,
-  Gem,
   Leaf,
   Rocket,
   RotateCw,
@@ -15,6 +13,7 @@ import {
 
 import candyReference from "@/assets/candy-cascade/reference-hd.webp";
 import { goldenTigerReferenceBase64 } from "@/assets/golden-tiger/referenceData";
+import neonMinesReference from "@/assets/neon-mines-reference.webp";
 import { olympusStormReferenceBase64 } from "@/assets/olympus-storm/referenceData";
 import type { GameEntry } from "@/lib/arcade/catalog";
 import { cn } from "@/lib/utils";
@@ -102,19 +101,7 @@ function PlayableCover({ game }: { game: GameEntry }) {
     case "candy-cascade":
       return <ReferenceCover src={candyReference} className="game-cover-reference--candy" />;
     case "neon-mines":
-      return (
-        <div className="game-cover-premium game-cover-premium--mines">
-          <div className="game-cover-mines__header"><Gem /><span>CRYSTAL VAULT</span></div>
-          <div className="game-cover-mines__grid" aria-hidden>
-            {Array.from({ length: 15 }, (_, index) => (
-              <span key={index} className={cn("game-cover-mines__tile", index === 12 && "is-danger", index === 7 && "is-gem")}>
-                {index === 12 ? <Bomb /> : index === 7 ? <Gem /> : <i />}
-              </span>
-            ))}
-          </div>
-          <div className="game-cover-mines__rail" aria-hidden />
-        </div>
-      );
+      return <ReferenceCover src={neonMinesReference} className="game-cover-reference--mines" />;
     case "neon-plinko":
       return (
         <div className="game-cover-premium game-cover-premium--plinko">
