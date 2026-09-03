@@ -1,8 +1,13 @@
 import part01 from "./cabinet-part-01";
 import part02 from "./cabinet-part-02";
 import part03 from "./cabinet-part-03";
-import part04a from "./cabinet-part-04a";
-import part04b from "./cabinet-part-04b";
+import part041 from "./cabinet-04-1";
+import part042 from "./cabinet-04-2";
+import part043 from "./cabinet-04-3";
+import part044 from "./cabinet-04-4";
+import part045 from "./cabinet-04-5";
+import part046 from "./cabinet-04-6";
+import part047 from "./cabinet-04-7";
 import part05 from "./cabinet-part-05";
 import part06 from "./cabinet-part-06";
 import part07 from "./cabinet-part-07";
@@ -14,8 +19,13 @@ const cabinetBase64 = [
   part01,
   part02,
   part03,
-  part04a,
-  part04b,
+  part041,
+  part042,
+  part043,
+  part044,
+  part045,
+  part046,
+  part047,
   part05,
   part06,
   part07,
