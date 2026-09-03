@@ -295,7 +295,7 @@ export function CandyCascadeHQ() {
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-black sm:px-3 sm:py-2">
-      <div className="relative mx-auto aspect-[600/1066] w-full max-w-[470px] overflow-hidden bg-[#31001d] shadow-[0_0_120px_rgba(255,54,187,.3)] sm:rounded-[22px]">
+      <div className="relative mx-auto aspect-[600/1066] w-full max-w-[430px] overflow-hidden bg-[#31001d] shadow-[0_0_120px_rgba(255,54,187,.3)] sm:rounded-[22px]">
         <img src={candyReference} alt="Candy Cascade" draggable={false} className="absolute inset-0 size-full select-none object-fill" />
 
         <Link to="/" aria-label="Voltar ao lobby" className="absolute right-[1.1%] top-[.8%] z-50 size-[9.2%] rounded-full bg-transparent" />

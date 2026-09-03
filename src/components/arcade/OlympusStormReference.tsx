@@ -301,7 +301,7 @@ export function OlympusStormReference() {
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-black sm:px-3 sm:py-2">
-      <div className="relative mx-auto aspect-[941/1672] w-full max-w-[470px] overflow-hidden bg-[#021329] shadow-[0_0_100px_rgba(20,106,255,.16)] sm:rounded-[22px]">
+      <div className="relative mx-auto aspect-[941/1672] w-full max-w-[430px] overflow-hidden bg-[#021329] shadow-[0_0_100px_rgba(20,106,255,.16)] sm:rounded-[22px]">
         {src ? (
           <img
             src={src}

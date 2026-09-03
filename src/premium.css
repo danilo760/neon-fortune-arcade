@@ -355,6 +355,9 @@
 @keyframes nfBall { 50%{transform:scale(.88);filter:brightness(1.2)} }
 
 @media (max-width: 760px) {
+  .game-topbar > div { padding-block: .35rem; }
+  .game-page main { padding: .35rem 0 1rem; }
+  .game-fictional-notice { margin: 0 .45rem .35rem; padding-block: .35rem; font-size: .58rem; }
   .fortune-hero { min-height: 24rem; grid-template-columns: 1fr; align-items: start; }
   .fortune-hero__copy { padding: 1.15rem 1.15rem 10.5rem; }
   .fortune-hero__mascot { position: absolute; right: -1.4rem; bottom: -1.5rem; width: 16rem; }

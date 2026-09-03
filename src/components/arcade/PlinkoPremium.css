@@ -1,5 +1,5 @@
 .plinko-premium {
-  width: min(100%, 60rem);
+  width: min(100%, 430px);
   padding: .35rem;
 }
 
@@ -527,11 +527,11 @@
   .plinko-premium__cabinet { border-radius: 1.15rem; }
   .plinko-premium__cabinet::before,
   .plinko-premium__cabinet::after { display: none; }
-  .plinko-premium__masthead { grid-template-columns: 1fr; min-height: 8rem; padding-inline: .55rem; }
+  .plinko-premium__masthead { grid-template-columns: 1fr; min-height: 6.8rem; padding: .5rem .55rem; }
   .plinko-premium__brand::before { width: 12rem; }
   .plinko-premium__jackpots { width: 100%; max-width: 28rem; margin-inline: auto; }
   .plinko-premium__status-strip { margin-inline: .65rem; }
-  .plinko-premium__board { height: min(65vh, 36rem); min-height: 28rem; margin-inline: .5rem; }
+  .plinko-premium__board { height: clamp(23rem, 54vh, 29rem); min-height: 23rem; margin-inline: .5rem; }
   .plinko-premium__result { margin-inline: .5rem; }
   .plinko-premium__controls { grid-template-columns: 1fr 1fr; padding-inline: .5rem; }
   .plinko-premium__drop-zone { grid-column: 1 / -1; grid-row: 1; }
@@ -543,7 +543,7 @@
   .plinko-premium__brand strong { font-size: 1.65rem; }
   .plinko-premium__brand span { font-size: 1.05rem; }
   .plinko-premium__status-strip { margin-inline: .35rem; }
-  .plinko-premium__board { min-height: 25rem; margin-inline: .3rem; }
+  .plinko-premium__board { height: clamp(22rem, 51vh, 25rem); min-height: 22rem; margin-inline: .3rem; }
   .plinko-premium__pegs { inset-inline: 5%; }
   .plinko-premium__bucket { min-height: 2.6rem; }
   .plinko-premium__result { grid-template-columns: .8fr 1.25fr .8fr; margin-inline: .3rem; padding-inline: .5rem; }

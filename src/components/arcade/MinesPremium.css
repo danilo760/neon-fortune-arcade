@@ -1,5 +1,5 @@
 .mines-premium {
-  width: min(100%, 58rem);
+  width: min(100%, 430px);
   padding: .35rem;
 }
 
@@ -540,7 +540,7 @@
   .mines-premium__cabinet { border-radius: 1.15rem; }
   .mines-premium__cabinet::before,
   .mines-premium__cabinet::after { display: none; }
-  .mines-premium__masthead { min-height: 7.5rem; padding-inline: .55rem; }
+  .mines-premium__masthead { min-height: 6.6rem; padding: .5rem .45rem .65rem; }
   .mines-premium__crest { width: 2.25rem; height: 2.25rem; }
   .mines-premium__crest svg { width: 1.2rem; height: 1.2rem; }
   .mines-premium__title { min-width: 8.8rem; }
@@ -551,10 +551,11 @@
   .mines-premium__telemetry { margin-inline: .85rem; }
   .mines-premium__grid-frame { margin-inline: .55rem; padding: .36rem; }
   .mines-premium__grid { padding: .35rem; gap: .25rem; }
-  .mines-premium__possible { margin-inline: .55rem; }
+  .mines-premium__possible { margin-inline: .55rem; padding-block: .5rem; }
   .mines-premium__result { margin-inline: .55rem; }
-  .mines-premium__controls { grid-template-columns: 1fr; padding-inline: .55rem; }
-  .mines-premium__action { width: 100%; order: 1; }
+  .mines-premium__controls { grid-template-columns: 1fr 1fr; padding-inline: .55rem; }
+  .mines-premium__bet { grid-column: 1 / -1; }
+  .mines-premium__action { width: 100%; min-width: 0; order: 1; }
   .mines-premium__selector { order: 2; }
   .mines-premium__tile-rivet { width: 3px; height: 3px; }
 }

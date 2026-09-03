@@ -33,7 +33,7 @@ export function GameShell({ game, children }: { game: GameEntry; children: React
       </header>
 
       <main className="relative z-10 mx-auto max-w-7xl px-2.5 py-3 sm:px-6 sm:py-6">
-        <FictionalNotice className="mx-auto mb-3 max-w-md opacity-80" />
+        <FictionalNotice className="game-fictional-notice mx-auto mb-3 max-w-md opacity-80" />
         {children}
       </main>
     </div>

@@ -401,7 +401,7 @@ export function GoldenTigerReference() {
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-black sm:px-3 sm:py-2">
-      <div className="relative mx-auto aspect-[940/1672] w-full max-w-[470px] overflow-hidden bg-[#240003] shadow-[0_0_90px_rgba(0,0,0,.96)] sm:rounded-[22px]">
+      <div className="relative mx-auto aspect-[940/1672] w-full max-w-[430px] overflow-hidden bg-[#240003] shadow-[0_0_90px_rgba(0,0,0,.96)] sm:rounded-[22px]">
         {src ? (
           <img src={src} alt="Golden Tiger" draggable={false} className="absolute inset-0 size-full select-none object-fill" />
         ) : (
