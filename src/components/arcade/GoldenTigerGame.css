@@ -27,16 +27,39 @@ div[style*="/golden-tiger/symbols.webp"] {
 
 @keyframes tiger-reel-spin {
   0% {
-    transform: translateY(-10%) scaleY(1.04);
-    filter: blur(7px) brightness(1.15);
+    transform: translateY(-17%) scaleY(1.13);
+    filter: blur(8px) brightness(1.14) saturate(1.18);
   }
-  45% {
-    transform: translateY(12%) scaleY(0.95);
-    filter: blur(10px) brightness(1.3);
+  40% {
+    transform: translateY(19%) scaleY(0.9);
+    filter: blur(12px) brightness(1.38) saturate(1.32);
+  }
+  72% {
+    transform: translateY(-9%) scaleY(1.08);
+    filter: blur(9px) brightness(1.23) saturate(1.25);
   }
   100% {
-    transform: translateY(-10%) scaleY(1.04);
-    filter: blur(7px) brightness(1.15);
+    transform: translateY(-17%) scaleY(1.13);
+    filter: blur(8px) brightness(1.14) saturate(1.18);
+  }
+}
+
+@keyframes tiger-reel-stop {
+  0% {
+    transform: translateY(-10%) scaleY(1.1);
+    filter: blur(5px) brightness(1.3);
+  }
+  55% {
+    transform: translateY(4%) scaleY(0.94);
+    filter: blur(1px) brightness(1.18);
+  }
+  78% {
+    transform: translateY(-2.5%) scaleY(1.035);
+    filter: blur(0) brightness(1.08);
+  }
+  100% {
+    transform: translateY(0) scaleY(1);
+    filter: blur(0) brightness(1);
   }
 }
 
@@ -45,10 +68,24 @@ div[style*="/golden-tiger/symbols.webp"] {
   100% {
     transform: scale(1);
     box-shadow: inset 0 0 22px rgba(0, 0, 0, 0.65), 0 0 5px rgba(255, 211, 70, 0.25);
+    filter: brightness(1);
   }
   50% {
-    transform: scale(1.045);
-    box-shadow: inset 0 0 18px rgba(255, 236, 166, 0.15), 0 0 26px rgba(255, 211, 70, 0.95);
+    transform: scale(1.055);
+    box-shadow: inset 0 0 18px rgba(255, 236, 166, 0.15), 0 0 32px rgba(255, 211, 70, 1);
+    filter: brightness(1.28) saturate(1.2);
+  }
+}
+
+@keyframes tiger-scatter-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1) saturate(1);
+  }
+  50% {
+    transform: scale(1.075);
+    filter: brightness(1.48) saturate(1.3) drop-shadow(0 0 18px rgba(255, 88, 32, 0.95));
   }
 }
 
@@ -59,8 +96,97 @@ div[style*="/golden-tiger/symbols.webp"] {
     filter: brightness(1);
   }
   50% {
-    transform: scale(1.025);
-    filter: brightness(1.18);
+    transform: scale(1.035);
+    filter: brightness(1.28) drop-shadow(0 0 12px rgba(255, 224, 90, 0.72));
+  }
+}
+
+@keyframes tiger-win-flash {
+  0% {
+    background: rgba(255, 239, 160, 0.5);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.72;
+  }
+  100% {
+    background: rgba(255, 183, 35, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes tiger-coin-burst {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.4) rotate(0deg);
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(calc((50% - var(--particle-x, 50%)) * 0.15), -350px, 0) scale(1.25) rotate(520deg);
+    opacity: 0;
+  }
+}
+
+@keyframes tiger-big-win-text {
+  0% {
+    transform: scale(0.35) rotate(-5deg);
+    opacity: 0;
+    filter: blur(8px) brightness(2);
+  }
+  24% {
+    transform: scale(1.18) rotate(2deg);
+    opacity: 1;
+    filter: blur(0) brightness(1.55);
+  }
+  55% {
+    transform: scale(0.98) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.05) translateY(-20px);
+    opacity: 0;
+  }
+}
+
+@keyframes tiger-bonus-burst {
+  0% {
+    transform: scale(0.35) rotate(-3deg);
+    opacity: 0;
+    filter: blur(10px) brightness(2.2);
+  }
+  52% {
+    transform: scale(1.08) rotate(1deg);
+    opacity: 1;
+    filter: blur(0) brightness(1.28);
+  }
+  76% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+@keyframes tiger-cabinet-impact {
+  0%, 100% { transform: translateX(0) scale(1); }
+  15% { transform: translateX(-2px) scale(1.006); }
+  30% { transform: translateX(3px) scale(1.01); }
+  45% { transform: translateX(-2px) scale(1.006); }
+  60% { transform: translateX(1px) scale(1.003); }
+}
+
+@keyframes tiger-spin-active {
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.045);
+    filter: brightness(1.35) saturate(1.2);
   }
 }
 
@@ -84,8 +210,16 @@ div[style*="/golden-tiger/symbols.webp"] {
 
 @media (prefers-reduced-motion: reduce) {
   [class*="tiger-reel-spin"],
+  [class*="tiger-reel-stop"],
   [class*="tiger-win-cell"],
+  [class*="tiger-scatter-pulse"],
   [class*="tiger-win-banner"],
+  [class*="tiger-win-flash"],
+  [class*="tiger-coin-burst"],
+  [class*="tiger-big-win-text"],
+  [class*="tiger-bonus-burst"],
+  [class*="tiger-cabinet-impact"],
+  [class*="tiger-spin-active"],
   [class*="tiger-spin-button"],
   [class*="tiger-spin-pulse"] {
     animation-duration: 0.001ms !important;
