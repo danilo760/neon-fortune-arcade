@@ -1,0 +1,45 @@
+@keyframes tiger-symbol-fall {
+  0% {
+    transform: translateY(-5%);
+    filter: blur(1px) brightness(1.04);
+  }
+  35% {
+    filter: blur(4px) brightness(1.18);
+  }
+  100% {
+    transform: translateY(75%);
+    filter: blur(2px) brightness(1.08);
+  }
+}
+
+@keyframes tiger-piece-land {
+  0% {
+    transform: translateY(-118%) scaleY(1.08);
+    opacity: 0.15;
+    filter: blur(7px) brightness(1.35);
+  }
+  52% {
+    transform: translateY(9%) scaleY(0.9);
+    opacity: 1;
+    filter: blur(0) brightness(1.18);
+  }
+  72% {
+    transform: translateY(-5%) scaleY(1.04);
+  }
+  88% {
+    transform: translateY(2%) scaleY(0.98);
+  }
+  100% {
+    transform: translateY(0) scaleY(1);
+    opacity: 1;
+    filter: blur(0) brightness(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="tiger-symbol-fall"],
+  [class*="tiger-piece-land"] {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
