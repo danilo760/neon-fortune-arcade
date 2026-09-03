@@ -70,7 +70,7 @@ function noise(duration: number, gain: number, delay = 0, cutoff = 1800) {
   source.stop(start + duration + 0.02);
 }
 
-export type SoundName = "spin" | "tick" | "win" | "bigWin" | "lose" | "click" | "cash";
+export type SoundName = "spin" | "tick" | "win" | "bigWin" | "lose" | "click" | "cash" | "bonus";
 
 export function playSound(name: SoundName, enabled: boolean) {
   if (!enabled) return;
@@ -97,6 +97,13 @@ export function playSound(name: SoundName, enabled: boolean) {
       [392, 523, 659, 784, 1046, 1318].forEach((frequency, index) => {
         tone(frequency, 0.28, "triangle", 0.055, index * 0.075, frequency * 1.08);
       });
+      break;
+    case "bonus":
+      noise(0.42, 0.014, 0, 3600);
+      [392, 523, 659, 784, 1046, 1318, 1568].forEach((frequency, index) => {
+        tone(frequency, 0.32, index % 2 === 0 ? "triangle" : "sine", 0.058, index * 0.065, frequency * 1.1);
+      });
+      tone(196, 0.55, "sine", 0.04, 0.06, 392);
       break;
     case "cash":
       [659, 880, 1174].forEach((frequency, index) => {
