@@ -51,19 +51,26 @@ export function GameCard({ game }: { game: GameEntry }) {
       <div className="flex flex-col gap-2 p-3">
         <div className="flex min-w-0 items-start justify-between gap-2">
           <div className="min-w-0">
-            <h3 className="truncate font-display text-base font-bold text-foreground">{game.name}</h3>
+            <h3 className="truncate font-display text-base font-bold text-foreground">
+              {game.name}
+            </h3>
             <p className="line-clamp-2 text-xs text-muted-foreground">{game.tagline}</p>
           </div>
           <Button
             size="icon"
             variant="ghost"
             className="size-9 shrink-0 rounded-full"
-            aria-label={isFavorite ? `Remover ${game.name} dos favoritos` : `Favoritar ${game.name}`}
+            aria-label={
+              isFavorite ? `Remover ${game.name} dos favoritos` : `Favoritar ${game.name}`
+            }
             aria-pressed={isFavorite}
             onClick={() => arcadeActions.toggleFavorite(game.slug)}
           >
             <Heart
-              className={cn("size-4", isFavorite ? "fill-accent text-accent" : "text-muted-foreground")}
+              className={cn(
+                "size-4",
+                isFavorite ? "fill-accent text-accent" : "text-muted-foreground",
+              )}
               aria-hidden
             />
           </Button>

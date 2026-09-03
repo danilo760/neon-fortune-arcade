@@ -105,7 +105,12 @@ export function randomGrid(config: SlotConfig, rng: Rng): Grid {
 
 /** ---------- Lines mode ---------- */
 
-export function evaluateLines(config: SlotConfig, grid: Grid, bet: number, rng: Rng): LinesSpinResult {
+export function evaluateLines(
+  config: SlotConfig,
+  grid: Grid,
+  bet: number,
+  rng: Rng,
+): LinesSpinResult {
   const lines = config.lines ?? [];
   const wins: LineWin[] = [];
 
@@ -124,7 +129,8 @@ export function evaluateLines(config: SlotConfig, grid: Grid, bet: number, rng: 
 
     let multiplier = 1;
     if (config.winMultiplierValues?.length && chance(rng, config.winMultiplierChance ?? 0)) {
-      multiplier = config.winMultiplierValues[randomInt(rng, 0, config.winMultiplierValues.length - 1)]!;
+      multiplier =
+        config.winMultiplierValues[randomInt(rng, 0, config.winMultiplierValues.length - 1)]!;
     }
 
     wins.push({
@@ -214,7 +220,9 @@ function clusterPay(symbol: SlotSymbol, count: number): number {
 
 function collapse(config: SlotConfig, grid: Grid, removed: Set<string>, rng: Rng): Grid {
   const weights = symbolWeights(config);
-  const next: Grid = Array.from({ length: config.rows }, () => Array.from({ length: config.cols }, () => ""));
+  const next: Grid = Array.from({ length: config.rows }, () =>
+    Array.from({ length: config.cols }, () => ""),
+  );
 
   for (let col = 0; col < config.cols; col++) {
     const survivors: string[] = [];
@@ -244,7 +252,9 @@ export function spinCluster(config: SlotConfig, bet: number, rng: Rng): ClusterS
     }
     const wins = clusters.map((cluster) => ({
       ...cluster,
-      payout: Math.round(bet * clusterPay(symbolById(config, cluster.symbolId), cluster.cells.length)),
+      payout: Math.round(
+        bet * clusterPay(symbolById(config, cluster.symbolId), cluster.cells.length),
+      ),
     }));
     const stepPayout = wins.reduce((sum, win) => sum + win.payout, 0);
     basePayout += stepPayout;

@@ -51,7 +51,14 @@ export const GOLDEN_TIGER: SlotConfig = {
     { id: "bell", label: "Sino", glyph: "🔔", weight: 14, linePays: { 3: 4 } },
     { id: "lantern", label: "Lanterna", glyph: "🏮", weight: 16, linePays: { 3: 3 } },
     { id: "bamboo", label: "Bambu", glyph: "🎍", weight: 18, linePays: { 3: 2 } },
-    { id: "wild", label: "Wild Rugido", glyph: "🌟", weight: 4, linePays: { 2: 2, 3: 40 }, kind: "wild" },
+    {
+      id: "wild",
+      label: "Wild Rugido",
+      glyph: "🌟",
+      weight: 4,
+      linePays: { 2: 2, 3: 40 },
+      kind: "wild",
+    },
     { id: "bonus", label: "Bônus Lua", glyph: "🌙", weight: 4, kind: "bonus" },
   ],
 };

@@ -8,7 +8,22 @@ export interface GameEntry {
   playable: boolean;
   featured: boolean;
   /** Visual identity: gradient stops as oklch token expressions. */
-  accent: "gold" | "storm" | "candy" | "mine" | "plinko" | "dragon" | "ox" | "panda" | "classic" | "pirate" | "rocket" | "wheel" | "dice" | "royal" | "rabbit";
+  accent:
+    | "gold"
+    | "storm"
+    | "candy"
+    | "mine"
+    | "plinko"
+    | "dragon"
+    | "ox"
+    | "panda"
+    | "classic"
+    | "pirate"
+    | "rocket"
+    | "wheel"
+    | "dice"
+    | "royal"
+    | "rabbit";
   emblem: string;
   volatility: string;
 }

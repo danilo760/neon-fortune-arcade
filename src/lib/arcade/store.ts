@@ -42,31 +42,37 @@ function isFiniteNumber(value: unknown): value is number {
 export function parseState(raw: unknown): ArcadeState {
   if (typeof raw !== "object" || raw === null) return { ...defaultState };
   const data = raw as Record<string, unknown>;
-  const history = Array.isArray(data.history)
-    ? data.history
-        .filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
+  const history = Array.isArray(data["history"])
+    ? data["history"]
+        .filter(
+          (item): item is Record<string, unknown> => typeof item === "object" && item !== null,
+        )
         .map((item) => ({
-          id: typeof item.id === "string" ? item.id : Math.random().toString(36).slice(2),
-          slug: typeof item.slug === "string" ? item.slug : "unknown",
-          gameName: typeof item.gameName === "string" ? item.gameName : "Jogo",
-          bet: isFiniteNumber(item.bet) ? item.bet : 0,
-          payout: isFiniteNumber(item.payout) ? item.payout : 0,
-          multiplier: isFiniteNumber(item.multiplier) ? item.multiplier : 0,
-          at: isFiniteNumber(item.at) ? item.at : Date.now(),
-          note: typeof item.note === "string" ? item.note : undefined,
+          id: typeof item["id"] === "string" ? item["id"] : Math.random().toString(36).slice(2),
+          slug: typeof item["slug"] === "string" ? item["slug"] : "unknown",
+          gameName: typeof item["gameName"] === "string" ? item["gameName"] : "Jogo",
+          bet: isFiniteNumber(item["bet"]) ? item["bet"] : 0,
+          payout: isFiniteNumber(item["payout"]) ? item["payout"] : 0,
+          multiplier: isFiniteNumber(item["multiplier"]) ? item["multiplier"] : 0,
+          at: isFiniteNumber(item["at"]) ? item["at"] : Date.now(),
+          ...(typeof item["note"] === "string" ? { note: item["note"] } : {}),
         }))
         .slice(0, MAX_HISTORY)
     : [];
 
   return {
-    balance: isFiniteNumber(data.balance) ? Math.max(0, Math.floor(data.balance)) : STARTING_BALANCE,
-    favorites: Array.isArray(data.favorites)
-      ? data.favorites.filter((item): item is string => typeof item === "string")
+    balance: isFiniteNumber(data["balance"])
+      ? Math.max(0, Math.floor(data["balance"]))
+      : STARTING_BALANCE,
+    favorites: Array.isArray(data["favorites"])
+      ? data["favorites"].filter((item): item is string => typeof item === "string")
       : [],
-    soundEnabled: typeof data.soundEnabled === "boolean" ? data.soundEnabled : false,
+    soundEnabled: typeof data["soundEnabled"] === "boolean" ? data["soundEnabled"] : false,
     history,
-    totalSpins: isFiniteNumber(data.totalSpins) ? Math.max(0, Math.floor(data.totalSpins)) : 0,
-    bestWin: isFiniteNumber(data.bestWin) ? Math.max(0, Math.floor(data.bestWin)) : 0,
+    totalSpins: isFiniteNumber(data["totalSpins"])
+      ? Math.max(0, Math.floor(data["totalSpins"]))
+      : 0,
+    bestWin: isFiniteNumber(data["bestWin"]) ? Math.max(0, Math.floor(data["bestWin"])) : 0,
   };
 }
 
