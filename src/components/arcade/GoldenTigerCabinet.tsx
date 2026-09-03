@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Volume2, VolumeX } from "lucide-react";
+import { ArrowLeft, RotateCw, Volume2, VolumeX } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { goldenTigerCabinet } from "@/assets/golden-tiger/cabinetData";
@@ -10,7 +10,6 @@ import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store
 import { cn } from "@/lib/utils";
 
 const BET_STEPS = [10, 50, 100, 200, 500, 1_000, 5_000, 10_000] as const;
-
 const WIN_LINES = [
   [0, 1, 2],
   [3, 4, 5],
@@ -23,15 +22,15 @@ const WIN_LINES = [
 ] as const;
 
 const CELL_BOXES = [
-  { left: 6.15, top: 22.73, width: 28.16, height: 15.55 },
-  { left: 35.39, top: 22.73, width: 28.8, height: 15.55 },
-  { left: 65.25, top: 22.73, width: 28.69, height: 15.55 },
-  { left: 6.15, top: 38.94, width: 28.16, height: 15.61 },
-  { left: 35.39, top: 38.94, width: 28.8, height: 15.61 },
-  { left: 65.25, top: 38.94, width: 28.69, height: 15.61 },
-  { left: 6.15, top: 55.14, width: 28.16, height: 15.55 },
-  { left: 35.39, top: 55.14, width: 28.8, height: 15.55 },
-  { left: 65.25, top: 55.14, width: 28.69, height: 15.55 },
+  { left: 6.2, top: 22.7, width: 28.1, height: 15.6 },
+  { left: 35.4, top: 22.7, width: 28.8, height: 15.6 },
+  { left: 65.25, top: 22.7, width: 28.7, height: 15.6 },
+  { left: 6.2, top: 38.95, width: 28.1, height: 15.6 },
+  { left: 35.4, top: 38.95, width: 28.8, height: 15.6 },
+  { left: 65.25, top: 38.95, width: 28.7, height: 15.6 },
+  { left: 6.2, top: 55.15, width: 28.1, height: 15.55 },
+  { left: 35.4, top: 55.15, width: 28.8, height: 15.55 },
+  { left: 65.25, top: 55.15, width: 28.7, height: 15.55 },
 ] as const;
 
 type ArtId = "ingot" | "envelope" | "jade" | "flower" | "tiger" | "coins";
@@ -86,7 +85,6 @@ function evaluate(grid: readonly SymbolId[], bet: number) {
     const second = grid[b];
     const third = grid[c];
     if (!first || !second || !third || first !== second || second !== third) continue;
-
     const symbol = BY_ID.get(first);
     if (!symbol) continue;
     payout += bet * symbol.pay;
@@ -97,12 +95,6 @@ function evaluate(grid: readonly SymbolId[], bet: number) {
   }
 
   return { payout: Math.round(payout), lines, winning };
-}
-
-function letterStyle(id: LetterId) {
-  if (id === "a") return { color: "#b837e7", shadow: "#5f087f" };
-  if (id === "k") return { color: "#38d878", shadow: "#08723a" };
-  return { color: "#279fe8", shadow: "#075c99" };
 }
 
 function DynamicSymbol({ id, spinning, winning }: { id: SymbolId; spinning: boolean; winning: boolean }) {
@@ -127,12 +119,17 @@ function DynamicSymbol({ id, spinning, winning }: { id: SymbolId; spinning: bool
     );
   }
 
-  const letter = id as LetterId;
-  const colors = letterStyle(letter);
+  const palette =
+    id === "a"
+      ? { fill: "#bb45ed", shadow: "#6a138c" }
+      : id === "k"
+        ? { fill: "#45dd78", shadow: "#08743a" }
+        : { fill: "#2eaef2", shadow: "#075c99" };
+
   return (
     <div
       className={cn(
-        "absolute inset-0 flex items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_50%_35%,#a81712,#710c08_55%,#3d0302)]",
+        "absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_50%_35%,#ad1710,#730d08_58%,#430402)]",
         spinning && "motion-safe:animate-[tiger-reel-spin_210ms_linear_infinite]",
         winning && !spinning && "motion-safe:animate-[tiger-win-cell_850ms_ease-in-out_infinite]",
       )}
@@ -141,9 +138,9 @@ function DynamicSymbol({ id, spinning, winning }: { id: SymbolId; spinning: bool
       <span
         className="font-serif text-[clamp(3rem,15vw,5.7rem)] font-black leading-none"
         style={{
-          color: colors.color,
-          WebkitTextStroke: "2px #ffd75d",
-          textShadow: `0 5px 0 ${colors.shadow}, 0 8px 12px rgba(0,0,0,.45)`,
+          color: palette.fill,
+          WebkitTextStroke: "2px #ffd65d",
+          textShadow: `0 5px 0 ${palette.shadow}, 0 9px 14px rgba(0,0,0,.5)`,
         }}
       >
         {symbol.letter}
@@ -152,12 +149,44 @@ function DynamicSymbol({ id, spinning, winning }: { id: SymbolId; spinning: bool
   );
 }
 
+function useCabinetBlob() {
+  const [src, setSrc] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let objectUrl: string | null = null;
+    try {
+      const commaIndex = goldenTigerCabinet.indexOf(",");
+      if (commaIndex < 0) throw new Error("Cabinet data is invalid");
+      const base64 = goldenTigerCabinet.slice(commaIndex + 1);
+      const binary = window.atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) {
+        bytes[index] = binary.charCodeAt(index);
+      }
+      const blob = new Blob([bytes.buffer as ArrayBuffer], { type: "image/jpeg" });
+      objectUrl = URL.createObjectURL(blob);
+      setSrc(objectUrl);
+      setFailed(false);
+    } catch {
+      setFailed(true);
+    }
+
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, []);
+
+  return { src, failed };
+}
+
 export function GoldenTigerCabinet() {
   const balance = useArcade((state) => state.balance);
   const soundEnabled = useArcade((state) => state.soundEnabled);
+  const { src: cabinetSrc, failed: cabinetFailed } = useCabinetBlob();
   const [bet, setBet] = useState<number>(200);
   const [grid, setGrid] = useState<SymbolId[]>(INITIAL_GRID);
-  const [win, setWin] = useState(0);
+  const [win, setWin] = useState(2450);
   const [winning, setWinning] = useState<Set<number>>(() => new Set());
   const [spinning, setSpinning] = useState(false);
   const [hasSpun, setHasSpun] = useState(false);
@@ -185,13 +214,13 @@ export function GoldenTigerCabinet() {
     const finalGrid = makeGrid();
     const result = evaluate(finalGrid, bet);
     const duration = turbo ? 430 : 980;
-    const interval = window.setInterval(() => {
+    const ticker = window.setInterval(() => {
       setGrid(makeGrid());
       playSound("tick", soundEnabled);
     }, turbo ? 55 : 82);
 
     await new Promise<void>((resolve) => window.setTimeout(resolve, duration));
-    window.clearInterval(interval);
+    window.clearInterval(ticker);
     setGrid(finalGrid);
 
     if (result.payout > 0) arcadeActions.credit(result.payout);
@@ -238,19 +267,26 @@ export function GoldenTigerCabinet() {
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-[#050302] sm:px-4 sm:py-3">
-      <div className="relative mx-auto aspect-[941/1672] w-full max-w-[430px] overflow-hidden bg-black shadow-[0_0_90px_rgba(0,0,0,.95)] sm:rounded-[24px] sm:ring-1 sm:ring-yellow-500/25">
-        <img
-          src={goldenTigerCabinet}
-          alt="Golden Tiger, máquina premium de arcade com tigrinho, templo dourado e rolos 3 por 3"
-          className="absolute inset-0 size-full select-none object-fill"
-          draggable={false}
-        />
+      <div className="relative mx-auto aspect-[941/1672] w-full max-w-[430px] overflow-hidden bg-[#2e0704] shadow-[0_0_90px_rgba(0,0,0,.95)] sm:rounded-[24px] sm:ring-1 sm:ring-yellow-500/25">
+        {cabinetSrc ? (
+          <img
+            src={cabinetSrc}
+            alt="Golden Tiger, máquina premium de arcade com tigrinho, templo dourado e rolos 3 por 3"
+            className="absolute inset-0 size-full select-none object-fill"
+            draggable={false}
+            onError={() => console.error("Golden Tiger cabinet image failed to render")}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_50%_30%,#6e1009,#210301_70%,#050000)] px-8 text-center text-sm font-semibold text-yellow-100">
+            {cabinetFailed ? "Falha ao carregar a arte do Golden Tiger." : "Carregando Golden Tiger…"}
+          </div>
+        )}
 
         <div className="absolute left-[1.4%] top-[1.1%] z-50 flex gap-1.5">
           <Link
             to="/"
             aria-label="Voltar ao lobby"
-            className="flex size-8 items-center justify-center rounded-full border border-yellow-300/80 bg-black/65 text-yellow-100 shadow-lg backdrop-blur-sm transition hover:bg-black/80"
+            className="flex size-8 items-center justify-center rounded-full border border-yellow-300/80 bg-black/65 text-yellow-100 shadow-lg backdrop-blur-sm"
           >
             <ArrowLeft className="size-4" />
           </Link>
@@ -258,7 +294,7 @@ export function GoldenTigerCabinet() {
             type="button"
             onClick={() => arcadeActions.toggleSound()}
             aria-label={soundEnabled ? "Desativar som" : "Ativar som"}
-            className="flex size-8 items-center justify-center rounded-full border border-yellow-300/80 bg-black/65 text-yellow-100 shadow-lg backdrop-blur-sm transition hover:bg-black/80"
+            className="flex size-8 items-center justify-center rounded-full border border-yellow-300/80 bg-black/65 text-yellow-100 shadow-lg backdrop-blur-sm"
           >
             {soundEnabled ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
           </button>
@@ -275,12 +311,7 @@ export function GoldenTigerCabinet() {
                   "absolute z-20 overflow-hidden bg-[#720d08]",
                   winning.has(index) && !spinning && "ring-2 ring-inset ring-yellow-200 shadow-[0_0_28px_rgba(255,216,75,.9)]",
                 )}
-                style={{
-                  left: `${box.left}%`,
-                  top: `${box.top}%`,
-                  width: `${box.width}%`,
-                  height: `${box.height}%`,
-                }}
+                style={{ left: `${box.left}%`, top: `${box.top}%`, width: `${box.width}%`, height: `${box.height}%` }}
               >
                 <DynamicSymbol id={id} spinning={spinning} winning={winning.has(index)} />
               </div>
@@ -290,7 +321,7 @@ export function GoldenTigerCabinet() {
         {hasSpun && (
           <div
             className={cn(
-              "absolute z-30 flex items-center justify-center rounded-[18%] bg-[radial-gradient(ellipse_at_center,#087b42,#034326_72%)] px-2 text-center shadow-[inset_0_0_14px_rgba(255,214,79,.15)]",
+              "absolute z-30 flex items-center justify-center rounded-[18%] bg-[radial-gradient(ellipse_at_center,#087b42,#034326_72%)] px-2 text-center",
               win > 0 && !spinning && "motion-safe:animate-[tiger-win-banner_900ms_ease-in-out_infinite]",
             )}
             style={{ left: "27.2%", top: "74.6%", width: "45.6%", height: "4.45%" }}
@@ -303,106 +334,45 @@ export function GoldenTigerCabinet() {
           </div>
         )}
 
-        <div
-          className="absolute z-30 flex items-center justify-center bg-[#170b08] px-1 text-center"
-          style={{ left: "5.2%", top: "84.45%", width: "26.8%", height: "3.75%" }}
-        >
+        <div className="absolute z-30 flex items-center justify-center bg-[#170b08] px-1" style={{ left: "5.2%", top: "84.45%", width: "26.8%", height: "3.75%" }}>
           <span className="text-[clamp(.78rem,4.4vw,1.12rem)] font-bold tabular-nums text-white">{formatCoins(balance)}</span>
         </div>
 
-        <div
-          className="absolute z-30 flex items-center justify-center bg-[#170b08] px-1 text-center"
-          style={{ left: "68.25%", top: "84.45%", width: "25.6%", height: "3.75%" }}
-        >
+        <div className="absolute z-30 flex items-center justify-center bg-[#170b08] px-1" style={{ left: "68.25%", top: "84.45%", width: "25.6%", height: "3.75%" }}>
           <span className="text-[clamp(.78rem,4.4vw,1.12rem)] font-bold tabular-nums text-white">{formatCoins(bet)}</span>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setTurbo((value) => !value)}
-          aria-label="Alternar modo turbo"
-          aria-pressed={turbo}
-          title={`Turbo ${turbo ? "ligado" : "desligado"}`}
-          className={cn(
-            "absolute z-40 rounded-full transition active:scale-95",
-            turbo && "shadow-[0_0_25px_rgba(255,222,66,.95)] ring-2 ring-yellow-200/90",
-          )}
-          style={{ left: "87.1%", top: "74.65%", width: "9.3%", height: "5.25%" }}
-        />
-
-        <button
-          type="button"
-          aria-label="Informações: oito linhas premiadas"
-          title="8 linhas: 3 horizontais, 3 verticais e 2 diagonais"
-          className="absolute z-40 rounded-full transition active:scale-95"
-          style={{ left: "3.4%", top: "74.65%", width: "9.3%", height: "5.25%" }}
-        />
-
-        <button
-          type="button"
-          onClick={() => changeBet(-1)}
-          disabled={spinning || autoLeft > 0}
-          aria-label="Diminuir aposta"
-          className="absolute z-40 rounded-full disabled:cursor-not-allowed"
-          style={{ left: "66.2%", top: "84.3%", width: "7.8%", height: "4.55%" }}
-        />
-        <button
-          type="button"
-          onClick={() => changeBet(1)}
-          disabled={spinning || autoLeft > 0}
-          aria-label="Aumentar aposta"
-          className="absolute z-40 rounded-full disabled:cursor-not-allowed"
-          style={{ left: "90.35%", top: "84.3%", width: "7.8%", height: "4.55%" }}
-        />
+        <button type="button" onClick={() => setTurbo((value) => !value)} aria-label="Alternar modo turbo" aria-pressed={turbo} className={cn("absolute z-40 rounded-full", turbo && "shadow-[0_0_25px_rgba(255,222,66,.95)] ring-2 ring-yellow-200/90")} style={{ left: "87.1%", top: "74.65%", width: "9.3%", height: "5.25%" }} />
+        <button type="button" aria-label="Informações: oito linhas premiadas" title="8 linhas: 3 horizontais, 3 verticais e 2 diagonais" className="absolute z-40 rounded-full" style={{ left: "3.4%", top: "74.65%", width: "9.3%", height: "5.25%" }} />
+        <button type="button" onClick={() => changeBet(-1)} disabled={spinning || autoLeft > 0} aria-label="Diminuir aposta" className="absolute z-40 rounded-full disabled:cursor-not-allowed" style={{ left: "66.2%", top: "84.3%", width: "7.8%", height: "4.55%" }} />
+        <button type="button" onClick={() => changeBet(1)} disabled={spinning || autoLeft > 0} aria-label="Aumentar aposta" className="absolute z-40 rounded-full disabled:cursor-not-allowed" style={{ left: "90.35%", top: "84.3%", width: "7.8%", height: "4.55%" }} />
 
         <button
           type="button"
           onClick={() => void spin()}
-          disabled={spinning || autoLeft > 0 || insufficient}
+          disabled={spinning || autoLeft > 0 || insufficient || !cabinetSrc}
           aria-label="Girar Golden Tiger"
           className={cn(
-            "absolute z-40 rounded-full transition duration-150 active:scale-95 disabled:cursor-not-allowed disabled:opacity-55",
-            spinning
-              ? "shadow-[0_0_34px_rgba(86,255,104,.9)] ring-4 ring-yellow-200/70"
-              : "motion-safe:animate-[tiger-spin-pulse_1.8s_ease-in-out_infinite]",
+            "absolute z-40 rounded-full transition duration-150 active:scale-95 disabled:cursor-not-allowed disabled:opacity-45",
+            spinning ? "shadow-[0_0_34px_rgba(86,255,104,.9)] ring-4 ring-yellow-200/70" : "motion-safe:animate-[tiger-spin-pulse_1.8s_ease-in-out_infinite]",
           )}
           style={{ left: "32.2%", top: "81.05%", width: "35.7%", height: "17.9%" }}
-        />
+        >
+          {spinning ? <RotateCw className="mx-auto size-[36%] animate-spin text-transparent" /> : null}
+        </button>
 
         {autoLeft > 0 ? (
-          <button
-            type="button"
-            onClick={() => {
-              stopRef.current = true;
-            }}
-            aria-label={`Parar auto play, ${autoLeft} giros restantes`}
-            className="absolute z-40 rounded-xl bg-black/15 ring-2 ring-inset ring-emerald-300/80"
-            style={{ left: "4.4%", top: "91.0%", width: "26.6%", height: "5.55%" }}
-          >
-            <span className="absolute right-1 top-1 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[9px] font-black text-white shadow">{autoLeft}</span>
+          <button type="button" onClick={() => { stopRef.current = true; }} aria-label={`Parar auto play, ${autoLeft} giros restantes`} className="absolute z-40 rounded-xl bg-black/15 ring-2 ring-inset ring-emerald-300/80" style={{ left: "4.4%", top: "91.0%", width: "26.6%", height: "5.55%" }}>
+            <span className="absolute right-1 top-1 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[9px] font-black text-white">{autoLeft}</span>
           </button>
         ) : (
-          <button
-            type="button"
-            onClick={() => void startAuto()}
-            disabled={spinning || insufficient}
-            aria-label="Auto play de dez giros"
-            className="absolute z-40 rounded-xl transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50"
-            style={{ left: "4.4%", top: "91.0%", width: "26.6%", height: "5.55%" }}
-          />
+          <button type="button" onClick={() => void startAuto()} disabled={spinning || insufficient || !cabinetSrc} aria-label="Auto play de dez giros" className="absolute z-40 rounded-xl disabled:cursor-not-allowed disabled:opacity-45" style={{ left: "4.4%", top: "91.0%", width: "26.6%", height: "5.55%" }} />
         )}
 
-        <button
-          type="button"
-          onClick={() => setBet(10_000)}
-          disabled={spinning || autoLeft > 0}
-          aria-label="Aposta máxima"
-          className="absolute z-40 rounded-xl transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50"
-          style={{ left: "69.2%", top: "91.0%", width: "26.2%", height: "5.55%" }}
-        />
+        <button type="button" onClick={() => setBet(10_000)} disabled={spinning || autoLeft > 0} aria-label="Aposta máxima" className="absolute z-40 rounded-xl disabled:cursor-not-allowed disabled:opacity-45" style={{ left: "69.2%", top: "91.0%", width: "26.2%", height: "5.55%" }} />
 
         {insufficient && (
-          <div className="absolute inset-x-[8%] bottom-[1.2%] z-50 rounded-xl border border-red-300/80 bg-red-950/95 px-3 py-2 text-center text-[11px] font-semibold text-red-50 shadow-2xl">
+          <div className="absolute inset-x-[8%] bottom-[1.2%] z-50 rounded-xl border border-red-300/80 bg-red-950/95 px-3 py-2 text-center text-[11px] font-semibold text-red-50">
             Saldo fictício insuficiente. Recarregue moedas grátis no lobby.
           </div>
         )}
