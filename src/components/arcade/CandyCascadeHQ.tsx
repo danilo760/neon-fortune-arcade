@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import candyReference from "@/assets/candy-cascade/reference-hq.webp";
+import candyReference from "@/assets/candy-cascade/reference.webp";
 import { formatCoins } from "@/lib/arcade/format";
 import { playSound } from "@/lib/arcade/sound";
 import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store";
