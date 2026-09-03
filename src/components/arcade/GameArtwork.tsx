@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 import candyReference from "@/assets/candy-cascade/reference.webp";
-import goldenTigerHero from "@/assets/golden-tiger/hero.webp";
+import { goldenTigerReferenceBase64 } from "@/assets/golden-tiger/referenceData";
 import { olympusStormReferenceBase64 } from "@/assets/olympus-storm/referenceData";
 import type { GameEntry } from "@/lib/arcade/catalog";
 import { cn } from "@/lib/utils";
@@ -80,6 +80,7 @@ export function TigerCubMascot({ className }: { className?: string }) {
   );
 }
 
+const goldenTigerReference = `data:image/webp;base64,${goldenTigerReferenceBase64}`;
 const olympusReference = `data:image/webp;base64,${olympusStormReferenceBase64}`;
 
 function ReferenceCover({ src, className }: { src: string; className: string }) {
@@ -95,12 +96,7 @@ function ReferenceCover({ src, className }: { src: string; className: string }) 
 function PlayableCover({ game }: { game: GameEntry }) {
   switch (game.slug) {
     case "golden-tiger":
-      return (
-        <div className="game-cover-premium game-cover-premium--tiger">
-          <img src={goldenTigerHero} alt="" className="game-cover-tiger__image" aria-hidden />
-          <div className="game-cover-tiger__glow" aria-hidden />
-        </div>
-      );
+      return <ReferenceCover src={goldenTigerReference} className="game-cover-reference--tiger" />;
     case "olympus-storm":
       return <ReferenceCover src={olympusReference} className="game-cover-reference--olympus" />;
     case "candy-cascade":
