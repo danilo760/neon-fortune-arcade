@@ -20,6 +20,18 @@ const delay = (ms: number) => new Promise<void>((resolve) => window.setTimeout(r
 const BALL_COUNTS = [1, 3, 5, 10] as const;
 
 type BallCount = (typeof BALL_COUNTS)[number];
+type BallStatus = "queued" | "falling" | "landed";
+
+type ActiveBall = {
+  id: string;
+  ballNumber: number;
+  path: number[];
+  step: number;
+  bucket: number;
+  multiplier: number;
+  payout: number;
+  status: BallStatus;
+};
 
 function getBallPosition(path: readonly number[], step: number, rows: number) {
   if (step < 0) return { left: 50, top: 5 };
@@ -31,6 +43,13 @@ function getBallPosition(path: readonly number[], step: number, rows: number) {
   };
 }
 
+function getRenderedBallPosition(ball: ActiveBall, rows: number, bucketCount: number) {
+  if (ball.status === "landed") {
+    return { left: ((ball.bucket + 0.5) / bucketCount) * 100, top: 86.3 };
+  }
+  return getBallPosition(ball.path, ball.step, rows);
+}
+
 export function PlinkoGame() {
   const balance = useArcade((state) => state.balance);
   const soundEnabled = useArcade((state) => state.soundEnabled);
@@ -38,12 +57,11 @@ export function PlinkoGame() {
   const [risk, setRisk] = useState<PlinkoRisk>("medio");
   const [rows, setRows] = useState(14);
   const [ballsPerRun, setBallsPerRun] = useState<BallCount>(3);
-  const [path, setPath] = useState<number[]>([]);
-  const [step, setStep] = useState(-1);
-  const [winningBucket, setWinningBucket] = useState<number | null>(null);
+  const [activeBalls, setActiveBalls] = useState<ActiveBall[]>([]);
   const [lastWin, setLastWin] = useState<{ payout: number; multiplier: number } | null>(null);
   const [runWin, setRunWin] = useState(0);
-  const [currentBall, setCurrentBall] = useState(0);
+  const [launchedBalls, setLaunchedBalls] = useState(0);
+  const [settledBalls, setSettledBalls] = useState(0);
   const [busy, setBusy] = useState(false);
   const [autoDrop, setAutoDrop] = useState(false);
   const [bigWin, setBigWin] = useState<{ payout: number; multiplier: number } | null>(null);
@@ -51,20 +69,17 @@ export function PlinkoGame() {
   const autoDropRef = useRef(false);
 
   const payouts = plinkoPayouts(risk, rows);
-  const dropping = busy && step >= 0 && step < rows;
   const maxMultiplier = Math.max(...payouts);
   const runCost = bet * ballsPerRun;
-  const insufficient = bet > balance;
-
-  const currentPosition =
-    step === rows && winningBucket !== null
-      ? { left: ((winningBucket + 0.5) / payouts.length) * 100, top: 86.3 }
-      : getBallPosition(path, step, rows);
-
-  const trailStart = Math.max(0, step - 6);
-  const trailSteps = dropping
-    ? Array.from({ length: Math.max(0, step - trailStart + 1) }, (_, index) => trailStart + index)
-    : [];
+  const insufficient = runCost > balance;
+  const dropping = activeBalls.some((ball) => ball.status === "falling");
+  const activeCount = activeBalls.filter((ball) => ball.status === "falling").length;
+  const landedBuckets = new Set(
+    activeBalls.filter((ball) => ball.status === "landed").map((ball) => ball.bucket),
+  );
+  const hitRows = new Set(
+    activeBalls.filter((ball) => ball.status === "falling" && ball.step >= 0).map((ball) => ball.step),
+  );
 
   function stopAutoDrop() {
     autoDropRef.current = false;
@@ -78,57 +93,46 @@ export function PlinkoGame() {
     if (next && !busyRef.current) window.setTimeout(() => void runDropSequence(), 120);
   }
 
-  async function playOneBall(ballNumber: number, totalBalls: number): Promise<number | null> {
-    if (!arcadeActions.placeBet(bet)) {
-      playSound("lose", soundEnabled);
-      return null;
-    }
+  function updateBall(id: string, patch: Partial<ActiveBall>) {
+    setActiveBalls((balls) => balls.map((ball) => (ball.id === id ? { ...ball, ...patch } : ball)));
+  }
 
-    setCurrentBall(ballNumber);
-    setBigWin(null);
-    setLastWin(null);
-    setWinningBucket(null);
+  async function animatePreparedBall(ball: ActiveBall, launchDelay: number) {
+    await delay(launchDelay);
+    setLaunchedBalls((value) => value + 1);
+    updateBall(ball.id, { status: "falling", step: 0 });
     playSound("spin", soundEnabled);
 
-    // Cada bola tem seu resultado definido antes da animação. A animação apenas revela o caminho sorteado.
-    const outcome = dropBall(createRng(), rows);
-    setPath(outcome.path);
-    setStep(0);
-
     for (let index = 0; index < rows; index += 1) {
-      setStep(index);
-      playSound("tick", soundEnabled);
-      await delay(62 + Math.round((index / Math.max(1, rows - 1)) * 26));
+      updateBall(ball.id, { step: index });
+      if (index % 2 === 0 || ballsPerRun <= 3) playSound("tick", soundEnabled);
+      await delay(64 + Math.round((index / Math.max(1, rows - 1)) * 24));
     }
 
-    const multiplier = payouts[outcome.bucket] ?? 0;
-    const payout = Math.round(bet * multiplier);
-    setWinningBucket(outcome.bucket);
-    setStep(rows);
-    setLastWin({ payout, multiplier });
+    updateBall(ball.id, { status: "landed", step: rows });
+    setLastWin({ payout: ball.payout, multiplier: ball.multiplier });
+    setSettledBalls((value) => value + 1);
+    setRunWin((value) => value + ball.payout);
 
-    if (payout > 0) arcadeActions.credit(payout);
+    if (ball.payout > 0) arcadeActions.credit(ball.payout);
     arcadeActions.recordRound({
       slug: "neon-plinko",
       gameName: "Neon Plinko",
       bet,
-      payout,
-      multiplier,
-      note: `Bola ${ballNumber}/${totalBalls} · Risco ${RISK_LABELS[risk]} · ${rows} linhas`,
+      payout: ball.payout,
+      multiplier: ball.multiplier,
+      note: `Bola ${ball.ballNumber}/${ballsPerRun} · Risco ${RISK_LABELS[risk]} · ${rows} linhas`,
     });
 
-    const isBigWin = multiplier >= 10 || payout >= bet * 10;
-    if (isBigWin) setBigWin({ payout, multiplier });
-    playSound(isBigWin ? "bigWin" : payout >= bet ? "win" : "lose", soundEnabled);
+    const isBigWin = ball.multiplier >= 10 || ball.payout >= bet * 10;
+    playSound(isBigWin ? "bigWin" : ball.payout >= bet ? "win" : "lose", soundEnabled);
 
-    await delay(isBigWin ? 900 : 360);
-    setBigWin(null);
-    return payout;
+    return ball;
   }
 
   async function runDropSequence() {
     if (busyRef.current) return;
-    if (bet > balance) {
+    if (runCost > balance) {
       playSound("lose", soundEnabled);
       stopAutoDrop();
       return;
@@ -136,36 +140,71 @@ export function PlinkoGame() {
 
     busyRef.current = true;
     setBusy(true);
+    setBigWin(null);
     setRunWin(0);
-    setCurrentBall(0);
+    setLaunchedBalls(0);
+    setSettledBalls(0);
+    setLastWin(null);
 
-    let totalPayout = 0;
-    let ballsPlayed = 0;
+    const sequenceStamp = Date.now();
+    const preparedBalls: ActiveBall[] = [];
 
+    // Todas as bolas da sequência são debitadas e têm seus resultados definidos ANTES da primeira animação.
+    // Isso garante múltiplas bolas reais no tabuleiro sem alterar a liquidação de cada queda.
     for (let ballNumber = 1; ballNumber <= ballsPerRun; ballNumber += 1) {
-      const payout = await playOneBall(ballNumber, ballsPerRun);
-      if (payout === null) {
+      if (!arcadeActions.placeBet(bet)) {
         stopAutoDrop();
         break;
       }
 
-      ballsPlayed += 1;
-      totalPayout += payout;
-      setRunWin(totalPayout);
-
-      if (ballNumber < ballsPerRun) {
-        setStep(-1);
-        await delay(155);
-      }
+      const outcome = dropBall(createRng(), rows);
+      const multiplier = payouts[outcome.bucket] ?? 0;
+      preparedBalls.push({
+        id: `${sequenceStamp}-${ballNumber}`,
+        ballNumber,
+        path: outcome.path,
+        step: -1,
+        bucket: outcome.bucket,
+        multiplier,
+        payout: Math.round(bet * multiplier),
+        status: "queued",
+      });
     }
 
-    setStep(-1);
-    setCurrentBall(0);
+    if (preparedBalls.length === 0) {
+      busyRef.current = false;
+      setBusy(false);
+      return;
+    }
+
+    setActiveBalls(preparedBalls);
+
+    // Stagger curto: a segunda bola entra antes de a primeira terminar, criando multi-bola simultânea de verdade.
+    const staggerMs = ballsPerRun >= 10 ? 92 : ballsPerRun >= 5 ? 112 : 138;
+    const settled = await Promise.all(
+      preparedBalls.map((ball, index) => animatePreparedBall(ball, index * staggerMs)),
+    );
+
+    const biggest = settled.reduce<ActiveBall | null>(
+      (best, ball) => (!best || ball.multiplier > best.multiplier ? ball : best),
+      null,
+    );
+    if (biggest && (biggest.multiplier >= 10 || biggest.payout >= bet * 10)) {
+      setBigWin({ payout: biggest.payout, multiplier: biggest.multiplier });
+      await delay(800);
+      setBigWin(null);
+    } else {
+      await delay(420);
+    }
+
+    setActiveBalls([]);
+    setLaunchedBalls(0);
+    setSettledBalls(0);
     busyRef.current = false;
     setBusy(false);
 
-    if (ballsPlayed > 0 && autoDropRef.current) {
-      window.setTimeout(() => void runDropSequence(), 290);
+    if (autoDropRef.current) {
+      window.setTimeout(() => void runDropSequence(), 260);
     }
   }
 
@@ -206,13 +245,25 @@ export function PlinkoGame() {
           <div className="plinko-premium__launch-label" aria-hidden>DROP PORTAL</div>
 
           <div className="plinko-premium__ball-queue" aria-label={`${ballsPerRun} bolas por sequência`}>
-            {Array.from({ length: Math.min(ballsPerRun, 10) }, (_, index) => (
-              <i key={index} className={cn(currentBall > index && "is-played", currentBall === index + 1 && busy && "is-active")} />
-            ))}
+            {Array.from({ length: Math.min(ballsPerRun, 10) }, (_, index) => {
+              const number = index + 1;
+              const ball = activeBalls.find((item) => item.ballNumber === number);
+              return (
+                <i
+                  key={index}
+                  className={cn(
+                    ball?.status === "landed" && "is-played",
+                    ball?.status === "falling" && "is-active",
+                  )}
+                />
+              );
+            })}
           </div>
 
-          {busy && currentBall > 0 && (
-            <div className="plinko-premium__ball-counter" role="status">BALL {currentBall}/{ballsPerRun}</div>
+          {busy && (
+            <div className="plinko-premium__ball-counter" role="status">
+              {activeCount > 0 ? `${activeCount} BALL${activeCount > 1 ? "S" : ""} IN FLIGHT` : `${settledBalls}/${ballsPerRun} SETTLED`}
+            </div>
           )}
 
           <div className="plinko-pegs plinko-premium__pegs" aria-hidden>
@@ -221,7 +272,7 @@ export function PlinkoGame() {
                 key={row}
                 className={cn(
                   "plinko-peg-row plinko-premium__peg-row",
-                  dropping && row === step && "plinko-premium__peg-row--hit",
+                  hitRows.has(row) && "plinko-premium__peg-row--hit",
                 )}
               >
                 {Array.from({ length: row + 3 }, (_, peg) => (
@@ -231,31 +282,55 @@ export function PlinkoGame() {
             ))}
           </div>
 
-          <div className="plinko-premium__trail" aria-hidden>
-            {trailSteps.map((trailStep, index) => {
-              const position = getBallPosition(path, trailStep, rows);
-              return (
-                <span
-                  key={trailStep}
-                  style={{
-                    left: `${position.left}%`,
-                    top: `${position.top}%`,
-                    opacity: (index + 1) / (trailSteps.length + 2),
-                  }}
-                />
-              );
-            })}
-          </div>
+          {activeBalls.map((ball) => {
+            const currentPosition = getRenderedBallPosition(ball, rows, payouts.length);
+            const trailStart = Math.max(0, ball.step - 5);
+            const trailSteps = ball.status === "falling"
+              ? Array.from({ length: Math.max(0, ball.step - trailStart + 1) }, (_, index) => trailStart + index)
+              : [];
 
-          <div
-            className={cn(
-              "plinko-ball plinko-premium__ball",
-              dropping && "plinko-ball--dropping plinko-premium__ball--dropping",
-              step === rows && "plinko-premium__ball--landed",
-            )}
-            style={{ left: `${currentPosition.left}%`, top: `${currentPosition.top}%` }}
-            aria-hidden
-          ><span /></div>
+            return (
+              <div key={ball.id} className="plinko-premium__multi-ball-layer" aria-hidden>
+                <div className="plinko-premium__trail">
+                  {trailSteps.map((trailStep, index) => {
+                    const position = getBallPosition(ball.path, trailStep, rows);
+                    return (
+                      <span
+                        key={`${ball.id}-${trailStep}`}
+                        style={{
+                          left: `${position.left}%`,
+                          top: `${position.top}%`,
+                          opacity: ((index + 1) / (trailSteps.length + 2)) * 0.9,
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+
+                <div
+                  className={cn(
+                    "plinko-ball plinko-premium__ball plinko-premium__ball--multi",
+                    ball.status === "queued" && "plinko-premium__ball--queued",
+                    ball.status === "falling" && "plinko-ball--dropping plinko-premium__ball--dropping",
+                    ball.status === "landed" && "plinko-premium__ball--landed",
+                  )}
+                  style={{
+                    left: `${currentPosition.left}%`,
+                    top: `${currentPosition.top}%`,
+                    zIndex: 12 + (ball.ballNumber % 4),
+                  }}
+                ><span /></div>
+              </div>
+            );
+          })}
+
+          {!busy && activeBalls.length === 0 && (
+            <div
+              className="plinko-ball plinko-premium__ball plinko-premium__ball--idle"
+              style={{ left: "50%", top: "5%" }}
+              aria-hidden
+            ><span /></div>
+          )}
 
           <div className="plinko-buckets plinko-premium__buckets" style={{ gridTemplateColumns: `repeat(${payouts.length}, minmax(0, 1fr))` }}>
             {payouts.map((value, index) => (
@@ -264,7 +339,7 @@ export function PlinkoGame() {
                 className={cn(
                   "plinko-bucket plinko-premium__bucket",
                   value >= 10 && "plinko-bucket--high plinko-premium__bucket--high",
-                  winningBucket === index && "plinko-bucket--winner plinko-premium__bucket--winner",
+                  landedBuckets.has(index) && "plinko-bucket--winner plinko-premium__bucket--winner",
                 )}
               >
                 <small>{index + 1}</small>
@@ -285,9 +360,15 @@ export function PlinkoGame() {
         </div>
 
         <div className="plinko-result plinko-premium__result" role="status" aria-live="polite">
-          <div className="plinko-premium__result-label"><small>{busy ? "CURRENT RUN" : "LAST DROP"}</small><span>{busy ? `BALL ${currentBall}/${ballsPerRun}` : lastWin ? "SETTLED" : "READY"}</span></div>
+          <div className="plinko-premium__result-label">
+            <small>{busy ? "MULTI-BALL RUN" : "LAST DROP"}</small>
+            <span>{busy ? `${settledBalls}/${ballsPerRun} SETTLED` : lastWin ? "SETTLED" : "READY"}</span>
+          </div>
           <strong>{busy ? formatCoins(runWin) : lastWin ? formatCoins(lastWin.payout) : "0"}</strong>
-          <div className="plinko-premium__result-meta"><span>{lastWin ? formatMultiplier(lastWin.multiplier) : `${ballsPerRun} bola${ballsPerRun > 1 ? "s" : ""}`}</span><small>{RISK_LABELS[risk]} RISK</small></div>
+          <div className="plinko-premium__result-meta">
+            <span>{busy ? `${launchedBalls}/${ballsPerRun} launched` : lastWin ? formatMultiplier(lastWin.multiplier) : `${ballsPerRun} bola${ballsPerRun > 1 ? "s" : ""}`}</span>
+            <small>{RISK_LABELS[risk]} RISK</small>
+          </div>
         </div>
 
         <div className="plinko-controls plinko-premium__controls">
@@ -304,8 +385,8 @@ export function PlinkoGame() {
             <div className="plinko-mascot-chip plinko-premium__mascot-chip" aria-hidden><TigerCubMascot className="w-full" /></div>
             <Button size="lg" variant="gold" className="plinko-drop-button plinko-premium__drop-button" disabled={busy || insufficient} onClick={() => void runDropSequence()}>
               {dropping ? <CircleDot className="size-6 animate-bounce" aria-hidden /> : <Play className="size-6" aria-hidden />}
-              <span>{dropping ? "FALLING" : `DROP ×${ballsPerRun}`}</span>
-              <small>{dropping ? `ball ${currentBall}/${ballsPerRun}` : formatCoins(runCost)}</small>
+              <span>{busy ? "MULTI DROP" : `DROP ×${ballsPerRun}`}</span>
+              <small>{busy ? `${activeCount} in flight` : formatCoins(runCost)}</small>
             </Button>
           </div>
 
@@ -359,7 +440,7 @@ export function PlinkoGame() {
         </div>
       </section>
 
-      <p className="game-machine-note plinko-premium__note"><Sparkles className="inline size-3.5" /> Cada bola tem resultado definido antes da animação e o saldo é liquidado exatamente uma vez por bola.</p>
+      <p className="game-machine-note plinko-premium__note"><Sparkles className="inline size-3.5" /> As bolas da sequência têm resultados definidos antes da animação, descem simultaneamente e cada uma é liquidada exatamente uma vez.</p>
     </div>
   );
 }
