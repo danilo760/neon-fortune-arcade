@@ -1,6 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 
 import { GameShell } from "@/components/arcade/GameShell";
+import { GoldenTigerGame } from "@/components/arcade/GoldenTigerGame";
 import { MinesGame } from "@/components/arcade/MinesGame";
 import { PlinkoGame } from "@/components/arcade/PlinkoGame";
 import { SlotGame } from "@/components/arcade/SlotGame";
@@ -27,6 +28,11 @@ export const Route = createFileRoute("/game/$slug")({
 
 function GameRoute() {
   const { game } = Route.useLoaderData();
+
+  if (game.slug === "golden-tiger") {
+    return <GoldenTigerGame />;
+  }
+
   const slotConfig = SLOT_CONFIGS[game.slug];
 
   return (
