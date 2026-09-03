@@ -3,6 +3,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { GameShell } from "@/components/arcade/GameShell";
 import { GoldenTigerReference } from "@/components/arcade/GoldenTigerReference";
 import { MinesGame } from "@/components/arcade/MinesGame";
+import { OlympusStormReference } from "@/components/arcade/OlympusStormReference";
 import { PlinkoGame } from "@/components/arcade/PlinkoGame";
 import { SlotGame } from "@/components/arcade/SlotGame";
 import { getGame } from "@/lib/arcade/catalog";
@@ -31,6 +32,10 @@ function GameRoute() {
 
   if (game.slug === "golden-tiger") {
     return <GoldenTigerReference />;
+  }
+
+  if (game.slug === "olympus-storm") {
+    return <OlympusStormReference />;
   }
 
   const slotConfig = SLOT_CONFIGS[game.slug];
