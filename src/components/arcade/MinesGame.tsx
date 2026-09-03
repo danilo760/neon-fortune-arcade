@@ -1,9 +1,9 @@
-import { Bomb, Gem, Play, ShieldCheck, Trophy } from "lucide-react";
+import { Bomb, Gem, Play, ShieldCheck, Sparkles, Trophy } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { createMineField, minesMultiplier, nextMinesMultiplier } from "@/lib/arcade/mines";
 import { formatCoins, formatMultiplier } from "@/lib/arcade/format";
+import { createMineField, minesMultiplier, nextMinesMultiplier } from "@/lib/arcade/mines";
 import { createRng } from "@/lib/arcade/rng";
 import { BET_STEPS } from "@/lib/arcade/slot-configs";
 import { playSound } from "@/lib/arcade/sound";
@@ -87,30 +87,19 @@ export function MinesGame() {
 
   const showMines = status === "lost" || status === "won";
   const insufficient = bet > balance;
+  const gemsLeft = Math.max(0, 25 - mineCount - revealed.size);
+  const possibleWin = Math.round(bet * (status === "playing" ? multiplier : 1));
 
   return (
-    <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-[minmax(0,1fr)_19rem]">
-      <section className="rounded-3xl border border-jade/25 bg-ink/80 p-3 shadow-2xl sm:p-5">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-              Campo 5 × 5
-            </p>
-            <p className="font-display font-bold text-jade">
-              {status === "playing" ? `${revealed.size} seguras reveladas` : "Escolha com cuidado"}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-[0.62rem] uppercase tracking-widest text-muted-foreground">
-              Multiplicador
-            </p>
-            <p className="font-display text-xl font-black text-primary">
-              {formatMultiplier(multiplier)}
-            </p>
-          </div>
+    <div className="mines-machine">
+      <section className="mines-machine__cabinet">
+        <div className="mines-machine__masthead">
+          <div className="mines-status-card"><small>GEMS LEFT</small><strong>{gemsLeft}</strong></div>
+          <div className="mines-title"><Sparkles className="size-5" aria-hidden /><span>NEON</span><strong>MINES</strong><small>PRIVATE ARCADE</small></div>
+          <div className="mines-status-card"><small>NEXT WIN</small><strong>{formatCoins(Math.round(bet * nextMultiplier))}</strong></div>
         </div>
 
-        <div className="grid grid-cols-5 gap-2 rounded-2xl border border-border/70 bg-background/60 p-2 sm:gap-3 sm:p-4">
+        <div className="mines-grid" role="grid" aria-label="Campo de 25 casas">
           {Array.from({ length: 25 }, (_, index) => {
             const isMine = mineSet.has(index);
             const isRevealed = revealed.has(index);
@@ -120,115 +109,47 @@ export function MinesGame() {
                 key={index}
                 type="button"
                 className={cn(
-                  "flex aspect-square items-center justify-center rounded-xl border text-xl transition-all sm:text-3xl",
-                  status === "playing" && !isRevealed
-                    ? "border-jade/30 bg-ink-soft hover:-translate-y-0.5 hover:border-jade hover:bg-jade/10"
-                    : "border-border/50 bg-background/70",
-                  isRevealed &&
-                    "border-jade bg-jade/15 motion-safe:animate-[pop-in_250ms_ease-out]",
-                  visibleMine && "border-destructive bg-destructive/20",
+                  "mines-tile",
+                  status === "playing" && !isRevealed && "mines-tile--ready",
+                  isRevealed && "mines-tile--gem",
+                  visibleMine && "mines-tile--mine",
                 )}
                 disabled={status !== "playing" || isRevealed}
                 onClick={() => revealCell(index)}
-                aria-label={
-                  isRevealed
-                    ? `Casa ${index + 1}, segura`
-                    : visibleMine
-                      ? `Casa ${index + 1}, mina`
-                      : `Revelar casa ${index + 1}`
-                }
+                aria-label={isRevealed ? `Casa ${index + 1}, segura` : visibleMine ? `Casa ${index + 1}, mina` : `Revelar casa ${index + 1}`}
               >
-                {visibleMine ? (
-                  <Bomb className="size-6 text-destructive sm:size-8" aria-hidden />
-                ) : isRevealed ? (
-                  <Gem className="size-6 text-jade sm:size-8" aria-hidden />
-                ) : (
-                  <span className="text-primary/25">✦</span>
-                )}
+                {visibleMine ? <Bomb className="size-[55%]" aria-hidden /> : isRevealed ? <Gem className="size-[60%]" aria-hidden /> : <span className="mines-tile__facet" aria-hidden />}
               </button>
             );
           })}
         </div>
 
-        {status === "lost" && (
-          <div
-            className="mt-3 rounded-2xl border border-destructive/40 bg-destructive/10 p-3 text-center"
-            role="status"
-          >
-            <p className="font-display font-bold text-destructive-foreground">A mina explodiu</p>
-            <p className="text-sm text-muted-foreground">
-              Você perdeu somente a aposta fictícia desta rodada.
-            </p>
+        <div className="mines-possible">
+          <small>POSSIBLE WIN</small>
+          <strong>{formatCoins(possibleWin)}</strong>
+          <div className="mines-multipliers" aria-hidden>
+            {[1, 1.25, 1.43, 1.67, 2, 2.5].map((value, index) => <span key={value} className={index <= Math.min(5, revealed.size) ? "is-active" : ""}>{value}x</span>)}
           </div>
-        )}
-        {status === "won" && (
-          <div
-            className="mt-3 rounded-2xl border border-jade/40 bg-jade/10 p-3 text-center"
-            role="status"
-          >
-            <p className="flex items-center justify-center gap-1 font-display font-bold text-jade">
-              <Trophy className="size-4" aria-hidden /> Coleta concluída
-            </p>
-            <p className="text-xl font-black tabular-nums text-primary">
-              + {formatCoins(lastPayout)} moedas
-            </p>
-          </div>
-        )}
+        </div>
+
+        {status === "lost" && <div className="mines-result mines-result--lost" role="status"><Bomb className="size-5" /><div><strong>A mina explodiu</strong><span>Somente a aposta fictícia da rodada foi perdida.</span></div></div>}
+        {status === "won" && <div className="mines-result mines-result--won" role="status"><Trophy className="size-5" /><div><strong>Coleta concluída</strong><span>+ {formatCoins(lastPayout)} moedas fictícias</span></div></div>}
+
+        <div className="mines-controls">
+          <div className="mines-controls__bet"><BetControls value={bet} onChange={setBet} disabled={status === "playing"} /></div>
+          <section className="mines-selector">
+            <small>MINES</small>
+            <div>{[1, 3, 5, 10].map((count) => <Button key={count} size="sm" variant={mineCount === count ? "gold" : "outline"} disabled={status === "playing"} onClick={() => setMineCount(count)} aria-pressed={mineCount === count}>{count}</Button>)}</div>
+          </section>
+          {status === "playing" ? (
+            <Button size="lg" variant="gold" className="mines-cash-button" disabled={revealed.size === 0} onClick={() => settleWin(revealed.size)}><ShieldCheck className="size-6" aria-hidden /><span>CASH OUT</span><strong>{formatCoins(Math.round(bet * multiplier))}</strong></Button>
+          ) : (
+            <Button size="lg" variant="gold" className="mines-cash-button" disabled={insufficient} onClick={startRound}><Play className="size-6" aria-hidden /><span>NOVA RODADA</span><strong>{formatCoins(bet)}</strong></Button>
+          )}
+        </div>
       </section>
 
-      <aside className="grid content-start gap-3">
-        <BetControls value={bet} onChange={setBet} disabled={status === "playing"} />
-        <section className="rounded-2xl surface-panel p-3">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-            Quantidade de minas
-          </p>
-          <div className="grid grid-cols-4 gap-2">
-            {[1, 3, 5, 10].map((count) => (
-              <Button
-                key={count}
-                size="sm"
-                variant={mineCount === count ? "gold" : "outline"}
-                disabled={status === "playing"}
-                onClick={() => setMineCount(count)}
-                aria-pressed={mineCount === count}
-              >
-                {count}
-              </Button>
-            ))}
-          </div>
-        </section>
-
-        {status === "playing" ? (
-          <Button
-            size="lg"
-            variant="gold"
-            className="min-h-14 rounded-2xl text-base font-black"
-            disabled={revealed.size === 0}
-            onClick={() => settleWin(revealed.size)}
-          >
-            <ShieldCheck className="size-5" aria-hidden /> Coletar{" "}
-            {formatCoins(Math.round(bet * multiplier))}
-          </Button>
-        ) : (
-          <Button
-            size="lg"
-            variant="gold"
-            className="min-h-14 rounded-2xl text-base font-black"
-            disabled={insufficient}
-            onClick={startRound}
-          >
-            <Play className="size-5" aria-hidden /> Nova rodada
-          </Button>
-        )}
-
-        <div className="rounded-2xl border border-border/70 bg-ink/60 p-3 text-sm text-muted-foreground">
-          <p>
-            Próxima casa segura:{" "}
-            <strong className="text-jade">{formatMultiplier(nextMultiplier)}</strong>
-          </p>
-          <p className="mt-1">Quanto mais minas e casas seguras, maior o multiplicador fictício.</p>
-        </div>
-      </aside>
+      <p className="game-machine-note">Cada casa segura aumenta o multiplicador. Resultado e crédito continuam definidos apenas pela lógica fictícia já existente.</p>
     </div>
   );
 }
