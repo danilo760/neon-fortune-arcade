@@ -1,0 +1,1 @@
+Candy HQ raw file replaces fragmented chunk loading. Chunk files can be removed after visual validation.
