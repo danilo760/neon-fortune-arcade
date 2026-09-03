@@ -10,6 +10,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import premiumCss from "../premium.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -77,13 +78,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lucky Neon Arcade" },
+      { title: "Neon Fortune Arcade" },
       {
         name: "description",
-        content: "Arcade privado single-player com 15 jogos e moedas totalmente fictícias.",
+        content: "Arcade privado single-player com jogos originais e moedas totalmente fictícias.",
       },
-      { name: "author", content: "Lucky Neon Arcade" },
-      { property: "og:title", content: "Lucky Neon Arcade" },
+      { name: "author", content: "Neon Fortune Arcade" },
+      { property: "og:title", content: "Neon Fortune Arcade" },
       {
         property: "og:description",
         content: "Slots e jogos arcade originais para entretenimento privado, sem valor real.",
@@ -92,10 +93,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
+      { rel: "stylesheet", href: premiumCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
