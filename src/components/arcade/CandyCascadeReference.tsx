@@ -1,12 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { formatCoins } from "@/lib/arcade/format";
 import { playSound } from "@/lib/arcade/sound";
 import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store";
 import { cn } from "@/lib/utils";
 
-import "./CandyCascadeReference.css";
+import "./CandyCascadePremiumV2.css";
 
 type SymbolId = "lollipop" | "star" | "jelly" | "candy" | "cupcake" | "sprinkle" | "heart" | "diamond";
 type SymbolDef = { id: SymbolId; weight: number; pay: number };
@@ -112,200 +112,109 @@ function collapseGrid(grid: readonly SymbolId[], removed: Set<number>) {
 }
 
 function CandySymbol({ id }: { id: SymbolId }) {
-  const uid = useId().replace(/:/g, "");
-
   if (id === "lollipop") {
     return (
-      <svg viewBox="0 0 100 100" aria-hidden="true" className="cc-symbol-svg">
+      <svg viewBox="0 0 100 100" className="cc2-symbol" aria-hidden="true">
         <defs>
-          <radialGradient id={`${uid}-pop`} cx="34%" cy="25%" r="72%">
-            <stop offset="0" stopColor="#fff6ff" />
-            <stop offset=".16" stopColor="#ffb7eb" />
-            <stop offset=".5" stopColor="#ff4fb8" />
-            <stop offset="1" stopColor="#9d145f" />
-          </radialGradient>
-          <linearGradient id={`${uid}-stick`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#ffffff" />
-            <stop offset=".5" stopColor="#f7d9ff" />
-            <stop offset="1" stopColor="#b58ac6" />
-          </linearGradient>
+          <radialGradient id="lp-disc" cx="34%" cy="25%"><stop stopColor="#fff7ff"/><stop offset=".18" stopColor="#ffb3df"/><stop offset=".55" stopColor="#ff49ae"/><stop offset="1" stopColor="#b41469"/></radialGradient>
+          <linearGradient id="lp-stick" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#fff"/><stop offset=".45" stopColor="#ffe4fb"/><stop offset="1" stopColor="#cba2cf"/></linearGradient>
         </defs>
-        <path d="M53 60 68 92" stroke={`url(#${uid}-stick)`} strokeWidth="9" strokeLinecap="round" />
-        <circle cx="43" cy="41" r="31" fill="#74134f" opacity=".45" />
-        <circle cx="43" cy="39" r="29" fill={`url(#${uid}-pop)`} stroke="#7d1659" strokeWidth="5" />
-        <path d="M22 39c1-15 12-25 25-25 14 0 24 10 24 23 0 13-10 22-22 22-11 0-19-7-19-16 0-8 6-14 14-14 7 0 12 5 12 11 0 6-4 10-9 10" fill="none" stroke="#fff7ff" strokeWidth="7" strokeLinecap="round" opacity=".95" />
-        <path d="M25 26c6-8 15-11 23-10" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" opacity=".72" />
-        <ellipse cx="33" cy="25" rx="7" ry="4" fill="#fff" opacity=".85" transform="rotate(-25 33 25)" />
+        <path d="M51 57 69 91" stroke="url(#lp-stick)" strokeWidth="9" strokeLinecap="round"/>
+        <circle cx="42" cy="39" r="31" fill="#8b145b"/>
+        <circle cx="42" cy="39" r="27" fill="url(#lp-disc)" stroke="#ffd3ef" strokeWidth="2"/>
+        <path d="M24 41c1-18 30-22 34-5 4 17-23 23-28 8-4-12 15-18 21-8 5 8-5 16-13 11" fill="none" stroke="#fff8ff" strokeWidth="7" strokeLinecap="round"/>
+        <ellipse className="shine" cx="31" cy="25" rx="8" ry="5" fill="#fff" opacity=".75"/>
       </svg>
     );
   }
 
   if (id === "star") {
     return (
-      <svg viewBox="0 0 100 100" aria-hidden="true" className="cc-symbol-svg">
-        <defs>
-          <linearGradient id={`${uid}-star`} x1=".2" y1="0" x2=".8" y2="1">
-            <stop offset="0" stopColor="#fff7ae" />
-            <stop offset=".45" stopColor="#ffd540" />
-            <stop offset="1" stopColor="#ef8b11" />
-          </linearGradient>
-          <linearGradient id={`${uid}-starInner`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#fffbd5" />
-            <stop offset="1" stopColor="#ffc52c" />
-          </linearGradient>
-        </defs>
-        <path d="m50 7 12 25 28 4-20 20 5 29-25-14-25 14 5-29L10 36l28-4Z" fill="#7b3d06" opacity=".45" transform="translate(0 3)" />
-        <path d="m50 7 12 25 28 4-20 20 5 29-25-14-25 14 5-29L10 36l28-4Z" fill={`url(#${uid}-star)`} stroke="#9b5607" strokeWidth="5" strokeLinejoin="round" />
-        <path d="m50 22 7 15 17 2-12 12 3 17-15-8-15 8 3-17-12-12 17-2Z" fill={`url(#${uid}-starInner)`} opacity=".88" />
-        <path d="M38 24c4-5 8-7 13-8" stroke="#fffde4" strokeWidth="4" strokeLinecap="round" opacity=".8" />
+      <svg viewBox="0 0 100 100" className="cc2-symbol" aria-hidden="true">
+        <defs><linearGradient id="st-g" x1=".2" y1="0" x2=".8" y2="1"><stop stopColor="#fff7a9"/><stop offset=".28" stopColor="#ffd53e"/><stop offset=".72" stopColor="#ffae19"/><stop offset="1" stopColor="#c86a00"/></linearGradient></defs>
+        <path d="m50 7 13 26 29 4-21 20 5 30-26-14-26 14 5-30L8 37l29-4Z" fill="#8c4900" stroke="#6d2a00" strokeWidth="4" strokeLinejoin="round"/>
+        <path d="m50 13 11 24 26 4-19 18 5 25-23-12-23 12 5-25-19-18 26-4Z" fill="url(#st-g)" stroke="#ffe879" strokeWidth="2" strokeLinejoin="round"/>
+        <path className="shine" d="M42 27c7-6 15-4 19 0" fill="none" stroke="#fff7cf" strokeWidth="5" strokeLinecap="round" opacity=".75"/>
       </svg>
     );
   }
 
   if (id === "jelly") {
     return (
-      <svg viewBox="0 0 100 100" aria-hidden="true" className="cc-symbol-svg">
-        <defs>
-          <radialGradient id={`${uid}-jelly`} cx="36%" cy="25%" r="78%">
-            <stop offset="0" stopColor="#cfc5ff" />
-            <stop offset=".3" stopColor="#8e75ff" />
-            <stop offset=".75" stopColor="#6041e8" />
-            <stop offset="1" stopColor="#35147f" />
-          </radialGradient>
-        </defs>
-        <ellipse cx="50" cy="78" rx="29" ry="9" fill="#24105c" opacity=".45" />
-        <path d="M17 63c0-29 14-47 33-47s33 18 33 47c0 17-8 24-16 18-8-6-11 9-19 2-8-7-12 7-20 0-7-5-11-10-11-20Z" fill={`url(#${uid}-jelly)`} stroke="#35147f" strokeWidth="5" />
-        <ellipse cx="38" cy="37" rx="10" ry="15" fill="#ffffff" opacity=".36" transform="rotate(18 38 37)" />
-        <ellipse cx="36" cy="31" rx="5" ry="7" fill="#fff" opacity=".72" />
-        <circle cx="65" cy="50" r="7" fill="#5fe6ff" opacity=".82" />
-        <path d="M28 68c7 6 13 6 20 0 7 6 13 6 21-1" fill="none" stroke="#a993ff" strokeWidth="3" opacity=".65" />
+      <svg viewBox="0 0 100 100" className="cc2-symbol" aria-hidden="true">
+        <defs><radialGradient id="jl-g" cx="32%" cy="22%"><stop stopColor="#d9c9ff"/><stop offset=".28" stopColor="#8d76ff"/><stop offset=".72" stopColor="#5e3de7"/><stop offset="1" stopColor="#321a93"/></radialGradient></defs>
+        <path d="M16 65c0-30 15-49 34-49s34 19 34 49c0 18-9 27-18 19-7-6-11 7-18 2-8-7-13 6-21-1-7-6-11-10-11-20Z" fill="#2c177d" stroke="#21105e" strokeWidth="5"/>
+        <path d="M21 62c0-26 13-42 29-42s29 16 29 42c0 16-7 22-14 16-7-6-11 7-18 2-8-6-11 5-18-1-5-5-8-8-8-17Z" fill="url(#jl-g)"/>
+        <ellipse className="shine" cx="39" cy="36" rx="10" ry="15" fill="#fff" opacity=".42"/>
+        <circle cx="64" cy="51" r="7" fill="#5fe8ff" opacity=".8"/>
+        <path d="M25 68c7 5 11-4 17 1 7 6 12-4 18 0" fill="none" stroke="#b8a5ff" strokeWidth="3" opacity=".8"/>
       </svg>
     );
   }
 
   if (id === "candy") {
     return (
-      <svg viewBox="0 0 100 100" aria-hidden="true" className="cc-symbol-svg">
-        <defs>
-          <linearGradient id={`${uid}-wrap`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#ffc35f" />
-            <stop offset=".5" stopColor="#ff7646" />
-            <stop offset="1" stopColor="#c62d4f" />
-          </linearGradient>
-          <radialGradient id={`${uid}-candy`} cx="35%" cy="24%" r="78%">
-            <stop offset="0" stopColor="#ffb66e" />
-            <stop offset=".27" stopColor="#ff5a6d" />
-            <stop offset=".72" stopColor="#ff2c59" />
-            <stop offset="1" stopColor="#9b143d" />
-          </radialGradient>
-        </defs>
-        <path d="m20 37-14 13 14 13 15-7V44Z" fill={`url(#${uid}-wrap)`} stroke="#8e273c" strokeWidth="4" strokeLinejoin="round" />
-        <path d="m80 37 14 13-14 13-15-7V44Z" fill={`url(#${uid}-wrap)`} stroke="#8e273c" strokeWidth="4" strokeLinejoin="round" />
-        <rect x="27" y="27" width="46" height="46" rx="18" fill="#8d143b" opacity=".45" transform="translate(0 3)" />
-        <rect x="27" y="25" width="46" height="46" rx="18" fill={`url(#${uid}-candy)`} stroke="#8e1737" strokeWidth="5" />
-        <path d="M36 32c8 8 17 24 28 34" stroke="#ffd75a" strokeWidth="10" strokeLinecap="round" />
-        <path d="M52 29c7 8 11 18 14 28" stroke="#fff0aa" strokeWidth="5" strokeLinecap="round" opacity=".88" />
-        <ellipse cx="39" cy="32" rx="8" ry="4" fill="#fff" opacity=".55" transform="rotate(-25 39 32)" />
+      <svg viewBox="0 0 100 100" className="cc2-symbol" aria-hidden="true">
+        <defs><linearGradient id="ca-g" x1=".1" y1="0" x2=".9" y2="1"><stop stopColor="#ff9b7d"/><stop offset=".25" stopColor="#ff4569"/><stop offset=".7" stopColor="#ff2f5d"/><stop offset="1" stopColor="#b3123f"/></linearGradient></defs>
+        <path d="m20 34-16 16 16 16 16-8V42Z" fill="#ff8d4c" stroke="#8d233e" strokeWidth="4" strokeLinejoin="round"/>
+        <path d="m80 34 16 16-16 16-16-8V42Z" fill="#ff8d4c" stroke="#8d233e" strokeWidth="4" strokeLinejoin="round"/>
+        <rect x="25" y="24" width="50" height="52" rx="20" fill="url(#ca-g)" stroke="#861233" strokeWidth="5"/>
+        <path d="M34 30c8 9 16 25 28 38" stroke="#ffd75b" strokeWidth="11" strokeLinecap="round"/>
+        <path d="M55 27c7 8 11 17 15 29" stroke="#fff3a8" strokeWidth="5" strokeLinecap="round" opacity=".8"/>
+        <ellipse className="shine" cx="43" cy="31" rx="10" ry="5" fill="#fff" opacity=".55"/>
       </svg>
     );
   }
 
   if (id === "cupcake") {
     return (
-      <svg viewBox="0 0 100 100" aria-hidden="true" className="cc-symbol-svg">
-        <defs>
-          <linearGradient id={`${uid}-cup`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#ff9bc9" />
-            <stop offset="1" stopColor="#d34d8c" />
-          </linearGradient>
-          <radialGradient id={`${uid}-cream`} cx="38%" cy="20%" r="78%">
-            <stop offset="0" stopColor="#ffffff" />
-            <stop offset=".5" stopColor="#ffeaf9" />
-            <stop offset="1" stopColor="#efb2d8" />
-          </radialGradient>
-          <radialGradient id={`${uid}-cherry`} cx="35%" cy="25%" r="75%">
-            <stop offset="0" stopColor="#ff9aa9" />
-            <stop offset=".5" stopColor="#ff385c" />
-            <stop offset="1" stopColor="#9b1737" />
-          </radialGradient>
-        </defs>
-        <ellipse cx="51" cy="85" rx="24" ry="7" fill="#591138" opacity=".38" />
-        <path d="M25 53h51l-7 34H32Z" fill={`url(#${uid}-cup)`} stroke="#7d1e55" strokeWidth="5" strokeLinejoin="round" />
-        <path d="M38 56v26M50 56v28M63 56v25" stroke="#ffd6eb" strokeWidth="4" opacity=".8" />
-        <path d="M28 55c-8-12 3-21 14-18-2-12 8-20 18-18 8 1 13 6 14 13 14-3 21 13 9 23Z" fill={`url(#${uid}-cream)`} stroke="#a64a87" strokeWidth="5" strokeLinejoin="round" />
-        <path d="M37 43c8-3 23-3 34 1" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" opacity=".7" />
-        <circle cx="59" cy="22" r="9" fill={`url(#${uid}-cherry)`} stroke="#8b1838" strokeWidth="3" />
-        <path d="M61 15c2-8 9-9 13-8" fill="none" stroke="#64b442" strokeWidth="4" strokeLinecap="round" />
-        <circle cx="56" cy="19" r="3" fill="#fff" opacity=".75" />
+      <svg viewBox="0 0 100 100" className="cc2-symbol" aria-hidden="true">
+        <defs><linearGradient id="cp-cup" y1="0" y2="1"><stop stopColor="#ff9fce"/><stop offset="1" stopColor="#d6408d"/></linearGradient><radialGradient id="cp-cream" cx="36%" cy="18%"><stop stopColor="#fff"/><stop offset=".42" stopColor="#fff0fb"/><stop offset="1" stopColor="#ef9dce"/></radialGradient></defs>
+        <path d="M25 53h51l-8 35H33Z" fill="#7d1e55" stroke="#5f123f" strokeWidth="4"/>
+        <path d="M29 55h43l-7 29H36Z" fill="url(#cp-cup)"/>
+        <path d="M39 57v23M51 57v25M63 57v22" stroke="#ffd2e8" strokeWidth="4" opacity=".75"/>
+        <path d="M26 55c-8-13 5-22 15-18-2-15 22-21 29-6 16-4 24 15 9 25Z" fill="url(#cp-cream)" stroke="#a84a87" strokeWidth="4"/>
+        <circle cx="59" cy="21" r="10" fill="#7f1434"/>
+        <circle cx="59" cy="19" r="8" fill="#ff426a"/>
+        <path d="M60 12c2-8 9-9 13-8" fill="none" stroke="#5ea83a" strokeWidth="4" strokeLinecap="round"/>
+        <ellipse className="shine" cx="43" cy="39" rx="9" ry="5" fill="#fff" opacity=".7"/>
       </svg>
     );
   }
 
   if (id === "sprinkle") {
     return (
-      <svg viewBox="0 0 100 100" aria-hidden="true" className="cc-symbol-svg">
-        <defs>
-          <radialGradient id={`${uid}-dough`} cx="36%" cy="24%" r="76%">
-            <stop offset="0" stopColor="#ffe5a0" />
-            <stop offset=".5" stopColor="#e7a252" />
-            <stop offset="1" stopColor="#9a5524" />
-          </radialGradient>
-          <radialGradient id={`${uid}-icing`} cx="35%" cy="25%" r="78%">
-            <stop offset="0" stopColor="#ffd5ef" />
-            <stop offset=".36" stopColor="#ff83cd" />
-            <stop offset="1" stopColor="#d53c95" />
-          </radialGradient>
-        </defs>
-        <ellipse cx="50" cy="78" rx="29" ry="8" fill="#6e2645" opacity=".38" />
-        <circle cx="50" cy="49" r="36" fill={`url(#${uid}-dough)`} stroke="#82451d" strokeWidth="5" />
-        <circle cx="50" cy="47" r="29" fill={`url(#${uid}-icing)`} />
-        <circle cx="50" cy="49" r="11" fill="#6a294f" stroke="#a76038" strokeWidth="3" />
-        <ellipse cx="37" cy="28" rx="9" ry="5" fill="#fff" opacity=".45" transform="rotate(-20 37 28)" />
-        <path d="m27 35 8 4m15-12 2 8m19 4 7-5M30 64l8-4m18 14 1-8m17-8 7 4" stroke="#fff073" strokeWidth="5" strokeLinecap="round" />
-        <path d="m42 31 6 3m15 19 5-4M41 68l5-3M66 64l5 3" stroke="#43e8ff" strokeWidth="4" strokeLinecap="round" />
-        <path d="m32 52 4-6m31-17 5 3" stroke="#77ff9e" strokeWidth="4" strokeLinecap="round" />
+      <svg viewBox="0 0 100 100" className="cc2-symbol" aria-hidden="true">
+        <defs><radialGradient id="dn-base" cx="35%" cy="25%"><stop stopColor="#ffd78e"/><stop offset=".52" stopColor="#e99b4c"/><stop offset="1" stopColor="#a95a1e"/></radialGradient><radialGradient id="dn-ice" cx="35%" cy="22%"><stop stopColor="#ffc7e9"/><stop offset=".45" stopColor="#ff75c4"/><stop offset="1" stopColor="#db2e92"/></radialGradient></defs>
+        <circle cx="50" cy="50" r="38" fill="#7d4117"/>
+        <circle cx="50" cy="48" r="34" fill="url(#dn-base)"/>
+        <path d="M20 45c4-18 15-30 31-30 18 0 29 13 31 31-8-4-13 5-20 1-8-5-12 4-19 0-7-5-12 3-23-2Z" fill="url(#dn-ice)"/>
+        <circle cx="50" cy="50" r="12" fill="#5b204d" stroke="#b96442" strokeWidth="5"/>
+        <path d="m29 35 8 4m15-13 2 9m20 4 7-5M31 66l7-4m20 13 1-9m17-7 7 4" stroke="#fff27b" strokeWidth="5" strokeLinecap="round"/>
+        <path d="m42 31 5 3m16 21 6-4M41 69l6-3" stroke="#58e9ff" strokeWidth="4" strokeLinecap="round"/>
+        <ellipse className="shine" cx="37" cy="27" rx="9" ry="5" fill="#fff" opacity=".5"/>
       </svg>
     );
   }
 
   if (id === "heart") {
     return (
-      <svg viewBox="0 0 100 100" aria-hidden="true" className="cc-symbol-svg">
-        <defs>
-          <radialGradient id={`${uid}-heart`} cx="35%" cy="23%" r="80%">
-            <stop offset="0" stopColor="#ffc2df" />
-            <stop offset=".25" stopColor="#ff6daf" />
-            <stop offset=".72" stopColor="#ff378b" />
-            <stop offset="1" stopColor="#9b174f" />
-          </radialGradient>
-        </defs>
-        <path d="M50 90S14 69 14 39c0-25 31-32 36-9 5-23 36-16 36 9 0 30-36 51-36 51Z" fill="#66123d" opacity=".4" transform="translate(0 2)" />
-        <path d="M50 86S14 66 14 38c0-24 31-31 36-9 5-22 36-15 36 9 0 28-36 48-36 48Z" fill={`url(#${uid}-heart)`} stroke="#8b174f" strokeWidth="5" strokeLinejoin="round" />
-        <path d="M27 38c1-9 9-14 18-10" fill="none" stroke="#ffe6f3" strokeWidth="6" strokeLinecap="round" opacity=".85" />
-        <ellipse cx="34" cy="31" rx="7" ry="4" fill="#fff" opacity=".5" transform="rotate(-26 34 31)" />
+      <svg viewBox="0 0 100 100" className="cc2-symbol" aria-hidden="true">
+        <defs><radialGradient id="hr-g" cx="34%" cy="22%"><stop stopColor="#ffb4db"/><stop offset=".3" stopColor="#ff6bad"/><stop offset=".72" stopColor="#f33083"/><stop offset="1" stopColor="#a50e52"/></radialGradient></defs>
+        <path d="M50 90S10 68 10 37c0-27 34-35 40-10 6-25 40-17 40 10 0 31-40 53-40 53Z" fill="#7d103f" stroke="#681036" strokeWidth="4"/>
+        <path d="M50 84S16 64 16 39c0-21 28-27 34-7 6-20 34-14 34 7 0 25-34 45-34 45Z" fill="url(#hr-g)"/>
+        <path className="shine" d="M29 38c1-10 10-15 18-10" fill="none" stroke="#ffe2f1" strokeWidth="7" strokeLinecap="round" opacity=".8"/>
       </svg>
     );
   }
 
   return (
-    <svg viewBox="0 0 100 100" aria-hidden="true" className="cc-symbol-svg">
-      <defs>
-        <linearGradient id={`${uid}-diamond`} x1=".2" y1="0" x2=".8" y2="1">
-          <stop offset="0" stopColor="#efffff" />
-          <stop offset=".25" stopColor="#75efff" />
-          <stop offset=".62" stopColor="#24c9f5" />
-          <stop offset="1" stopColor="#1887d4" />
-        </linearGradient>
-        <linearGradient id={`${uid}-facet`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#ffffff" />
-          <stop offset="1" stopColor="#64ddff" />
-        </linearGradient>
-      </defs>
-      <path d="M18 36 36 14h28l18 22-32 55Z" fill="#075b8f" opacity=".4" transform="translate(0 2)" />
-      <path d="M18 33 36 13h28l18 20-32 55Z" fill={`url(#${uid}-diamond)`} stroke="#086c93" strokeWidth="5" strokeLinejoin="round" />
-      <path d="M18 33h64M36 13l14 20 14-20M36 33l14 55 14-55" fill="none" stroke={`url(#${uid}-facet)`} strokeWidth="4" strokeLinejoin="round" opacity=".95" />
-      <path d="M29 26h18" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" opacity=".9" />
-      <path d="m25 37 25 51 25-51" fill="none" stroke="#b9f8ff" strokeWidth="2.5" opacity=".62" />
+    <svg viewBox="0 0 100 100" className="cc2-symbol" aria-hidden="true">
+      <defs><linearGradient id="dm-g" x1=".15" y1="0" x2=".8" y2="1"><stop stopColor="#e9ffff"/><stop offset=".25" stopColor="#62efff"/><stop offset=".65" stopColor="#10bde8"/><stop offset="1" stopColor="#0874ae"/></linearGradient></defs>
+      <path d="M16 32 35 10h30l19 22-34 59Z" fill="#065d84" stroke="#043e67" strokeWidth="4" strokeLinejoin="round"/>
+      <path d="M20 33 37 14h26l17 19-30 52Z" fill="url(#dm-g)" stroke="#c7fbff" strokeWidth="2" strokeLinejoin="round"/>
+      <path d="M20 33h60M37 14l13 19 13-19M37 33l13 52 13-52" fill="none" stroke="#e3fdff" strokeWidth="4" opacity=".82"/>
+      <path className="shine" d="M30 27h18" stroke="#fff" strokeWidth="6" strokeLinecap="round" opacity=".82"/>
     </svg>
   );
 }
@@ -434,84 +343,87 @@ export function CandyCascadeReference() {
   const insufficient = bet > balance;
 
   return (
-    <main className="cc-page">
-      <div className="cc-machine">
-        <div className="cc-sky" aria-hidden="true">
-          <div className="cc-cloud cc-cloud-a" />
-          <div className="cc-cloud cc-cloud-b" />
-          <div className="cc-candy-hill cc-hill-a" />
-          <div className="cc-candy-hill cc-hill-b" />
-          <div className="cc-rainbow" />
+    <main className="cc2-page">
+      <div className="cc2-machine">
+        <div className="cc2-sky" aria-hidden="true">
+          <div className="cc2-rainbow" />
+          <div className="cc2-cloud cc2-cloud-a" />
+          <div className="cc2-cloud cc2-cloud-b" />
+          <div className="cc2-castle cc2-castle-a" />
+          <div className="cc2-castle cc2-castle-b" />
+          <div className="cc2-lollipop-deco cc2-lollipop-a" />
+          <div className="cc2-lollipop-deco cc2-lollipop-b" />
         </div>
 
-        <header className="cc-header">
-          <Link to="/" aria-label="Voltar ao lobby" className="cc-back">‹</Link>
-          <div className="cc-title-wrap">
-            <span className="cc-title-small">SWEET WIN</span>
-            <h1 className="cc-title"><span>CANDY</span><strong>CASCADE</strong></h1>
+        <header className="cc2-header">
+          <Link to="/" aria-label="Voltar ao lobby" className="cc2-back">‹</Link>
+          <div className="cc2-brand">
+            <div className="cc2-brand-kicker">SWEET WIN</div>
+            <h1 className="cc2-logo"><span>CANDY</span><strong>CASCADE</strong></h1>
             <p>CLUSTER PARTY</p>
           </div>
-          <button type="button" onClick={() => setTurbo((value) => !value)} aria-pressed={turbo} className={cn("cc-turbo", turbo && "is-active")}>
-            TURBO
-          </button>
+          <button type="button" onClick={() => setTurbo((value) => !value)} aria-pressed={turbo} className={cn("cc2-turbo", turbo && "is-active")}>TURBO</button>
         </header>
 
-        <section className="cc-board-wrap" aria-label="Grade Candy Cascade">
-          <div className="cc-board-glow" />
-          <div className="cc-board">
+        <div className="cc2-jackpot" aria-label="Jackpot fictício decorativo">
+          <small>SUGAR JACKPOT</small>
+          <strong>1.250.000</strong>
+        </div>
+
+        <section className="cc2-board-shell" aria-label="Grade Candy Cascade">
+          <div className="cc2-board">
             {grid.map((symbol, index) => (
-              <div key={index} className={cn("cc-cell", spinning && "cc-ref-roll", winning.has(index) && "cc-ref-win", cascadeIndex > 0 && !spinning && "cc-ref-land")}>
+              <div key={index} className={cn("cc2-cell", spinning && "cc2-ref-roll", winning.has(index) && "cc2-ref-win", cascadeIndex > 0 && !spinning && "cc2-ref-land")}>
                 <CandySymbol id={symbol ?? "candy"} />
               </div>
             ))}
           </div>
         </section>
 
-        {message && <div className="cc-ref-bomb cc-bomb-message">{message}</div>}
+        {winning.size > 0 && (
+          <div className="cc2-particles" aria-hidden="true">
+            {Array.from({ length: 12 }, (_, index) => <i key={index} />)}
+          </div>
+        )}
+        {message && <div className="cc2-bomb">{message}</div>}
 
-        <section className="cc-win-panel" aria-live="polite">
-          <span>WIN</span>
+        <section className="cc2-win" aria-live="polite">
+          <span>GANHO</span>
           <strong>{formatCoins(win)}</strong>
-          {(cascadeIndex > 0 || bombMultiplier > 1) && <small>CASCADE {cascadeIndex} · SUGAR ×{bombMultiplier}</small>}
+          {(cascadeIndex > 0 || bombMultiplier > 1) && <small>CASCATA {cascadeIndex} · SUGAR ×{bombMultiplier}</small>}
         </section>
 
-        <section className="cc-controls">
-          <div className="cc-meter">
-            <span>SALDO</span>
-            <strong>{formatCoins(balance)}</strong>
-          </div>
-
-          <div className="cc-bet-control">
-            <button type="button" onClick={() => changeBet(-1)} disabled={spinning || autoLeft > 0} aria-label="Diminuir aposta">−</button>
-            <div>
-              <span>APOSTA</span>
-              <strong>{formatCoins(bet)}</strong>
+        <section className="cc2-deck">
+          <div className="cc2-main-controls">
+            <div className="cc2-meter">
+              <span>SALDO</span>
+              <strong>{formatCoins(balance)}</strong>
             </div>
-            <button type="button" onClick={() => changeBet(1)} disabled={spinning || autoLeft > 0} aria-label="Aumentar aposta">+</button>
+
+            <button type="button" onClick={() => void spinRound()} disabled={spinning || autoLeft > 0 || insufficient} aria-label="Girar Candy Cascade" className={cn("cc2-spin", spinning && "is-spinning")}>
+              <span className="cc2-spin-arrow">↻</span>
+              <small>{spinning ? "GIRO" : "SPIN"}</small>
+            </button>
+
+            <div className="cc2-bet">
+              <button type="button" onClick={() => changeBet(-1)} disabled={spinning || autoLeft > 0} aria-label="Diminuir aposta">−</button>
+              <div><span>APOSTA</span><strong>{formatCoins(bet)}</strong></div>
+              <button type="button" onClick={() => changeBet(1)} disabled={spinning || autoLeft > 0} aria-label="Aumentar aposta">+</button>
+            </div>
           </div>
 
-          <button type="button" onClick={() => void spinRound()} disabled={spinning || autoLeft > 0 || insufficient} aria-label="Girar Candy Cascade" className={cn("cc-ref-spin cc-spin", spinning && "is-spinning")}>
-            <span className="cc-spin-arrow">↻</span>
-            <small>{spinning ? "GIRO" : "SPIN"}</small>
-          </button>
-
-          {autoLeft > 0 ? (
-            <button type="button" onClick={() => { autoStopRef.current = true; }} className="cc-action cc-auto is-running">
-              PARAR <strong>{autoLeft}</strong>
-            </button>
-          ) : (
-            <button type="button" onClick={() => void startAuto()} disabled={spinning || insufficient} className="cc-action cc-auto">
-              AUTO <strong>10×</strong>
-            </button>
-          )}
-
-          <button type="button" onClick={setMaxBet} disabled={spinning} className="cc-action cc-max">
-            MAX <strong>BET</strong>
-          </button>
+          <div className="cc2-actions">
+            {autoLeft > 0 ? (
+              <button type="button" onClick={() => { autoStopRef.current = true; }} className="cc2-action is-running">PARAR <strong>{autoLeft} GIROS</strong></button>
+            ) : (
+              <button type="button" onClick={() => void startAuto()} disabled={spinning || insufficient} className="cc2-action">AUTO PLAY <strong>10×</strong></button>
+            )}
+            <button type="button" onClick={setMaxBet} disabled={spinning} className="cc2-action">MAX <strong>BET</strong></button>
+          </div>
         </section>
 
-        {insufficient && <div className="cc-insufficient">Saldo fictício insuficiente — recarregue moedas grátis no lobby.</div>}
-        <footer className="cc-footer">MOEDAS FICTÍCIAS · SEM VALOR REAL</footer>
+        {insufficient && <div className="cc2-insufficient">Saldo fictício insuficiente — recarregue moedas grátis no lobby.</div>}
+        <footer className="cc2-footer">MOEDAS FICTÍCIAS · SEM VALOR REAL</footer>
       </div>
     </main>
   );
