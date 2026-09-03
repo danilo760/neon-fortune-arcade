@@ -1,5 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 
+import { CandyCascadeReference } from "@/components/arcade/CandyCascadeReference";
 import { GameShell } from "@/components/arcade/GameShell";
 import { GoldenTigerReference } from "@/components/arcade/GoldenTigerReference";
 import { MinesGame } from "@/components/arcade/MinesGame";
@@ -36,6 +37,10 @@ function GameRoute() {
 
   if (game.slug === "olympus-storm") {
     return <OlympusStormReference />;
+  }
+
+  if (game.slug === "candy-cascade") {
+    return <CandyCascadeReference />;
   }
 
   const slotConfig = SLOT_CONFIGS[game.slug];

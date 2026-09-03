@@ -1,0 +1,12 @@
+.cc-ref-roll { animation: ccRoll .095s linear infinite; filter: blur(2.2px) saturate(1.25); }
+.cc-ref-land { animation: ccLand .28s cubic-bezier(.2,.9,.3,1.25); }
+.cc-ref-win { z-index: 4; animation: ccWin .48s ease-in-out infinite alternate; box-shadow: inset 0 0 24px rgba(255,255,255,.8), 0 0 22px rgba(255,77,222,.95); }
+.cc-ref-bomb { animation: ccBomb .5s cubic-bezier(.2,.9,.25,1.2) both; }
+.cc-ref-spin { animation: ccSpinPulse 1.7s ease-in-out infinite; }
+.cc-ref-spin:active { transform: scale(.92); }
+@keyframes ccRoll { 0% { transform: translateY(-13%); } 50% { transform: translateY(13%); } 100% { transform: translateY(-13%); } }
+@keyframes ccLand { 0% { transform: translateY(-22%) scaleY(.92); } 70% { transform: translateY(3%) scaleY(1.04); } 100% { transform: translateY(0) scale(1); } }
+@keyframes ccWin { from { filter: brightness(1.08) saturate(1.2); transform: scale(.98); } to { filter: brightness(1.48) saturate(1.45); transform: scale(1.035); } }
+@keyframes ccBomb { 0% { transform: translate(-50%,-15%) scale(.55); opacity:0; } 70% { transform: translate(-50%,0) scale(1.12); opacity:1; } 100% { transform: translate(-50%,0) scale(1); opacity:1; } }
+@keyframes ccSpinPulse { 0%,100% { filter: drop-shadow(0 0 4px rgba(255,255,255,.08)); } 50% { filter: drop-shadow(0 0 20px rgba(255,78,212,.65)); } }
+@media (prefers-reduced-motion: reduce) { .cc-ref-roll,.cc-ref-land,.cc-ref-win,.cc-ref-bomb,.cc-ref-spin { animation:none !important; } }
