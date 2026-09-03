@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { formatCoins } from "@/lib/arcade/format";
 import { playSound } from "@/lib/arcade/sound";
@@ -112,13 +112,30 @@ function collapseGrid(grid: readonly SymbolId[], removed: Set<number>) {
 }
 
 function CandySymbol({ id }: { id: SymbolId }) {
+  const uid = useId().replace(/:/g, "");
+
   if (id === "lollipop") {
     return (
       <svg viewBox="0 0 100 100" aria-hidden="true" className="cc-symbol-svg">
-        <path d="M52 61 66 91" stroke="#f9e6ff" strokeWidth="8" strokeLinecap="round" />
-        <circle cx="43" cy="42" r="29" fill="#ff4fb8" stroke="#8d145f" strokeWidth="6" />
-        <path d="M28 42c0-18 26-18 26-3 0 13-21 12-21 0 0-9 14-10 16-2" fill="none" stroke="#fff2ff" strokeWidth="7" strokeLinecap="round" />
-        <circle cx="34" cy="29" r="6" fill="#ffffff" opacity=".75" />
+        <defs>
+          <radialGradient id={`${uid}-pop`} cx="34%" cy="25%" r="72%">
+            <stop offset="0" stopColor="#fff6ff" />
+            <stop offset=".16" stopColor="#ffb7eb" />
+            <stop offset=".5" stopColor="#ff4fb8" />
+            <stop offset="1" stopColor="#9d145f" />
+          </radialGradient>
+          <linearGradient id={`${uid}-stick`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#ffffff" />
+            <stop offset=".5" stopColor="#f7d9ff" />
+            <stop offset="1" stopColor="#b58ac6" />
+          </linearGradient>
+        </defs>
+        <path d="M53 60 68 92" stroke={`url(#${uid}-stick)`} strokeWidth="9" strokeLinecap="round" />
+        <circle cx="43" cy="41" r="31" fill="#74134f" opacity=".45" />
+        <circle cx="43" cy="39" r="29" fill={`url(#${uid}-pop)`} stroke="#7d1659" strokeWidth="5" />
+        <path d="M22 39c1-15 12-25 25-25 14 0 24 10 24 23 0 13-10 22-22 22-11 0-19-7-19-16 0-8 6-14 14-14 7 0 12 5 12 11 0 6-4 10-9 10" fill="none" stroke="#fff7ff" strokeWidth="7" strokeLinecap="round" opacity=".95" />
+        <path d="M25 26c6-8 15-11 23-10" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" opacity=".72" />
+        <ellipse cx="33" cy="25" rx="7" ry="4" fill="#fff" opacity=".85" transform="rotate(-25 33 25)" />
       </svg>
     );
   }
@@ -126,8 +143,21 @@ function CandySymbol({ id }: { id: SymbolId }) {
   if (id === "star") {
     return (
       <svg viewBox="0 0 100 100" aria-hidden="true" className="cc-symbol-svg">
-        <path d="m50 8 12 25 28 4-20 20 5 28-25-13-25 13 5-28L10 37l28-4Z" fill="#ffd74a" stroke="#a85d00" strokeWidth="6" strokeLinejoin="round" />
-        <path d="m50 23 7 15 17 3-12 11 3 17-15-8-15 8 3-17-12-11 17-3Z" fill="#fff49a" opacity=".8" />
+        <defs>
+          <linearGradient id={`${uid}-star`} x1=".2" y1="0" x2=".8" y2="1">
+            <stop offset="0" stopColor="#fff7ae" />
+            <stop offset=".45" stopColor="#ffd540" />
+            <stop offset="1" stopColor="#ef8b11" />
+          </linearGradient>
+          <linearGradient id={`${uid}-starInner`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#fffbd5" />
+            <stop offset="1" stopColor="#ffc52c" />
+          </linearGradient>
+        </defs>
+        <path d="m50 7 12 25 28 4-20 20 5 29-25-14-25 14 5-29L10 36l28-4Z" fill="#7b3d06" opacity=".45" transform="translate(0 3)" />
+        <path d="m50 7 12 25 28 4-20 20 5 29-25-14-25 14 5-29L10 36l28-4Z" fill={`url(#${uid}-star)`} stroke="#9b5607" strokeWidth="5" strokeLinejoin="round" />
+        <path d="m50 22 7 15 17 2-12 12 3 17-15-8-15 8 3-17-12-12 17-2Z" fill={`url(#${uid}-starInner)`} opacity=".88" />
+        <path d="M38 24c4-5 8-7 13-8" stroke="#fffde4" strokeWidth="4" strokeLinecap="round" opacity=".8" />
       </svg>
     );
   }
@@ -135,9 +165,20 @@ function CandySymbol({ id }: { id: SymbolId }) {
   if (id === "jelly") {
     return (
       <svg viewBox="0 0 100 100" aria-hidden="true" className="cc-symbol-svg">
-        <path d="M18 64c0-28 14-46 32-46s32 18 32 46c0 17-8 24-16 18-7-6-11 8-18 2-8-7-12 6-20-1-6-5-10-9-10-19Z" fill="#7d50ff" stroke="#35177f" strokeWidth="6" />
-        <ellipse cx="39" cy="39" rx="10" ry="14" fill="#c7b7ff" opacity=".7" />
-        <circle cx="65" cy="50" r="7" fill="#52e3ff" opacity=".85" />
+        <defs>
+          <radialGradient id={`${uid}-jelly`} cx="36%" cy="25%" r="78%">
+            <stop offset="0" stopColor="#cfc5ff" />
+            <stop offset=".3" stopColor="#8e75ff" />
+            <stop offset=".75" stopColor="#6041e8" />
+            <stop offset="1" stopColor="#35147f" />
+          </radialGradient>
+        </defs>
+        <ellipse cx="50" cy="78" rx="29" ry="9" fill="#24105c" opacity=".45" />
+        <path d="M17 63c0-29 14-47 33-47s33 18 33 47c0 17-8 24-16 18-8-6-11 9-19 2-8-7-12 7-20 0-7-5-11-10-11-20Z" fill={`url(#${uid}-jelly)`} stroke="#35147f" strokeWidth="5" />
+        <ellipse cx="38" cy="37" rx="10" ry="15" fill="#ffffff" opacity=".36" transform="rotate(18 38 37)" />
+        <ellipse cx="36" cy="31" rx="5" ry="7" fill="#fff" opacity=".72" />
+        <circle cx="65" cy="50" r="7" fill="#5fe6ff" opacity=".82" />
+        <path d="M28 68c7 6 13 6 20 0 7 6 13 6 21-1" fill="none" stroke="#a993ff" strokeWidth="3" opacity=".65" />
       </svg>
     );
   }
@@ -145,11 +186,26 @@ function CandySymbol({ id }: { id: SymbolId }) {
   if (id === "candy") {
     return (
       <svg viewBox="0 0 100 100" aria-hidden="true" className="cc-symbol-svg">
-        <path d="m20 37-13 13 13 13 14-7V44Z" fill="#ff7b4b" stroke="#8e273c" strokeWidth="5" strokeLinejoin="round" />
-        <path d="m80 37 13 13-13 13-14-7V44Z" fill="#ff7b4b" stroke="#8e273c" strokeWidth="5" strokeLinejoin="round" />
-        <rect x="27" y="27" width="46" height="46" rx="18" fill="#ff315f" stroke="#8e1737" strokeWidth="6" />
-        <path d="M38 34c9 8 15 21 24 32" stroke="#ffd85c" strokeWidth="10" strokeLinecap="round" />
-        <path d="M55 31c7 8 10 17 13 27" stroke="#fff1aa" strokeWidth="5" strokeLinecap="round" opacity=".75" />
+        <defs>
+          <linearGradient id={`${uid}-wrap`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#ffc35f" />
+            <stop offset=".5" stopColor="#ff7646" />
+            <stop offset="1" stopColor="#c62d4f" />
+          </linearGradient>
+          <radialGradient id={`${uid}-candy`} cx="35%" cy="24%" r="78%">
+            <stop offset="0" stopColor="#ffb66e" />
+            <stop offset=".27" stopColor="#ff5a6d" />
+            <stop offset=".72" stopColor="#ff2c59" />
+            <stop offset="1" stopColor="#9b143d" />
+          </radialGradient>
+        </defs>
+        <path d="m20 37-14 13 14 13 15-7V44Z" fill={`url(#${uid}-wrap)`} stroke="#8e273c" strokeWidth="4" strokeLinejoin="round" />
+        <path d="m80 37 14 13-14 13-15-7V44Z" fill={`url(#${uid}-wrap)`} stroke="#8e273c" strokeWidth="4" strokeLinejoin="round" />
+        <rect x="27" y="27" width="46" height="46" rx="18" fill="#8d143b" opacity=".45" transform="translate(0 3)" />
+        <rect x="27" y="25" width="46" height="46" rx="18" fill={`url(#${uid}-candy)`} stroke="#8e1737" strokeWidth="5" />
+        <path d="M36 32c8 8 17 24 28 34" stroke="#ffd75a" strokeWidth="10" strokeLinecap="round" />
+        <path d="M52 29c7 8 11 18 14 28" stroke="#fff0aa" strokeWidth="5" strokeLinecap="round" opacity=".88" />
+        <ellipse cx="39" cy="32" rx="8" ry="4" fill="#fff" opacity=".55" transform="rotate(-25 39 32)" />
       </svg>
     );
   }
@@ -157,11 +213,30 @@ function CandySymbol({ id }: { id: SymbolId }) {
   if (id === "cupcake") {
     return (
       <svg viewBox="0 0 100 100" aria-hidden="true" className="cc-symbol-svg">
-        <path d="M26 52h49l-7 35H33Z" fill="#ef6eaa" stroke="#7d1e55" strokeWidth="6" strokeLinejoin="round" />
-        <path d="M39 54v28M51 54v30M63 54v27" stroke="#ffd1e9" strokeWidth="4" opacity=".75" />
-        <path d="M28 54c-8-13 5-20 14-17-2-13 21-19 27-5 15-4 22 14 9 23Z" fill="#fff2ff" stroke="#a64a87" strokeWidth="6" strokeLinejoin="round" />
-        <circle cx="58" cy="23" r="9" fill="#ff3f68" stroke="#8b1838" strokeWidth="4" />
-        <path d="M60 15c2-7 8-8 12-7" fill="none" stroke="#59a537" strokeWidth="4" strokeLinecap="round" />
+        <defs>
+          <linearGradient id={`${uid}-cup`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#ff9bc9" />
+            <stop offset="1" stopColor="#d34d8c" />
+          </linearGradient>
+          <radialGradient id={`${uid}-cream`} cx="38%" cy="20%" r="78%">
+            <stop offset="0" stopColor="#ffffff" />
+            <stop offset=".5" stopColor="#ffeaf9" />
+            <stop offset="1" stopColor="#efb2d8" />
+          </radialGradient>
+          <radialGradient id={`${uid}-cherry`} cx="35%" cy="25%" r="75%">
+            <stop offset="0" stopColor="#ff9aa9" />
+            <stop offset=".5" stopColor="#ff385c" />
+            <stop offset="1" stopColor="#9b1737" />
+          </radialGradient>
+        </defs>
+        <ellipse cx="51" cy="85" rx="24" ry="7" fill="#591138" opacity=".38" />
+        <path d="M25 53h51l-7 34H32Z" fill={`url(#${uid}-cup)`} stroke="#7d1e55" strokeWidth="5" strokeLinejoin="round" />
+        <path d="M38 56v26M50 56v28M63 56v25" stroke="#ffd6eb" strokeWidth="4" opacity=".8" />
+        <path d="M28 55c-8-12 3-21 14-18-2-12 8-20 18-18 8 1 13 6 14 13 14-3 21 13 9 23Z" fill={`url(#${uid}-cream)`} stroke="#a64a87" strokeWidth="5" strokeLinejoin="round" />
+        <path d="M37 43c8-3 23-3 34 1" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" opacity=".7" />
+        <circle cx="59" cy="22" r="9" fill={`url(#${uid}-cherry)`} stroke="#8b1838" strokeWidth="3" />
+        <path d="M61 15c2-8 9-9 13-8" fill="none" stroke="#64b442" strokeWidth="4" strokeLinecap="round" />
+        <circle cx="56" cy="19" r="3" fill="#fff" opacity=".75" />
       </svg>
     );
   }
@@ -169,11 +244,26 @@ function CandySymbol({ id }: { id: SymbolId }) {
   if (id === "sprinkle") {
     return (
       <svg viewBox="0 0 100 100" aria-hidden="true" className="cc-symbol-svg">
-        <circle cx="50" cy="50" r="35" fill="#e5a157" stroke="#82451d" strokeWidth="6" />
-        <circle cx="50" cy="50" r="29" fill="#ff85cf" />
-        <circle cx="50" cy="50" r="11" fill="#5a204c" />
-        <path d="m28 35 8 4m15-12 2 8m19 4 7-5M31 64l7-4m18 13 1-8m17-7 7 4" stroke="#fff37a" strokeWidth="5" strokeLinecap="round" />
-        <path d="m42 31 5 3m15 19 5-4M41 68l5-3" stroke="#50e6ff" strokeWidth="4" strokeLinecap="round" />
+        <defs>
+          <radialGradient id={`${uid}-dough`} cx="36%" cy="24%" r="76%">
+            <stop offset="0" stopColor="#ffe5a0" />
+            <stop offset=".5" stopColor="#e7a252" />
+            <stop offset="1" stopColor="#9a5524" />
+          </radialGradient>
+          <radialGradient id={`${uid}-icing`} cx="35%" cy="25%" r="78%">
+            <stop offset="0" stopColor="#ffd5ef" />
+            <stop offset=".36" stopColor="#ff83cd" />
+            <stop offset="1" stopColor="#d53c95" />
+          </radialGradient>
+        </defs>
+        <ellipse cx="50" cy="78" rx="29" ry="8" fill="#6e2645" opacity=".38" />
+        <circle cx="50" cy="49" r="36" fill={`url(#${uid}-dough)`} stroke="#82451d" strokeWidth="5" />
+        <circle cx="50" cy="47" r="29" fill={`url(#${uid}-icing)`} />
+        <circle cx="50" cy="49" r="11" fill="#6a294f" stroke="#a76038" strokeWidth="3" />
+        <ellipse cx="37" cy="28" rx="9" ry="5" fill="#fff" opacity=".45" transform="rotate(-20 37 28)" />
+        <path d="m27 35 8 4m15-12 2 8m19 4 7-5M30 64l8-4m18 14 1-8m17-8 7 4" stroke="#fff073" strokeWidth="5" strokeLinecap="round" />
+        <path d="m42 31 6 3m15 19 5-4M41 68l5-3M66 64l5 3" stroke="#43e8ff" strokeWidth="4" strokeLinecap="round" />
+        <path d="m32 52 4-6m31-17 5 3" stroke="#77ff9e" strokeWidth="4" strokeLinecap="round" />
       </svg>
     );
   }
@@ -181,17 +271,41 @@ function CandySymbol({ id }: { id: SymbolId }) {
   if (id === "heart") {
     return (
       <svg viewBox="0 0 100 100" aria-hidden="true" className="cc-symbol-svg">
-        <path d="M50 86S14 66 14 38c0-24 31-31 36-9 5-22 36-15 36 9 0 28-36 48-36 48Z" fill="#ff3d91" stroke="#8b174f" strokeWidth="6" strokeLinejoin="round" />
-        <path d="M28 39c1-9 9-13 17-9" fill="none" stroke="#ffd9ee" strokeWidth="7" strokeLinecap="round" opacity=".8" />
+        <defs>
+          <radialGradient id={`${uid}-heart`} cx="35%" cy="23%" r="80%">
+            <stop offset="0" stopColor="#ffc2df" />
+            <stop offset=".25" stopColor="#ff6daf" />
+            <stop offset=".72" stopColor="#ff378b" />
+            <stop offset="1" stopColor="#9b174f" />
+          </radialGradient>
+        </defs>
+        <path d="M50 90S14 69 14 39c0-25 31-32 36-9 5-23 36-16 36 9 0 30-36 51-36 51Z" fill="#66123d" opacity=".4" transform="translate(0 2)" />
+        <path d="M50 86S14 66 14 38c0-24 31-31 36-9 5-22 36-15 36 9 0 28-36 48-36 48Z" fill={`url(#${uid}-heart)`} stroke="#8b174f" strokeWidth="5" strokeLinejoin="round" />
+        <path d="M27 38c1-9 9-14 18-10" fill="none" stroke="#ffe6f3" strokeWidth="6" strokeLinecap="round" opacity=".85" />
+        <ellipse cx="34" cy="31" rx="7" ry="4" fill="#fff" opacity=".5" transform="rotate(-26 34 31)" />
       </svg>
     );
   }
 
   return (
     <svg viewBox="0 0 100 100" aria-hidden="true" className="cc-symbol-svg">
-      <path d="M18 33 36 13h28l18 20-32 55Z" fill="#39e0ff" stroke="#086c93" strokeWidth="6" strokeLinejoin="round" />
-      <path d="M18 33h64M36 13l14 20 14-20M36 33l14 55 14-55" fill="none" stroke="#d7fbff" strokeWidth="5" strokeLinejoin="round" opacity=".9" />
-      <path d="M30 27h16" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" opacity=".85" />
+      <defs>
+        <linearGradient id={`${uid}-diamond`} x1=".2" y1="0" x2=".8" y2="1">
+          <stop offset="0" stopColor="#efffff" />
+          <stop offset=".25" stopColor="#75efff" />
+          <stop offset=".62" stopColor="#24c9f5" />
+          <stop offset="1" stopColor="#1887d4" />
+        </linearGradient>
+        <linearGradient id={`${uid}-facet`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#ffffff" />
+          <stop offset="1" stopColor="#64ddff" />
+        </linearGradient>
+      </defs>
+      <path d="M18 36 36 14h28l18 22-32 55Z" fill="#075b8f" opacity=".4" transform="translate(0 2)" />
+      <path d="M18 33 36 13h28l18 20-32 55Z" fill={`url(#${uid}-diamond)`} stroke="#086c93" strokeWidth="5" strokeLinejoin="round" />
+      <path d="M18 33h64M36 13l14 20 14-20M36 33l14 55 14-55" fill="none" stroke={`url(#${uid}-facet)`} strokeWidth="4" strokeLinejoin="round" opacity=".95" />
+      <path d="M29 26h18" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" opacity=".9" />
+      <path d="m25 37 25 51 25-51" fill="none" stroke="#b9f8ff" strokeWidth="2.5" opacity=".62" />
     </svg>
   );
 }
