@@ -1,8 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 
-import "@/components/arcade/GoldenTigerV4.css";
 import { GameShell } from "@/components/arcade/GameShell";
-import { GoldenTigerV4 } from "@/components/arcade/GoldenTigerV4";
+import { GoldenTigerReference } from "@/components/arcade/GoldenTigerReference";
 import { MinesGame } from "@/components/arcade/MinesGame";
 import { PlinkoGame } from "@/components/arcade/PlinkoGame";
 import { SlotGame } from "@/components/arcade/SlotGame";
@@ -31,7 +30,7 @@ function GameRoute() {
   const { game } = Route.useLoaderData();
 
   if (game.slug === "golden-tiger") {
-    return <GoldenTigerV4 />;
+    return <GoldenTigerReference />;
   }
 
   const slotConfig = SLOT_CONFIGS[game.slug];
