@@ -14,8 +14,12 @@ import { cn } from "@/lib/utils";
 import { BetControls } from "./BetControls";
 import { TigerCubMascot } from "./GameArtwork";
 import "./PlinkoPremium.css";
+import "./PlinkoMobile.css";
 
 const delay = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+const BALL_COUNTS = [1, 3, 5, 10] as const;
+
+type BallCount = (typeof BALL_COUNTS)[number];
 
 function getBallPosition(path: readonly number[], step: number, rows: number) {
   if (step < 0) return { left: 50, top: 5 };
@@ -33,10 +37,13 @@ export function PlinkoGame() {
   const [bet, setBet] = useState<number>(BET_STEPS[2]);
   const [risk, setRisk] = useState<PlinkoRisk>("medio");
   const [rows, setRows] = useState(14);
+  const [ballsPerRun, setBallsPerRun] = useState<BallCount>(3);
   const [path, setPath] = useState<number[]>([]);
   const [step, setStep] = useState(-1);
   const [winningBucket, setWinningBucket] = useState<number | null>(null);
   const [lastWin, setLastWin] = useState<{ payout: number; multiplier: number } | null>(null);
+  const [runWin, setRunWin] = useState(0);
+  const [currentBall, setCurrentBall] = useState(0);
   const [busy, setBusy] = useState(false);
   const [autoDrop, setAutoDrop] = useState(false);
   const [bigWin, setBigWin] = useState<{ payout: number; multiplier: number } | null>(null);
@@ -46,6 +53,7 @@ export function PlinkoGame() {
   const payouts = plinkoPayouts(risk, rows);
   const dropping = busy && step >= 0 && step < rows;
   const maxMultiplier = Math.max(...payouts);
+  const runCost = bet * ballsPerRun;
   const insufficient = bet > balance;
 
   const currentPosition =
@@ -67,25 +75,22 @@ export function PlinkoGame() {
     const next = !autoDropRef.current;
     autoDropRef.current = next;
     setAutoDrop(next);
-    if (next && !busyRef.current) window.setTimeout(() => void drop(), 120);
+    if (next && !busyRef.current) window.setTimeout(() => void runDropSequence(), 120);
   }
 
-  async function drop() {
-    if (busyRef.current) return;
+  async function playOneBall(ballNumber: number, totalBalls: number): Promise<number | null> {
     if (!arcadeActions.placeBet(bet)) {
-      if (bet > balance) playSound("lose", soundEnabled);
-      stopAutoDrop();
-      return;
+      playSound("lose", soundEnabled);
+      return null;
     }
 
-    busyRef.current = true;
-    setBusy(true);
+    setCurrentBall(ballNumber);
     setBigWin(null);
     setLastWin(null);
     setWinningBucket(null);
     playSound("spin", soundEnabled);
 
-    // O resultado é definido antes da animação. A queda apenas revela o caminho já sorteado.
+    // Cada bola tem seu resultado definido antes da animação. A animação apenas revela o caminho sorteado.
     const outcome = dropBall(createRng(), rows);
     setPath(outcome.path);
     setStep(0);
@@ -93,7 +98,7 @@ export function PlinkoGame() {
     for (let index = 0; index < rows; index += 1) {
       setStep(index);
       playSound("tick", soundEnabled);
-      await delay(68 + Math.round((index / Math.max(1, rows - 1)) * 32));
+      await delay(62 + Math.round((index / Math.max(1, rows - 1)) * 26));
     }
 
     const multiplier = payouts[outcome.bucket] ?? 0;
@@ -109,20 +114,59 @@ export function PlinkoGame() {
       bet,
       payout,
       multiplier,
-      note: `Risco ${RISK_LABELS[risk]} · ${rows} linhas`,
+      note: `Bola ${ballNumber}/${totalBalls} · Risco ${RISK_LABELS[risk]} · ${rows} linhas`,
     });
 
     const isBigWin = multiplier >= 10 || payout >= bet * 10;
     if (isBigWin) setBigWin({ payout, multiplier });
     playSound(isBigWin ? "bigWin" : payout >= bet ? "win" : "lose", soundEnabled);
 
-    await delay(isBigWin ? 1150 : 620);
+    await delay(isBigWin ? 900 : 360);
     setBigWin(null);
+    return payout;
+  }
+
+  async function runDropSequence() {
+    if (busyRef.current) return;
+    if (bet > balance) {
+      playSound("lose", soundEnabled);
+      stopAutoDrop();
+      return;
+    }
+
+    busyRef.current = true;
+    setBusy(true);
+    setRunWin(0);
+    setCurrentBall(0);
+
+    let totalPayout = 0;
+    let ballsPlayed = 0;
+
+    for (let ballNumber = 1; ballNumber <= ballsPerRun; ballNumber += 1) {
+      const payout = await playOneBall(ballNumber, ballsPerRun);
+      if (payout === null) {
+        stopAutoDrop();
+        break;
+      }
+
+      ballsPlayed += 1;
+      totalPayout += payout;
+      setRunWin(totalPayout);
+
+      if (ballNumber < ballsPerRun) {
+        setStep(-1);
+        await delay(155);
+      }
+    }
+
     setStep(-1);
+    setCurrentBall(0);
     busyRef.current = false;
     setBusy(false);
 
-    if (autoDropRef.current) window.setTimeout(() => void drop(), 340);
+    if (ballsPlayed > 0 && autoDropRef.current) {
+      window.setTimeout(() => void runDropSequence(), 290);
+    }
   }
 
   return (
@@ -160,6 +204,16 @@ export function PlinkoGame() {
 
           <div className="plinko-launch-ring plinko-premium__launch-ring" aria-hidden><span /></div>
           <div className="plinko-premium__launch-label" aria-hidden>DROP PORTAL</div>
+
+          <div className="plinko-premium__ball-queue" aria-label={`${ballsPerRun} bolas por sequência`}>
+            {Array.from({ length: Math.min(ballsPerRun, 10) }, (_, index) => (
+              <i key={index} className={cn(currentBall > index && "is-played", currentBall === index + 1 && busy && "is-active")} />
+            ))}
+          </div>
+
+          {busy && currentBall > 0 && (
+            <div className="plinko-premium__ball-counter" role="status">BALL {currentBall}/{ballsPerRun}</div>
+          )}
 
           <div className="plinko-pegs plinko-premium__pegs" aria-hidden>
             {Array.from({ length: rows }, (_, row) => (
@@ -231,9 +285,9 @@ export function PlinkoGame() {
         </div>
 
         <div className="plinko-result plinko-premium__result" role="status" aria-live="polite">
-          <div className="plinko-premium__result-label"><small>LAST DROP</small><span>{lastWin ? "SETTLED" : busy ? "IN FLIGHT" : "READY"}</span></div>
-          <strong>{lastWin ? formatCoins(lastWin.payout) : "0"}</strong>
-          <div className="plinko-premium__result-meta"><span>{lastWin ? formatMultiplier(lastWin.multiplier) : `${rows} linhas`}</span><small>{RISK_LABELS[risk]} RISK</small></div>
+          <div className="plinko-premium__result-label"><small>{busy ? "CURRENT RUN" : "LAST DROP"}</small><span>{busy ? `BALL ${currentBall}/${ballsPerRun}` : lastWin ? "SETTLED" : "READY"}</span></div>
+          <strong>{busy ? formatCoins(runWin) : lastWin ? formatCoins(lastWin.payout) : "0"}</strong>
+          <div className="plinko-premium__result-meta"><span>{lastWin ? formatMultiplier(lastWin.multiplier) : `${ballsPerRun} bola${ballsPerRun > 1 ? "s" : ""}`}</span><small>{RISK_LABELS[risk]} RISK</small></div>
         </div>
 
         <div className="plinko-controls plinko-premium__controls">
@@ -248,10 +302,10 @@ export function PlinkoGame() {
 
           <div className="plinko-drop-zone plinko-premium__drop-zone">
             <div className="plinko-mascot-chip plinko-premium__mascot-chip" aria-hidden><TigerCubMascot className="w-full" /></div>
-            <Button size="lg" variant="gold" className="plinko-drop-button plinko-premium__drop-button" disabled={busy || insufficient} onClick={() => void drop()}>
+            <Button size="lg" variant="gold" className="plinko-drop-button plinko-premium__drop-button" disabled={busy || insufficient} onClick={() => void runDropSequence()}>
               {dropping ? <CircleDot className="size-6 animate-bounce" aria-hidden /> : <Play className="size-6" aria-hidden />}
-              <span>{dropping ? "FALLING" : "DROP"}</span>
-              <small>{dropping ? "tracking path" : formatCoins(bet)}</small>
+              <span>{dropping ? "FALLING" : `DROP ×${ballsPerRun}`}</span>
+              <small>{dropping ? `ball ${currentBall}/${ballsPerRun}` : formatCoins(runCost)}</small>
             </Button>
           </div>
 
@@ -260,6 +314,24 @@ export function PlinkoGame() {
             <div className="grid grid-cols-3 gap-1.5">
               {[12, 14, 16].map((value) => (
                 <Button key={value} size="sm" variant={rows === value ? "gold" : "outline"} disabled={busy || autoDrop} onClick={() => setRows(value)} aria-pressed={rows === value}>{value}</Button>
+              ))}
+            </div>
+          </section>
+
+          <section className="plinko-premium__ball-selector" aria-label="Quantidade de bolas por sequência">
+            <small>BALLS PER RUN</small>
+            <div>
+              {BALL_COUNTS.map((count) => (
+                <button
+                  key={count}
+                  type="button"
+                  className={cn(ballsPerRun === count && "is-active")}
+                  onClick={() => setBallsPerRun(count)}
+                  disabled={busy || autoDrop}
+                  aria-pressed={ballsPerRun === count}
+                >
+                  {count}
+                </button>
               ))}
             </div>
           </section>
@@ -281,13 +353,13 @@ export function PlinkoGame() {
 
           <div className="plinko-premium__hud" aria-label="Resumo da rodada">
             <div><Coins aria-hidden /><span><small>BALANCE</small><strong>{formatCoins(balance)}</strong></span></div>
-            <div><CircleDot aria-hidden /><span><small>TOTAL BET</small><strong>{formatCoins(bet)}</strong></span></div>
-            <div><Trophy aria-hidden /><span><small>LAST WIN</small><strong>{lastWin ? formatCoins(lastWin.payout) : "0"}</strong></span></div>
+            <div><CircleDot aria-hidden /><span><small>RUN BET</small><strong>{formatCoins(runCost)}</strong></span></div>
+            <div><Trophy aria-hidden /><span><small>RUN WIN</small><strong>{formatCoins(runWin)}</strong></span></div>
           </div>
         </div>
       </section>
 
-      <p className="game-machine-note plinko-premium__note"><Sparkles className="inline size-3.5" /> O caminho e o multiplicador continuam definidos antes da animação; o saldo é creditado uma única vez por queda.</p>
+      <p className="game-machine-note plinko-premium__note"><Sparkles className="inline size-3.5" /> Cada bola tem resultado definido antes da animação e o saldo é liquidado exatamente uma vez por bola.</p>
     </div>
   );
 }
