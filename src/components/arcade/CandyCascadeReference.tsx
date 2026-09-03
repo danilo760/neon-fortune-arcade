@@ -1,31 +1,55 @@
 import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { candyReferenceBase64 } from "@/assets/candy-cascade/referenceData";
 import { formatCoins } from "@/lib/arcade/format";
 import { playSound } from "@/lib/arcade/sound";
 import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store";
 import { cn } from "@/lib/utils";
 
-import "./CandyCascadePremiumV2.css";
+import "./CandyCascadeReference.css";
 
-type SymbolId = "lollipop" | "star" | "jelly" | "candy" | "cupcake" | "sprinkle" | "heart" | "diamond";
+type SymbolId =
+  | "lollipop"
+  | "star"
+  | "jelly"
+  | "candy"
+  | "cupcake"
+  | "sprinkle"
+  | "heart"
+  | "diamond";
+
 type SymbolDef = { id: SymbolId; weight: number; pay: number };
+type Crop = { x: number; y: number; w: number; h: number };
 type Cluster = { symbol: SymbolId; indexes: number[] };
 
-const COLS = 5;
+const FULL_W = 600;
+const FULL_H = 1066;
+const COLS = 6;
 const ROWS = 6;
 const BET_STEPS = [10, 50, 100, 200, 500, 1_000, 5_000, 10_000] as const;
 const BOMB_MULTIPLIERS = [2, 3, 5, 10] as const;
 
+const CROPS: Record<SymbolId, Crop> = {
+  lollipop: { x: 24, y: 281, w: 93, h: 87 },
+  star: { x: 118, y: 281, w: 93, h: 87 },
+  jelly: { x: 212, y: 281, w: 92, h: 87 },
+  candy: { x: 305, y: 281, w: 93, h: 87 },
+  cupcake: { x: 399, y: 281, w: 92, h: 87 },
+  heart: { x: 399, y: 369, w: 92, h: 87 },
+  sprinkle: { x: 212, y: 457, w: 92, h: 87 },
+  diamond: { x: 305, y: 457, w: 93, h: 87 },
+};
+
 const SYMBOLS: readonly SymbolDef[] = [
-  { id: "diamond", weight: 5, pay: 1.8 },
-  { id: "heart", weight: 7, pay: 1.35 },
-  { id: "sprinkle", weight: 9, pay: 1.05 },
-  { id: "cupcake", weight: 11, pay: 0.85 },
-  { id: "lollipop", weight: 13, pay: 0.68 },
-  { id: "star", weight: 15, pay: 0.55 },
-  { id: "jelly", weight: 17, pay: 0.45 },
-  { id: "candy", weight: 19, pay: 0.36 },
+  { id: "diamond", weight: 5, pay: 2.2 },
+  { id: "heart", weight: 7, pay: 1.6 },
+  { id: "sprinkle", weight: 9, pay: 1.25 },
+  { id: "cupcake", weight: 11, pay: 1.0 },
+  { id: "lollipop", weight: 13, pay: 0.82 },
+  { id: "star", weight: 15, pay: 0.66 },
+  { id: "jelly", weight: 17, pay: 0.52 },
+  { id: "candy", weight: 19, pay: 0.42 },
 ];
 
 const TOTAL_WEIGHT = SYMBOLS.reduce((sum, symbol) => sum + symbol.weight, 0);
@@ -44,7 +68,7 @@ function pickSymbol(): SymbolId {
   return "candy";
 }
 
-function makeGrid() {
+function makeGrid(): SymbolId[] {
   return Array.from({ length: COLS * ROWS }, pickSymbol);
 }
 
@@ -62,17 +86,21 @@ function neighbors(index: number) {
 function findClusters(grid: readonly SymbolId[]): Cluster[] {
   const visited = new Set<number>();
   const clusters: Cluster[] = [];
+
   for (let start = 0; start < grid.length; start += 1) {
     if (visited.has(start)) continue;
     const symbol = grid[start];
     if (!symbol) continue;
+
     const queue = [start];
     const indexes: number[] = [];
     visited.add(start);
+
     while (queue.length) {
       const current = queue.shift();
       if (current === undefined) break;
       indexes.push(current);
+
       for (const next of neighbors(current)) {
         if (!visited.has(next) && grid[next] === symbol) {
           visited.add(next);
@@ -80,8 +108,10 @@ function findClusters(grid: readonly SymbolId[]): Cluster[] {
         }
       }
     }
+
     if (indexes.length >= 5) clusters.push({ symbol, indexes });
   }
+
   return clusters;
 }
 
@@ -89,139 +119,86 @@ function clusterPayout(clusters: readonly Cluster[], bet: number) {
   return clusters.reduce((sum, cluster) => {
     const def = SYMBOL_BY_ID.get(cluster.symbol);
     if (!def) return sum;
-    const sizeBoost = cluster.indexes.length >= 12 ? 5 : cluster.indexes.length >= 9 ? 3 : cluster.indexes.length >= 7 ? 1.8 : 1;
+    const count = cluster.indexes.length;
+    const sizeBoost = count >= 15 ? 7 : count >= 12 ? 5 : count >= 9 ? 3 : count >= 7 ? 1.8 : 1;
     return sum + bet * def.pay * sizeBoost;
   }, 0);
 }
 
 function collapseGrid(grid: readonly SymbolId[], removed: Set<number>) {
   const next = [...grid];
+
   for (let col = 0; col < COLS; col += 1) {
     const survivors: SymbolId[] = [];
+
     for (let row = ROWS - 1; row >= 0; row -= 1) {
       const index = row * COLS + col;
       const symbol = grid[index];
       if (!removed.has(index) && symbol) survivors.push(symbol);
     }
+
     for (let row = ROWS - 1, cursor = 0; row >= 0; row -= 1, cursor += 1) {
       const index = row * COLS + col;
       next[index] = survivors[cursor] ?? pickSymbol();
     }
   }
+
   return next;
 }
 
-function CandySymbol({ id }: { id: SymbolId }) {
-  if (id === "lollipop") {
-    return (
-      <svg viewBox="0 0 100 100" className="cc2-symbol" aria-hidden="true">
-        <defs>
-          <radialGradient id="lp-disc" cx="34%" cy="25%"><stop stopColor="#fff7ff"/><stop offset=".18" stopColor="#ffb3df"/><stop offset=".55" stopColor="#ff49ae"/><stop offset="1" stopColor="#b41469"/></radialGradient>
-          <linearGradient id="lp-stick" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#fff"/><stop offset=".45" stopColor="#ffe4fb"/><stop offset="1" stopColor="#cba2cf"/></linearGradient>
-        </defs>
-        <path d="M51 57 69 91" stroke="url(#lp-stick)" strokeWidth="9" strokeLinecap="round"/>
-        <circle cx="42" cy="39" r="31" fill="#8b145b"/>
-        <circle cx="42" cy="39" r="27" fill="url(#lp-disc)" stroke="#ffd3ef" strokeWidth="2"/>
-        <path d="M24 41c1-18 30-22 34-5 4 17-23 23-28 8-4-12 15-18 21-8 5 8-5 16-13 11" fill="none" stroke="#fff8ff" strokeWidth="7" strokeLinecap="round"/>
-        <ellipse className="shine" cx="31" cy="25" rx="8" ry="5" fill="#fff" opacity=".75"/>
-      </svg>
-    );
-  }
+function useReferenceBlob() {
+  const [src, setSrc] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
 
-  if (id === "star") {
-    return (
-      <svg viewBox="0 0 100 100" className="cc2-symbol" aria-hidden="true">
-        <defs><linearGradient id="st-g" x1=".2" y1="0" x2=".8" y2="1"><stop stopColor="#fff7a9"/><stop offset=".28" stopColor="#ffd53e"/><stop offset=".72" stopColor="#ffae19"/><stop offset="1" stopColor="#c86a00"/></linearGradient></defs>
-        <path d="m50 7 13 26 29 4-21 20 5 30-26-14-26 14 5-30L8 37l29-4Z" fill="#8c4900" stroke="#6d2a00" strokeWidth="4" strokeLinejoin="round"/>
-        <path d="m50 13 11 24 26 4-19 18 5 25-23-12-23 12 5-25-19-18 26-4Z" fill="url(#st-g)" stroke="#ffe879" strokeWidth="2" strokeLinejoin="round"/>
-        <path className="shine" d="M42 27c7-6 15-4 19 0" fill="none" stroke="#fff7cf" strokeWidth="5" strokeLinecap="round" opacity=".75"/>
-      </svg>
-    );
-  }
+  useEffect(() => {
+    let objectUrl: string | null = null;
 
-  if (id === "jelly") {
-    return (
-      <svg viewBox="0 0 100 100" className="cc2-symbol" aria-hidden="true">
-        <defs><radialGradient id="jl-g" cx="32%" cy="22%"><stop stopColor="#d9c9ff"/><stop offset=".28" stopColor="#8d76ff"/><stop offset=".72" stopColor="#5e3de7"/><stop offset="1" stopColor="#321a93"/></radialGradient></defs>
-        <path d="M16 65c0-30 15-49 34-49s34 19 34 49c0 18-9 27-18 19-7-6-11 7-18 2-8-7-13 6-21-1-7-6-11-10-11-20Z" fill="#2c177d" stroke="#21105e" strokeWidth="5"/>
-        <path d="M21 62c0-26 13-42 29-42s29 16 29 42c0 16-7 22-14 16-7-6-11 7-18 2-8-6-11 5-18-1-5-5-8-8-8-17Z" fill="url(#jl-g)"/>
-        <ellipse className="shine" cx="39" cy="36" rx="10" ry="15" fill="#fff" opacity=".42"/>
-        <circle cx="64" cy="51" r="7" fill="#5fe8ff" opacity=".8"/>
-        <path d="M25 68c7 5 11-4 17 1 7 6 12-4 18 0" fill="none" stroke="#b8a5ff" strokeWidth="3" opacity=".8"/>
-      </svg>
-    );
-  }
+    try {
+      const binary = window.atob(candyReferenceBase64);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) {
+        bytes[index] = binary.charCodeAt(index);
+      }
+      objectUrl = URL.createObjectURL(new Blob([bytes], { type: "image/webp" }));
+      setSrc(objectUrl);
+    } catch {
+      setFailed(true);
+    }
 
-  if (id === "candy") {
-    return (
-      <svg viewBox="0 0 100 100" className="cc2-symbol" aria-hidden="true">
-        <defs><linearGradient id="ca-g" x1=".1" y1="0" x2=".9" y2="1"><stop stopColor="#ff9b7d"/><stop offset=".25" stopColor="#ff4569"/><stop offset=".7" stopColor="#ff2f5d"/><stop offset="1" stopColor="#b3123f"/></linearGradient></defs>
-        <path d="m20 34-16 16 16 16 16-8V42Z" fill="#ff8d4c" stroke="#8d233e" strokeWidth="4" strokeLinejoin="round"/>
-        <path d="m80 34 16 16-16 16-16-8V42Z" fill="#ff8d4c" stroke="#8d233e" strokeWidth="4" strokeLinejoin="round"/>
-        <rect x="25" y="24" width="50" height="52" rx="20" fill="url(#ca-g)" stroke="#861233" strokeWidth="5"/>
-        <path d="M34 30c8 9 16 25 28 38" stroke="#ffd75b" strokeWidth="11" strokeLinecap="round"/>
-        <path d="M55 27c7 8 11 17 15 29" stroke="#fff3a8" strokeWidth="5" strokeLinecap="round" opacity=".8"/>
-        <ellipse className="shine" cx="43" cy="31" rx="10" ry="5" fill="#fff" opacity=".55"/>
-      </svg>
-    );
-  }
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, []);
 
-  if (id === "cupcake") {
-    return (
-      <svg viewBox="0 0 100 100" className="cc2-symbol" aria-hidden="true">
-        <defs><linearGradient id="cp-cup" y1="0" y2="1"><stop stopColor="#ff9fce"/><stop offset="1" stopColor="#d6408d"/></linearGradient><radialGradient id="cp-cream" cx="36%" cy="18%"><stop stopColor="#fff"/><stop offset=".42" stopColor="#fff0fb"/><stop offset="1" stopColor="#ef9dce"/></radialGradient></defs>
-        <path d="M25 53h51l-8 35H33Z" fill="#7d1e55" stroke="#5f123f" strokeWidth="4"/>
-        <path d="M29 55h43l-7 29H36Z" fill="url(#cp-cup)"/>
-        <path d="M39 57v23M51 57v25M63 57v22" stroke="#ffd2e8" strokeWidth="4" opacity=".75"/>
-        <path d="M26 55c-8-13 5-22 15-18-2-15 22-21 29-6 16-4 24 15 9 25Z" fill="url(#cp-cream)" stroke="#a84a87" strokeWidth="4"/>
-        <circle cx="59" cy="21" r="10" fill="#7f1434"/>
-        <circle cx="59" cy="19" r="8" fill="#ff426a"/>
-        <path d="M60 12c2-8 9-9 13-8" fill="none" stroke="#5ea83a" strokeWidth="4" strokeLinecap="round"/>
-        <ellipse className="shine" cx="43" cy="39" rx="9" ry="5" fill="#fff" opacity=".7"/>
-      </svg>
-    );
-  }
+  return { src, failed };
+}
 
-  if (id === "sprinkle") {
-    return (
-      <svg viewBox="0 0 100 100" className="cc2-symbol" aria-hidden="true">
-        <defs><radialGradient id="dn-base" cx="35%" cy="25%"><stop stopColor="#ffd78e"/><stop offset=".52" stopColor="#e99b4c"/><stop offset="1" stopColor="#a95a1e"/></radialGradient><radialGradient id="dn-ice" cx="35%" cy="22%"><stop stopColor="#ffc7e9"/><stop offset=".45" stopColor="#ff75c4"/><stop offset="1" stopColor="#db2e92"/></radialGradient></defs>
-        <circle cx="50" cy="50" r="38" fill="#7d4117"/>
-        <circle cx="50" cy="48" r="34" fill="url(#dn-base)"/>
-        <path d="M20 45c4-18 15-30 31-30 18 0 29 13 31 31-8-4-13 5-20 1-8-5-12 4-19 0-7-5-12 3-23-2Z" fill="url(#dn-ice)"/>
-        <circle cx="50" cy="50" r="12" fill="#5b204d" stroke="#b96442" strokeWidth="5"/>
-        <path d="m29 35 8 4m15-13 2 9m20 4 7-5M31 66l7-4m20 13 1-9m17-7 7 4" stroke="#fff27b" strokeWidth="5" strokeLinecap="round"/>
-        <path d="m42 31 5 3m16 21 6-4M41 69l6-3" stroke="#58e9ff" strokeWidth="4" strokeLinecap="round"/>
-        <ellipse className="shine" cx="37" cy="27" rx="9" ry="5" fill="#fff" opacity=".5"/>
-      </svg>
-    );
-  }
-
-  if (id === "heart") {
-    return (
-      <svg viewBox="0 0 100 100" className="cc2-symbol" aria-hidden="true">
-        <defs><radialGradient id="hr-g" cx="34%" cy="22%"><stop stopColor="#ffb4db"/><stop offset=".3" stopColor="#ff6bad"/><stop offset=".72" stopColor="#f33083"/><stop offset="1" stopColor="#a50e52"/></radialGradient></defs>
-        <path d="M50 90S10 68 10 37c0-27 34-35 40-10 6-25 40-17 40 10 0 31-40 53-40 53Z" fill="#7d103f" stroke="#681036" strokeWidth="4"/>
-        <path d="M50 84S16 64 16 39c0-21 28-27 34-7 6-20 34-14 34 7 0 25-34 45-34 45Z" fill="url(#hr-g)"/>
-        <path className="shine" d="M29 38c1-10 10-15 18-10" fill="none" stroke="#ffe2f1" strokeWidth="7" strokeLinecap="round" opacity=".8"/>
-      </svg>
-    );
-  }
+function CandySymbol({ id, src }: { id: SymbolId; src: string }) {
+  const crop = CROPS[id];
 
   return (
-    <svg viewBox="0 0 100 100" className="cc2-symbol" aria-hidden="true">
-      <defs><linearGradient id="dm-g" x1=".15" y1="0" x2=".8" y2="1"><stop stopColor="#e9ffff"/><stop offset=".25" stopColor="#62efff"/><stop offset=".65" stopColor="#10bde8"/><stop offset="1" stopColor="#0874ae"/></linearGradient></defs>
-      <path d="M16 32 35 10h30l19 22-34 59Z" fill="#065d84" stroke="#043e67" strokeWidth="4" strokeLinejoin="round"/>
-      <path d="M20 33 37 14h26l17 19-30 52Z" fill="url(#dm-g)" stroke="#c7fbff" strokeWidth="2" strokeLinejoin="round"/>
-      <path d="M20 33h60M37 14l13 19 13-19M37 33l13 52 13-52" fill="none" stroke="#e3fdff" strokeWidth="4" opacity=".82"/>
-      <path className="shine" d="M30 27h18" stroke="#fff" strokeWidth="6" strokeLinecap="round" opacity=".82"/>
-    </svg>
+    <div className="absolute inset-0 overflow-hidden bg-[#46052c]">
+      <img
+        src={src}
+        alt=""
+        draggable={false}
+        className="pointer-events-none absolute max-w-none select-none"
+        style={{
+          width: `${(FULL_W / crop.w) * 100}%`,
+          height: `${(FULL_H / crop.h) * 100}%`,
+          left: `${-(crop.x / crop.w) * 100}%`,
+          top: `${-(crop.y / crop.h) * 100}%`,
+        }}
+      />
+    </div>
   );
 }
 
 export function CandyCascadeReference() {
   const balance = useArcade((state) => state.balance);
   const soundEnabled = useArcade((state) => state.soundEnabled);
+  const { src, failed } = useReferenceBlob();
+
   const [bet, setBet] = useState<number>(200);
   const [grid, setGrid] = useState<SymbolId[]>(() => makeGrid());
   const [win, setWin] = useState(0);
@@ -232,6 +209,8 @@ export function CandyCascadeReference() {
   const [message, setMessage] = useState<string | null>(null);
   const [turbo, setTurbo] = useState(false);
   const [autoLeft, setAutoLeft] = useState(0);
+  const [showInfo, setShowInfo] = useState(false);
+
   const busyRef = useRef(false);
   const autoStopRef = useRef(false);
 
@@ -239,6 +218,7 @@ export function CandyCascadeReference() {
 
   const spinRound = useCallback(async () => {
     if (busyRef.current) return false;
+
     if (!arcadeActions.placeBet(bet)) {
       playSound("lose", soundEnabled);
       return false;
@@ -254,49 +234,55 @@ export function CandyCascadeReference() {
     playSound("spin", soundEnabled);
 
     let current = makeGrid();
-    for (let step = 0; step < 9; step += 1) {
+
+    for (let step = 0; step < (turbo ? 6 : 12); step += 1) {
       setGrid(makeGrid());
-      await wait(turbo ? 55 : 85);
+      await wait(turbo ? 42 : 72);
     }
+
     setGrid(current);
-    await wait(turbo ? 100 : 220);
+    await wait(turbo ? 80 : 190);
 
     let total = 0;
     let cascades = 0;
     let activeMultiplier = 1;
 
-    for (let chain = 0; chain < 7; chain += 1) {
+    for (let chain = 0; chain < 8; chain += 1) {
       const clusters = findClusters(current);
       if (clusters.length === 0) break;
+
       cascades += 1;
       const removed = new Set(clusters.flatMap((cluster) => cluster.indexes));
       setWinning(removed);
       playSound("win", soundEnabled);
-      await wait(turbo ? 160 : 420);
+      await wait(turbo ? 145 : 400);
 
-      if (Math.random() < 0.38) {
+      if (Math.random() < 0.4) {
         const bomb = BOMB_MULTIPLIERS[Math.floor(Math.random() * BOMB_MULTIPLIERS.length)] ?? 2;
         activeMultiplier += bomb;
         setBombMultiplier(activeMultiplier);
         setMessage(`SUGAR BOMB +${bomb}×`);
         playSound("bonus", soundEnabled);
-        await wait(turbo ? 190 : 460);
+        await wait(turbo ? 175 : 450);
         setMessage(null);
       }
 
       const amount = clusterPayout(clusters, bet) * activeMultiplier;
       total += amount;
       setWin(Math.round(total));
+
+      await wait(turbo ? 90 : 210);
       setWinning(new Set());
       current = collapseGrid(current, removed);
       setGrid(current);
       setCascadeIndex(cascades);
       playSound("tick", soundEnabled);
-      await wait(turbo ? 170 : 430);
+      await wait(turbo ? 160 : 420);
     }
 
     const payout = Math.round(total);
     if (payout > 0) arcadeActions.credit(payout);
+
     arcadeActions.recordRound({
       slug: "candy-cascade",
       gameName: "Candy Cascade",
@@ -316,114 +302,171 @@ export function CandyCascadeReference() {
   const startAuto = useCallback(async () => {
     if (busyRef.current || autoLeft > 0) return;
     autoStopRef.current = false;
+
     for (let left = 10; left > 0; left -= 1) {
       if (autoStopRef.current) break;
       setAutoLeft(left);
       const played = await spinRound();
       if (!played) break;
-      await wait(turbo ? 120 : 320);
+      await wait(turbo ? 100 : 290);
     }
+
     setAutoLeft(0);
   }, [autoLeft, spinRound, turbo]);
 
   const changeBet = (direction: -1 | 1) => {
     if (spinning || autoLeft > 0) return;
-    const current = Math.max(0, BET_STEPS.findIndex((value) => value === bet));
-    const next = Math.max(0, Math.min(BET_STEPS.length - 1, current + direction));
-    const value = BET_STEPS[next];
+    const currentIndex = Math.max(0, BET_STEPS.findIndex((value) => value === bet));
+    const nextIndex = Math.max(0, Math.min(BET_STEPS.length - 1, currentIndex + direction));
+    const value = BET_STEPS[nextIndex];
     if (value !== undefined) setBet(value);
   };
 
   const setMaxBet = () => {
-    if (spinning) return;
+    if (spinning || autoLeft > 0) return;
     const affordable = [...BET_STEPS].reverse().find((value) => value <= balance);
     if (affordable !== undefined) setBet(affordable);
   };
 
   const insufficient = bet > balance;
 
+  if (failed) {
+    return (
+      <main className="grid min-h-dvh place-items-center bg-black px-6 text-center text-white">
+        <div>
+          <p className="text-lg font-black">Não foi possível carregar a arte do Candy Cascade.</p>
+          <Link to="/" className="mt-4 inline-block rounded-full border border-pink-300 px-4 py-2">
+            Voltar
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="cc2-page">
-      <div className="cc2-machine">
-        <div className="cc2-sky" aria-hidden="true">
-          <div className="cc2-rainbow" />
-          <div className="cc2-cloud cc2-cloud-a" />
-          <div className="cc2-cloud cc2-cloud-b" />
-          <div className="cc2-castle cc2-castle-a" />
-          <div className="cc2-castle cc2-castle-b" />
-          <div className="cc2-lollipop-deco cc2-lollipop-a" />
-          <div className="cc2-lollipop-deco cc2-lollipop-b" />
-        </div>
+    <main className="min-h-dvh overflow-x-hidden bg-black sm:px-3 sm:py-2">
+      <div className="relative mx-auto aspect-[600/1066] w-full max-w-[470px] overflow-hidden bg-[#31001d] shadow-[0_0_120px_rgba(255,54,187,.3)] sm:rounded-[22px]">
+        {src ? (
+          <>
+            <img
+              src={src}
+              alt="Candy Cascade"
+              draggable={false}
+              className="absolute inset-0 size-full select-none object-fill"
+            />
 
-        <header className="cc2-header">
-          <Link to="/" aria-label="Voltar ao lobby" className="cc2-back">‹</Link>
-          <div className="cc2-brand">
-            <div className="cc2-brand-kicker">SWEET WIN</div>
-            <h1 className="cc2-logo"><span>CANDY</span><strong>CASCADE</strong></h1>
-            <p>CLUSTER PARTY</p>
-          </div>
-          <button type="button" onClick={() => setTurbo((value) => !value)} aria-pressed={turbo} className={cn("cc2-turbo", turbo && "is-active")}>TURBO</button>
-        </header>
+            <Link
+              to="/"
+              aria-label="Voltar ao lobby"
+              className="absolute right-[1.1%] top-[.8%] z-50 size-[9.2%] rounded-full bg-transparent"
+            />
 
-        <div className="cc2-jackpot" aria-label="Jackpot fictício decorativo">
-          <small>SUGAR JACKPOT</small>
-          <strong>1.250.000</strong>
-        </div>
+            <div className="absolute left-[4%] top-[26.35%] z-20 grid h-[49.7%] w-[93.3%] grid-cols-6 grid-rows-6 overflow-hidden">
+              {grid.map((symbol, index) => (
+                <div
+                  key={index}
+                  className={cn(
+                    "relative overflow-hidden border border-[#f5b340]/55 bg-[#46052c]",
+                    spinning && "cc-ref-roll",
+                    winning.has(index) && "cc-ref-win",
+                    cascadeIndex > 0 && !spinning && "cc-ref-land",
+                  )}
+                >
+                  <CandySymbol id={symbol} src={src} />
+                </div>
+              ))}
+            </div>
 
-        <section className="cc2-board-shell" aria-label="Grade Candy Cascade">
-          <div className="cc2-board">
-            {grid.map((symbol, index) => (
-              <div key={index} className={cn("cc2-cell", spinning && "cc2-ref-roll", winning.has(index) && "cc2-ref-win", cascadeIndex > 0 && !spinning && "cc2-ref-land")}>
-                <CandySymbol id={symbol ?? "candy"} />
+            {message && (
+              <div className="cc-ref-bomb absolute left-1/2 top-[48%] z-[70] -translate-x-1/2 whitespace-nowrap rounded-3xl border-2 border-pink-100 bg-[#8e075e]/95 px-6 py-4 text-center text-[clamp(.9rem,4vw,1.2rem)] font-black text-white shadow-[0_0_55px_rgba(255,66,211,.95)]">
+                {message}
               </div>
-            ))}
-          </div>
-        </section>
+            )}
 
-        {winning.size > 0 && (
-          <div className="cc2-particles" aria-hidden="true">
-            {Array.from({ length: 12 }, (_, index) => <i key={index} />)}
+            <div className="absolute left-[25%] top-[76.4%] z-[35] flex h-[7.7%] w-[50%] items-center justify-center rounded-[20px] bg-[#4a075f]/96 text-center shadow-[inset_0_0_18px_rgba(255,85,238,.4)]">
+              <div>
+                <p className="text-[8px] font-black uppercase tracking-[.16em] text-pink-100">WIN</p>
+                <p className="font-serif text-[clamp(1.25rem,7vw,2.15rem)] font-black leading-none text-[#ffe35f] tabular-nums drop-shadow-[0_2px_0_#6b2b00]">
+                  {formatCoins(win)}
+                </p>
+                {(cascadeIndex > 0 || bombMultiplier > 1) && (
+                  <p className="mt-0.5 text-[8px] font-black text-pink-100">
+                    CASCADE {cascadeIndex} · SUGAR ×{bombMultiplier}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="absolute left-[3%] top-[85.1%] z-[35] flex h-[5.5%] w-[31%] items-center justify-center rounded-xl bg-[#2b071f]/96 px-1 text-[clamp(.65rem,3vw,.95rem)] font-black text-white tabular-nums">
+              {formatCoins(balance)}
+            </div>
+            <div className="absolute right-[3%] top-[85.1%] z-[35] flex h-[5.5%] w-[28%] items-center justify-center rounded-xl bg-[#2b071f]/96 px-1 text-[clamp(.65rem,3vw,.95rem)] font-black text-white tabular-nums">
+              {formatCoins(bet)}
+            </div>
+
+            <button type="button" onClick={() => changeBet(-1)} disabled={spinning || autoLeft > 0} aria-label="Diminuir aposta" className="absolute right-[29.8%] top-[87%] z-50 size-[6.4%] rounded-full disabled:opacity-40" />
+            <button type="button" onClick={() => changeBet(1)} disabled={spinning || autoLeft > 0} aria-label="Aumentar aposta" className="absolute right-[1.7%] top-[87%] z-50 size-[6.4%] rounded-full disabled:opacity-40" />
+
+            <button
+              type="button"
+              onClick={() => void spinRound()}
+              disabled={spinning || autoLeft > 0 || insufficient}
+              aria-label="Girar"
+              className={cn(
+                "absolute left-[34.5%] top-[84.1%] z-50 h-[15.1%] w-[31%] rounded-full",
+                !spinning && !insufficient && "cc-ref-spin-ready",
+                "disabled:cursor-not-allowed disabled:opacity-40",
+              )}
+            />
+
+            <button
+              type="button"
+              onClick={() => {
+                if (autoLeft > 0) {
+                  autoStopRef.current = true;
+                  setAutoLeft(0);
+                } else {
+                  void startAuto();
+                }
+              }}
+              aria-label={autoLeft > 0 ? "Parar auto play" : "Auto play"}
+              className="absolute left-[8%] top-[93.4%] z-50 h-[5.5%] w-[25%] rounded-xl"
+            />
+
+            <button type="button" onClick={setMaxBet} disabled={spinning || autoLeft > 0} aria-label="Aposta máxima" className="absolute right-[8%] top-[93.4%] z-50 h-[5.5%] w-[25%] rounded-xl disabled:opacity-40" />
+
+            <button
+              type="button"
+              onClick={() => setTurbo((value) => !value)}
+              aria-label={turbo ? "Desativar turbo" : "Ativar turbo"}
+              className={cn(
+                "absolute right-[1.8%] top-[77.4%] z-50 size-[8.5%] rounded-full",
+                turbo && "ring-2 ring-yellow-300 ring-offset-1 ring-offset-transparent",
+              )}
+            />
+
+            <button type="button" onClick={() => setShowInfo((value) => !value)} aria-label="Informações do jogo" className="absolute left-[1.8%] top-[77.4%] z-50 size-[8.5%] rounded-full" />
+
+            {showInfo && (
+              <div className="absolute inset-x-[8%] top-[18%] z-[90] rounded-3xl border border-pink-200/80 bg-[#4a075f]/95 p-4 text-center text-white shadow-[0_12px_60px_rgba(0,0,0,.6)] backdrop-blur">
+                <p className="text-base font-black text-yellow-200">CANDY CASCADE</p>
+                <p className="mt-1 text-xs leading-relaxed text-pink-50">5 ou mais doces iguais conectados explodem e novos símbolos caem. Sugar Bombs podem aumentar o multiplicador da sequência.</p>
+                <button type="button" onClick={() => setShowInfo(false)} className="mt-3 rounded-full border border-pink-100 px-4 py-1.5 text-xs font-black">FECHAR</button>
+              </div>
+            )}
+
+            {autoLeft > 0 && <div className="absolute left-[26%] top-[94.2%] z-[60] grid size-[6%] place-items-center rounded-full bg-emerald-500 text-[9px] font-black text-white shadow-lg">{autoLeft}</div>}
+
+            {insufficient && <div className="absolute inset-x-[9%] bottom-[9%] z-[80] rounded-full border border-yellow-300 bg-[#4d0732]/95 px-4 py-2 text-center text-[10px] font-black uppercase tracking-wider text-yellow-100">Saldo insuficiente</div>}
+          </>
+        ) : (
+          <div className="absolute inset-0 grid place-items-center text-center text-pink-100">
+            <div>
+              <div className="mx-auto mb-3 size-10 animate-spin rounded-full border-4 border-pink-300/20 border-t-pink-300" />
+              <p className="text-sm font-black tracking-wide">CARREGANDO CANDY CASCADE</p>
+            </div>
           </div>
         )}
-        {message && <div className="cc2-bomb">{message}</div>}
-
-        <section className="cc2-win" aria-live="polite">
-          <span>GANHO</span>
-          <strong>{formatCoins(win)}</strong>
-          {(cascadeIndex > 0 || bombMultiplier > 1) && <small>CASCATA {cascadeIndex} · SUGAR ×{bombMultiplier}</small>}
-        </section>
-
-        <section className="cc2-deck">
-          <div className="cc2-main-controls">
-            <div className="cc2-meter">
-              <span>SALDO</span>
-              <strong>{formatCoins(balance)}</strong>
-            </div>
-
-            <button type="button" onClick={() => void spinRound()} disabled={spinning || autoLeft > 0 || insufficient} aria-label="Girar Candy Cascade" className={cn("cc2-spin", spinning && "is-spinning")}>
-              <span className="cc2-spin-arrow">↻</span>
-              <small>{spinning ? "GIRO" : "SPIN"}</small>
-            </button>
-
-            <div className="cc2-bet">
-              <button type="button" onClick={() => changeBet(-1)} disabled={spinning || autoLeft > 0} aria-label="Diminuir aposta">−</button>
-              <div><span>APOSTA</span><strong>{formatCoins(bet)}</strong></div>
-              <button type="button" onClick={() => changeBet(1)} disabled={spinning || autoLeft > 0} aria-label="Aumentar aposta">+</button>
-            </div>
-          </div>
-
-          <div className="cc2-actions">
-            {autoLeft > 0 ? (
-              <button type="button" onClick={() => { autoStopRef.current = true; }} className="cc2-action is-running">PARAR <strong>{autoLeft} GIROS</strong></button>
-            ) : (
-              <button type="button" onClick={() => void startAuto()} disabled={spinning || insufficient} className="cc2-action">AUTO PLAY <strong>10×</strong></button>
-            )}
-            <button type="button" onClick={setMaxBet} disabled={spinning} className="cc2-action">MAX <strong>BET</strong></button>
-          </div>
-        </section>
-
-        {insufficient && <div className="cc2-insufficient">Saldo fictício insuficiente — recarregue moedas grátis no lobby.</div>}
-        <footer className="cc2-footer">MOEDAS FICTÍCIAS · SEM VALOR REAL</footer>
       </div>
     </main>
   );
