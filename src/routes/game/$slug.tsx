@@ -1,5 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 
+import "@/components/arcade/GoldenTigerGame.css";
 import { GameShell } from "@/components/arcade/GameShell";
 import { GoldenTigerGame } from "@/components/arcade/GoldenTigerGame";
 import { MinesGame } from "@/components/arcade/MinesGame";
