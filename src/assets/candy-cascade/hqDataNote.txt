@@ -1,0 +1,1 @@
+HQ binary reference upload is handled through Git data, not through the Lovable-generated low-res reference.webp.
