@@ -2,6 +2,7 @@ import { CircleDot, Play, Sparkles } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import neonPlinkoReference from "@/assets/neon-plinko-reference.webp";
 import { formatCoins, formatMultiplier } from "@/lib/arcade/format";
 import { dropBall, plinkoPayouts, RISK_LABELS, type PlinkoRisk } from "@/lib/arcade/plinko";
 import { createRng } from "@/lib/arcade/rng";
@@ -79,6 +80,7 @@ export function PlinkoGame() {
   return (
     <div className="plinko-machine plinko-premium" data-risk={risk}>
       <section className="plinko-machine__cabinet plinko-premium__cabinet">
+        <img className="plinko-premium__machine-art" src={neonPlinkoReference} alt="" aria-hidden />
         <div className="plinko-premium__ambient" aria-hidden />
         <div className="plinko-premium__side-light plinko-premium__side-light--left" aria-hidden />
         <div className="plinko-premium__side-light plinko-premium__side-light--right" aria-hidden />
