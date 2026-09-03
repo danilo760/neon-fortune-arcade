@@ -1,0 +1,445 @@
+.plinko-premium__ball-selector {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: .55rem;
+  margin-top: -.08rem;
+  padding: .42rem .55rem;
+  border: 1px solid rgba(87, 226, 255, .2);
+  border-radius: .72rem;
+  background: linear-gradient(180deg, rgba(13, 21, 48, .96), rgba(4, 6, 16, .98));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+.plinko-premium__ball-selector > small {
+  color: rgba(255,255,255,.42);
+  font-size: .4rem;
+  font-weight: 900;
+  letter-spacing: .14em;
+  white-space: nowrap;
+}
+
+.plinko-premium__ball-selector > div {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .3rem;
+}
+
+.plinko-premium__ball-selector button {
+  min-height: 1.75rem;
+  border: 1px solid rgba(255, 215, 82, .18);
+  border-radius: .48rem;
+  background: rgba(10, 12, 28, .94);
+  color: rgba(255,255,255,.58);
+  font-size: .62rem;
+  font-weight: 900;
+  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+.plinko-premium__ball-selector button.is-active {
+  border-color: #ffe074;
+  background: linear-gradient(180deg, #ffe47a, #d6981b);
+  color: #291700;
+  box-shadow: 0 0 13px rgba(255, 218, 75, .32);
+}
+
+.plinko-premium__ball-selector button:disabled {
+  cursor: not-allowed;
+  opacity: .42;
+}
+
+.plinko-premium__ball-queue {
+  position: absolute;
+  z-index: 15;
+  top: 10.7%;
+  left: 50%;
+  display: flex;
+  gap: .22rem;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.plinko-premium__ball-queue i {
+  width: .36rem;
+  height: .36rem;
+  border: 1px solid rgba(255, 231, 123, .58);
+  border-radius: 50%;
+  background: rgba(255, 214, 67, .12);
+  box-shadow: 0 0 4px rgba(255, 218, 70, .12);
+}
+
+.plinko-premium__ball-queue i.is-played {
+  background: #ffc93c;
+  box-shadow: 0 0 7px #ffc93c;
+}
+
+.plinko-premium__ball-queue i.is-active {
+  background: #fff7c3;
+  box-shadow: 0 0 8px #ffd83f, 0 0 15px rgba(81, 225, 255, .68);
+  transform: scale(1.28);
+}
+
+.plinko-premium__ball-counter {
+  position: absolute;
+  z-index: 16;
+  top: 13%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 1px solid rgba(96, 229, 255, .26);
+  border-radius: 999px;
+  background: rgba(4, 8, 20, .78);
+  padding: .16rem .42rem;
+  color: #77eaff;
+  font-size: .38rem;
+  font-weight: 900;
+  letter-spacing: .13em;
+  box-shadow: 0 0 10px rgba(60, 220, 255, .12);
+  pointer-events: none;
+}
+
+@media (max-width: 430px) {
+  .plinko-premium {
+    width: 100% !important;
+    max-width: 430px;
+    padding: .08rem !important;
+  }
+
+  .plinko-premium__cabinet {
+    border-radius: 1rem;
+  }
+
+  .plinko-premium__cabinet::before,
+  .plinko-premium__cabinet::after {
+    top: 5.8rem;
+    bottom: .65rem;
+    width: .42rem;
+  }
+
+  .plinko-premium__cabinet::before { left: -.18rem; }
+  .plinko-premium__cabinet::after { right: -.18rem; }
+
+  .plinko-premium__masthead {
+    min-height: 5.55rem !important;
+    grid-template-columns: 1.1fr .9fr !important;
+    gap: .35rem !important;
+    padding: .42rem .5rem .45rem !important;
+    border-radius: .95rem .95rem 0 0;
+  }
+
+  .plinko-premium__brand {
+    padding: .15rem .2rem;
+  }
+
+  .plinko-premium__brand::before {
+    width: 8.5rem;
+    height: 3.55rem;
+  }
+
+  .plinko-premium__brand-kicker {
+    font-size: .32rem;
+    letter-spacing: .15em;
+  }
+
+  .plinko-premium__brand span {
+    font-size: .78rem;
+  }
+
+  .plinko-premium__brand strong {
+    font-size: 1.48rem;
+  }
+
+  .plinko-premium__brand small {
+    margin-top: .15rem;
+    font-size: .32rem;
+  }
+
+  .plinko-premium__jackpots {
+    gap: .18rem !important;
+  }
+
+  .plinko-premium__jackpots > div {
+    min-height: 1.3rem !important;
+    padding: .16rem .22rem !important;
+  }
+
+  .plinko-premium__jackpots small {
+    font-size: .29rem;
+  }
+
+  .plinko-premium__jackpots strong {
+    font-size: .58rem;
+  }
+
+  .plinko-premium__status-strip {
+    margin: .28rem .65rem -.05rem !important;
+    border-radius: .5rem;
+  }
+
+  .plinko-premium__status-strip > div {
+    padding: .22rem .15rem !important;
+  }
+
+  .plinko-premium__status-strip small {
+    font-size: .29rem;
+  }
+
+  .plinko-premium__status-strip strong {
+    font-size: .56rem;
+  }
+
+  .plinko-premium__board {
+    height: clamp(18.7rem, 43vh, 22.2rem) !important;
+    margin: .34rem .48rem .34rem !important;
+    border-radius: .78rem;
+  }
+
+  .plinko-premium__launch-ring {
+    top: 2.1% !important;
+    width: 5.7rem !important;
+    height: 2.3rem !important;
+  }
+
+  .plinko-premium__launch-label {
+    top: 7.2% !important;
+    font-size: .31rem !important;
+  }
+
+  .plinko-premium__ball-queue {
+    top: 9.6%;
+    gap: .16rem;
+  }
+
+  .plinko-premium__ball-queue i {
+    width: .29rem;
+    height: .29rem;
+  }
+
+  .plinko-premium__ball-counter {
+    top: 12.1%;
+    padding: .12rem .32rem;
+    font-size: .31rem;
+  }
+
+  .plinko-premium__pegs {
+    inset: 13.5% 7% 17% !important;
+  }
+
+  .plinko-premium__peg-row {
+    gap: clamp(.12rem, 1vw, .36rem) !important;
+  }
+
+  .plinko-premium__peg {
+    width: clamp(.27rem, 1.2vw, .42rem) !important;
+  }
+
+  .plinko-premium__ball {
+    width: 1.3rem !important;
+    height: 1.3rem !important;
+  }
+
+  .plinko-premium__trail span {
+    width: .3rem;
+    height: .3rem;
+  }
+
+  .plinko-premium__bucket {
+    min-height: 1.8rem !important;
+    padding: .2rem .01rem .15rem !important;
+  }
+
+  .plinko-premium__bucket small {
+    display: none;
+  }
+
+  .plinko-premium__bucket strong {
+    margin-top: 0;
+    font-size: clamp(.31rem, 1.55vw, .48rem) !important;
+  }
+
+  .plinko-premium__result {
+    min-height: 2.8rem !important;
+    margin: 0 .48rem .3rem !important;
+    padding: .3rem .45rem !important;
+    border-radius: .62rem;
+  }
+
+  .plinko-premium__result > strong {
+    font-size: 1.05rem !important;
+  }
+
+  .plinko-premium__result-label small,
+  .plinko-premium__result-meta small {
+    font-size: .29rem !important;
+  }
+
+  .plinko-premium__result-label span,
+  .plinko-premium__result-meta span {
+    font-size: .44rem !important;
+  }
+
+  .plinko-premium__controls {
+    grid-template-columns: minmax(0, 1fr) 5.7rem minmax(0, 1fr) !important;
+    gap: .3rem !important;
+    padding: .16rem .46rem .46rem !important;
+  }
+
+  .plinko-premium__control-card {
+    min-height: 3.8rem !important;
+    padding: .36rem .28rem !important;
+    border-radius: .58rem;
+  }
+
+  .plinko-premium__control-card > small {
+    margin-bottom: .25rem !important;
+    font-size: .31rem !important;
+  }
+
+  .plinko-premium__control-card button {
+    height: 1.42rem !important;
+    padding-inline: .08rem !important;
+    font-size: .42rem !important;
+  }
+
+  .plinko-premium__drop-zone {
+    min-height: 4.35rem !important;
+  }
+
+  .plinko-premium__mascot-chip {
+    top: -.9rem !important;
+    width: 2.55rem !important;
+    height: 2.55rem !important;
+    border-width: 2px !important;
+  }
+
+  .plinko-premium__drop-button {
+    width: 5.55rem !important;
+    height: 3.55rem !important;
+    margin-top: .72rem !important;
+    border-width: 3px !important;
+    border-radius: 2rem !important;
+  }
+
+  .plinko-premium__drop-button > span {
+    font-size: .82rem !important;
+  }
+
+  .plinko-premium__drop-button > small {
+    font-size: .33rem !important;
+  }
+
+  .plinko-premium__ball-selector {
+    gap: .35rem;
+    margin-top: 0;
+    padding: .3rem .36rem;
+    border-radius: .55rem;
+  }
+
+  .plinko-premium__ball-selector > small {
+    font-size: .31rem;
+  }
+
+  .plinko-premium__ball-selector > div {
+    gap: .2rem;
+  }
+
+  .plinko-premium__ball-selector button {
+    min-height: 1.45rem;
+    font-size: .48rem;
+  }
+
+  .plinko-premium__utility-row {
+    grid-column: 1 / -1 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, .9fr) !important;
+    gap: .32rem !important;
+  }
+
+  .plinko-premium__auto {
+    min-height: 3.05rem !important;
+    padding: .35rem .4rem !important;
+  }
+
+  .plinko-premium__auto svg {
+    width: .9rem !important;
+    height: .9rem !important;
+  }
+
+  .plinko-premium__auto small {
+    font-size: .3rem !important;
+  }
+
+  .plinko-premium__auto strong {
+    font-size: .55rem !important;
+  }
+
+  .plinko-premium__hud {
+    grid-column: 1 / -1 !important;
+    gap: .22rem !important;
+  }
+
+  .plinko-premium__hud > div {
+    min-height: 2.35rem !important;
+    padding: .28rem .32rem !important;
+  }
+
+  .plinko-premium__hud svg {
+    width: .82rem !important;
+    height: .82rem !important;
+  }
+
+  .plinko-premium__hud small {
+    font-size: .27rem !important;
+  }
+
+  .plinko-premium__hud strong {
+    font-size: .5rem !important;
+  }
+
+  .plinko-premium__note {
+    margin-top: .25rem !important;
+    padding-inline: .4rem;
+    font-size: .56rem !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .plinko-premium__masthead {
+    min-height: 5.1rem !important;
+  }
+
+  .plinko-premium__brand strong {
+    font-size: 1.28rem;
+  }
+
+  .plinko-premium__board {
+    height: clamp(17.8rem, 42vh, 20.2rem) !important;
+    margin-inline: .35rem !important;
+  }
+
+  .plinko-premium__result {
+    margin-inline: .35rem !important;
+  }
+
+  .plinko-premium__controls {
+    grid-template-columns: minmax(0, 1fr) 5.3rem minmax(0, 1fr) !important;
+    padding-inline: .35rem !important;
+  }
+
+  .plinko-premium__drop-button {
+    width: 5.1rem !important;
+    height: 3.35rem !important;
+  }
+
+  .plinko-premium__ball-selector {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plinko-premium__ball-queue i,
+  .plinko-premium__ball-selector button {
+    transition: none !important;
+  }
+}
