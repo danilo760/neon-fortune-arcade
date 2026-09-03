@@ -4,12 +4,28 @@
 //     nitro (build-only using cloudflare as a default target), VITE_* env injection, @ path alias,
 //     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
+import { fileURLToPath, URL } from "node:url";
+
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+
+const candyReference = fileURLToPath(new URL("./src/assets/candy-cascade/reference.webp", import.meta.url));
 
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
+  },
+  vite: {
+    plugins: [
+      {
+        name: "candy-cascade-reference-fallback",
+        enforce: "pre",
+        resolveId(source) {
+          if (source === "@/assets/candy-cascade/reference-hq.webp") return candyReference;
+          return null;
+        },
+      },
+    ],
   },
 });
