@@ -1,0 +1,22 @@
+name: Perf audio validation
+
+on:
+  push:
+    branches:
+      - perf/cache-procedural-audio
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run test
+      - run: bun run build
+      - name: Report Plinko peg admission
+        run: |
+          bun -e 'import { simulatePlinkoPegAdmission } from "./src/lib/arcade/audioEventGate.ts"; const result = simulatePlinkoPegAdmission(16, 10, 88); console.log(JSON.stringify(result)); console.log(`suppressed=${result.attempted-result.admitted}`); console.log(`reductionPct=${(((result.attempted-result.admitted)/result.attempted)*100).toFixed(1)}`);'
