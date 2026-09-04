@@ -1,148 +1,129 @@
 @keyframes gt-ref-reel-fall {
-  0% { transform: translateY(-22%); filter: blur(5px) brightness(1.12); }
-  100% { transform: translateY(22%); filter: blur(2px) brightness(1.02); }
+  0% { transform: translateY(-18%); filter: blur(3.2px) brightness(1.08); }
+  100% { transform: translateY(18%); filter: blur(1.8px) brightness(1.03); }
 }
+
 @keyframes gt-ref-land {
-  0% { transform: translateY(-45%) scaleY(1.08); filter: blur(5px); }
-  58% { transform: translateY(7%) scaleY(.92); filter: blur(0); }
-  78% { transform: translateY(-3%) scaleY(1.04); }
+  0% { transform: translateY(-24%) scaleY(1.05); filter: blur(3px); }
+  62% { transform: translateY(4%) scaleY(.97); filter: blur(0); }
+  82% { transform: translateY(-1.5%) scaleY(1.015); }
   100% { transform: translateY(0) scale(1); }
 }
+
 @keyframes gt-ref-anticipate {
-  0%,100% { box-shadow: inset 0 0 0 2px rgba(255,215,80,.45),0 0 10px rgba(255,55,10,.35); filter: brightness(1); }
-  50% { box-shadow: inset 0 0 0 3px #fff0a0,0 0 34px #ff3b00,0 0 54px #ffb000; filter: brightness(1.28); }
+  0%,100% { box-shadow: inset 0 0 0 2px rgba(255,215,80,.4), 0 0 9px rgba(255,74,13,.3); filter: brightness(1); }
+  50% { box-shadow: inset 0 0 0 2px rgba(255,240,154,.95), 0 0 24px rgba(255,73,0,.8), 0 0 36px rgba(255,184,0,.45); filter: brightness(1.17); }
 }
+
 @keyframes gt-ref-scatter {
   0%,100% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.08); filter: brightness(1.35) drop-shadow(0 0 10px #ffd84c); }
+  50% { transform: scale(1.045); filter: brightness(1.22) drop-shadow(0 0 8px #ffd84c); }
 }
+
 @keyframes gt-ref-win {
   0%,100% { filter: brightness(1); transform: scale(1); }
-  50% { filter: brightness(1.45) drop-shadow(0 0 12px #fff27a); transform: scale(1.055); }
+  50% { filter: brightness(1.28) drop-shadow(0 0 9px #fff27a); transform: scale(1.03); }
 }
+
 @keyframes gt-ref-spin {
-  0%,100% { box-shadow: 0 0 18px rgba(255,190,20,.55),0 0 38px rgba(255,65,0,.35); transform: scale(1); }
-  50% { box-shadow: 0 0 28px #ffe45c,0 0 62px #ff5300; transform: scale(1.035); }
-}
-@keyframes gt-ref-burst {
-  0% { opacity: 0; transform: translate(-50%,-50%) scale(.4); }
-  35% { opacity: 1; }
-  100% { opacity: 0; transform: translate(-50%,-160%) scale(1.35); }
-}
-@keyframes gt-hero-breathe {
-  0%,100% { opacity: .18; transform: translateZ(0) scale(.96); filter: blur(1px); }
-  50% { opacity: .44; transform: translateZ(0) scale(1.035); filter: blur(0); }
-}
-@keyframes gt-card-tension {
-  0% { opacity: 0; transform: translateY(18%) rotate(-12deg) scale(.55); }
-  24% { opacity: 1; transform: translateY(-5%) rotate(4deg) scale(1.08); }
-  58% { opacity: 1; transform: translateY(0) rotate(-2deg) scale(1); }
-  100% { opacity: .25; transform: translateY(-10%) rotate(3deg) scale(1.04); }
-}
-@keyframes gt-hero-tension {
-  0%,100% { opacity: .34; transform: scale(.95); }
-  50% { opacity: .78; transform: scale(1.08); }
+  0%,100% { box-shadow: 0 0 16px rgba(255,190,20,.5), 0 0 32px rgba(255,65,0,.3); transform: scale(1); }
+  50% { box-shadow: 0 0 23px rgba(255,228,92,.95), 0 0 46px rgba(255,83,0,.65); transform: scale(1.022); }
 }
 
-.gt-ref-machine__ambient { position: absolute; z-index: 10; inset: 0; pointer-events: none; opacity: .46; background: radial-gradient(circle at 15% 19%, rgba(255,244,164,.9) 0 1px, transparent 2px), radial-gradient(circle at 82% 14%, rgba(255,210,80,.85) 0 1px, transparent 2px), radial-gradient(circle at 71% 47%, rgba(255,132,35,.7) 0 1.5px, transparent 2.5px), linear-gradient(112deg, transparent 36%, rgba(255,239,147,.16) 47%, transparent 59%); background-size: 92px 108px, 126px 146px, 148px 174px, 210% 100%; background-position: 0 0, 22px 38px, 46px 12px, -130% 0; mix-blend-mode: screen; animation: gt-ref-ambient-sweep 5.2s ease-in-out infinite; }
-@keyframes gt-ref-ambient-sweep { 0%, 100% { background-position: 0 0, 22px 38px, 46px 12px, -130% 0; opacity: .28; } 48% { opacity: .56; } 58% { background-position: 0 0, 22px 38px, 46px 12px, 130% 0; opacity: .48; } }
-.gt-ref-spinning { animation: gt-ref-reel-fall .19s linear infinite alternate; }
-.gt-ref-land { animation: gt-ref-land .42s cubic-bezier(.18,.9,.22,1.35) both; }
-.gt-ref-anticipate { animation: gt-ref-anticipate .72s ease-in-out infinite; }
-.gt-ref-scatter { animation: gt-ref-scatter .72s ease-in-out infinite; }
-.gt-ref-win { animation: gt-ref-win .82s ease-in-out infinite; }
-.gt-ref-spin-button { animation: gt-ref-spin 1.45s ease-in-out infinite; }
-.gt-ref-spin-button:active { transform: scale(.94); }
+@keyframes gt-ref-ambient-sweep {
+  0%,100% { background-position: 0 0, 22px 38px, 46px 12px, -130% 0; opacity: .23; }
+  52% { background-position: 0 0, 22px 38px, 46px 12px, 130% 0; opacity: .42; }
+}
 
-/* Cover the sample balance/bet numbers baked into the reference artwork. */
+.gt-ref-machine__ambient {
+  position: absolute;
+  z-index: 10;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 15% 19%, rgba(255,244,164,.8) 0 1px, transparent 2px),
+    radial-gradient(circle at 82% 14%, rgba(255,210,80,.75) 0 1px, transparent 2px),
+    radial-gradient(circle at 71% 47%, rgba(255,132,35,.6) 0 1.5px, transparent 2.5px),
+    linear-gradient(112deg, transparent 36%, rgba(255,239,147,.13) 47%, transparent 59%);
+  background-size: 92px 108px, 126px 146px, 148px 174px, 210% 100%;
+  background-position: 0 0, 22px 38px, 46px 12px, -130% 0;
+  mix-blend-mode: screen;
+  animation: gt-ref-ambient-sweep 5.6s ease-in-out infinite;
+}
+
+.gt-ref-spinning { animation: gt-ref-reel-fall .18s linear infinite alternate; }
+.gt-ref-land { animation: gt-ref-land .32s cubic-bezier(.2,.8,.25,1.08) both; }
+.gt-ref-anticipate { animation: gt-ref-anticipate .78s ease-in-out infinite; }
+.gt-ref-scatter { animation: gt-ref-scatter .84s ease-in-out infinite; }
+.gt-ref-win { animation: gt-ref-win .9s ease-in-out infinite; }
+.gt-ref-spin-button { animation: gt-ref-spin 1.55s ease-in-out infinite; }
+.gt-ref-spin-button:active:not(:disabled) { transform: scale(.95); }
+
+/* The reference artwork already contains example values. These panels must fully cover them. */
 .gt-ref-machine > [class*="bg-[#270006]"] {
+  isolation: isolate;
   overflow: visible;
   white-space: nowrap;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -.025em;
   background: #270006 !important;
   box-shadow:
-    0 .58rem 0 .22rem #270006,
+    0 .8rem 0 .28rem #270006,
     inset 0 0 7px rgba(255,202,55,.18) !important;
 }
-.gt-ref-machine > [class*="bg-[#270006]"]::after {
+
+.gt-ref-machine > [class*="bg-[#270006]"]::before {
   content: "";
   position: absolute;
-  left: -3%;
-  right: -3%;
-  top: 72%;
-  height: 75%;
   z-index: -1;
-  border-radius: 0 0 .55rem .55rem;
+  left: -5%;
+  right: -5%;
+  top: -10%;
+  bottom: -72%;
+  border-radius: .55rem;
   background: #270006;
 }
 
-/* Character-life layer: subtle idle breathing and stronger near-bonus reaction. */
-.gt-ref-machine::before {
+.gt-ref-machine > [class*="bg-[#270006]"]:nth-of-type(1),
+.gt-ref-machine > [class*="bg-[#270006]"]:nth-of-type(3) {
+  font-size: clamp(.58rem, 2.8vw, .82rem) !important;
+}
+
+.gt-ref-machine > [class*="bg-[#270006]"]:nth-of-type(2) {
+  font-size: clamp(.9rem, 4.6vw, 1.42rem) !important;
+}
+
+/* Stable near-bonus reaction: glow only. No pseudo-character transforms or :has() selectors. */
+.gt-ref-anticipate::after {
   content: "";
   position: absolute;
-  z-index: 14;
-  left: 27%;
-  top: 4.2%;
-  width: 47%;
-  height: 22%;
+  inset: 0;
   pointer-events: none;
-  border-radius: 48%;
-  background:
-    radial-gradient(ellipse at 50% 46%, rgba(255,232,116,.2) 0 18%, rgba(255,128,28,.12) 35%, transparent 67%),
-    radial-gradient(ellipse at 50% 72%, rgba(255,191,50,.14), transparent 62%);
+  background: radial-gradient(circle at 50% 50%, rgba(255,241,145,.18), transparent 62%);
   mix-blend-mode: screen;
-  animation: gt-hero-breathe 3.2s ease-in-out infinite;
-}
-.gt-ref-machine::after {
-  content: "";
-  position: absolute;
-  z-index: 46;
-  right: 20.5%;
-  top: 14.5%;
-  width: 10.5%;
-  aspect-ratio: .72;
-  pointer-events: none;
-  opacity: 0;
-  border: 2px solid #ffd54e;
-  border-radius: 12%;
-  color: #ffe67d;
-  background: linear-gradient(145deg, #e42116, #7c0708 72%);
-  box-shadow: 0 0 18px rgba(255,62,22,.8), inset 0 0 10px rgba(255,220,88,.42);
-}
-.gt-ref-machine:has(.gt-ref-anticipate)::before {
-  background:
-    radial-gradient(ellipse at 50% 46%, rgba(255,245,166,.42) 0 15%, rgba(255,101,21,.3) 39%, transparent 69%),
-    radial-gradient(ellipse at 50% 72%, rgba(255,196,52,.28), transparent 64%);
-  animation: gt-hero-tension .58s ease-in-out infinite;
-}
-.gt-ref-machine:has(.gt-ref-anticipate)::after {
-  content: "福";
-  display: grid;
-  place-items: center;
-  opacity: 1;
-  font-family: serif;
-  font-size: clamp(.85rem, 4vw, 1.35rem);
-  font-weight: 900;
-  animation: gt-card-tension .7s cubic-bezier(.2,.85,.25,1.2) infinite alternate;
-}
-.gt-ref-machine:has(.gt-ref-scatter)::before {
-  opacity: .58;
-  filter: saturate(1.25);
 }
 
 @media (max-width: 390px) {
-  .gt-ref-machine > [class*="bg-[#270006]"] {
-    font-size: clamp(.66rem, 3.8vw, .96rem) !important;
-    letter-spacing: -.025em;
+  .gt-ref-machine > [class*="bg-[#270006]"]:nth-of-type(1),
+  .gt-ref-machine > [class*="bg-[#270006]"]:nth-of-type(3) {
+    font-size: clamp(.54rem, 2.65vw, .76rem) !important;
   }
-  .gt-ref-machine > [class*="bg-[#270006]"]:nth-of-type(1) {
-    font-size: clamp(.62rem, 3.55vw, .9rem) !important;
+
+  .gt-ref-machine > [class*="bg-[#270006]"]:nth-of-type(2) {
+    font-size: clamp(.82rem, 4.25vw, 1.22rem) !important;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gt-ref-spinning,.gt-ref-land,.gt-ref-anticipate,.gt-ref-scatter,.gt-ref-win,.gt-ref-spin-button,.gt-ref-machine__ambient,.gt-ref-machine::before,.gt-ref-machine::after { animation: none !important; }
-  .gt-ref-machine::before { opacity: .18; }
-  .gt-ref-machine:has(.gt-ref-anticipate)::after { opacity: .85; }
+  .gt-ref-spinning,
+  .gt-ref-land,
+  .gt-ref-anticipate,
+  .gt-ref-scatter,
+  .gt-ref-win,
+  .gt-ref-spin-button,
+  .gt-ref-machine__ambient {
+    animation: none !important;
+  }
 }
