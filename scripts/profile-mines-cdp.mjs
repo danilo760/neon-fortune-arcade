@@ -41,7 +41,6 @@ await cdp.send("Performance.enable");
 await cdp.send("HeapProfiler.enable");
 await cdp.send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
 await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
-// A constant high roll leaves shuffle order unchanged, so with 3 mines cells 1-3 are mines.
 await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: `Math.random = () => 0.999999;` });
 const loaded = cdp.once("Page.loadEventFired");
 await cdp.send("Page.navigate", { url: APP });
@@ -118,3 +117,5 @@ result.recalcStyleDuration = metric(after, "RecalcStyleDuration") - metric(befor
 if (!result.activeSamples || result.renderCount < 5) throw new Error(`Invalid Mines stress run: ${JSON.stringify(result)}`);
 console.log(JSON.stringify(result));
 cdp.close();
+
+// Trigger profile after workflow registration.
