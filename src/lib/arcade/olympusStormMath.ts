@@ -85,7 +85,7 @@ export const OLYMPUS_FEATURE_BUY_INITIAL_SPINS = 8;
 export const OLYMPUS_FEATURE_BUY_COST_MULTIPLIER = 9;
 export const OLYMPUS_MAX_RETRIGGERS = 3;
 export const OLYMPUS_FEATURE_MAX_SPINS = 60;
-export const OLYMPUS_STORM_LEVEL_MULTIPLIERS = [1, 1.38, 1.82, 2.45, 3.2] as const;
+export const OLYMPUS_STORM_LEVEL_MULTIPLIERS = [1, 1.38, 1.82, 2.45, 3.2] as readonly number[] & Record<number, number>;
 export const OLYMPUS_STORM_LEVEL_THRESHOLDS = [2, 3, 4, 5] as const;
 
 const SYMBOLS: readonly SymbolDef[] = [
