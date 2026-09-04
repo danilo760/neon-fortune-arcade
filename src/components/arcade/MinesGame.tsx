@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 
 import { BetControls } from "./BetControls";
 import "./MinesPremium.css";
+import "./MinesInteraction.css";
 
 type RoundStatus = "idle" | "playing" | "lost" | "won";
 
@@ -32,6 +33,8 @@ export function MinesGame() {
   const [revealed, setRevealed] = useState<Set<number>>(() => new Set());
   const [status, setStatus] = useState<RoundStatus>("idle");
   const [lastPayout, setLastPayout] = useState(0);
+  const [lastSafeReveal, setLastSafeReveal] = useState<number | null>(null);
+  const [triggeredMine, setTriggeredMine] = useState<number | null>(null);
   const settledRef = useRef(true);
   const roundActiveRef = useRef(false);
   const revealedRef = useRef<Set<number>>(new Set());
@@ -50,6 +53,8 @@ export function MinesGame() {
     revealedRef.current = new Set();
     setRevealed(revealedRef.current);
     setLastPayout(0);
+    setLastSafeReveal(null);
+    setTriggeredMine(null);
     setStatus("playing");
     settledRef.current = false;
     playSound("spin", soundEnabled);
@@ -81,6 +86,8 @@ export function MinesGame() {
     if (mineSet.has(index)) {
       settledRef.current = true;
       roundActiveRef.current = false;
+      setLastSafeReveal(null);
+      setTriggeredMine(index);
       setStatus("lost");
       arcadeActions.recordRound({
         slug: "neon-mines",
@@ -98,6 +105,7 @@ export function MinesGame() {
     next.add(index);
     revealedRef.current = next;
     setRevealed(next);
+    setLastSafeReveal(index);
     playSound("tick", soundEnabled);
     if (next.size === 25 - mineCount) settleWin(next.size);
   }
@@ -154,6 +162,8 @@ export function MinesGame() {
               const isMine = mineSet.has(index);
               const isRevealed = revealed.has(index);
               const visibleMine = showMines && isMine;
+              const isFreshGem = isRevealed && lastSafeReveal === index;
+              const isTriggeredMine = visibleMine && triggeredMine === index;
 
               return (
                 <button
@@ -163,7 +173,9 @@ export function MinesGame() {
                     "mines-tile mines-premium__tile",
                     status === "playing" && !isRevealed && "mines-tile--ready mines-premium__tile--ready",
                     isRevealed && "mines-tile--gem mines-premium__tile--gem",
+                    isFreshGem && "mines-premium__tile--fresh-gem",
                     visibleMine && "mines-tile--mine mines-premium__tile--mine",
+                    isTriggeredMine && "mines-premium__tile--triggered",
                   )}
                   disabled={status !== "playing" || isRevealed}
                   onClick={() => revealCell(index)}
@@ -222,19 +234,26 @@ export function MinesGame() {
             <small>MINES / RISK</small>
             <div>
               {[1, 3, 5, 10].map((count) => (
-                <Button key={count} size="sm" variant={mineCount === count ? "gold" : "outline"} disabled={status === "playing"} onClick={() => setMineCount(count)} aria-pressed={mineCount === count}>{count}</Button>
+                <Button key={count} size="sm" variant={mineCount === count ? "gold" : "outline"} disabled={status === "playing"} onClick={() => setMineCount(count)} aria-label={`${count} minas`} aria-pressed={mineCount === count}>{count}</Button>
               ))}
             </div>
           </section>
 
           {status === "playing" ? (
-            <Button size="lg" variant="gold" className="mines-cash-button mines-premium__action" disabled={revealed.size === 0} onClick={() => settleWin(revealed.size)}>
+            <Button
+              size="lg"
+              variant="gold"
+              className={cn("mines-cash-button mines-premium__action", revealed.size > 0 && "mines-premium__action--cashout-ready")}
+              disabled={revealed.size === 0}
+              onClick={() => settleWin(revealed.size)}
+              aria-label={`Cash out por ${formatCoins(Math.round(bet * multiplier))}`}
+            >
               <ShieldCheck className="size-6" aria-hidden />
               <span>CASH OUT</span>
               <strong>{formatCoins(Math.round(bet * multiplier))}</strong>
             </Button>
           ) : (
-            <Button size="lg" variant="gold" className="mines-cash-button mines-premium__action" disabled={insufficient} onClick={startRound}>
+            <Button size="lg" variant="gold" className="mines-cash-button mines-premium__action" disabled={insufficient} onClick={startRound} aria-label={`Abrir cofre apostando ${formatCoins(bet)}`}>
               <Play className="size-6" aria-hidden />
               <span>OPEN VAULT</span>
               <strong>{formatCoins(bet)}</strong>
