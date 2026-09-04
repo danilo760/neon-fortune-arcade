@@ -1,45 +1,10 @@
-name: Olympus Final Render Optimization
+name: Olympus Final Render Optimization Disabled
 
 on:
-  push:
-    branches:
-      - codex/olympus-storm-ascension
-
-permissions:
-  contents: write
+  workflow_dispatch:
 
 jobs:
-  patch:
+  noop:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: codex/olympus-storm-ascension
-          fetch-depth: 0
-      - name: Isolate Olympus cell reconciliation
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          component = Path('src/components/arcade/OlympusStormReference.tsx')
-          text = component.read_text()
-          start = text.index('const OlympusGrid = memo(function OlympusGrid({')
-          end = text.index('function visibleScatterCount', start)
-          replacement = '''const OlympusGridCells = memo(function OlympusGridCells({\n  grid,\n  src,\n  winning,\n  hiddenColumns,\n}: {\n  grid: OlympusSymbolId[];\n  src: string;\n  winning: Set<number>;\n  hiddenColumns: number;\n}) {\n  return (\n    <>\n      {grid.map((symbol, index) => {\n        const column = index % OLYMPUS_COLUMNS;\n        const hidden = column >= hiddenColumns;\n        return (\n          <div\n            key={index}\n            className={cn(\n              "os-ref-cell relative overflow-hidden border border-[#9fdcff]/20 bg-[#031735]",\n              winning.has(index) && "os-ref-win",\n              hidden && "os-ref-cell--hidden",\n              symbol === "scatter" && "os-ref-cell--scatter",\n            )}\n          >\n            <ReferenceSymbol id={symbol} src={src} />\n          </div>\n        );\n      })}\n    </>\n  );\n});\n\nconst OlympusGrid = memo(function OlympusGrid({\n  grid,\n  src,\n  winning,\n  phase,\n  revealedColumns,\n}: {\n  grid: OlympusSymbolId[];\n  src: string;\n  winning: Set<number>;\n  phase: PresentationPhase;\n  revealedColumns: number;\n}) {\n  const hiddenColumns = phase === "landing" || phase === "anticipation"\n    ? revealedColumns\n    : OLYMPUS_COLUMNS;\n\n  return (\n    <div\n      className={cn(\n        "os-ref-grid absolute left-[7.95%] top-[24.76%] z-20 grid h-[53.05%] w-[82.9%] grid-cols-6 grid-rows-5 overflow-hidden",\n        phase === "spinning" && "os-ref-grid--spinning",\n        phase === "landing" && "os-ref-grid--landing",\n        phase === "anticipation" && "os-ref-grid--anticipation",\n        phase === "collapse" && "os-ref-grid--collapse",\n        phase === "stormHit" && "os-ref-grid--storm-hit",\n        phase === "bonusPlaying" && "os-ref-grid--bonus",\n      )}\n    >\n      <OlympusGridCells\n        grid={grid}\n        src={src}\n        winning={winning}\n        hiddenColumns={hiddenColumns}\n      />\n    </div>\n  );\n});\n\n'''
-          text = text[:start] + replacement + text[end:]
-          component.write_text(text)
-
-          css = Path('src/components/arcade/OlympusStormAscension.css')
-          text = css.read_text()
-          empty = '''.os-ref-machine--ascended .os-ref-mid-mist,\n.os-ref-machine--anticipation .os-ref-mid-mist,\n.os-ref-machine--storm .os-ref-mid-mist {\n}\n\n'''
-          text = text.replace(empty, '')
-          css.write_text(text)
-          PY
-      - name: Commit optimization
-        run: |
-          if git diff --quiet; then exit 0; fi
-          git config user.name "danilo760"
-          git config user.email "62104537+danilo760@users.noreply.github.com"
-          git add src/components/arcade/OlympusStormReference.tsx src/components/arcade/OlympusStormAscension.css
-          git commit -m "perf: isolate Olympus grid cell renders"
-          git push origin HEAD:codex/olympus-storm-ascension
+      - run: echo "Olympus render optimization already applied"
