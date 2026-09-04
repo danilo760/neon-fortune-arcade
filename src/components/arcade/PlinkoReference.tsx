@@ -17,6 +17,7 @@ import "./PlinkoInteraction.css";
 const BALL_COUNTS = [1, 3, 5, 10] as const;
 type BallCount = (typeof BALL_COUNTS)[number];
 type BallStatus = "queued" | "falling" | "landed";
+type PortalPhase = "idle" | "charging" | "launching";
 
 type ActiveBall = {
   id: string;
@@ -61,6 +62,7 @@ export function PlinkoReference() {
   const [busy, setBusy] = useState(false);
   const [autoDrop, setAutoDrop] = useState(false);
   const [bigWin, setBigWin] = useState<{ payout: number; multiplier: number } | null>(null);
+  const [portalPhase, setPortalPhase] = useState<PortalPhase>("idle");
 
   const busyRef = useRef(false);
   const autoRef = useRef(false);
@@ -125,11 +127,11 @@ export function PlinkoReference() {
     await wait(launchDelay);
     setLaunched((value) => value + 1);
     updateBall(ball.id, { status: "falling", step: 0 });
-    playSound("spin", soundEnabled);
+    playSound("plinkoLaunch", soundEnabled);
 
     for (let step = 0; step < rows; step += 1) {
       updateBall(ball.id, { step });
-      if (step % 2 === 0 || ballsPerRun <= 3) playSound("tick", soundEnabled);
+      if (step % 2 === 0 || ballsPerRun <= 3) playSound("plinkoPeg", soundEnabled);
       await wait(58 + Math.round((step / Math.max(1, rows - 1)) * 24));
     }
 
@@ -138,6 +140,7 @@ export function PlinkoReference() {
     setSettled((value) => value + 1);
     setRunWin((value) => value + ball.payout);
     setLastWin({ payout: ball.payout, multiplier: ball.multiplier });
+    playSound("plinkoBucket", soundEnabled);
 
     if (ball.payout > 0) arcadeActions.credit(ball.payout);
     arcadeActions.recordRound({
@@ -149,7 +152,12 @@ export function PlinkoReference() {
       note: `Bola ${ball.ballNumber}/${ballsPerRun} · Risco ${RISK_LABELS[risk]} · ${rows} linhas`,
     });
 
-    playSound(ball.multiplier >= 10 ? "bigWin" : ball.payout >= bet ? "win" : "lose", soundEnabled);
+    if (ball.multiplier >= 10) {
+      playSound("plinkoHigh", soundEnabled);
+      playSound("bigWin", soundEnabled);
+    } else {
+      playSound(ball.payout >= bet ? "win" : "lose", soundEnabled);
+    }
     return ball;
   }
 
@@ -174,7 +182,7 @@ export function PlinkoReference() {
     const stamp = Date.now();
     const prepared: ActiveBall[] = [];
 
-    // Cada resultado e débito é definido antes da primeira animação da sequência.
+    // Cada resultado, bucket, multiplicador e débito é definido antes da primeira animação.
     for (let ballNumber = 1; ballNumber <= ballsPerRun; ballNumber += 1) {
       if (!arcadeActions.placeBet(bet)) {
         stopAuto();
@@ -201,8 +209,15 @@ export function PlinkoReference() {
     }
 
     setActiveBalls(prepared);
+    setPortalPhase("charging");
+    playSound("plinkoPortal", soundEnabled);
+    await wait(180);
+    setPortalPhase("launching");
+    await wait(100);
+
     const stagger = ballsPerRun >= 10 ? 88 : ballsPerRun >= 5 ? 108 : 136;
     const completed = await Promise.all(prepared.map((ball, index) => animateBall(ball, index * stagger)));
+    setPortalPhase("idle");
 
     const best = completed.reduce<ActiveBall | null>((current, ball) => (!current || ball.multiplier > current.multiplier ? ball : current), null);
     if (best && best.multiplier >= 10) {
@@ -230,7 +245,7 @@ export function PlinkoReference() {
 
   return (
     <div className="plinko-ref-page">
-      <div className={cn("plinko-ref-machine", bigWin && "is-celebrating")}>
+      <div className={cn("plinko-ref-machine", bigWin && "is-celebrating", portalPhase !== "idle" && "is-portal-active")}>
         <img className="plinko-ref-machine__art" src={neonPlinkoReference} alt="Neon Plinko Skyfall Tower" draggable={false} />
         <div className="plinko-ref-machine__vignette" aria-hidden />
 
@@ -250,7 +265,7 @@ export function PlinkoReference() {
         </div>
 
         <div className="plinko-ref-board" aria-label="Torre Plinko">
-          <div className="plinko-ref-board__portal" aria-hidden><i /><i /></div>
+          <div className={cn("plinko-ref-board__portal", `is-${portalPhase}`)} aria-hidden><i /><i /></div>
 
           {activeBalls.map((ball) => {
             const position = ballPosition(ball.path, ball.step, rows, ball.bucket, payouts.length);

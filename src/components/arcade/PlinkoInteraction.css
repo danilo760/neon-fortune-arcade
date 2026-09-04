@@ -1,3 +1,5 @@
+@import "./PlinkoOrchestration.css";
+
 @keyframes plinko-latest-bucket-hit {
   0% {
     transform: translateY(2px) scale(.9, .96);
@@ -15,6 +17,7 @@
 
 .plinko-ref-bucket.is-latest-winner {
   z-index: 3;
+  position: relative;
   color: #fffbd1;
   border-color: #fff3a7;
   background: linear-gradient(180deg, #ff67ed, #a31a9a 54%, #4f123e);
