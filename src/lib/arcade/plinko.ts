@@ -3,8 +3,9 @@ import type { Rng } from "./rng";
 export type PlinkoRisk = "baixo" | "medio" | "alto";
 
 export const PLINKO_ROWS = [12, 13, 14, 15, 16] as const;
+export const PLINKO_TARGET_RETURN = 0.96;
 
-const PAYOUT_TABLES: Record<PlinkoRisk, Record<number, number[]>> = {
+const BASE_PAYOUT_TABLES: Record<PlinkoRisk, Record<number, number[]>> = {
   baixo: {
     12: [8, 3, 1.6, 1.2, 1, 0.7, 0.5, 0.7, 1, 1.2, 1.6, 3, 8],
     13: [10, 3, 1.8, 1.3, 1, 0.7, 0.5, 0.5, 0.7, 1, 1.3, 1.8, 3, 10],
@@ -27,6 +28,51 @@ const PAYOUT_TABLES: Record<PlinkoRisk, Record<number, number[]>> = {
     16: [500, 90, 15, 4, 1, 0.4, 0.2, 0.2, 0.2, 0.2, 0.2, 0.4, 1, 4, 15, 90, 500],
   },
 };
+
+function binomialProbability(rows: number, bucket: number) {
+  let combinations = 1;
+  const selected = Math.min(bucket, rows - bucket);
+  for (let index = 1; index <= selected; index += 1) {
+    combinations = (combinations * (rows - selected + index)) / index;
+  }
+  return combinations / 2 ** rows;
+}
+
+export function plinkoExpectedReturn(rows: number, payouts: readonly number[]) {
+  return payouts.reduce(
+    (sum, multiplier, bucket) => sum + binomialProbability(rows, bucket) * multiplier,
+    0,
+  );
+}
+
+export function plinkoVariance(rows: number, payouts: readonly number[]) {
+  const mean = plinkoExpectedReturn(rows, payouts);
+  return payouts.reduce(
+    (sum, multiplier, bucket) =>
+      sum + binomialProbability(rows, bucket) * (multiplier - mean) ** 2,
+    0,
+  );
+}
+
+function normalizeTable(rows: number, source: readonly number[]) {
+  const currentReturn = plinkoExpectedReturn(rows, source);
+  if (currentReturn <= 0) return [...source];
+  const scale = PLINKO_TARGET_RETURN / currentReturn;
+  return source.map((value) => Number((value * scale).toFixed(3)));
+}
+
+const PAYOUT_TABLES: Record<PlinkoRisk, Record<number, number[]>> = {
+  baixo: {},
+  medio: {},
+  alto: {},
+};
+
+for (const risk of ["baixo", "medio", "alto"] as const) {
+  for (const rows of PLINKO_ROWS) {
+    const source = BASE_PAYOUT_TABLES[risk][rows];
+    if (source) PAYOUT_TABLES[risk][rows] = normalizeTable(rows, source);
+  }
+}
 
 export function plinkoPayouts(risk: PlinkoRisk, rows: number): number[] {
   return PAYOUT_TABLES[risk][rows] ?? PAYOUT_TABLES[risk][16]!;
