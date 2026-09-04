@@ -1,0 +1,68 @@
+/* Second-pass polish: isolated visual refinements only. */
+
+/* OLYMPUS STORM */
+@keyframes os-polish-stop-flare {
+  0% { opacity: 0; transform: scale(.72); }
+  38% { opacity: .95; transform: scale(1.08); }
+  100% { opacity: 0; transform: scale(1.22); }
+}
+
+@keyframes os-polish-win-sweep {
+  0% { transform: translateX(-145%) skewX(-18deg); opacity: 0; }
+  20% { opacity: .9; }
+  55% { opacity: .55; }
+  100% { transform: translateX(185%) skewX(-18deg); opacity: 0; }
+}
+
+@keyframes os-polish-storm-breathe {
+  0%,100% { filter: saturate(1) brightness(1); box-shadow: 0 0 28px rgba(75,190,255,.5), inset 0 0 18px rgba(133,220,255,.18); }
+  50% { filter: saturate(1.22) brightness(1.08); box-shadow: 0 0 48px rgba(90,210,255,.86), 0 0 78px rgba(58,100,255,.28), inset 0 0 28px rgba(210,246,255,.3); }
+}
+
+.os-ref-land {
+  position: relative;
+  z-index: 4;
+  box-shadow: inset 0 0 0 1px rgba(225,248,255,.45), 0 0 18px rgba(60,188,255,.35);
+}
+.os-ref-land::after {
+  content: "";
+  position: absolute;
+  inset: 12% 10%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255,255,255,.95) 0 4%, rgba(106,211,255,.55) 12%, transparent 62%);
+  mix-blend-mode: screen;
+  animation: os-polish-stop-flare .42s ease-out both;
+}
+
+.os-ref-win {
+  overflow: hidden;
+}
+.os-ref-win::after {
+  content: "";
+  position: absolute;
+  inset: -20% -35%;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,.78) 49%, rgba(115,214,255,.62) 52%, transparent 64%);
+  mix-blend-mode: screen;
+  animation: os-polish-win-sweep 1.15s ease-in-out infinite;
+}
+
+.os-ref-storm-message {
+  letter-spacing: .03em;
+  text-shadow: 0 2px 0 #16477b, 0 0 18px rgba(188,236,255,.95);
+  animation: os-storm-pop .36s cubic-bezier(.2,.9,.3,1.25) both, os-polish-storm-breathe 1.05s ease-in-out .36s infinite;
+}
+
+.os-ref-spin-button {
+  filter: drop-shadow(0 0 10px rgba(60,195,255,.35));
+}
+.os-ref-spin-button:not(:disabled) {
+  box-shadow: 0 0 14px rgba(61,198,255,.44), 0 0 34px rgba(38,111,255,.28), inset 0 0 20px rgba(255,255,255,.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .os-ref-land::after,
+  .os-ref-win::after,
+  .os-ref-storm-message { animation: none !important; }
+}
