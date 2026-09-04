@@ -1,6 +1,6 @@
 name: Perf Plinko stress
 
-# Re-run after collision visuals were moved to compositor timelines.
+# Re-run after repeated Plinko audio cues were moved to reusable AudioBuffers.
 on:
   push:
     branches:
