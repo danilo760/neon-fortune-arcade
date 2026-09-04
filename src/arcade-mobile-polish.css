@@ -1,0 +1,277 @@
+/* Third-pass mobile/product polish. Visual-only, no game math or state changes. */
+
+.arcade-lobby button,
+.arcade-lobby a,
+.gt-ref-machine button,
+.plinko-ref-machine button,
+.mines-premium button,
+.os-ref-spin-button,
+.cc-ref-spin-ready {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.arcade-bottom-nav {
+  padding-bottom: max(.375rem, env(safe-area-inset-bottom));
+  backdrop-filter: blur(18px) saturate(1.15);
+  box-shadow: 0 16px 44px rgba(0,0,0,.52), inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+.arcade-nav-item {
+  min-height: 3.15rem;
+  transition: transform .14s ease, color .14s ease, background-color .14s ease;
+}
+
+.arcade-nav-item:active {
+  transform: scale(.94);
+}
+
+.game-card--playable {
+  isolation: isolate;
+}
+
+.game-card--playable::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(112deg, transparent 30%, rgba(255,241,179,.13) 48%, transparent 63%);
+  transform: translateX(-80%);
+  transition: opacity .2s ease, transform .45s ease;
+}
+
+.game-card--playable:hover::after {
+  opacity: 1;
+  transform: translateX(80%);
+}
+
+.game-card__play {
+  min-height: 2.65rem;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .game-card--playable:hover {
+    transform: none;
+    box-shadow: 0 14px 35px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.04);
+  }
+
+  .game-card--playable:hover::after {
+    opacity: 0;
+  }
+
+  .game-card--playable:active {
+    transform: scale(.975);
+    border-color: rgba(255,221,97,.42);
+    filter: brightness(1.045);
+  }
+}
+
+@media (max-width: 640px) {
+  .arcade-header > div {
+    min-height: 3.55rem;
+    padding-top: .45rem;
+    padding-bottom: .45rem;
+  }
+
+  .arcade-logo-mark {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .fortune-hero {
+    display: block;
+    min-height: 17.2rem;
+    border-radius: 1.25rem;
+    background:
+      radial-gradient(circle at 82% 45%, rgba(255,201,61,.3), transparent 23%),
+      radial-gradient(circle at 70% 0%, rgba(247,65,41,.26), transparent 34%),
+      linear-gradient(118deg, #240504 0%, #7e1114 49%, #a81b13 72%, #360706 100%);
+  }
+
+  .fortune-hero__copy {
+    width: 68%;
+    padding: 1.05rem .9rem 1.1rem 1.05rem;
+  }
+
+  .fortune-kicker {
+    padding: .28rem .48rem;
+    font-size: .5rem;
+    letter-spacing: .11em;
+  }
+
+  .fortune-hero__eyebrow {
+    margin-top: .7rem;
+    font-size: .55rem;
+    letter-spacing: .23em;
+  }
+
+  .fortune-hero__title {
+    margin-top: .18rem;
+    font-size: clamp(2.35rem, 12vw, 3.15rem);
+    line-height: .88;
+    text-shadow: 0 2px 0 #7e3b00, 0 5px 0 #4d2100, 0 0 20px rgba(255,207,65,.25);
+  }
+
+  .fortune-hero__subtitle {
+    display: -webkit-box;
+    margin-top: .7rem;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    font-size: .72rem;
+    line-height: 1.35;
+  }
+
+  .fortune-hero__copy .mt-4 {
+    margin-top: .8rem;
+    gap: .4rem;
+  }
+
+  .fortune-hero__copy .min-h-12 {
+    min-height: 2.65rem;
+    padding-inline: .8rem;
+    font-size: .72rem;
+  }
+
+  .fortune-hero__mascot {
+    position: absolute;
+    right: -7%;
+    bottom: -2%;
+    width: 48%;
+    max-width: 12.5rem;
+    filter: drop-shadow(0 16px 20px rgba(0,0,0,.54));
+  }
+
+  .fortune-hero__coin-cloud {
+    inset: 28% -12% 0;
+  }
+
+  .fortune-hero__lantern {
+    top: .7rem;
+    width: 1.45rem;
+    height: 1.95rem;
+  }
+
+  .fortune-hero__lantern--left { left: .65rem; }
+  .fortune-hero__lantern--right { right: .65rem; }
+
+  .jackpot-strip {
+    margin-top: .55rem;
+    border-radius: .85rem;
+  }
+
+  .jackpot-strip > div {
+    padding: .5rem .25rem;
+  }
+
+  .jackpot-strip small {
+    font-size: .43rem;
+    letter-spacing: .09em;
+  }
+
+  .jackpot-strip strong {
+    font-size: clamp(.62rem, 2.9vw, .84rem);
+  }
+
+  .featured-showcase {
+    grid-template-columns: 1fr;
+    border-radius: 1rem;
+  }
+
+  .featured-showcase__art {
+    min-height: 10.5rem;
+    max-height: 11.5rem;
+  }
+
+  .featured-showcase__copy {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) auto;
+    align-items: center;
+    gap: .2rem .75rem;
+    padding: .8rem .85rem;
+  }
+
+  .featured-showcase__copy > span,
+  .featured-showcase__copy h3 {
+    grid-column: 1;
+  }
+
+  .featured-showcase__copy > span { font-size: .5rem; }
+  .featured-showcase__copy h3 { margin-top: 0; font-size: 1.25rem; }
+  .featured-showcase__copy p { display: none; }
+  .featured-showcase__copy > a,
+  .featured-showcase__copy > button { grid-column: 2; grid-row: 1 / span 2; }
+
+  .game-card {
+    border-radius: .85rem;
+  }
+
+  .game-card__body {
+    min-height: 7.15rem;
+    gap: .42rem;
+    padding: .58rem;
+  }
+
+  .game-card__body h3 {
+    font-size: .92rem;
+    line-height: 1.05;
+  }
+
+  .game-card__body p {
+    font-size: .66rem;
+    line-height: 1.25;
+  }
+
+  .game-card__badge,
+  .game-card__category {
+    font-size: .45rem;
+  }
+
+  .game-card__play {
+    min-height: 2.4rem;
+    font-size: .7rem;
+  }
+
+  #historico,
+  #perfil {
+    padding-top: 1.9rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .fortune-hero {
+    min-height: 16.1rem;
+  }
+
+  .fortune-hero__copy {
+    width: 70%;
+    padding-left: .85rem;
+  }
+
+  .fortune-hero__title {
+    font-size: 2.25rem;
+  }
+
+  .fortune-hero__subtitle {
+    -webkit-line-clamp: 2;
+  }
+
+  .fortune-hero__mascot {
+    right: -9%;
+    width: 50%;
+  }
+
+  .game-card__body {
+    min-height: 6.8rem;
+    padding: .5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-card--playable::after,
+  .arcade-nav-item {
+    transition: none !important;
+  }
+}
