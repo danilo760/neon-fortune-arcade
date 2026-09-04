@@ -1,0 +1,17 @@
+name: Plinko validation
+on:
+  push:
+    branches: [codex/plinko-complete-refinement]
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run test
+      - run: bun run build
+      - run: bun scripts/report-plinko-return.ts
