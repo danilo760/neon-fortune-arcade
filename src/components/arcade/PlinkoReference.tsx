@@ -324,7 +324,7 @@ export function PlinkoReference() {
           <div><Trophy /><span><small>RUN WIN</small><strong>{formatCoins(runWin)}</strong></span></div>
         </div>
 
-        <div className="plinko-ref-last" role="status" aria-live="polite">
+        <div className={cn("plinko-ref-last", lastWin && !busy && "plinko-ref-last--win")} role="status" aria-live="polite">
           <small>{busy ? "MULTI-BALL" : "LAST WIN"}</small>
           <strong>{busy ? formatCoins(runWin) : lastWin ? formatCoins(lastWin.payout) : "0"}</strong>
           <span>{lastWin ? formatMultiplier(lastWin.multiplier) : `${ballsPerRun} BALLS`}</span>
