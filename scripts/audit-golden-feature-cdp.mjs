@@ -25,7 +25,16 @@ await cdp.ready();
 await cdp.send("Page.enable"); await cdp.send("Runtime.enable");
 await cdp.send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
 await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
-await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: `(() => { let a = 0x2f6e2b1; Math.random = () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; })();` });
+await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: `(() => {
+  let a = 0x2f6e2b1;
+  Math.random = () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  try {
+    const key = 'lucky-neon-arcade:v1';
+    if (location.origin !== 'null' && !localStorage.getItem(key)) {
+      localStorage.setItem(key, JSON.stringify({ balance: 1000000, favorites: [], soundEnabled: false, history: [], totalSpins: 0, bestWin: 0 }));
+    }
+  } catch {}
+})();` });
 const loaded = cdp.once("Page.loadEventFired"); await cdp.send("Page.navigate", { url: APP }); await loaded;
 await waitFor(cdp, `Boolean(document.querySelector('button[aria-label="Abrir Golden Fortune Bonus Buy"]'))`, 30000);
 await waitFor(cdp, `!document.querySelector('button[aria-label="Abrir Golden Fortune Bonus Buy"]')?.disabled`, 30000);
@@ -33,6 +42,7 @@ await evaluate(cdp, `document.querySelector('button[aria-label="Alternar turbo"]
 await waitFor(cdp, `document.querySelector('button[aria-label="Alternar turbo"]')?.getAttribute('aria-pressed') === 'true'`, 10000);
 
 const initial = await evaluate(cdp, `(() => { const s = JSON.parse(localStorage.getItem('lucky-neon-arcade:v1') || '{}'); return { balance: s.balance, totalSpins: s.totalSpins ?? 0, history: s.history?.length ?? 0 }; })()`);
+if (!Number.isFinite(initial.balance)) throw new Error(`Audit state was not seeded: ${JSON.stringify(initial)}`);
 await evaluate(cdp, `document.querySelector('button[aria-label="Abrir Golden Fortune Bonus Buy"]')?.click()`);
 await waitFor(cdp, `Boolean(document.querySelector('[role="dialog"]'))`, 10000);
 const modal = await evaluate(cdp, `(() => { const el = document.querySelector('[role="dialog"]'); const text = el?.textContent ?? ''; const rect = el?.getBoundingClientRect(); return { text, viewportWidth: innerWidth, docWidth: document.documentElement.scrollWidth, rect: rect ? { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom } : null, activateDisabled: document.querySelector('[role="dialog"] button:last-child')?.disabled ?? true }; })()`);
