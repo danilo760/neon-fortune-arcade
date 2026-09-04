@@ -1,0 +1,135 @@
+/*
+ * Isolated motion polish for Neon Mines + Neon Plinko.
+ * Visual only: no layout, HUD, math, RNG, balance or settlement changes.
+ */
+
+@keyframes minesGemReveal {
+  0% { transform: scale(.68) rotate(-8deg); opacity: .15; }
+  56% { transform: scale(1.12) rotate(2deg); opacity: 1; }
+  78% { transform: scale(.97) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+@keyframes minesGemHalo {
+  0% { opacity: 0; transform: scale(.5); }
+  45% { opacity: .82; }
+  100% { opacity: 0; transform: scale(1.45); }
+}
+
+@keyframes minesDangerHit {
+  0% { transform: scale(.72) rotate(-7deg); opacity: .2; }
+  24% { transform: scale(1.14) rotate(5deg); opacity: 1; }
+  46% { transform: scale(.96) rotate(-4deg); }
+  68% { transform: scale(1.04) rotate(2deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+@keyframes minesDangerRing {
+  0% { opacity: 0; transform: scale(.45); }
+  32% { opacity: .9; }
+  100% { opacity: 0; transform: scale(1.55); }
+}
+
+.mines-premium__tile--gem .mines-premium__gem {
+  animation: minesGemReveal .38s cubic-bezier(.2,.85,.25,1.08) both;
+}
+
+.mines-premium__tile--gem .mines-premium__gem::after {
+  content: "";
+  position: absolute;
+  inset: -18%;
+  pointer-events: none;
+  border: 1px solid rgba(145,255,218,.72);
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(74,255,193,.42);
+  animation: minesGemHalo .52s ease-out both;
+}
+
+.mines-premium__tile--mine .mines-premium__danger {
+  animation: minesDangerHit .42s cubic-bezier(.2,.82,.25,1.08) both;
+}
+
+.mines-premium__tile--mine .mines-premium__danger::after {
+  content: "";
+  position: absolute;
+  inset: -22%;
+  pointer-events: none;
+  border: 2px solid rgba(255,110,126,.76);
+  border-radius: 50%;
+  box-shadow: 0 0 16px rgba(255,62,89,.42);
+  animation: minesDangerRing .5s ease-out both;
+}
+
+@keyframes plinkoPegHitRing {
+  0% { opacity: 0; transform: scale(.45); }
+  35% { opacity: .85; }
+  100% { opacity: 0; transform: scale(1.9); }
+}
+
+@keyframes plinkoBallLandRing {
+  0% { opacity: .85; transform: translate(-50%, -50%) scale(.5); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(2.2); }
+}
+
+@keyframes plinkoBucketSweep {
+  0% { opacity: 0; transform: translateX(-150%) skewX(-18deg); }
+  40% { opacity: .72; }
+  100% { opacity: 0; transform: translateX(150%) skewX(-18deg); }
+}
+
+.plinko-premium__peg-row--hit .plinko-premium__peg::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -62%;
+  pointer-events: none;
+  border: 1px solid var(--plinko-risk);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--plinko-risk-glow);
+  animation: plinkoPegHitRing .28s ease-out both;
+}
+
+.plinko-premium__ball--landed::after {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  left: 50%;
+  top: 50%;
+  width: 2.6rem;
+  height: 2.6rem;
+  pointer-events: none;
+  border: 2px solid rgba(255,232,121,.8);
+  border-radius: 50%;
+  box-shadow: 0 0 18px rgba(255,211,70,.48), 0 0 28px var(--plinko-risk-glow);
+  animation: plinkoBallLandRing .48s ease-out both;
+}
+
+.plinko-premium__bucket--winner::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  top: -20%;
+  bottom: -20%;
+  width: 34%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255,255,220,.82), transparent);
+  mix-blend-mode: screen;
+  animation: plinkoBucketSweep .62s ease-out both;
+}
+
+/* Keep 10-ball runs readable: effects are short and local, no blur on moving balls. */
+.plinko-premium__ball--dropping {
+  will-change: left, top, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mines-premium__tile--gem .mines-premium__gem,
+  .mines-premium__tile--gem .mines-premium__gem::after,
+  .mines-premium__tile--mine .mines-premium__danger,
+  .mines-premium__tile--mine .mines-premium__danger::after,
+  .plinko-premium__peg-row--hit .plinko-premium__peg::after,
+  .plinko-premium__ball--landed::after,
+  .plinko-premium__bucket--winner::after {
+    animation: none !important;
+  }
+}
