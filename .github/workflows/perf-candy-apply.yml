@@ -1,0 +1,38 @@
+name: Apply Candy render isolation
+
+on:
+  push:
+    branches: [perf/candy-render-cost]
+    paths:
+      - scripts/apply-candy-render-isolation.py
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: python3 scripts/apply-candy-render-isolation.py
+      - run: git diff --check
+      - run: bun run typecheck
+      - run: bun run test
+      - run: bun run build
+      - name: Commit validated source change
+        run: |
+          if git diff --quiet -- src/components/arcade/CandyCascadeHQ.tsx src/components/arcade/CandyCascadeReference.css; then
+            echo 'No product diff to commit'
+            exit 0
+          fi
+          git config user.name 'danilo760'
+          git config user.email '62104537+danilo760@users.noreply.github.com'
+          git add src/components/arcade/CandyCascadeHQ.tsx src/components/arcade/CandyCascadeReference.css
+          git commit -m 'perf: reduce Candy grid render cost'
+          git push origin HEAD:perf/candy-render-cost
