@@ -102,7 +102,9 @@
 }
 .fortune-hero__title span { color: #f8b62c; }
 .fortune-hero__subtitle { margin-top: 1rem; max-width: 34rem; color: rgba(255,255,255,.72); font-size: .95rem; line-height: 1.45; }
-.fortune-play { box-shadow: 0 8px 26px rgba(255, 188, 38, .32), inset 0 1px 0 rgba(255,255,255,.65); }
+.fortune-play { box-shadow: 0 8px 26px rgba(255, 188, 38, .32), inset 0 1px 0 rgba(255,255,255,.65); transition: transform .16s ease, filter .16s ease, box-shadow .16s ease; }
+.fortune-play:hover { filter: brightness(1.08); box-shadow: 0 10px 30px rgba(255, 188, 38, .46), inset 0 1px 0 rgba(255,255,255,.72); }
+.fortune-play:active { transform: scale(.96); filter: brightness(1.14); }
 .fortune-hero__mascot { position: relative; z-index: 2; align-self: end; width: min(100%, 28rem); justify-self: center; filter: drop-shadow(0 24px 28px rgba(0,0,0,.58)); animation: nfFloat 4.5s ease-in-out infinite; }
 .fortune-hero__coin-cloud { position: absolute; inset: 30% -8% 2%; z-index: -1; border-radius: 50%; background: radial-gradient(circle, rgba(255,208,68,.42), rgba(255,144,11,.09) 44%, transparent 70%); filter: blur(9px); }
 .fortune-hero__lantern { position: absolute; top: 1rem; width: 2rem; height: 2.65rem; border: 2px solid #f8b62c; border-radius: 45%; background: radial-gradient(circle at 50% 35%, #ffec7b, #df241b 48%, #740507 80%); box-shadow: 0 0 24px rgba(255,72,31,.5); }
