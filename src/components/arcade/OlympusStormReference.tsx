@@ -292,7 +292,7 @@ export function OlympusStormReference() {
   };
 
   const setMaxBet = () => {
-    if (spinning) return;
+    if (spinning || autoLeft > 0) return;
     const affordable = [...BET_STEPS].reverse().find((value) => value <= balance);
     if (affordable !== undefined) setBet(affordable);
   };
