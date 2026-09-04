@@ -216,9 +216,20 @@ export type SoundName =
   | "tigerScatter" | "tigerThrow" | "tigerImpact" | "tigerBonus" | "tigerRetrigger" | "tigerMiss"
   | "tigerFeatureOpen" | "tigerCardAppear" | "tigerFeatureStart"
   | "olympusCluster" | "olympusFall" | "olympusCharge" | "olympusHit" | "olympusMultiplier"
+  | "olympusSpin" | "olympusBonusSpin" | "olympusScatter" | "olympusAnticipation"
+  | "olympusFeatureOpen" | "olympusBonusIntro" | "olympusRetrigger" | "olympusBonusEnd" | "olympusBigWin"
   | "candyPop" | "candyBreak" | "candyBounce" | "candyBomb" | "candyExplosion" | "candyStreak"
   | "minesMetal" | "minesUnlock" | "minesCrystal" | "minesDanger" | "minesExplosion" | "minesCashout"
   | "plinkoPortal" | "plinkoLaunch" | "plinkoPeg" | "plinkoBucket" | "plinkoHigh";
+
+export function playOlympusLevelUp(level: number, enabled: boolean) {
+  if (!enabled) return;
+  const clamped = Math.max(2, Math.min(5, Math.round(level)));
+  const ratio = 1 + (clamped - 2) * .09;
+  tone(220 * ratio, .18, "triangle", .028, 0, 360 * ratio);
+  tone(440 * ratio, .2, "sine", .025, .04, 660 * ratio);
+  noise(.14, .006, 0, 1400);
+}
 
 export function playSound(name: SoundName, enabled: boolean) {
   if (!enabled) return;
@@ -252,6 +263,24 @@ export function playSound(name: SoundName, enabled: boolean) {
       [784,1046,1318,1568].forEach((f,i)=>tone(f,0.22,"sine",0.05,i*0.06,f*1.05)); tone(262,0.38,"triangle",0.03,0.04,524); break;
     case "tigerMiss":
       tone(410,0.16,"triangle",0.022,0,330); tone(290,0.2,"sine",0.018,0.08,210); break;
+    case "olympusSpin":
+      noise(.28,.009,0,1000); tone(82,.28,"sine",.025,0,105); tone(164,.2,"triangle",.012,.04,210); break;
+    case "olympusBonusSpin":
+      noise(.3,.011,0,1250); tone(86,.3,"sine",.028,0,118); tone(172,.22,"triangle",.015,.035,245); break;
+    case "olympusScatter":
+      tone(410,.16,"triangle",.028,0,690); tone(820,.17,"sine",.018,.035,1180); noise(.1,.004,.01,2600); break;
+    case "olympusAnticipation":
+      tone(72,.45,"sine",.042,0,90); tone(144,.38,"sawtooth",.018,.06,260); noise(.34,.008,.05,750); break;
+    case "olympusFeatureOpen":
+      noise(.3,.012,0,1700); tone(62,.58,"sine",.05,0,96); tone(310,.4,"triangle",.022,.08,720); break;
+    case "olympusBonusIntro":
+      noise(.34,.014,0,2200); tone(72,.5,"sine",.05,0,48); [294,392,523,698].forEach((f,i)=>tone(f,.25,i%2===0?"triangle":"sine",.034,.08+i*.055,f*1.08)); break;
+    case "olympusRetrigger":
+      tone(92,.34,"sine",.035,0,126); [440,660,880].forEach((f,i)=>tone(f,.2,"sine",.035,.05+i*.055,f*1.08)); break;
+    case "olympusBonusEnd":
+      [262,392,523].forEach((f,i)=>tone(f,.2,"triangle",.028,i*.055,f*1.04)); tone(82,.28,"sine",.022,0,62); break;
+    case "olympusBigWin":
+      noise(.25,.018,0,2400); tone(64,.5,"sine",.055,0,42); [330,494,659,988].forEach((f,i)=>tone(f,.24,i%2===0?"triangle":"sine",.038,.055+i*.06,f*1.06)); break;
     case "olympusCluster":
       [330,440,554].forEach((f,i)=>tone(f,0.13,"triangle",0.03,i*0.035,f*1.08)); noise(0.12,0.009,0,2400); break;
     case "olympusFall":
