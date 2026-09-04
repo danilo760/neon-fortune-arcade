@@ -114,10 +114,60 @@
   filter: drop-shadow(0 0 9px rgba(255,225,70,.45)) drop-shadow(0 0 18px rgba(255,71,199,.18));
 }
 
+/* NEON MINES */
+@keyframes mines-polish-gem-pop {
+  0% { transform: scale(.62) rotate(-8deg); filter: brightness(1.9); }
+  58% { transform: scale(1.14) rotate(3deg); filter: brightness(1.25); }
+  100% { transform: scale(1) rotate(0); filter: brightness(1); }
+}
+@keyframes mines-polish-mine-hit {
+  0% { transform: scale(.72); filter: brightness(2.2) saturate(1.4); }
+  42% { transform: scale(1.18) rotate(5deg); filter: brightness(1.45) saturate(1.35); }
+  100% { transform: scale(1); filter: brightness(1) saturate(1); }
+}
+@keyframes mines-polish-action-breathe {
+  0%,100% { box-shadow: 0 0 18px rgba(67,255,186,.22), inset 0 0 16px rgba(255,255,255,.05); }
+  50% { box-shadow: 0 0 34px rgba(78,255,194,.5), 0 0 56px rgba(255,210,72,.12), inset 0 0 22px rgba(255,255,255,.08); }
+}
+
+.mines-premium__tile {
+  transition: transform .14s ease, filter .14s ease, box-shadow .14s ease;
+}
+.mines-premium__tile--ready:not(:disabled):active {
+  transform: scale(.92);
+  filter: brightness(1.15);
+}
+.mines-premium__tile--gem .mines-premium__gem {
+  animation: mines-polish-gem-pop .38s cubic-bezier(.2,.9,.2,1.25) both;
+  filter: drop-shadow(0 0 10px rgba(90,255,207,.78));
+}
+.mines-premium__tile--mine .mines-premium__danger {
+  animation: mines-polish-mine-hit .48s cubic-bezier(.18,.85,.25,1.2) both;
+  filter: drop-shadow(0 0 12px rgba(255,66,66,.85));
+}
+.mines-premium__tile--gem {
+  box-shadow: inset 0 0 24px rgba(88,255,201,.28), 0 0 18px rgba(58,255,190,.22);
+}
+.mines-premium__tile--mine {
+  box-shadow: inset 0 0 28px rgba(255,52,52,.25), 0 0 22px rgba(255,57,57,.3);
+}
+.mines-premium__action:not(:disabled) {
+  animation: mines-polish-action-breathe 1.35s ease-in-out infinite;
+}
+.mines-premium__possible strong {
+  text-shadow: 0 0 14px rgba(85,255,198,.34);
+}
+.mines-premium__progress span {
+  box-shadow: 0 0 12px rgba(74,255,194,.6);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .os-ref-land::after,
   .os-ref-win::after,
   .os-ref-storm-message,
   .cc-ref-win::after,
-  .cc-ref-bomb { animation: none !important; }
+  .cc-ref-bomb,
+  .mines-premium__tile--gem .mines-premium__gem,
+  .mines-premium__tile--mine .mines-premium__danger,
+  .mines-premium__action { animation: none !important; }
 }
