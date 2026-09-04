@@ -1,0 +1,128 @@
+name: Golden Fortune validation
+
+on:
+  push:
+    branches: [feat/golden-fortune-feature-buy]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run test
+      - run: bun run build
+      - name: Simulate 1M base spins and 1M Golden Fortune purchases
+        run: SPINS=1000000 FEATURE_ENTRIES=1000000 bun scripts/simulate-golden-tiger.ts
+      - name: Compare Golden Auto performance at 390x844 / CPU 4x
+        env:
+          AFTER_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          cp scripts/profile-golden-cdp.mjs /tmp/profile-golden-cdp.mjs
+
+          inject_counters() {
+            python3 - <<'PY'
+          from pathlib import Path
+          path = Path('src/components/arcade/GoldenTigerReference.tsx')
+          text = path.read_text()
+          main = 'export function GoldenTigerReference() {\n'
+          main_injected = '''export function GoldenTigerReference() {\n  if (typeof window !== "undefined") {\n    const perfWindow = window as Window & { __goldenRenderCount?: number; __goldenSymbolRenderCount?: number };\n    perfWindow.__goldenRenderCount = (perfWindow.__goldenRenderCount ?? 0) + 1;\n  }\n'''
+          if main not in text:
+              raise SystemExit('Golden main marker missing')
+          text = text.replace(main, main_injected, 1)
+          markers = [
+              'function ReferenceSymbol({ id, src }: { id: GoldenTigerSymbolId; src: string }) {\n',
+              'const ReferenceSymbol = memo(function ReferenceSymbol({ id, src }: { id: GoldenTigerSymbolId; src: string }) {\n',
+          ]
+          injection = '''  if (typeof window !== "undefined") {\n    const perfWindow = window as Window & { __goldenSymbolRenderCount?: number };\n    perfWindow.__goldenSymbolRenderCount = (perfWindow.__goldenSymbolRenderCount ?? 0) + 1;\n  }\n'''
+          for marker in markers:
+              if marker in text:
+                  text = text.replace(marker, marker + injection, 1)
+                  break
+          else:
+              raise SystemExit('Golden symbol marker missing')
+          path.write_text(text)
+          PY
+          }
+
+          start_runtime() {
+            bun run dev -- --host 127.0.0.1 --port 4173 >/tmp/golden-vite.log 2>&1 & VITE_PID=$!
+            CHROME_BIN=$(command -v google-chrome || command -v chromium || command -v chromium-browser)
+            "$CHROME_BIN" --headless=new --no-sandbox --disable-dev-shm-usage --autoplay-policy=no-user-gesture-required --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-golden about:blank >/tmp/golden-chrome.log 2>&1 & CHROME_PID=$!
+            for i in $(seq 1 120); do
+              if curl -sf http://127.0.0.1:9222/json/version >/dev/null && curl -sf http://127.0.0.1:4173/game/golden-tiger >/dev/null; then return; fi
+              sleep .25
+            done
+            cat /tmp/golden-vite.log || true; cat /tmp/golden-chrome.log || true; exit 1
+          }
+
+          stop_runtime() {
+            kill "$VITE_PID" "$CHROME_PID" 2>/dev/null || true
+            wait "$VITE_PID" 2>/dev/null || true
+            wait "$CHROME_PID" 2>/dev/null || true
+            rm -rf /tmp/chrome-golden
+          }
+
+          profile_ref() {
+            REF="$1"; LABEL="$2"
+            git checkout --force "$REF"
+            bun install --frozen-lockfile >/dev/null
+            inject_counters
+            start_runtime
+            node /tmp/profile-golden-cdp.mjs >"/tmp/$LABEL.json"
+            stop_runtime
+            echo "$LABEL=$(cat /tmp/$LABEL.json)"
+          }
+
+          profile_ref b035054e0870edf4d317aef4730b582e7c6437b1 before
+          profile_ref "$AFTER_SHA" after
+
+          node - <<'NODE'
+          const fs = require('fs');
+          const before = JSON.parse(fs.readFileSync('/tmp/before.json', 'utf8'));
+          const after = JSON.parse(fs.readFileSync('/tmp/after.json', 'utf8'));
+          const pct = (a,b) => a ? ((b-a)/a)*100 : 0;
+          const comparison = { before, after, delta: {
+            avgFpsPct: pct(before.avgFps, after.avgFps),
+            renderCountPct: pct(before.renderCount, after.renderCount),
+            symbolRenderCountPct: pct(before.symbolRenderCount, after.symbolRenderCount),
+            taskDurationPct: pct(before.taskDuration, after.taskDuration),
+            scriptDurationPct: pct(before.scriptDuration, after.scriptDuration),
+            worstFramePct: pct(before.worstFrameMs, after.worstFrameMs),
+            longTasks: after.longTasks - before.longTasks,
+            heapDeltaBytes: after.jsHeapDelta - before.jsHeapDelta,
+          }};
+          console.log('=== GOLDEN PERF COMPARISON ===');
+          console.log(JSON.stringify(comparison, null, 2));
+          if (after.symbolRenderCount > before.symbolRenderCount * 1.05) throw new Error('Golden symbol renders regressed >5%');
+          if (after.scriptDuration > before.scriptDuration * 1.12) throw new Error('Golden script duration regressed >12%');
+          if (after.taskDuration > before.taskDuration * 1.15) throw new Error('Golden task duration regressed >15%');
+          if (after.avgFps < before.avgFps * .9) throw new Error('Golden average FPS regressed >10%');
+          if (after.longTasks > before.longTasks + 2) throw new Error('Golden long tasks regressed by >2');
+          NODE
+
+          git checkout --force "$AFTER_SHA"
+          bun install --frozen-lockfile >/dev/null
+      - name: Audit Golden Fortune purchase flow at 390x844 / CPU 4x
+        run: |
+          set -euo pipefail
+          bun run dev -- --host 127.0.0.1 --port 4174 >/tmp/golden-feature-vite.log 2>&1 & VITE_PID=$!
+          CHROME_BIN=$(command -v google-chrome || command -v chromium || command -v chromium-browser)
+          "$CHROME_BIN" --headless=new --no-sandbox --disable-dev-shm-usage --autoplay-policy=no-user-gesture-required --remote-debugging-port=9223 --user-data-dir=/tmp/chrome-golden-feature about:blank >/tmp/golden-feature-chrome.log 2>&1 & CHROME_PID=$!
+          cleanup() { kill "$VITE_PID" "$CHROME_PID" 2>/dev/null || true; wait "$VITE_PID" 2>/dev/null || true; wait "$CHROME_PID" 2>/dev/null || true; }
+          trap cleanup EXIT
+          for i in $(seq 1 120); do
+            if curl -sf http://127.0.0.1:9223/json/version >/dev/null && curl -sf http://127.0.0.1:4174/game/golden-tiger >/dev/null; then break; fi
+            sleep .25
+          done
+          node scripts/audit-golden-feature-cdp.mjs
