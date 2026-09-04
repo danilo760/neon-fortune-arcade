@@ -1,0 +1,38 @@
+name: Apply Plinko scheduler budget
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - perf/plinko-off-react-state
+
+jobs:
+  apply:
+    if: ${{ github.event.head_commit.message != 'perf: budget Plinko collision scheduler' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: perf/plinko-off-react-state
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: python3 scripts/apply-plinko-scheduler-budget.py
+      - run: git diff --check
+      - run: bun run typecheck
+      - run: bun run test
+      - run: bun run build
+      - name: Commit validated source change
+        run: |
+          if git diff --quiet; then
+            echo "Scheduler budget already applied."
+            exit 0
+          fi
+          git config user.name "danilo760"
+          git config user.email "62104537+danilo760@users.noreply.github.com"
+          git add src/components/arcade/PlinkoReference.tsx
+          git commit -m "perf: budget Plinko collision scheduler"
+          git push origin HEAD:perf/plinko-off-react-state
