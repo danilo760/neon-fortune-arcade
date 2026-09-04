@@ -1,57 +1,39 @@
 @keyframes os-reel-fall {
-  0% { transform: translateY(-26%); filter: blur(2px) brightness(1.08); }
-  42% { transform: translateY(20%); filter: blur(7px) brightness(1.22); }
-  100% { transform: translateY(-26%); filter: blur(2px) brightness(1.08); }
+  0% { transform: translateY(-20%); filter: blur(2.4px) brightness(1.06); }
+  50% { transform: translateY(16%); filter: blur(4.5px) brightness(1.14); }
+  100% { transform: translateY(-20%); filter: blur(2.4px) brightness(1.06); }
 }
 
 @keyframes os-reel-land {
-  0% { transform: translateY(-12%) scaleY(1.08); }
-  55% { transform: translateY(5%) scaleY(.96); }
-  78% { transform: translateY(-2%) scaleY(1.02); }
+  0% { transform: translateY(-10%) scaleY(1.05); }
+  58% { transform: translateY(4%) scaleY(.98); }
+  82% { transform: translateY(-1.5%) scaleY(1.01); }
   100% { transform: translateY(0) scaleY(1); }
 }
 
 @keyframes os-win-pulse {
-  0%, 100% { box-shadow: inset 0 0 18px rgba(84, 183, 255, .25), 0 0 7px rgba(55, 189, 255, .35); filter: brightness(1); }
-  50% { box-shadow: inset 0 0 34px rgba(225, 248, 255, .9), 0 0 36px rgba(44, 190, 255, 1); filter: brightness(1.38) saturate(1.15); }
+  0%,100% { box-shadow: inset 0 0 14px rgba(84,183,255,.2), 0 0 6px rgba(55,189,255,.28); filter: brightness(1); }
+  50% { box-shadow: inset 0 0 25px rgba(225,248,255,.7), 0 0 24px rgba(44,190,255,.72); filter: brightness(1.22) saturate(1.08); }
 }
 
 @keyframes os-lightning-flash {
   0% { opacity: 0; }
-  8% { opacity: .94; }
-  16% { opacity: .08; }
-  27% { opacity: .72; }
-  42% { opacity: .05; }
+  10% { opacity: .82; }
+  20% { opacity: .06; }
+  32% { opacity: .54; }
+  48% { opacity: .04; }
   100% { opacity: 0; }
 }
 
 @keyframes os-storm-pop {
-  0% { transform: translate(-50%, 22px) scale(.72); opacity: 0; filter: blur(4px); }
-  55% { transform: translate(-50%, -3px) scale(1.08); opacity: 1; filter: blur(0); }
+  0% { transform: translate(-50%, 14px) scale(.82); opacity: 0; filter: blur(3px); }
+  58% { transform: translate(-50%, -2px) scale(1.04); opacity: 1; filter: blur(0); }
   100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
 }
 
 @keyframes os-spin-idle {
-  0%, 100% { box-shadow: 0 0 8px rgba(0, 172, 255, .3); }
-  50% { box-shadow: 0 0 34px rgba(56, 194, 255, .88), 0 0 54px rgba(35, 116, 255, .38); }
-}
-
-@keyframes os-hero-breathe {
-  0%,100% { opacity: .16; transform: scale(.96); filter: blur(1px); }
-  50% { opacity: .4; transform: scale(1.035); filter: blur(0); }
-}
-
-@keyframes os-hero-charge {
-  0%,100% { opacity: .28; transform: scale(.94); }
-  50% { opacity: .82; transform: scale(1.08); }
-}
-
-@keyframes os-bolt-live {
-  0%,100% { opacity: .25; transform: rotate(8deg) scale(.92); filter: brightness(1); }
-  18% { opacity: .92; transform: rotate(5deg) scale(1.06); filter: brightness(1.8); }
-  34% { opacity: .36; transform: rotate(10deg) scale(.97); }
-  52% { opacity: 1; transform: rotate(6deg) scale(1.12); filter: brightness(2); }
-  68% { opacity: .3; transform: rotate(9deg) scale(.95); }
+  0%,100% { box-shadow: 0 0 8px rgba(0,172,255,.26); }
+  50% { box-shadow: 0 0 25px rgba(56,194,255,.7), 0 0 42px rgba(35,116,255,.28); }
 }
 
 .os-ref-spinning > div {
@@ -65,99 +47,83 @@
 
 .os-ref-win {
   z-index: 2;
-  animation: os-win-pulse .72s ease-in-out infinite;
-  outline: 2px solid rgba(168, 231, 255, .9);
-  outline-offset: -3px;
+  animation: os-win-pulse .8s ease-in-out infinite;
+  outline: 1px solid rgba(168,231,255,.8);
+  outline-offset: -2px;
 }
 
 .os-ref-lightning-flash {
   background:
-    radial-gradient(circle at 52% 34%, rgba(255,255,255,.95), rgba(129,216,255,.55) 11%, transparent 32%),
-    linear-gradient(112deg, transparent 43%, rgba(234,249,255,.95) 46%, rgba(76,193,255,.72) 47%, transparent 50%),
-    linear-gradient(72deg, transparent 52%, rgba(255,255,255,.86) 54%, rgba(48,165,255,.64) 55%, transparent 58%);
+    radial-gradient(circle at 52% 34%, rgba(255,255,255,.82), rgba(129,216,255,.42) 11%, transparent 31%),
+    linear-gradient(112deg, transparent 43%, rgba(234,249,255,.8) 46%, rgba(76,193,255,.56) 47%, transparent 50%),
+    linear-gradient(72deg, transparent 52%, rgba(255,255,255,.72) 54%, rgba(48,165,255,.5) 55%, transparent 58%);
   mix-blend-mode: screen;
-  animation: os-lightning-flash .62s ease-out both;
+  animation: os-lightning-flash .58s ease-out both;
 }
 
 .os-ref-storm-message {
-  animation: os-storm-pop .36s cubic-bezier(.2,.9,.3,1.25) both;
+  animation: os-storm-pop .34s cubic-bezier(.2,.9,.3,1.15) both;
 }
 
 .os-ref-spin-button {
-  animation: os-spin-idle 1.35s ease-in-out infinite;
+  animation: os-spin-idle 1.5s ease-in-out infinite;
   transition: transform .12s ease, filter .12s ease;
 }
 
 .os-ref-spin-button:active:not(:disabled) {
-  transform: scale(.9);
-  filter: brightness(1.25);
+  transform: scale(.93);
+  filter: brightness(1.18);
 }
 
-/* Fully cover values that are already printed in the reference art. */
+/* Fully cover values printed in the artwork and keep live numbers on one line. */
 main:has(.os-ref-spin-button) > div > [class*="bg-[#021b3a]"] {
+  isolation: isolate;
   overflow: visible;
   white-space: nowrap;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -.025em;
   background: #021b3a !important;
-  box-shadow: 0 .58rem 0 .22rem #021b3a !important;
-}
-main:has(.os-ref-spin-button) > div > [class*="bg-[#002a62]"] {
-  background: #002a62 !important;
-  box-shadow: 0 .38rem 0 .18rem #002a62, inset 0 0 12px rgba(70,175,255,.45) !important;
+  box-shadow: 0 .74rem 0 .26rem #021b3a !important;
+  font-size: clamp(.6rem, 2.85vw, .86rem) !important;
 }
 
-/* Zeus reaction layer. It charges while reels are moving and flashes on Storm wins. */
-main:has(.os-ref-spin-button) > div::before {
+main:has(.os-ref-spin-button) > div > [class*="bg-[#021b3a]"]::before {
   content: "";
   position: absolute;
-  z-index: 14;
-  left: 29%;
-  top: 2%;
-  width: 45%;
-  height: 20%;
-  pointer-events: none;
-  border-radius: 48%;
-  background:
-    radial-gradient(ellipse at 50% 48%, rgba(219,248,255,.26) 0 16%, rgba(52,184,255,.18) 38%, transparent 68%),
-    radial-gradient(ellipse at 56% 74%, rgba(64,142,255,.18), transparent 64%);
-  mix-blend-mode: screen;
-  animation: os-hero-breathe 3s ease-in-out infinite;
+  z-index: -1;
+  left: -5%;
+  right: -5%;
+  top: -10%;
+  bottom: -66%;
+  border-radius: .55rem;
+  background: #021b3a;
 }
-main:has(.os-ref-spin-button) > div::after {
+
+main:has(.os-ref-spin-button) > div > [class*="bg-[#002a62]"] {
+  overflow: hidden;
+  background: #002a62 !important;
+  box-shadow: inset 0 0 12px rgba(70,175,255,.38) !important;
+}
+
+/* Keep Zeus effects stable: only the existing win flash reacts; no full-cabinet pseudo transforms. */
+.os-ref-lightning-flash::after {
   content: "";
   position: absolute;
-  z-index: 18;
-  right: 18%;
-  top: 6.5%;
-  width: 8.5%;
+  right: 17%;
+  top: 5.5%;
+  width: 9%;
   height: 18%;
-  pointer-events: none;
-  opacity: .12;
-  transform: rotate(8deg);
-  transform-origin: 50% 0;
+  opacity: .55;
   clip-path: polygon(43% 0, 70% 0, 55% 35%, 82% 35%, 28% 100%, 40% 56%, 12% 56%);
-  background: linear-gradient(180deg, #ffffff, #8ee6ff 42%, #299dff 76%, #dffaff);
-  filter: drop-shadow(0 0 8px #b7edff) drop-shadow(0 0 16px #3bbcff);
-}
-main:has(.os-ref-spinning) > div::before {
-  animation: os-hero-charge .68s ease-in-out infinite;
-}
-main:has(.os-ref-spinning) > div::after,
-main:has(.os-ref-storm-message) > div::after {
-  animation: os-bolt-live .48s steps(2,end) infinite;
-}
-main:has(.os-ref-storm-message) > div::before {
-  opacity: .88;
-  background:
-    radial-gradient(ellipse at 50% 48%, rgba(255,255,255,.55) 0 10%, rgba(78,202,255,.38) 37%, transparent 70%),
-    radial-gradient(ellipse at 56% 74%, rgba(76,145,255,.3), transparent 66%);
+  background: linear-gradient(180deg, #fff, #8ee6ff 42%, #299dff 76%, #dffaff);
+  filter: drop-shadow(0 0 7px #b7edff) drop-shadow(0 0 13px #3bbcff);
 }
 
 @media (max-width: 390px) {
   main:has(.os-ref-spin-button) > div > [class*="bg-[#021b3a]"] {
-    font-size: clamp(.64rem, 3.45vw, .92rem) !important;
-    letter-spacing: -.02em;
+    font-size: clamp(.56rem, 2.7vw, .78rem) !important;
   }
 }
 
@@ -167,11 +133,7 @@ main:has(.os-ref-storm-message) > div::before {
   .os-ref-win,
   .os-ref-lightning-flash,
   .os-ref-storm-message,
-  .os-ref-spin-button,
-  main:has(.os-ref-spin-button) > div::before,
-  main:has(.os-ref-spin-button) > div::after {
+  .os-ref-spin-button {
     animation: none !important;
   }
-  main:has(.os-ref-spin-button) > div::before { opacity: .18; }
-  main:has(.os-ref-spin-button) > div::after { opacity: .16; }
 }
