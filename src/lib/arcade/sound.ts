@@ -85,7 +85,12 @@ export type SoundName =
   | "tigerImpact"
   | "tigerBonus"
   | "tigerRetrigger"
-  | "tigerMiss";
+  | "tigerMiss"
+  | "olympusCluster"
+  | "olympusFall"
+  | "olympusCharge"
+  | "olympusHit"
+  | "olympusMultiplier";
 
 export function playSound(name: SoundName, enabled: boolean) {
   if (!enabled) return;
@@ -136,6 +141,31 @@ export function playSound(name: SoundName, enabled: boolean) {
     case "tigerMiss":
       tone(410, 0.16, "triangle", 0.022, 0, 330);
       tone(290, 0.2, "sine", 0.018, 0.08, 210);
+      break;
+    case "olympusCluster":
+      [330, 440, 554].forEach((frequency, index) => {
+        tone(frequency, 0.13, "triangle", 0.03, index * 0.035, frequency * 1.08);
+      });
+      noise(0.12, 0.009, 0, 2400);
+      break;
+    case "olympusFall":
+      noise(0.18, 0.012, 0, 1100);
+      tone(250, 0.16, "sine", 0.022, 0, 170);
+      break;
+    case "olympusCharge":
+      tone(96, 0.52, "sine", 0.045, 0, 150);
+      tone(220, 0.42, "sawtooth", 0.028, 0.05, 720);
+      noise(0.38, 0.008, 0.08, 1500);
+      break;
+    case "olympusHit":
+      noise(0.22, 0.028, 0, 3200);
+      tone(78, 0.36, "sine", 0.06, 0, 52);
+      tone(1180, 0.11, "square", 0.025, 0.01, 620);
+      break;
+    case "olympusMultiplier":
+      [523, 784, 1046].forEach((frequency, index) => {
+        tone(frequency, 0.2, "sine", 0.04, index * 0.055, frequency * 1.05);
+      });
       break;
     case "click":
       tone(560, 0.055, "triangle", 0.03, 0, 720);
