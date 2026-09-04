@@ -137,6 +137,12 @@ export const arcadeActions = {
   refillToStart() {
     setState({ balance: Math.max(state.balance, STARTING_BALANCE) });
   },
+  /** Debits fictional coins once without counting the action as a normal spin. */
+  debitCoins(amount: number): boolean {
+    if (!Number.isFinite(amount) || amount <= 0 || amount > state.balance) return false;
+    setState({ balance: state.balance - Math.round(amount) });
+    return true;
+  },
   /** Returns false when the balance cannot cover the bet. */
   placeBet(amount: number): boolean {
     if (!Number.isFinite(amount) || amount <= 0 || amount > state.balance) return false;
