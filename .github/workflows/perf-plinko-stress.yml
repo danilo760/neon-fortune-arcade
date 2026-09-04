@@ -46,16 +46,16 @@ jobs:
           }
 
           start_runtime() {
-            bun run preview -- --host 127.0.0.1 --port 4173 >/tmp/vite-preview.log 2>&1 &
+            bun run dev -- --host 127.0.0.1 --port 4173 >/tmp/vite-runtime.log 2>&1 &
             VITE_PID=$!
             CHROME_BIN=$(command -v google-chrome || command -v chromium || command -v chromium-browser)
             "$CHROME_BIN" --headless=new --no-sandbox --disable-dev-shm-usage --autoplay-policy=no-user-gesture-required --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-profiler about:blank >/tmp/chrome.log 2>&1 &
             CHROME_PID=$!
-            for i in $(seq 1 80); do
+            for i in $(seq 1 120); do
               if curl -sf http://127.0.0.1:9222/json/version >/dev/null && curl -sf http://127.0.0.1:4173/game/neon-plinko >/dev/null; then return; fi
               sleep .25
             done
-            cat /tmp/vite-preview.log || true
+            cat /tmp/vite-runtime.log || true
             cat /tmp/chrome.log || true
             exit 1
           }
@@ -73,7 +73,6 @@ jobs:
             git checkout --force "$REF"
             bun install --frozen-lockfile >/dev/null
             inject_render_counter
-            bun run build >/tmp/build-$LABEL.log 2>&1
             start_runtime
             STRESS_MS=60000 node /tmp/profile-plinko-cdp.mjs >"/tmp/$LABEL.json"
             stop_runtime
