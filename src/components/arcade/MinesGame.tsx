@@ -11,6 +11,7 @@ import { playSound } from "@/lib/arcade/sound";
 import { arcadeActions, useArcade } from "@/lib/arcade/store";
 import { cn } from "@/lib/utils";
 
+import { AnimatedWinCounter } from "./AnimatedWinCounter";
 import { BetControls } from "./BetControls";
 import "./MinesPremium.css";
 import "./MinesInteraction.css";
@@ -25,25 +26,6 @@ function wait(ms: number) {
 
 function reducedMotion() {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
-async function countUp(from: number, to: number, duration: number, update: (value: number) => void) {
-  if (to <= from || reducedMotion()) {
-    update(to);
-    return;
-  }
-
-  await new Promise<void>((resolve) => {
-    const started = performance.now();
-    const frame = (now: number) => {
-      const progress = Math.min(1, (now - started) / duration);
-      const eased = 1 - (1 - progress) ** 3;
-      update(Math.round(from + (to - from) * eased));
-      if (progress < 1) requestAnimationFrame(frame);
-      else resolve();
-    };
-    requestAnimationFrame(frame);
-  });
 }
 
 function riskLabel(mineCount: number) {
@@ -67,12 +49,12 @@ export function MinesGame() {
   const [openingIndex, setOpeningIndex] = useState<number | null>(null);
   const [revealPhase, setRevealPhase] = useState<RevealPhase>("idle");
   const [displayedPossibleWin, setDisplayedPossibleWin] = useState(0);
+  const [possibleWinDuration, setPossibleWinDuration] = useState(0);
 
   const settledRef = useRef(true);
   const roundActiveRef = useRef(false);
   const revealedRef = useRef<Set<number>>(new Set());
   const revealBusyRef = useRef(false);
-  const displayedPossibleRef = useRef(0);
 
   const multiplier = minesMultiplier(mineCount, revealed.size);
   const nextMultiplier = nextMinesMultiplier(mineCount, revealed.size);
@@ -98,7 +80,7 @@ export function MinesGame() {
     setTriggeredMine(null);
     setOpeningIndex(null);
     setRevealPhase("idle");
-    displayedPossibleRef.current = bet;
+    setPossibleWinDuration(0);
     setDisplayedPossibleWin(bet);
     setStatus("playing");
     settledRef.current = false;
@@ -117,10 +99,10 @@ export function MinesGame() {
     playSound("minesCashout", soundEnabled);
 
     await wait(reducedMotion() ? 0 : 220);
-    await countUp(displayedPossibleRef.current, payout, 420, (value) => {
-      displayedPossibleRef.current = value;
-      setDisplayedPossibleWin(value);
-    });
+    const countDuration = reducedMotion() ? 0 : 420;
+    setPossibleWinDuration(countDuration);
+    setDisplayedPossibleWin(payout);
+    await wait(countDuration);
     await wait(reducedMotion() ? 0 : 120);
 
     arcadeActions.credit(payout);
@@ -190,10 +172,10 @@ export function MinesGame() {
     playSound("minesCrystal", soundEnabled);
 
     const targetPossible = Math.round(bet * minesMultiplier(mineCount, next.size));
-    await countUp(displayedPossibleRef.current, targetPossible, 280, (value) => {
-      displayedPossibleRef.current = value;
-      setDisplayedPossibleWin(value);
-    });
+    const countDuration = reducedMotion() ? 0 : 280;
+    setPossibleWinDuration(countDuration);
+    setDisplayedPossibleWin(targetPossible);
+    await wait(countDuration);
     await wait(reducedMotion() ? 0 : 90);
 
     setRevealPhase("idle");
@@ -308,7 +290,7 @@ export function MinesGame() {
         <div className={cn("mines-possible mines-premium__possible", revealPhase === "gem" && "mines-premium__possible--counting")}>
           <div className="mines-premium__possible-copy">
             <small>POSSIBLE WIN</small>
-            <strong>{formatCoins(possibleWin)}</strong>
+            <strong><AnimatedWinCounter value={possibleWin} duration={possibleWinDuration} /></strong>
             <span>{status === "playing" ? `${revealed.size} gem${revealed.size === 1 ? "" : "s"} secured` : "Open the crystal vault"}</span>
           </div>
           <div className="mines-premium__progress" aria-hidden><span style={{ width: `${progress}%` }} /></div>
