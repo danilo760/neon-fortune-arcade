@@ -9,6 +9,7 @@ import {
   findOlympusClusters,
   makeOlympusGrid,
   planOlympusRound,
+  type OlympusSymbolId,
 } from "./olympusStormMath";
 
 test("Olympus uses a real 6x5 grid", () => {
@@ -19,7 +20,7 @@ test("Olympus uses a real 6x5 grid", () => {
 });
 
 test("Olympus cluster detection uses orthogonal adjacency and minimum five", () => {
-  const grid = Array.from({ length: 30 }, () => "coin" as const);
+  const grid: OlympusSymbolId[] = Array.from({ length: 30 }, () => "coin");
   grid[0] = "bolt";
   grid[1] = "bolt";
   grid[2] = "bolt";
@@ -34,8 +35,8 @@ test("Olympus cluster detection uses orthogonal adjacency and minimum five", () 
 });
 
 test("collapse removes winners, drops survivors and refills from the top", () => {
-  const grid = Array.from({ length: 30 }, (_, index) =>
-    (index % 2 === 0 ? "coin" : "orb") as "coin" | "orb",
+  const grid: OlympusSymbolId[] = Array.from({ length: 30 }, (_, index) =>
+    index % 2 === 0 ? "coin" : "orb",
   );
   const removed = [0, 6, 12, 18, 24];
   const next = collapseOlympusGrid(grid, removed, () => 0.99);
