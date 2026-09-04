@@ -1,0 +1,37 @@
+name: Apply Olympus render isolation
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - perf/olympus-render-cost
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: perf/olympus-render-cost
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: python3 scripts/apply-olympus-render-isolation.py
+      - run: git diff --check
+      - run: bun run typecheck
+      - run: bun run test
+      - run: bun run build
+      - name: Commit validated source change
+        run: |
+          if git diff --quiet; then
+            echo "Olympus render isolation already applied."
+            exit 0
+          fi
+          git config user.name "danilo760"
+          git config user.email "62104537+danilo760@users.noreply.github.com"
+          git add src/components/arcade/OlympusStormReference.tsx src/components/arcade/OlympusStormReference.css
+          git commit -m "perf: reduce Olympus grid render cost"
+          git push origin HEAD:perf/olympus-render-cost
