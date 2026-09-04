@@ -1,113 +1,68 @@
 @keyframes os-reel-fall {
-  0% { transform: translateY(-20%); filter: blur(2.4px) brightness(1.06); }
-  50% { transform: translateY(16%); filter: blur(4.5px) brightness(1.14); }
-  100% { transform: translateY(-20%); filter: blur(2.4px) brightness(1.06); }
+  0% { transform: translateY(-7%) scaleY(1.018); opacity: .95; }
+  50% { transform: translateY(7%) scaleY(.985); opacity: 1; }
+  100% { transform: translateY(-7%) scaleY(1.018); opacity: .95; }
 }
 
 @keyframes os-reel-land {
-  0% { transform: translateY(-10%) scaleY(1.05); }
-  58% { transform: translateY(4%) scaleY(.98); }
-  82% { transform: translateY(-1.5%) scaleY(1.01); }
+  0% { transform: translateY(-9%) scaleY(1.03); }
+  60% { transform: translateY(2.5%) scaleY(.99); }
+  84% { transform: translateY(-1%) scaleY(1.006); }
   100% { transform: translateY(0) scaleY(1); }
 }
 
 @keyframes os-win-pulse {
-  0%,100% { box-shadow: inset 0 0 14px rgba(84,183,255,.2), 0 0 6px rgba(55,189,255,.28); filter: brightness(1); }
-  50% { box-shadow: inset 0 0 25px rgba(225,248,255,.7), 0 0 24px rgba(44,190,255,.72); filter: brightness(1.22) saturate(1.08); }
+  0%,100% { box-shadow: inset 0 0 12px rgba(84,183,255,.16), 0 0 5px rgba(55,189,255,.22); }
+  50% { box-shadow: inset 0 0 22px rgba(225,248,255,.52), 0 0 22px rgba(44,190,255,.62); }
 }
 
 @keyframes os-lightning-flash {
   0% { opacity: 0; }
-  10% { opacity: .82; }
-  20% { opacity: .06; }
-  32% { opacity: .54; }
-  48% { opacity: .04; }
+  12% { opacity: .78; }
+  24% { opacity: .08; }
+  38% { opacity: .46; }
+  54% { opacity: .05; }
   100% { opacity: 0; }
 }
 
 @keyframes os-storm-pop {
-  0% { transform: translate(-50%, 14px) scale(.82); opacity: 0; filter: blur(3px); }
-  58% { transform: translate(-50%, -2px) scale(1.04); opacity: 1; filter: blur(0); }
+  0% { transform: translate(-50%, 10px) scale(.86); opacity: 0; }
+  60% { transform: translate(-50%, -1px) scale(1.025); opacity: 1; }
   100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
 }
 
 @keyframes os-spin-idle {
-  0%,100% { box-shadow: 0 0 8px rgba(0,172,255,.26); }
-  50% { box-shadow: 0 0 25px rgba(56,194,255,.7), 0 0 42px rgba(35,116,255,.28); }
+  0%,100% { box-shadow: 0 0 8px rgba(0,172,255,.22); }
+  50% { box-shadow: 0 0 22px rgba(56,194,255,.62), 0 0 36px rgba(35,116,255,.24); }
 }
 
 .os-ref-spinning > div {
-  animation: os-reel-fall .2s linear infinite;
+  animation: os-reel-fall .18s linear infinite;
   transform-origin: center;
+  will-change: transform, opacity;
 }
 
 .os-ref-land > div {
   animation: os-reel-land .3s cubic-bezier(.2,.8,.2,1) both;
+  will-change: transform;
 }
 
 .os-ref-win {
   z-index: 2;
-  animation: os-win-pulse .8s ease-in-out infinite;
-  outline: 1px solid rgba(168,231,255,.8);
+  animation: os-win-pulse .82s ease-in-out infinite;
+  outline: 1px solid rgba(168,231,255,.72);
   outline-offset: -2px;
 }
 
 .os-ref-lightning-flash {
   background:
-    radial-gradient(circle at 52% 34%, rgba(255,255,255,.82), rgba(129,216,255,.42) 11%, transparent 31%),
-    linear-gradient(112deg, transparent 43%, rgba(234,249,255,.8) 46%, rgba(76,193,255,.56) 47%, transparent 50%),
-    linear-gradient(72deg, transparent 52%, rgba(255,255,255,.72) 54%, rgba(48,165,255,.5) 55%, transparent 58%);
+    radial-gradient(circle at 52% 34%, rgba(255,255,255,.78), rgba(129,216,255,.38) 11%, transparent 31%),
+    linear-gradient(112deg, transparent 43%, rgba(234,249,255,.74) 46%, rgba(76,193,255,.5) 47%, transparent 50%),
+    linear-gradient(72deg, transparent 52%, rgba(255,255,255,.66) 54%, rgba(48,165,255,.44) 55%, transparent 58%);
   mix-blend-mode: screen;
-  animation: os-lightning-flash .58s ease-out both;
+  animation: os-lightning-flash .56s ease-out both;
 }
 
-.os-ref-storm-message {
-  animation: os-storm-pop .34s cubic-bezier(.2,.9,.3,1.15) both;
-}
-
-.os-ref-spin-button {
-  animation: os-spin-idle 1.5s ease-in-out infinite;
-  transition: transform .12s ease, filter .12s ease;
-}
-
-.os-ref-spin-button:active:not(:disabled) {
-  transform: scale(.93);
-  filter: brightness(1.18);
-}
-
-/* Fully cover values printed in the artwork and keep live numbers on one line. */
-main:has(.os-ref-spin-button) > div > [class*="bg-[#021b3a]"] {
-  isolation: isolate;
-  overflow: visible;
-  white-space: nowrap;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1;
-  letter-spacing: -.025em;
-  background: #021b3a !important;
-  box-shadow: 0 .74rem 0 .26rem #021b3a !important;
-  font-size: clamp(.6rem, 2.85vw, .86rem) !important;
-}
-
-main:has(.os-ref-spin-button) > div > [class*="bg-[#021b3a]"]::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  left: -5%;
-  right: -5%;
-  top: -10%;
-  bottom: -66%;
-  border-radius: .55rem;
-  background: #021b3a;
-}
-
-main:has(.os-ref-spin-button) > div > [class*="bg-[#002a62]"] {
-  overflow: hidden;
-  background: #002a62 !important;
-  box-shadow: inset 0 0 12px rgba(70,175,255,.38) !important;
-}
-
-/* Keep Zeus effects stable: only the existing win flash reacts; no full-cabinet pseudo transforms. */
 .os-ref-lightning-flash::after {
   content: "";
   position: absolute;
@@ -115,17 +70,15 @@ main:has(.os-ref-spin-button) > div > [class*="bg-[#002a62]"] {
   top: 5.5%;
   width: 9%;
   height: 18%;
-  opacity: .55;
+  opacity: .5;
   clip-path: polygon(43% 0, 70% 0, 55% 35%, 82% 35%, 28% 100%, 40% 56%, 12% 56%);
   background: linear-gradient(180deg, #fff, #8ee6ff 42%, #299dff 76%, #dffaff);
-  filter: drop-shadow(0 0 7px #b7edff) drop-shadow(0 0 13px #3bbcff);
+  filter: drop-shadow(0 0 6px #b7edff) drop-shadow(0 0 11px #3bbcff);
 }
 
-@media (max-width: 390px) {
-  main:has(.os-ref-spin-button) > div > [class*="bg-[#021b3a]"] {
-    font-size: clamp(.56rem, 2.7vw, .78rem) !important;
-  }
-}
+.os-ref-storm-message { animation: os-storm-pop .34s cubic-bezier(.2,.9,.3,1.08) both; }
+.os-ref-spin-button { animation: os-spin-idle 1.55s ease-in-out infinite; transition: transform .12s ease; }
+.os-ref-spin-button:active:not(:disabled) { transform: scale(.94); }
 
 @media (prefers-reduced-motion: reduce) {
   .os-ref-spinning > div,
