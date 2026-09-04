@@ -63,7 +63,9 @@ jobs:
               if curl -sf http://127.0.0.1:9222/json/version >/dev/null && curl -sf http://127.0.0.1:4173/game/golden-tiger >/dev/null; then return; fi
               sleep .25
             done
-            cat /tmp/golden-vite.log || true; cat /tmp/golden-chrome.log || true; exit 1
+            cat /tmp/golden-vite.log || true
+            cat /tmp/golden-chrome.log || true
+            exit 1
           }
 
           stop_runtime() {
@@ -78,21 +80,33 @@ jobs:
             git checkout --force "$REF"
             bun install --frozen-lockfile >/dev/null
             inject_counters
-            start_runtime
-            node /tmp/profile-golden-cdp.mjs >"/tmp/$LABEL.json"
-            stop_runtime
-            echo "$LABEL=$(cat /tmp/$LABEL.json)"
+            for SAMPLE in 1 2 3; do
+              start_runtime
+              node /tmp/profile-golden-cdp.mjs >"/tmp/${LABEL}-${SAMPLE}.json"
+              stop_runtime
+              echo "${LABEL}-${SAMPLE}=$(cat /tmp/${LABEL}-${SAMPLE}.json)"
+            done
           }
 
           profile_ref b035054e0870edf4d317aef4730b582e7c6437b1 before
           profile_ref "$AFTER_SHA" after
 
+          set +e
           node - <<'NODE'
           const fs = require('fs');
-          const before = JSON.parse(fs.readFileSync('/tmp/before.json', 'utf8'));
-          const after = JSON.parse(fs.readFileSync('/tmp/after.json', 'utf8'));
+          const read = (label) => [1,2,3].map((i) => JSON.parse(fs.readFileSync(`/tmp/${label}-${i}.json`, 'utf8')));
+          const beforeSamples = read('before');
+          const afterSamples = read('after');
+          const numericKeys = [
+            'avgFps','worstFrameMs','p99FrameMs','longTasks','renderCount','symbolRenderCount',
+            'jsHeapDelta','taskDuration','scriptDuration','layoutDuration','recalcStyleDuration'
+          ];
+          const median = (values) => [...values].sort((a,b) => a-b)[Math.floor(values.length / 2)];
+          const medians = (samples) => Object.fromEntries(numericKeys.map((key) => [key, median(samples.map((sample) => sample[key] ?? 0))]));
+          const before = medians(beforeSamples);
+          const after = medians(afterSamples);
           const pct = (a,b) => a ? ((b-a)/a)*100 : 0;
-          const comparison = { before, after, delta: {
+          const comparison = { beforeSamples, afterSamples, median: { before, after }, delta: {
             avgFpsPct: pct(before.avgFps, after.avgFps),
             renderCountPct: pct(before.renderCount, after.renderCount),
             symbolRenderCountPct: pct(before.symbolRenderCount, after.symbolRenderCount),
@@ -102,20 +116,27 @@ jobs:
             longTasks: after.longTasks - before.longTasks,
             heapDeltaBytes: after.jsHeapDelta - before.jsHeapDelta,
           }};
-          console.log('=== GOLDEN PERF COMPARISON ===');
+          console.log('=== GOLDEN PERF MEDIAN COMPARISON (3 samples each) ===');
           console.log(JSON.stringify(comparison, null, 2));
-          if (after.symbolRenderCount > before.symbolRenderCount * 1.05) throw new Error('Golden symbol renders regressed >5%');
-          if (after.scriptDuration > before.scriptDuration * 1.12) throw new Error('Golden script duration regressed >12%');
-          if (after.taskDuration > before.taskDuration * 1.15) throw new Error('Golden task duration regressed >15%');
-          if (after.avgFps < before.avgFps * .9) throw new Error('Golden average FPS regressed >10%');
-          if (after.longTasks > before.longTasks + 2) throw new Error('Golden long tasks regressed by >2');
+          if (after.symbolRenderCount > before.symbolRenderCount * 1.05) throw new Error('Golden median symbol renders regressed >5%');
+          if (after.scriptDuration > before.scriptDuration * 1.12) throw new Error('Golden median script duration regressed >12%');
+          if (after.taskDuration > before.taskDuration * 1.15) throw new Error('Golden median task duration regressed >15%');
+          if (after.avgFps < before.avgFps * .9) throw new Error('Golden median average FPS regressed >10%');
+          if (after.longTasks > before.longTasks + 2) throw new Error('Golden median long tasks regressed by >2');
+          if (Math.max(...afterSamples.map((sample) => sample.longTasks ?? 0)) > 3) throw new Error('Golden sample produced >3 long tasks');
           NODE
+          PERF_EXIT=$?
+          set -e
 
           git checkout --force "$AFTER_SHA"
           bun install --frozen-lockfile >/dev/null
+          exit "$PERF_EXIT"
       - name: Audit Golden Fortune purchase flow at 390x844 / CPU 4x
+        if: always()
         run: |
           set -euo pipefail
+          git checkout --force "${{ github.sha }}"
+          bun install --frozen-lockfile >/dev/null
           bun run dev -- --host 127.0.0.1 --port 4174 >/tmp/golden-feature-vite.log 2>&1 & VITE_PID=$!
           CHROME_BIN=$(command -v google-chrome || command -v chromium || command -v chromium-browser)
           "$CHROME_BIN" --headless=new --no-sandbox --disable-dev-shm-usage --autoplay-policy=no-user-gesture-required --remote-debugging-port=9223 --user-data-dir=/tmp/chrome-golden-feature about:blank >/tmp/golden-feature-chrome.log 2>&1 & CHROME_PID=$!
