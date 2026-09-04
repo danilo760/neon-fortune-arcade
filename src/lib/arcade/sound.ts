@@ -8,9 +8,7 @@ let ctx: AudioContext | null = null;
 function getContext(): AudioContext | null {
   if (typeof window === "undefined") return null;
   try {
-    const Ctor =
-      window.AudioContext ??
-      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Ctor) return null;
     ctx ??= new Ctor();
     if (ctx.state === "suspended") void ctx.resume();
@@ -65,7 +63,8 @@ export type SoundName =
   | "spin" | "tick" | "anticipation" | "win" | "bigWin" | "lose" | "click" | "cash" | "bonus"
   | "tigerScatter" | "tigerThrow" | "tigerImpact" | "tigerBonus" | "tigerRetrigger" | "tigerMiss"
   | "olympusCluster" | "olympusFall" | "olympusCharge" | "olympusHit" | "olympusMultiplier"
-  | "candyPop" | "candyBreak" | "candyBounce" | "candyBomb" | "candyExplosion" | "candyStreak";
+  | "candyPop" | "candyBreak" | "candyBounce" | "candyBomb" | "candyExplosion" | "candyStreak"
+  | "minesMetal" | "minesUnlock" | "minesCrystal" | "minesDanger" | "minesExplosion" | "minesCashout";
 
 export function playSound(name: SoundName, enabled: boolean) {
   if (!enabled) return;
@@ -114,6 +113,20 @@ export function playSound(name: SoundName, enabled: boolean) {
       noise(0.2,0.02,0,2800); tone(180,0.28,"sine",0.045,0,72); tone(1320,0.13,"triangle",0.025,0.01,420); break;
     case "candyStreak":
       [520,660,820].forEach((f,i)=>tone(f,0.14,"triangle",0.024,i*0.045,f*1.2)); break;
+    case "minesMetal":
+      noise(0.055,0.015,0,1500); tone(210,0.09,"triangle",0.024,0,155); break;
+    case "minesUnlock":
+      tone(460,0.12,"square",0.018,0,640); tone(720,0.1,"sine",0.02,0.055,940); break;
+    case "minesCrystal": {
+      const v = 0.96 + Math.random() * 0.08;
+      tone(760*v,0.18,"sine",0.035,0,1280*v); tone(1140*v,0.16,"triangle",0.022,0.04,1540*v); break;
+    }
+    case "minesDanger":
+      tone(92,0.3,"sine",0.036,0,76); tone(184,0.24,"sawtooth",0.014,0.04,132); break;
+    case "minesExplosion":
+      noise(0.28,0.035,0,1900); tone(88,0.38,"sine",0.06,0,42); tone(1180,0.1,"square",0.018,0.01,420); break;
+    case "minesCashout":
+      [523,659,880,1174].forEach((f,i)=>tone(f,0.2,"sine",0.04,i*0.045,f*1.05)); break;
     case "click":
       tone(560,0.055,"triangle",0.03,0,720); break;
     case "win":
