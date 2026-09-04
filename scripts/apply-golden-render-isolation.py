@@ -43,3 +43,5 @@ rule = '\n.gt-ref-grid { contain: layout paint; }\n'
 if rule.strip() not in css:
     css = rule + css
 CSS.write_text(css)
+
+# Trigger validation after workflow registration.
