@@ -1,0 +1,46 @@
+name: Olympus Ascension Validation
+
+on:
+  push:
+    branches:
+      - codex/olympus-storm-ascension
+
+jobs:
+  olympus-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Tests
+        run: npm test
+      - name: Build
+        run: npm run build
+      - name: Install profiler dependency
+        run: npm install --no-save --ignore-scripts puppeteer-core@24.16.0
+      - name: Start preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/olympus-preview.log 2>&1 &
+          echo $! > /tmp/olympus-preview.pid
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:4173/game/olympus-storm >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/olympus-preview.log
+          exit 1
+      - name: Locate Chrome
+        run: |
+          if command -v google-chrome >/dev/null; then echo "CHROME_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV"; 
+          elif command -v google-chrome-stable >/dev/null; then echo "CHROME_PATH=$(command -v google-chrome-stable)" >> "$GITHUB_ENV";
+          elif command -v chromium >/dev/null; then echo "CHROME_PATH=$(command -v chromium)" >> "$GITHUB_ENV";
+          else echo "Chrome not found"; exit 1; fi
+      - name: Profile Olympus 390x844 CPU 4x
+        env:
+          OLYMPUS_PROFILE_RUNS: "3"
+        run: node scripts/profile-olympus.mjs
