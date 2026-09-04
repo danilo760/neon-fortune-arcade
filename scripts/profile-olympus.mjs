@@ -87,7 +87,7 @@ async function runOnce(index) {
   await page.waitForFunction(() => {
     const auto = document.querySelector('[aria-label="Auto play"]');
     const spin = document.querySelector('[aria-label="Girar Olympus Storm"]');
-    return Boolean(auto && spin && !spin.hasAttribute("aria-busy"));
+    return Boolean(auto && spin && spin.getAttribute("aria-busy") !== "true");
   }, { timeout: 120_000, polling: 100 });
 
   const perf = await page.evaluate(() => {
