@@ -17,6 +17,8 @@ import "./PlinkoInteraction.css";
 const BALL_COUNTS = [1, 3, 5, 10] as const;
 const IMPACT_POOL_SIZE = 12;
 const TRAIL_POOL_SIZE = 6;
+const MAX_COLLISIONS_PER_FRAME = 4;
+const TRAIL_LAG_BUDGET_MS = 34;
 type BallCount = (typeof BALL_COUNTS)[number];
 type PortalPhase = "idle" | "charging" | "launching";
 
@@ -244,13 +246,23 @@ export function PlinkoReference() {
     let cursor = 0;
     const frame = (now: number) => {
       const elapsed = now - startedAt;
-      while (cursor < events.length && events[cursor]!.at <= elapsed) {
+      let processed = 0;
+      while (
+        cursor < events.length &&
+        events[cursor]!.at <= elapsed &&
+        processed < MAX_COLLISIONS_PER_FRAME
+      ) {
         const event = events[cursor]!;
         const point = ballPosition(event.ball.path, event.step, rows, event.ball.bucket, payouts.length);
-        emitTrail(event.ball, point, rect.width, rect.height);
+        const lateBy = Math.max(0, elapsed - event.at);
+
+        // Impacts communicate gameplay and are never removed. The trail is secondary and
+        // can be skipped only when the scheduler is already outside its frame budget.
+        if (lateBy <= TRAIL_LAG_BUDGET_MS) emitTrail(event.ball, point, rect.width, rect.height);
         emitImpact(event.ball, point, rect.width, rect.height);
         if (event.step % 2 === 0 || ballsPerRun <= 3) playSound("plinkoPeg", soundEnabled);
         cursor += 1;
+        processed += 1;
       }
       if (cursor < events.length && mountedRef.current) collisionRafRef.current = requestAnimationFrame(frame);
       else collisionRafRef.current = null;
