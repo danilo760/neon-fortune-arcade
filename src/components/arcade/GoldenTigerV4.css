@@ -70,6 +70,7 @@
 .gt4-scatter { animation: gt4-scatter 680ms ease-in-out infinite; }
 .gt4-winning { animation: gt4-win 760ms ease-in-out infinite; }
 .gt4-spin-idle { animation: gt4-spin-pulse 1.7s ease-in-out infinite; }
+.gt4-spin-idle:active { animation-play-state: paused; transform: scale(.92); filter: brightness(1.16) saturate(1.12); }
 .gt4-spin-arrow { animation: gt4-spin-active 650ms linear infinite; }
 .gt4-fire-ring { animation: gt4-fire-ring 850ms ease-in-out infinite; }
 .gt4-anticipation-banner { animation: gt4-banner-pop 380ms cubic-bezier(.2,.9,.25,1.25) both; }
