@@ -301,7 +301,7 @@ export function planOlympusRound(
     const multiplier = pickOlympusStormMultiplier(cascadeIndex, rng);
     const levelAtCascade = stormLevel;
     const levelMultiplier = mode === "freeSpins"
-      ? (OLYMPUS_STORM_LEVEL_MULTIPLIERS[levelAtCascade - 1] ?? 1)
+      ? ((OLYMPUS_STORM_LEVEL_MULTIPLIERS[levelAtCascade - 1] ?? 1) ?? 1)
       : 1;
     const stepPayout = Math.round(basePayout * multiplier * levelMultiplier);
     const nextGrid = collapseOlympusGrid(current, winning, rng, mode);
