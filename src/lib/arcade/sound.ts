@@ -1,21 +1,81 @@
+import { AudioEventGate } from "./audioEventGate";
+
 /**
  * Lightweight procedural WebAudio engine.
  * No commercial audio assets, no downloads, and no autoplay before interaction.
  */
 
 let ctx: AudioContext | null = null;
+let masterGain: GainNode | null = null;
+let toneFilter: BiquadFilterNode | null = null;
+let cachedNoiseBuffer: AudioBuffer | null = null;
+const noiseFilters = new Map<number, BiquadFilterNode>();
+const repeatedAudioGate = new AudioEventGate();
+
+function resetGraphCaches() {
+  masterGain = null;
+  toneFilter = null;
+  cachedNoiseBuffer = null;
+  noiseFilters.clear();
+  repeatedAudioGate.reset();
+}
 
 function getContext(): AudioContext | null {
   if (typeof window === "undefined") return null;
   try {
     const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Ctor) return null;
-    ctx ??= new Ctor();
+    if (!ctx || ctx.state === "closed") {
+      ctx = new Ctor();
+      resetGraphCaches();
+    }
     if (ctx.state === "suspended") void ctx.resume();
     return ctx;
   } catch {
     return null;
   }
+}
+
+function getMasterGain(audio: AudioContext) {
+  if (!masterGain) {
+    masterGain = audio.createGain();
+    masterGain.gain.value = 1;
+    masterGain.connect(audio.destination);
+  }
+  return masterGain;
+}
+
+function getToneFilter(audio: AudioContext) {
+  if (!toneFilter) {
+    toneFilter = audio.createBiquadFilter();
+    toneFilter.type = "lowpass";
+    toneFilter.frequency.value = 4200;
+    toneFilter.connect(getMasterGain(audio));
+  }
+  return toneFilter;
+}
+
+function getNoiseFilter(audio: AudioContext, cutoff: number) {
+  const key = Math.round(cutoff);
+  let filter = noiseFilters.get(key);
+  if (!filter) {
+    filter = audio.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = key;
+    filter.connect(getMasterGain(audio));
+    noiseFilters.set(key, filter);
+  }
+  return filter;
+}
+
+function getNoiseBuffer(audio: AudioContext) {
+  if (cachedNoiseBuffer && cachedNoiseBuffer.sampleRate === audio.sampleRate) return cachedNoiseBuffer;
+  const length = Math.max(1, Math.floor(audio.sampleRate));
+  const buffer = audio.createBuffer(1, length, audio.sampleRate);
+  const channel = buffer.getChannelData(0);
+  for (let index = 0; index < channel.length; index += 1) channel[index] = Math.random() * 2 - 1;
+  cachedNoiseBuffer = buffer;
+  return buffer;
 }
 
 function tone(freq: number, duration: number, type: OscillatorType, gain: number, delay = 0, endFreq?: number) {
@@ -24,16 +84,17 @@ function tone(freq: number, duration: number, type: OscillatorType, gain: number
   const start = audio.currentTime + delay;
   const osc = audio.createOscillator();
   const amp = audio.createGain();
-  const filter = audio.createBiquadFilter();
   osc.type = type;
   osc.frequency.setValueAtTime(freq, start);
   if (endFreq && endFreq > 0) osc.frequency.exponentialRampToValueAtTime(endFreq, start + duration);
-  filter.type = "lowpass";
-  filter.frequency.setValueAtTime(4200, start);
   amp.gain.setValueAtTime(0.0001, start);
   amp.gain.exponentialRampToValueAtTime(gain, start + 0.012);
   amp.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-  osc.connect(filter).connect(amp).connect(audio.destination);
+  osc.connect(amp).connect(getToneFilter(audio));
+  osc.onended = () => {
+    osc.disconnect();
+    amp.disconnect();
+  };
   osc.start(start);
   osc.stop(start + duration + 0.03);
 }
@@ -42,19 +103,16 @@ function noise(duration: number, gain: number, delay = 0, cutoff = 1800) {
   const audio = getContext();
   if (!audio) return;
   const start = audio.currentTime + delay;
-  const length = Math.max(1, Math.floor(audio.sampleRate * duration));
-  const buffer = audio.createBuffer(1, length, audio.sampleRate);
-  const channel = buffer.getChannelData(0);
-  for (let index = 0; index < channel.length; index += 1) channel[index] = (Math.random() * 2 - 1) * (1 - index / channel.length);
   const source = audio.createBufferSource();
-  const filter = audio.createBiquadFilter();
   const amp = audio.createGain();
-  filter.type = "lowpass";
-  filter.frequency.setValueAtTime(cutoff, start);
-  amp.gain.setValueAtTime(gain, start);
+  source.buffer = getNoiseBuffer(audio);
+  amp.gain.setValueAtTime(Math.max(0.0001, gain), start);
   amp.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-  source.buffer = buffer;
-  source.connect(filter).connect(amp).connect(audio.destination);
+  source.connect(amp).connect(getNoiseFilter(audio, cutoff));
+  source.onended = () => {
+    source.disconnect();
+    amp.disconnect();
+  };
   source.start(start);
   source.stop(start + duration + 0.02);
 }
@@ -69,6 +127,11 @@ export type SoundName =
 
 export function playSound(name: SoundName, enabled: boolean) {
   if (!enabled) return;
+  if (name === "plinkoPeg") {
+    const now = typeof performance === "undefined" ? Date.now() : performance.now();
+    if (!repeatedAudioGate.allow("plinkoPeg", now)) return;
+  }
+
   switch (name) {
     case "spin":
       noise(0.22, 0.02, 0, 1200); tone(150, 0.2, "sawtooth", 0.035, 0, 290); tone(330, 0.12, "triangle", 0.035, 0.055, 480); break;
