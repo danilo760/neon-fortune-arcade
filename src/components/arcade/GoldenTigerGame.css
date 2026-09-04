@@ -208,6 +208,45 @@ div[style*="/golden-tiger/symbols.webp"] {
   }
 }
 
+/* Result cards reveal in a deliberate sequence: flash, title, then detail.
+   They are visual-only and never delay or change the already-settled outcome. */
+@keyframes tiger-result-card-in {
+  0% { opacity: 0; transform: translateY(12px) scale(.84); filter: brightness(1.55) blur(3px); }
+  58% { opacity: 1; transform: translateY(-2px) scale(1.045); filter: brightness(1.18) blur(0); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1); }
+}
+
+@keyframes tiger-result-sheen {
+  0% { transform: translateX(-145%) skewX(-18deg); opacity: 0; }
+  22% { opacity: .78; }
+  100% { transform: translateX(185%) skewX(-18deg); opacity: 0; }
+}
+
+@keyframes tiger-bonus-stage-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.gt4-bonus-stage { animation: tiger-bonus-stage-in .18s ease-out both; }
+.gt4-result-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  animation: tiger-result-card-in .46s cubic-bezier(.18,.9,.25,1.15) both;
+}
+.gt4-result-card::after {
+  content: "";
+  position: absolute;
+  inset: -30% -40%;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(108deg, transparent 40%, rgba(255,244,176,.74) 49%, rgba(255,255,255,.93) 52%, transparent 62%);
+  mix-blend-mode: screen;
+  animation: tiger-result-sheen 1.05s ease-out .16s both;
+}
+.gt4-result-card--big { letter-spacing: .035em; text-shadow: 0 2px 0 #7a1d00, 0 0 18px rgba(255,229,111,.75); }
+.gt4-result-card--summary { animation-duration: .38s; }
+
 @media (prefers-reduced-motion: reduce) {
   [class*="tiger-reel-spin"],
   [class*="tiger-reel-stop"],
@@ -222,6 +261,12 @@ div[style*="/golden-tiger/symbols.webp"] {
   [class*="tiger-spin-active"],
   [class*="tiger-spin-button"],
   [class*="tiger-spin-pulse"] {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  .gt4-bonus-stage,
+  .gt4-result-card,
+  .gt4-result-card::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
   }
