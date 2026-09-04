@@ -331,7 +331,7 @@ export function CandyCascadeHQ() {
           </div>
         )}
 
-        <div className="absolute left-[25%] top-[76.4%] z-[35] flex h-[7.7%] w-[50%] items-center justify-center rounded-[20px] bg-[#4a075f]/96 text-center shadow-[inset_0_0_18px_rgba(255,85,238,.4)]">
+        <div className={cn("absolute left-[25%] top-[76.4%] z-[35] flex h-[7.7%] w-[50%] items-center justify-center rounded-[20px] bg-[#4a075f]/96 text-center shadow-[inset_0_0_18px_rgba(255,85,238,.4)]", win > 0 && !spinning && "cc-ref-result-win")}>
           <div>
             <p className="text-[8px] font-black uppercase tracking-[.16em] text-pink-100">WIN</p>
             <p className="font-serif text-[clamp(1.25rem,7vw,2.15rem)] font-black leading-none text-[#ffe35f] tabular-nums drop-shadow-[0_2px_0_#6b2b00]">{formatCoins(win)}</p>
