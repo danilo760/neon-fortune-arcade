@@ -1,0 +1,95 @@
+name: Perf Mines counter profile
+
+on:
+  push:
+    branches: [perf/mines-counter-isolation]
+    paths:
+      - scripts/profile-mines-cdp.mjs
+
+permissions:
+  contents: read
+
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run test
+      - run: bun run build
+      - name: Profile Mines safe reveals + cashout at 390x844 / CPU 4x
+        env:
+          AFTER_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          cp scripts/profile-mines-cdp.mjs /tmp/profile-mines-cdp.mjs
+
+          inject_counter() {
+            python3 - <<'PY'
+          from pathlib import Path
+          path = Path('src/components/arcade/MinesGame.tsx')
+          text = path.read_text()
+          marker = 'export function MinesGame() {\n'
+          injection = '''export function MinesGame() {\n  if (typeof window !== "undefined") {\n    const perfWindow = window as Window & { __minesRenderCount?: number };\n    perfWindow.__minesRenderCount = (perfWindow.__minesRenderCount ?? 0) + 1;\n  }\n'''
+          if marker not in text:
+              raise SystemExit('Mines main marker missing')
+          path.write_text(text.replace(marker, injection, 1))
+          PY
+          }
+
+          start_runtime() {
+            bun run dev -- --host 127.0.0.1 --port 4173 >/tmp/mines-vite.log 2>&1 & VITE_PID=$!
+            CHROME_BIN=$(command -v google-chrome || command -v chromium || command -v chromium-browser)
+            "$CHROME_BIN" --headless=new --no-sandbox --disable-dev-shm-usage --autoplay-policy=no-user-gesture-required --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-mines about:blank >/tmp/mines-chrome.log 2>&1 & CHROME_PID=$!
+            for i in $(seq 1 120); do
+              if curl -sf http://127.0.0.1:9222/json/version >/dev/null && curl -sf http://127.0.0.1:4173/game/neon-mines >/dev/null; then return; fi
+              sleep .25
+            done
+            cat /tmp/mines-vite.log || true; cat /tmp/mines-chrome.log || true; exit 1
+          }
+
+          stop_runtime() {
+            kill "$VITE_PID" "$CHROME_PID" 2>/dev/null || true
+            wait "$VITE_PID" 2>/dev/null || true
+            wait "$CHROME_PID" 2>/dev/null || true
+            rm -rf /tmp/chrome-mines
+          }
+
+          profile_ref() {
+            REF="$1"; LABEL="$2"
+            git checkout --force "$REF"
+            bun install --frozen-lockfile >/dev/null
+            inject_counter
+            start_runtime
+            node /tmp/profile-mines-cdp.mjs >"/tmp/$LABEL.json"
+            stop_runtime
+            echo "$LABEL=$(cat /tmp/$LABEL.json)"
+          }
+
+          profile_ref 0683b7b1aed3bac4d7117f6272349a8cd4d46945 before
+          profile_ref "$AFTER_SHA" after
+
+          node - <<'NODE'
+          const fs = require('fs');
+          const before = JSON.parse(fs.readFileSync('/tmp/before.json', 'utf8'));
+          const after = JSON.parse(fs.readFileSync('/tmp/after.json', 'utf8'));
+          const pct = (a,b) => a ? ((b-a)/a)*100 : 0;
+          console.log('=== MINES PERF COMPARISON ===');
+          console.log(JSON.stringify({ before, after, delta: {
+            avgFpsPct: pct(before.avgFps, after.avgFps),
+            renderCountPct: pct(before.renderCount, after.renderCount),
+            tileRenderOpsPct: pct(before.estimatedTileRenderOps, after.estimatedTileRenderOps),
+            taskDurationPct: pct(before.taskDuration, after.taskDuration),
+            scriptDurationPct: pct(before.scriptDuration, after.scriptDuration),
+            longTasks: after.longTasks - before.longTasks,
+            heapDeltaBytes: after.jsHeapDelta - before.jsHeapDelta,
+          }}, null, 2));
+          if (after.renderCount >= before.renderCount * 0.65) throw new Error('Mines parent render reduction below 35% gate');
+          if (after.scriptDuration > before.scriptDuration * 1.12) throw new Error('Mines script duration regressed >12%');
+          NODE
