@@ -47,6 +47,18 @@
   100% { transform: translateX(115%) skewX(-18deg); }
 }
 
+@keyframes gt-ref-tiger-breathe {
+  0%,100% { opacity: .14; transform: translate(-50%, -50%) scale(.94); }
+  50% { opacity: .42; transform: translate(-50%, -50%) scale(1.045); }
+}
+
+@keyframes gt-ref-tiger-eyes {
+  0%,76%,100% { opacity: .08; transform: scale(.86); }
+  82% { opacity: .78; transform: scale(1.18); }
+  88% { opacity: .2; transform: scale(.95); }
+  93% { opacity: .66; transform: scale(1.08); }
+}
+
 .gt-ref-machine__ambient {
   position: absolute;
   z-index: 10;
@@ -61,6 +73,38 @@
   background-position: 0 0, 22px 38px, 46px 12px, -130% 0;
   mix-blend-mode: screen;
   animation: gt-ref-ambient-sweep 5.8s ease-in-out infinite;
+}
+
+/* Mascot reactions live entirely inside the ambient layer: no HUD/reel movement. */
+.gt-ref-machine__ambient::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 14%;
+  width: 38%;
+  height: 22%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255,205,68,.22), rgba(255,92,18,.08) 42%, transparent 72%);
+  filter: drop-shadow(0 0 12px rgba(255,171,36,.22));
+  animation: gt-ref-tiger-breathe 3.4s ease-in-out infinite;
+}
+
+.gt-ref-machine__ambient::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 13.5%;
+  width: 14%;
+  height: 4.5%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  background:
+    radial-gradient(circle at 35% 52%, rgba(255,248,174,.95) 0 5%, rgba(255,177,48,.5) 7%, transparent 16%),
+    radial-gradient(circle at 65% 52%, rgba(255,248,174,.95) 0 5%, rgba(255,177,48,.5) 7%, transparent 16%);
+  filter: drop-shadow(0 0 5px rgba(255,217,85,.8));
+  animation: gt-ref-tiger-eyes 4.7s ease-in-out infinite;
 }
 
 .gt-ref-spinning {
@@ -130,6 +174,8 @@
   .gt-ref-win,
   .gt-ref-spin-button,
   .gt-ref-machine__ambient,
+  .gt-ref-machine__ambient::before,
+  .gt-ref-machine__ambient::after,
   .gt-ref-anticipate::before,
   .gt-ref-scatter::after {
     animation: none !important;
