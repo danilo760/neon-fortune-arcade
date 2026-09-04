@@ -14,6 +14,7 @@ import premiumCss from "../premium.css?url";
 import polishCss from "../arcade-polish.css?url";
 import mobilePolishCss from "../arcade-mobile-polish.css?url";
 import hudFixesCss from "../arcade-hud-fixes.css?url";
+import motionPolishCss from "../arcade-motion-polish.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -101,6 +102,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: polishCss },
       { rel: "stylesheet", href: mobilePolishCss },
       { rel: "stylesheet", href: hudFixesCss },
+      { rel: "stylesheet", href: motionPolishCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
