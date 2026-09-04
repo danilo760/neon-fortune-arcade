@@ -394,7 +394,7 @@ export function GoldenTigerReference() {
 
   const setMaxBet = () => {
     const affordable = [...BET_STEPS].reverse().find((value) => value <= balance);
-    if (affordable !== undefined && !spinning && !bonusActive) setBet(affordable);
+    if (affordable !== undefined && !spinning && !bonusActive && autoLeft === 0) setBet(affordable);
   };
 
   const insufficient = bet > balance;
@@ -466,7 +466,7 @@ export function GoldenTigerReference() {
         ) : (
           <button type="button" onClick={() => void startAuto()} disabled={spinning || bonusActive || insufficient || !src} aria-label="Auto play" className="absolute left-[22.4%] top-[86.1%] z-50 h-[8.3%] w-[17.8%] rounded-[28px] disabled:opacity-40" />
         )}
-        <button type="button" onClick={setMaxBet} disabled={spinning || bonusActive} aria-label="Aposta máxima" className="absolute right-[4.3%] top-[86.1%] z-50 h-[8.3%] w-[25%] rounded-[28px] disabled:opacity-40" />
+        <button type="button" onClick={setMaxBet} disabled={spinning || bonusActive || autoLeft > 0} aria-label="Aposta máxima" className="absolute right-[4.3%] top-[86.1%] z-50 h-[8.3%] w-[25%] rounded-[28px] disabled:opacity-40" />
 
         <button
           type="button"
