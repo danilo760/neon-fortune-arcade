@@ -3,8 +3,8 @@ import { ArrowLeft, Sparkles, Volume2, VolumeX } from "lucide-react";
 
 import { AnimatedWinCounter } from "./AnimatedWinCounter";
 import {
-  useCallback,
   memo,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -181,6 +181,57 @@ const ReferenceSymbol = memo(function ReferenceSymbol({ id, src }: { id: GoldenT
   );
 });
 
+const TigerStage = memo(function TigerStage({ flyingCardColumn }: { flyingCardColumn: number | null }) {
+  const targetX = flyingCardColumn === null ? 50 : 6.7 + (flyingCardColumn + 0.5) * (85.1 / 5);
+  const tigerStyle = { "--gt-target-x": `${targetX}%` } as CSSProperties;
+
+  return (
+    <div className="gt-ref-tiger-stage" style={tigerStyle} aria-hidden>
+      <span className="gt-ref-tiger-rim" />
+      <span className="gt-ref-tiger-live-eyes" />
+      <span className="gt-ref-tiger-live-paw" />
+      <span className="gt-ref-tiger-foreground" />
+      {flyingCardColumn !== null && (
+        <span className="gt-ref-flying-card">
+          <span />
+        </span>
+      )}
+    </div>
+  );
+});
+
+const GoldenFortuneButton = memo(function GoldenFortuneButton({
+  disabled,
+  onOpen,
+}: {
+  disabled: boolean;
+  onOpen: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      disabled={disabled}
+      aria-label="Abrir Golden Fortune Bonus Buy"
+      className="gt-ref-feature-button absolute left-[4.6%] top-[71.2%] z-50 flex h-[5.8%] w-[28%] items-center justify-center gap-1.5 rounded-[18px] disabled:cursor-not-allowed disabled:opacity-45"
+    >
+      <Sparkles className="size-3.5" aria-hidden />
+      <span>BÔNUS</span>
+    </button>
+  );
+});
+
+const GoldenFortuneTrigger = memo(function GoldenFortuneTrigger() {
+  return (
+    <div className="gt-ref-feature-trigger" aria-hidden>
+      <div className="gt-ref-feature-card gt-ref-feature-card--one" />
+      <div className="gt-ref-feature-card gt-ref-feature-card--two" />
+      <div className="gt-ref-feature-card gt-ref-feature-card--three" />
+      <div className="gt-ref-feature-bath" />
+    </div>
+  );
+});
+
 function NumberPatch({ className, children }: { className: string; children: ReactNode }) {
   return (
     <div
@@ -195,7 +246,11 @@ function NumberPatch({ className, children }: { className: string; children: Rea
 }
 
 function tierPhase(tier: GoldenTigerWinTier): PresentationPhase {
-  return tier === "big" || tier === "mega" ? "bigWin" : tier === "small" || tier === "nice" ? "smallWin" : "evaluating";
+  return tier === "big" || tier === "mega"
+    ? "bigWin"
+    : tier === "small" || tier === "nice"
+      ? "smallWin"
+      : "evaluating";
 }
 
 function tierLabel(tier: GoldenTigerWinTier) {
@@ -266,7 +321,7 @@ export function GoldenTigerReference() {
       busyRef.current = true;
       setSpinning(true);
       setPhase("spinning");
-      setTigerReaction(free ? "bonus" : "watch");
+      setTigerReaction(free ? "bonus" : "idle");
       setFlyingCardColumn(null);
       setStoppedColumns(0);
       stoppedRef.current = 0;
@@ -339,7 +394,7 @@ export function GoldenTigerReference() {
           await wait(turbo ? 240 : 480);
           if (columnsRemain) {
             setPhase("spinning");
-            setTigerReaction(free ? "bonus" : "watch");
+            setTigerReaction(free ? "bonus" : "idle");
           }
         } else if (crossedSecond && columnsRemain) {
           hadTwoScatters = true;
@@ -411,7 +466,6 @@ export function GoldenTigerReference() {
         setWinTier(tier);
         setPhase(tierPhase(tier));
         if (tier === "big" || tier === "mega") setTigerReaction("bigWin");
-        else if (result.payout > 0) setTigerReaction("excited");
         const duration = tier === "small" ? 320 : tier === "nice" ? 620 : tier === "big" ? 980 : 1_350;
         const animatedDuration = result.payout > 0 && !reducedMotion && tier !== "none" ? duration : 0;
         setWinDuration(animatedDuration);
@@ -444,7 +498,7 @@ export function GoldenTigerReference() {
       setBonusOverlay({
         title: purchased ? "GOLDEN FORTUNE" : "FREE SPINS",
         value: String(initial),
-        caption: purchased ? "8 Free Spins ativados" : "A sorte dourada começou",
+        caption: purchased ? "8 Free Spins ativados · START" : "A sorte dourada começou",
         tone: "bonus",
       });
       playSound(purchased ? "tigerFeatureStart" : "tigerBonus", soundEnabled);
@@ -548,7 +602,9 @@ export function GoldenTigerReference() {
     });
     if (!availability.allowed && availability.reason !== "insufficientBalance") return;
     setFeatureBuyError(
-      availability.reason === "insufficientBalance" ? "Saldo fictício insuficiente para ativar o bônus." : null,
+      availability.reason === "insufficientBalance"
+        ? "Saldo fictício insuficiente para ativar o bônus."
+        : null,
     );
     setFeatureBuyOpen(true);
     setPhase("featureBuy");
@@ -622,7 +678,17 @@ export function GoldenTigerReference() {
       setFeatureBuyRunning(false);
       featureBuyLockRef.current.release();
     }
-  }, [autoLeft, bet, bonusActive, featureBuyRunning, reducedMotion, runBonus, soundEnabled, spinning, turbo]);
+  }, [
+    autoLeft,
+    bet,
+    bonusActive,
+    featureBuyRunning,
+    reducedMotion,
+    runBonus,
+    soundEnabled,
+    spinning,
+    turbo,
+  ]);
 
   const changeBet = (direction: -1 | 1) => {
     if (spinning || bonusActive || autoLeft > 0 || featureBuyOpen || featureBuyRunning) return;
@@ -634,15 +700,23 @@ export function GoldenTigerReference() {
 
   const setMaxBet = () => {
     const affordable = [...BET_STEPS].reverse().find((value) => value <= balance);
-    if (affordable !== undefined && !spinning && !bonusActive && autoLeft === 0 && !featureBuyOpen && !featureBuyRunning) setBet(affordable);
+    if (
+      affordable !== undefined &&
+      !spinning &&
+      !bonusActive &&
+      autoLeft === 0 &&
+      !featureBuyOpen &&
+      !featureBuyRunning
+    ) {
+      setBet(affordable);
+    }
   };
 
   const insufficient = bet > balance;
   const featureBuyCost = goldenTigerFeatureBuyCost(bet);
   const featureBuyInsufficient = featureBuyCost > balance;
-  const featureBuyBlocked = spinning || bonusActive || autoLeft > 0 || featureBuyRunning || busyRef.current || bonusRef.current;
-  const targetX = flyingCardColumn === null ? 50 : 6.7 + (flyingCardColumn + 0.5) * (85.1 / 5);
-  const tigerStyle = { "--gt-target-x": `${targetX}%` } as CSSProperties;
+  const featureBuyBlocked =
+    spinning || bonusActive || autoLeft > 0 || featureBuyRunning || busyRef.current || bonusRef.current;
   const scatterOrderByIndex = useMemo(() => {
     const ordered = [...scatters].sort((a, b) => a - b);
     return new Map(ordered.map((index, order) => [index, order]));
@@ -686,15 +760,7 @@ export function GoldenTigerReference() {
           </div>
         )}
         <div className="gt-ref-machine__ambient" aria-hidden />
-        <div className="gt-ref-tiger-stage" style={tigerStyle} aria-hidden>
-          <span className="gt-ref-tiger-rim" />
-          <span className="gt-ref-tiger-live-eyes" />
-          <span className="gt-ref-tiger-live-paw" />
-          <span className="gt-ref-tiger-foreground" />
-          {flyingCardColumn !== null && (
-            <span className="gt-ref-flying-card"><span /></span>
-          )}
-        </div>
+        <TigerStage flyingCardColumn={flyingCardColumn} />
 
         <Link
           to="/"
@@ -709,7 +775,11 @@ export function GoldenTigerReference() {
           aria-label={soundEnabled ? "Desativar som" : "Ativar som"}
           className="absolute right-[9.3%] top-[.8%] z-50 size-[8.8%] rounded-full bg-transparent"
         >
-          {soundEnabled ? <Volume2 className="mx-auto size-4 opacity-0" /> : <VolumeX className="mx-auto size-4 opacity-0" />}
+          {soundEnabled ? (
+            <Volume2 className="mx-auto size-4 opacity-0" />
+          ) : (
+            <VolumeX className="mx-auto size-4 opacity-0" />
+          )}
         </button>
 
         {src && (
@@ -720,7 +790,10 @@ export function GoldenTigerReference() {
               const isLanding = spinning && landingColumn === column;
               const isAnticipating = spinning && anticipation > 0 && column >= stoppedColumns;
               const scatterOrder = scatterOrderByIndex.get(index) ?? -1;
-              const tileStyle = scatterOrder >= 0 ? ({ "--gt-scatter-order": scatterOrder } as CSSProperties) : undefined;
+              const tileStyle =
+                scatterOrder >= 0
+                  ? ({ "--gt-scatter-order": scatterOrder } as CSSProperties)
+                  : undefined;
               return (
                 <div
                   key={index}
@@ -741,14 +814,7 @@ export function GoldenTigerReference() {
           </div>
         )}
 
-        {featureBuyRunning && (
-          <div className="gt-ref-feature-trigger" aria-hidden>
-            <div className="gt-ref-feature-card gt-ref-feature-card--one" />
-            <div className="gt-ref-feature-card gt-ref-feature-card--two" />
-            <div className="gt-ref-feature-card gt-ref-feature-card--three" />
-            <div className="gt-ref-feature-bath" />
-          </div>
-        )}
+        {featureBuyRunning && <GoldenFortuneTrigger />}
 
         <div
           className="absolute left-[18%] top-[63.7%] z-35 flex h-[7.2%] w-[69%] items-center justify-center rounded-[28px] border-2 border-[#ffc52b] bg-[linear-gradient(180deg,rgba(122,0,7,.97),rgba(58,0,4,.98))] px-4 text-center shadow-[0_0_22px_rgba(255,67,0,.45)]"
@@ -758,20 +824,15 @@ export function GoldenTigerReference() {
             <p className="font-serif text-[clamp(.72rem,4vw,1.15rem)] font-black uppercase leading-tight text-[#ffe475] drop-shadow-[0_2px_0_#7b1500]">
               {statusText}
             </p>
-            {bonusActive && <p className="mt-1 text-[9px] font-black text-emerald-200">GANHO NO BÔNUS {formatCoins(bonusWin)}</p>}
+            {bonusActive && (
+              <p className="mt-1 text-[9px] font-black text-emerald-200">
+                GANHO NO BÔNUS {formatCoins(bonusWin)}
+              </p>
+            )}
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={openFeatureBuy}
-          disabled={featureBuyBlocked || !src}
-          aria-label="Abrir Golden Fortune Bonus Buy"
-          className="gt-ref-feature-button absolute left-[4.6%] top-[71.2%] z-50 flex h-[5.8%] w-[28%] items-center justify-center gap-1.5 rounded-[18px] disabled:cursor-not-allowed disabled:opacity-45"
-        >
-          <Sparkles className="size-3.5" aria-hidden />
-          <span>BÔNUS</span>
-        </button>
+        <GoldenFortuneButton disabled={featureBuyBlocked || !src} onOpen={openFeatureBuy} />
 
         <NumberPatch className="left-[5%] top-[79.1%] h-[3.4%] w-[25.5%] text-[clamp(.7rem,4vw,1.08rem)] tabular-nums">
           {formatCoins(balance)}
@@ -783,30 +844,90 @@ export function GoldenTigerReference() {
           {formatCoins(bet)}
         </NumberPatch>
 
-        <button type="button" onClick={() => changeBet(-1)} disabled={spinning || bonusActive || autoLeft > 0 || featureBuyOpen || featureBuyRunning} aria-label="Diminuir aposta" className="absolute left-[69%] top-[78.45%] z-50 size-[6.3%] rounded-full disabled:cursor-not-allowed" />
-        <button type="button" onClick={() => changeBet(1)} disabled={spinning || bonusActive || autoLeft > 0 || featureBuyOpen || featureBuyRunning} aria-label="Aumentar aposta" className="absolute right-[2.3%] top-[78.45%] z-50 size-[6.3%] rounded-full disabled:cursor-not-allowed" />
+        <button
+          type="button"
+          onClick={() => changeBet(-1)}
+          disabled={spinning || bonusActive || autoLeft > 0 || featureBuyOpen || featureBuyRunning}
+          aria-label="Diminuir aposta"
+          className="absolute left-[69%] top-[78.45%] z-50 size-[6.3%] rounded-full disabled:cursor-not-allowed"
+        />
+        <button
+          type="button"
+          onClick={() => changeBet(1)}
+          disabled={spinning || bonusActive || autoLeft > 0 || featureBuyOpen || featureBuyRunning}
+          aria-label="Aumentar aposta"
+          className="absolute right-[2.3%] top-[78.45%] z-50 size-[6.3%] rounded-full disabled:cursor-not-allowed"
+        />
 
-        <button type="button" onClick={() => setTurbo((value) => !value)} aria-pressed={turbo} aria-label="Alternar turbo" className={cn("absolute left-[4.2%] top-[86.1%] z-50 h-[8.3%] w-[17.7%] rounded-[28px]", turbo && "ring-2 ring-yellow-200 shadow-[0_0_25px_#ffb000]")} />
+        <button
+          type="button"
+          onClick={() => setTurbo((value) => !value)}
+          aria-pressed={turbo}
+          aria-label="Alternar turbo"
+          className={cn(
+            "absolute left-[4.2%] top-[86.1%] z-50 h-[8.3%] w-[17.7%] rounded-[28px]",
+            turbo && "ring-2 ring-yellow-200 shadow-[0_0_25px_#ffb000]",
+          )}
+        />
         {autoLeft > 0 ? (
-          <button type="button" onClick={() => { autoStopRef.current = true; }} aria-label="Parar auto play" className="absolute left-[22.4%] top-[86.1%] z-50 h-[8.3%] w-[17.8%] rounded-[28px]">
-            <span className="absolute right-0 top-0 rounded-full bg-emerald-500 px-1.5 text-[9px] font-black text-white">{autoLeft}</span>
+          <button
+            type="button"
+            onClick={() => {
+              autoStopRef.current = true;
+            }}
+            aria-label="Parar auto play"
+            className="absolute left-[22.4%] top-[86.1%] z-50 h-[8.3%] w-[17.8%] rounded-[28px]"
+          >
+            <span className="absolute right-0 top-0 rounded-full bg-emerald-500 px-1.5 text-[9px] font-black text-white">
+              {autoLeft}
+            </span>
           </button>
         ) : (
-          <button type="button" onClick={() => void startAuto()} disabled={spinning || bonusActive || insufficient || !src || featureBuyOpen || featureBuyRunning} aria-label="Auto play" className="absolute left-[22.4%] top-[86.1%] z-50 h-[8.3%] w-[17.8%] rounded-[28px] disabled:opacity-40" />
+          <button
+            type="button"
+            onClick={() => void startAuto()}
+            disabled={spinning || bonusActive || insufficient || !src || featureBuyOpen || featureBuyRunning}
+            aria-label="Auto play"
+            className="absolute left-[22.4%] top-[86.1%] z-50 h-[8.3%] w-[17.8%] rounded-[28px] disabled:opacity-40"
+          />
         )}
-        <button type="button" onClick={setMaxBet} disabled={spinning || bonusActive || autoLeft > 0 || featureBuyOpen || featureBuyRunning} aria-label="Aposta máxima" className="absolute right-[4.3%] top-[86.1%] z-50 h-[8.3%] w-[25%] rounded-[28px] disabled:opacity-40" />
+        <button
+          type="button"
+          onClick={setMaxBet}
+          disabled={spinning || bonusActive || autoLeft > 0 || featureBuyOpen || featureBuyRunning}
+          aria-label="Aposta máxima"
+          className="absolute right-[4.3%] top-[86.1%] z-50 h-[8.3%] w-[25%] rounded-[28px] disabled:opacity-40"
+        />
 
-        <button type="button" onClick={() => void spin()} disabled={spinning || bonusActive || autoLeft > 0 || insufficient || !src || featureBuyOpen || featureBuyRunning} aria-label="Girar Golden Tiger" className={cn("gt-ref-spin-button absolute left-[34%] top-[82.7%] z-50 size-[29.5%] rounded-full disabled:cursor-not-allowed disabled:opacity-45", spinning && "scale-95")} />
+        <button
+          type="button"
+          onClick={() => void spin()}
+          disabled={spinning || bonusActive || autoLeft > 0 || insufficient || !src || featureBuyOpen || featureBuyRunning}
+          aria-label="Girar Golden Tiger"
+          className={cn(
+            "gt-ref-spin-button absolute left-[34%] top-[82.7%] z-50 size-[29.5%] rounded-full disabled:cursor-not-allowed disabled:opacity-45",
+            spinning && "scale-95",
+          )}
+        />
 
         {(winTier === "big" || winTier === "mega") && win > 0 && phase === "bigWin" && (
-          <div className={cn("gt-ref-win-callout", `gt-ref-win-callout--${winTier}`)} aria-live="polite">
+          <div
+            className={cn("gt-ref-win-callout", `gt-ref-win-callout--${winTier}`)}
+            aria-live="polite"
+          >
             <span>{tierLabel(winTier)}</span>
-            <strong><AnimatedWinCounter value={win} duration={winDuration} /></strong>
+            <strong>
+              <AnimatedWinCounter value={win} duration={winDuration} />
+            </strong>
           </div>
         )}
 
         {bonusOverlay && (
-          <div className={cn("gt-ref-bonus-overlay", `gt-ref-bonus-overlay--${bonusOverlay.tone}`)} role="status" aria-live="polite">
+          <div
+            className={cn("gt-ref-bonus-overlay", `gt-ref-bonus-overlay--${bonusOverlay.tone}`)}
+            role="status"
+            aria-live="polite"
+          >
             <div className="gt-ref-bonus-card">
               <p>{bonusOverlay.title}</p>
               {bonusOverlay.value && <strong>{bonusOverlay.value}</strong>}
@@ -816,30 +937,56 @@ export function GoldenTigerReference() {
         )}
 
         {featureBuyOpen && (
-          <div className="gt-ref-feature-modal" role="dialog" aria-modal="true" aria-labelledby="golden-fortune-title">
+          <div
+            className="gt-ref-feature-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="golden-fortune-title"
+          >
             <div className="gt-ref-feature-modal__card">
               <span className="gt-ref-feature-modal__kicker">FEATURE BUY · NEON FORTUNE</span>
               <h2 id="golden-fortune-title">GOLDEN FORTUNE</h2>
               <strong>{GOLDEN_TIGER_FEATURE_BUY_INITIAL_SPINS} FREE SPINS</strong>
-              <p>Equivale à entrada normal de 3 cartinhas. Inclui retriggers e a mesma matemática dos Free Spins naturais.</p>
+              <p>
+                Equivale à entrada normal de 3 cartinhas. Inclui retriggers e a mesma matemática dos
+                Free Spins naturais.
+              </p>
               <div className="gt-ref-feature-modal__stats">
-                <div><span>APOSTA ATUAL</span><b>{formatCoins(bet)}</b></div>
-                <div><span>CUSTO</span><b>{formatCoins(featureBuyCost)} MOEDAS</b></div>
+                <div>
+                  <span>APOSTA ATUAL</span>
+                  <b>{formatCoins(bet)}</b>
+                </div>
+                <div>
+                  <span>CUSTO</span>
+                  <b>{formatCoins(featureBuyCost)} MOEDAS</b>
+                </div>
               </div>
               <small>MOEDAS FICTÍCIAS · SEM VALOR REAL</small>
               {featureBuyError && <em role="alert">{featureBuyError}</em>}
               <div className="gt-ref-feature-modal__actions">
-                <button type="button" onClick={closeFeatureBuy}>CANCELAR</button>
-                <button type="button" onClick={() => void confirmFeatureBuy()} disabled={featureBuyInsufficient || featureBuyRunning}>ATIVAR</button>
+                <button type="button" onClick={closeFeatureBuy}>
+                  CANCELAR
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void confirmFeatureBuy()}
+                  disabled={featureBuyInsufficient || featureBuyRunning}
+                >
+                  ATIVAR
+                </button>
               </div>
             </div>
           </div>
         )}
 
         {insufficient && !bonusActive && !featureBuyOpen && (
-          <div className="absolute inset-x-[12%] bottom-[.8%] z-[70] rounded-xl border border-red-200/80 bg-red-950/95 px-3 py-2 text-center text-[10px] font-bold text-red-50">Saldo fictício insuficiente — recarregue moedas grátis no lobby.</div>
+          <div className="absolute inset-x-[12%] bottom-[.8%] z-[70] rounded-xl border border-red-200/80 bg-red-950/95 px-3 py-2 text-center text-[10px] font-bold text-red-50">
+            Saldo fictício insuficiente — recarregue moedas grátis no lobby.
+          </div>
         )}
-        <div className="absolute inset-x-0 bottom-[.15%] z-20 text-center text-[7px] font-black tracking-[.18em] text-yellow-100/75">MOEDAS FICTÍCIAS · SEM VALOR REAL</div>
+        <div className="absolute inset-x-0 bottom-[.15%] z-20 text-center text-[7px] font-black tracking-[.18em] text-yellow-100/75">
+          MOEDAS FICTÍCIAS · SEM VALOR REAL
+        </div>
       </div>
     </main>
   );
