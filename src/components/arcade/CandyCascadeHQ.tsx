@@ -172,6 +172,8 @@ export function CandyCascadeHQ() {
   const [grid, setGrid] = useState<SymbolId[]>(makeGrid);
   const [win, setWin] = useState(0);
   const [spinning, setSpinning] = useState(false);
+  const [initialRolling, setInitialRolling] = useState(false);
+  const [cascadeDropping, setCascadeDropping] = useState(false);
   const [winning, setWinning] = useState<Set<number>>(() => new Set());
   const [cascadeIndex, setCascadeIndex] = useState(0);
   const [bombMultiplier, setBombMultiplier] = useState(1);
@@ -194,6 +196,8 @@ export function CandyCascadeHQ() {
 
     busyRef.current = true;
     setSpinning(true);
+    setInitialRolling(true);
+    setCascadeDropping(false);
     setWinning(new Set());
     setCascadeIndex(0);
     setBombMultiplier(1);
