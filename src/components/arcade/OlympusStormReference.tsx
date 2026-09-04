@@ -549,9 +549,7 @@ export function OlympusStormReference() {
           ? "bonus"
           : win >= bet * 15 && phase === "settled"
             ? "bigwin"
-            : cascadeNumber > 0 && roundBusy
-              ? "watch"
-              : "idle";
+            : "idle";
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-black sm:px-3 sm:py-2">
@@ -564,7 +562,6 @@ export function OlympusStormReference() {
           bonusVisualActive && "os-ref-machine--ascended",
           `os-ref-storm-level-${stormLevel}`,
         )}
-        data-phase={phase}
         data-bonus-active={bonusActive ? "true" : "false"}
       >
         {src ? (

@@ -79,8 +79,9 @@ export const OLYMPUS_SIZE = OLYMPUS_COLUMNS * OLYMPUS_ROWS;
 export const OLYMPUS_MIN_CLUSTER = 5;
 export const OLYMPUS_MAX_CASCADES = 8;
 export const OLYMPUS_BASE_SCATTER_CHANCE = 0.014;
-export const OLYMPUS_FREE_SCATTER_CHANCE = 0.01;
+export const OLYMPUS_FREE_SCATTER_CHANCE = 0.02;
 export const OLYMPUS_BASE_PAY_SCALE = 0.98;
+export const OLYMPUS_FREE_PAY_SCALE = 0.92;
 export const OLYMPUS_FEATURE_BUY_INITIAL_SPINS = 8;
 export const OLYMPUS_FEATURE_BUY_COST_MULTIPLIER = 9;
 export const OLYMPUS_MAX_RETRIGGERS = 3;
@@ -108,7 +109,7 @@ function scatterChance(mode: OlympusMode) {
 }
 
 function payScale(mode: OlympusMode) {
-  return mode === "freeSpins" ? 1 : OLYMPUS_BASE_PAY_SCALE;
+  return mode === "freeSpins" ? OLYMPUS_FREE_PAY_SCALE : OLYMPUS_BASE_PAY_SCALE;
 }
 
 export function olympusFeatureBuyCost(bet: number) {
@@ -301,7 +302,7 @@ export function planOlympusRound(
     const multiplier = pickOlympusStormMultiplier(cascadeIndex, rng);
     const levelAtCascade = stormLevel;
     const levelMultiplier = mode === "freeSpins"
-      ? ((OLYMPUS_STORM_LEVEL_MULTIPLIERS[levelAtCascade - 1] ?? 1) ?? 1)
+      ? (OLYMPUS_STORM_LEVEL_MULTIPLIERS[levelAtCascade - 1] ?? 1)
       : 1;
     const stepPayout = Math.round(basePayout * multiplier * levelMultiplier);
     const nextGrid = collapseOlympusGrid(current, winning, rng, mode);
