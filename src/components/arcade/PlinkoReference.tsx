@@ -12,6 +12,7 @@ import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store
 import { cn } from "@/lib/utils";
 
 import "./PlinkoReference.css";
+import "./PlinkoInteraction.css";
 
 const BALL_COUNTS = [1, 3, 5, 10] as const;
 type BallCount = (typeof BALL_COUNTS)[number];
@@ -54,6 +55,7 @@ export function PlinkoReference() {
   const [activeBalls, setActiveBalls] = useState<ActiveBall[]>([]);
   const [runWin, setRunWin] = useState(0);
   const [lastWin, setLastWin] = useState<{ payout: number; multiplier: number } | null>(null);
+  const [lastSettledBucket, setLastSettledBucket] = useState<number | null>(null);
   const [launched, setLaunched] = useState(0);
   const [settled, setSettled] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -132,6 +134,7 @@ export function PlinkoReference() {
     }
 
     updateBall(ball.id, { status: "landed", step: rows });
+    setLastSettledBucket(ball.bucket);
     setSettled((value) => value + 1);
     setRunWin((value) => value + ball.payout);
     setLastWin({ payout: ball.payout, multiplier: ball.multiplier });
@@ -163,6 +166,7 @@ export function PlinkoReference() {
     setBusy(true);
     setRunWin(0);
     setLastWin(null);
+    setLastSettledBucket(null);
     setBigWin(null);
     setLaunched(0);
     setSettled(0);
@@ -281,7 +285,15 @@ export function PlinkoReference() {
           <div className="plinko-ref-board__payout-mask" aria-hidden />
           <div className="plinko-ref-buckets" style={{ gridTemplateColumns: `repeat(${payouts.length}, minmax(0, 1fr))` }}>
             {payouts.map((value, index) => (
-              <div key={`${value}-${index}`} className={cn("plinko-ref-bucket", value >= 10 && "is-high", landedBuckets.has(index) && "is-winner")}>
+              <div
+                key={`${value}-${index}`}
+                className={cn(
+                  "plinko-ref-bucket",
+                  value >= 10 && "is-high",
+                  landedBuckets.has(index) && "is-winner",
+                  index === lastSettledBucket && "is-latest-winner",
+                )}
+              >
                 <span>{value}×</span>
               </div>
             ))}
@@ -290,30 +302,37 @@ export function PlinkoReference() {
 
         <section className="plinko-ref-panel plinko-ref-panel--risk" aria-label="Nível de risco">
           <small>RISK</small>
-          <div>{(["baixo", "medio", "alto"] as const).map((value) => <button key={value} type="button" className={cn(risk === value && "is-active")} disabled={busy || autoDrop} onClick={() => setRisk(value)}>{RISK_LABELS[value]}</button>)}</div>
+          <div>{(["baixo", "medio", "alto"] as const).map((value) => <button key={value} type="button" className={cn(risk === value && "is-active")} disabled={busy || autoDrop} onClick={() => setRisk(value)} aria-pressed={risk === value}>{RISK_LABELS[value]}</button>)}</div>
         </section>
 
         <section className="plinko-ref-panel plinko-ref-panel--rows" aria-label="Quantidade de linhas">
           <small>ROWS</small>
-          <div>{[12, 14, 16].map((value) => <button key={value} type="button" className={cn(rows === value && "is-active")} disabled={busy || autoDrop} onClick={() => setRows(value)}>{value}</button>)}</div>
+          <div>{[12, 14, 16].map((value) => <button key={value} type="button" className={cn(rows === value && "is-active")} disabled={busy || autoDrop} onClick={() => setRows(value)} aria-pressed={rows === value}>{value}</button>)}</div>
         </section>
 
         <section className="plinko-ref-panel plinko-ref-panel--balls" aria-label="Bolas por rodada">
           <small>BALLS</small>
-          <div>{BALL_COUNTS.map((value) => <button key={value} type="button" className={cn(ballsPerRun === value && "is-active")} disabled={busy || autoDrop} onClick={() => setBallsPerRun(value)}>{value}</button>)}</div>
+          <div>{BALL_COUNTS.map((value) => <button key={value} type="button" className={cn(ballsPerRun === value && "is-active")} disabled={busy || autoDrop} onClick={() => setBallsPerRun(value)} aria-pressed={ballsPerRun === value}>{value}</button>)}</div>
         </section>
 
         <section className="plinko-ref-panel plinko-ref-panel--bet" aria-label="Aposta fictícia">
           <small>BET</small>
-          <div className="plinko-ref-bet-row"><button disabled={busy || autoDrop} onClick={() => moveBet(-1)}>−</button><strong>{formatCoins(bet)}</strong><button disabled={busy || autoDrop} onClick={() => moveBet(1)}>+</button></div>
+          <div className="plinko-ref-bet-row"><button type="button" aria-label="Diminuir aposta" disabled={busy || autoDrop} onClick={() => moveBet(-1)}>−</button><strong>{formatCoins(bet)}</strong><button type="button" aria-label="Aumentar aposta" disabled={busy || autoDrop} onClick={() => moveBet(1)}>+</button></div>
         </section>
 
-        <button type="button" className={cn("plinko-ref-auto", autoDrop && "is-on")} disabled={insufficient && !autoDrop} onClick={toggleAuto} aria-pressed={autoDrop}>
+        <button type="button" className={cn("plinko-ref-auto", autoDrop && "is-on")} disabled={insufficient && !autoDrop} onClick={toggleAuto} aria-label={autoDrop ? "Desativar auto drop" : "Ativar auto drop"} aria-pressed={autoDrop}>
           <RotateCw /><span><small>AUTO</small><strong>{autoDrop ? "ON" : "OFF"}</strong></span><i><b /></i>
         </button>
 
-        <button type="button" className="plinko-ref-drop" disabled={busy || insufficient} onClick={() => void runSequence()}>
-          {busy ? <CircleDot className="animate-bounce" /> : <Play />}
+        <button
+          type="button"
+          className={cn("plinko-ref-drop", busy && "is-dropping")}
+          disabled={busy || insufficient}
+          onClick={() => void runSequence()}
+          aria-busy={busy}
+          aria-label={busy ? "Bolas em queda" : `Soltar ${ballsPerRun} bolas por ${formatCoins(runCost)}`}
+        >
+          {busy ? <CircleDot /> : <Play />}
           <strong>{busy ? "MULTI DROP" : `DROP ×${ballsPerRun}`}</strong>
           <small>{busy ? `${inFlight} in flight` : formatCoins(runCost)}</small>
         </button>
