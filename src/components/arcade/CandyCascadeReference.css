@@ -1,80 +1,50 @@
 @keyframes ccRefRoll {
-  0% { transform: translateY(-12%) scale(1.025); filter: blur(1.4px) saturate(1.08); }
-  50% { transform: translateY(9%) scale(1.015); filter: blur(2.2px) saturate(1.18); }
-  100% { transform: translateY(-6%) scale(1.025); filter: blur(1.2px) saturate(1.08); }
+  0% { transform: translateY(-6%) scale(1.012); opacity: .96; }
+  50% { transform: translateY(6%) scale(.995); opacity: 1; }
+  100% { transform: translateY(-6%) scale(1.012); opacity: .96; }
 }
 
 @keyframes ccRefLand {
-  0% { transform: translateY(-12%); }
-  64% { transform: translateY(3%); }
-  84% { transform: translateY(-1%); }
+  0% { transform: translateY(-10%); }
+  64% { transform: translateY(2.5%); }
+  84% { transform: translateY(-.8%); }
   100% { transform: translateY(0); }
 }
 
 @keyframes ccRefWin {
-  0%,100% { filter: brightness(1) saturate(1); transform: scale(1); }
-  48% { filter: brightness(1.38) saturate(1.25); transform: scale(1.045); }
+  0%,100% { transform: scale(1); box-shadow: inset 0 0 10px rgba(255,255,255,.24), 0 0 10px rgba(255,79,211,.34); }
+  48% { transform: scale(1.028); box-shadow: inset 0 0 16px rgba(255,255,255,.46), 0 0 16px rgba(255,79,211,.56), 0 0 22px rgba(255,212,63,.3); }
 }
 
 @keyframes ccRefBomb {
-  0% { transform: translate(-50%, 9px) scale(.8); opacity: 0; }
-  28% { transform: translate(-50%, -2px) scale(1.06); opacity: 1; }
+  0% { transform: translate(-50%, 7px) scale(.86); opacity: 0; }
+  30% { transform: translate(-50%, -1px) scale(1.035); opacity: 1; }
   78% { transform: translate(-50%, 0) scale(1); opacity: 1; }
-  100% { transform: translate(-50%, -9px) scale(1.02); opacity: 0; }
+  100% { transform: translate(-50%, -7px) scale(1.01); opacity: 0; }
 }
 
 @keyframes ccSpinReady {
-  0%,100% { filter: drop-shadow(0 0 0 rgba(255,225,70,0)); transform: scale(1); }
-  50% { filter: drop-shadow(0 0 10px rgba(255,226,74,.62)); transform: scale(1.02); }
+  0%,100% { transform: scale(1); box-shadow: 0 0 0 rgba(255,225,70,0); }
+  50% { transform: scale(1.016); box-shadow: 0 0 18px rgba(255,226,74,.32); }
 }
 
-.cc-ref-roll > div { animation: ccRefRoll .2s linear infinite; }
-.cc-ref-land > div { animation: ccRefLand .32s cubic-bezier(.2,.8,.2,1); }
+.cc-ref-roll > div {
+  animation: ccRefRoll .18s linear infinite;
+  will-change: transform, opacity;
+}
+
+.cc-ref-land > div {
+  animation: ccRefLand .31s cubic-bezier(.2,.8,.2,1);
+  will-change: transform;
+}
+
 .cc-ref-win {
   z-index: 8;
-  animation: ccRefWin .58s ease-in-out infinite;
-  box-shadow: inset 0 0 14px rgba(255,255,255,.6), 0 0 17px rgba(255,79,211,.72), 0 0 26px rgba(255,212,63,.44);
-}
-.cc-ref-bomb { animation: ccRefBomb .68s cubic-bezier(.2,.9,.2,1) both; }
-.cc-ref-spin-ready { animation: ccSpinReady 1.55s ease-in-out infinite; }
-
-/* Cover the static example values baked into the reference art. */
-main:has(.cc-ref-spin-ready) > div > [class*="bg-[#2b071f]"] {
-  isolation: isolate;
-  overflow: visible;
-  white-space: nowrap;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1;
-  letter-spacing: -.025em;
-  background: #2b071f !important;
-  box-shadow: 0 .78rem 0 .28rem #2b071f !important;
-  font-size: clamp(.58rem, 2.8vw, .84rem) !important;
+  animation: ccRefWin .62s ease-in-out infinite;
 }
 
-main:has(.cc-ref-spin-ready) > div > [class*="bg-[#2b071f]"]::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  left: -5%;
-  right: -5%;
-  top: -10%;
-  bottom: -64%;
-  border-radius: .7rem;
-  background: #2b071f;
-}
-
-main:has(.cc-ref-spin-ready) > div > [class*="bg-[#4a075f]"] {
-  overflow: hidden;
-  background: #4a075f !important;
-  box-shadow: inset 0 0 16px rgba(255,85,238,.32) !important;
-}
-
-@media (max-width: 390px) {
-  main:has(.cc-ref-spin-ready) > div > [class*="bg-[#2b071f]"] {
-    font-size: clamp(.54rem, 2.65vw, .76rem) !important;
-  }
-}
+.cc-ref-bomb { animation: ccRefBomb .66s cubic-bezier(.2,.9,.2,1) both; }
+.cc-ref-spin-ready { animation: ccSpinReady 1.6s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
   .cc-ref-roll > div,
