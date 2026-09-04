@@ -171,10 +171,10 @@ export function PlinkoReference() {
     const best = completed.reduce<ActiveBall | null>((current, ball) => (!current || ball.multiplier > current.multiplier ? ball : current), null);
     if (best && best.multiplier >= 10) {
       setBigWin({ payout: best.payout, multiplier: best.multiplier });
-      await wait(760);
+      await wait(940);
       setBigWin(null);
     } else {
-      await wait(360);
+      await wait(460);
     }
 
     setActiveBalls([]);
@@ -194,7 +194,7 @@ export function PlinkoReference() {
 
   return (
     <div className="plinko-ref-page">
-      <div className="plinko-ref-machine">
+      <div className={cn("plinko-ref-machine", bigWin && "is-celebrating")}>
         <img className="plinko-ref-machine__art" src={neonPlinkoReference} alt="Neon Plinko Skyfall Tower" draggable={false} />
         <div className="plinko-ref-machine__vignette" aria-hidden />
 
@@ -218,18 +218,26 @@ export function PlinkoReference() {
 
           {activeBalls.map((ball) => {
             const position = ballPosition(ball.path, ball.step, rows, ball.bucket, payouts.length);
-            const trailStart = Math.max(0, ball.step - 5);
+            const trailStart = Math.max(0, ball.step - 6);
             const trail = ball.status === "falling"
               ? Array.from({ length: Math.max(0, ball.step - trailStart + 1) }, (_, index) => trailStart + index)
               : [];
+            const tone = ((ball.ballNumber - 1) % 3) + 1;
             return (
               <div key={ball.id} className="plinko-ref-ball-layer" aria-hidden>
                 {trail.map((trailStep, index) => {
                   const point = ballPosition(ball.path, trailStep, rows);
-                  return <i key={`${ball.id}-${trailStep}`} className="plinko-ref-trail" style={{ left: `${point.left}%`, top: `${point.top}%`, opacity: (index + 1) / (trail.length + 2) }} />;
+                  return <i key={`${ball.id}-${trailStep}`} className={cn("plinko-ref-trail", `plinko-ref-trail--tone-${tone}`)} style={{ left: `${point.left}%`, top: `${point.top}%`, opacity: (index + 1) / (trail.length + 2) }} />;
                 })}
+                {ball.status === "falling" && ball.step >= 0 && (
+                  <i
+                    key={`${ball.id}-impact-${ball.step}`}
+                    className={cn("plinko-ref-impact", `plinko-ref-impact--tone-${tone}`)}
+                    style={{ left: `${position.left}%`, top: `${Math.min(82, position.top + 1.4)}%` }}
+                  />
+                )}
                 <div
-                  className={cn("plinko-ref-ball", `plinko-ref-ball--${ball.status}`)}
+                  className={cn("plinko-ref-ball", `plinko-ref-ball--${ball.status}`, `plinko-ref-ball--tone-${tone}`)}
                   style={{ left: `${position.left}%`, top: `${position.top}%`, zIndex: 20 + (ball.ballNumber % 6) }}
                 ><span /></div>
               </div>
@@ -238,6 +246,7 @@ export function PlinkoReference() {
 
           {!busy && <div className="plinko-ref-ball plinko-ref-ball--idle" style={{ left: "50%", top: "4.5%" }} aria-hidden><span /></div>}
 
+          <div className="plinko-ref-board__payout-mask" aria-hidden />
           <div className="plinko-ref-buckets" style={{ gridTemplateColumns: `repeat(${payouts.length}, minmax(0, 1fr))` }}>
             {payouts.map((value, index) => (
               <div key={`${value}-${index}`} className={cn("plinko-ref-bucket", value >= 10 && "is-high", landedBuckets.has(index) && "is-winner")}>
@@ -248,7 +257,7 @@ export function PlinkoReference() {
         </div>
 
         <section className="plinko-ref-panel plinko-ref-panel--risk" aria-label="Nível de risco">
-          <small>RISK LEVEL</small>
+          <small>RISK</small>
           <div>{(["baixo", "medio", "alto"] as const).map((value) => <button key={value} type="button" className={cn(risk === value && "is-active")} disabled={busy || autoDrop} onClick={() => setRisk(value)}>{RISK_LABELS[value]}</button>)}</div>
         </section>
 
@@ -263,12 +272,12 @@ export function PlinkoReference() {
         </section>
 
         <section className="plinko-ref-panel plinko-ref-panel--bet" aria-label="Aposta fictícia">
-          <small>BET AMOUNT</small>
+          <small>BET</small>
           <div className="plinko-ref-bet-row"><button disabled={busy || autoDrop} onClick={() => moveBet(-1)}>−</button><strong>{formatCoins(bet)}</strong><button disabled={busy || autoDrop} onClick={() => moveBet(1)}>+</button></div>
         </section>
 
         <button type="button" className={cn("plinko-ref-auto", autoDrop && "is-on")} disabled={insufficient && !autoDrop} onClick={toggleAuto} aria-pressed={autoDrop}>
-          <RotateCw /><span><small>AUTO DROP</small><strong>{autoDrop ? "ON" : "OFF"}</strong></span><i><b /></i>
+          <RotateCw /><span><small>AUTO</small><strong>{autoDrop ? "ON" : "OFF"}</strong></span><i><b /></i>
         </button>
 
         <button type="button" className="plinko-ref-drop" disabled={busy || insufficient} onClick={() => void runSequence()}>
@@ -284,7 +293,7 @@ export function PlinkoReference() {
         </div>
 
         <div className="plinko-ref-last" role="status" aria-live="polite">
-          <small>{busy ? "MULTI-BALL RUN" : "LAST WIN"}</small>
+          <small>{busy ? "MULTI-BALL" : "LAST WIN"}</small>
           <strong>{busy ? formatCoins(runWin) : lastWin ? formatCoins(lastWin.payout) : "0"}</strong>
           <span>{lastWin ? formatMultiplier(lastWin.multiplier) : `${ballsPerRun} BALLS`}</span>
         </div>
