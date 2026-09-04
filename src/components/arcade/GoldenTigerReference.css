@@ -35,6 +35,18 @@
   52% { background-position: 0 0, 22px 38px, 46px 12px, 130% 0; opacity: .36; }
 }
 
+@keyframes gt-ref-card-spark {
+  0%,100% { opacity: .18; transform: scale(.72) rotate(0deg); }
+  45% { opacity: .9; transform: scale(1.08) rotate(16deg); }
+  70% { opacity: .42; transform: scale(.92) rotate(-8deg); }
+}
+
+@keyframes gt-ref-scatter-shine {
+  0%,100% { opacity: .08; transform: translateX(-115%) skewX(-18deg); }
+  45%,55% { opacity: .75; }
+  100% { transform: translateX(115%) skewX(-18deg); }
+}
+
 .gt-ref-machine__ambient {
   position: absolute;
   z-index: 10;
@@ -67,7 +79,7 @@
 .gt-ref-spin-button { animation: gt-ref-spin 1.6s ease-in-out infinite; }
 .gt-ref-spin-button:active:not(:disabled) { transform: scale(.95); }
 
-/* Near-bonus feedback stays inside the reel cell only; no full-cabinet pseudo transforms. */
+/* Anticipation stays inside the reel cell so HUD and cabinet never move. */
 .gt-ref-anticipate::after {
   content: "";
   position: absolute;
@@ -77,6 +89,39 @@
   mix-blend-mode: screen;
 }
 
+.gt-ref-anticipate::before {
+  content: "";
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  top: 50%;
+  width: 46%;
+  aspect-ratio: 1;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 0%, #fff7ad 0 4%, transparent 5%),
+    radial-gradient(circle at 100% 48%, #ffd044 0 3.5%, transparent 4.5%),
+    radial-gradient(circle at 8% 74%, #ff7a18 0 3%, transparent 4%),
+    radial-gradient(circle, rgba(255,170,42,.22), transparent 66%);
+  filter: drop-shadow(0 0 5px rgba(255,206,67,.8));
+  animation: gt-ref-card-spark .72s ease-in-out infinite;
+}
+
+.gt-ref-scatter::after {
+  content: "";
+  position: absolute;
+  z-index: 5;
+  top: -8%;
+  bottom: -8%;
+  width: 24%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255,250,190,.72), transparent);
+  mix-blend-mode: screen;
+  animation: gt-ref-scatter-shine 1.15s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .gt-ref-spinning,
   .gt-ref-land,
@@ -84,7 +129,9 @@
   .gt-ref-scatter,
   .gt-ref-win,
   .gt-ref-spin-button,
-  .gt-ref-machine__ambient {
+  .gt-ref-machine__ambient,
+  .gt-ref-anticipate::before,
+  .gt-ref-scatter::after {
     animation: none !important;
   }
 }
