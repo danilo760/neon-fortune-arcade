@@ -1,0 +1,48 @@
+name: Olympus Type Fix
+
+on:
+  push:
+    branches:
+      - codex/olympus-storm-ascension
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: ${{ github.event.head_commit.message != 'fix: guard olympus storm multiplier lookup' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/olympus-storm-ascension
+          fetch-depth: 0
+      - name: Guard Storm Level lookup
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          math = Path('src/lib/arcade/olympusStormMath.ts')
+          text = math.read_text()
+          old = 'OLYMPUS_STORM_LEVEL_MULTIPLIERS[levelAtCascade - 1]'
+          new = '(OLYMPUS_STORM_LEVEL_MULTIPLIERS[levelAtCascade - 1] ?? 1)'
+          if old in text:
+              text = text.replace(old, new)
+              math.write_text(text)
+
+          component = Path('src/components/arcade/OlympusStormReference.tsx')
+          text = component.read_text()
+          old = 'const levelMultiplier = OLYMPUS_STORM_LEVEL_MULTIPLIERS[stormLevel - 1];'
+          new = 'const levelMultiplier = OLYMPUS_STORM_LEVEL_MULTIPLIERS[stormLevel - 1] ?? 1;'
+          if old in text:
+              text = text.replace(old, new)
+              component.write_text(text)
+          PY
+      - name: Commit fix if needed
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "danilo760"
+          git config user.email "62104537+danilo760@users.noreply.github.com"
+          git add src/lib/arcade/olympusStormMath.ts src/components/arcade/OlympusStormReference.tsx
+          git commit -m "fix: guard olympus storm multiplier lookup"
+          git push origin HEAD:codex/olympus-storm-ascension
