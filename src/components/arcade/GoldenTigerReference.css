@@ -1,38 +1,38 @@
 @keyframes gt-ref-reel-fall {
-  0% { transform: translateY(-18%); filter: blur(3.2px) brightness(1.08); }
-  100% { transform: translateY(18%); filter: blur(1.8px) brightness(1.03); }
+  0% { transform: translateY(-7%) scaleY(1.018); opacity: .94; }
+  100% { transform: translateY(7%) scaleY(.985); opacity: 1; }
 }
 
 @keyframes gt-ref-land {
-  0% { transform: translateY(-24%) scaleY(1.05); filter: blur(3px); }
-  62% { transform: translateY(4%) scaleY(.97); filter: blur(0); }
-  82% { transform: translateY(-1.5%) scaleY(1.015); }
+  0% { transform: translateY(-10%) scaleY(1.035); }
+  62% { transform: translateY(2.5%) scaleY(.985); }
+  84% { transform: translateY(-1%) scaleY(1.008); }
   100% { transform: translateY(0) scale(1); }
 }
 
 @keyframes gt-ref-anticipate {
-  0%,100% { box-shadow: inset 0 0 0 2px rgba(255,215,80,.4), 0 0 9px rgba(255,74,13,.3); filter: brightness(1); }
-  50% { box-shadow: inset 0 0 0 2px rgba(255,240,154,.95), 0 0 24px rgba(255,73,0,.8), 0 0 36px rgba(255,184,0,.45); filter: brightness(1.17); }
+  0%,100% { box-shadow: inset 0 0 0 2px rgba(255,215,80,.4), 0 0 8px rgba(255,74,13,.28); }
+  50% { box-shadow: inset 0 0 0 2px rgba(255,240,154,.95), 0 0 20px rgba(255,73,0,.72), 0 0 32px rgba(255,184,0,.38); }
 }
 
 @keyframes gt-ref-scatter {
-  0%,100% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.045); filter: brightness(1.22) drop-shadow(0 0 8px #ffd84c); }
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.035); box-shadow: inset 0 0 18px rgba(255,233,108,.22), 0 0 13px rgba(255,216,76,.62); }
 }
 
 @keyframes gt-ref-win {
-  0%,100% { filter: brightness(1); transform: scale(1); }
-  50% { filter: brightness(1.28) drop-shadow(0 0 9px #fff27a); transform: scale(1.03); }
+  0%,100% { transform: scale(1); box-shadow: inset 0 0 0 rgba(255,242,122,0); }
+  50% { transform: scale(1.025); box-shadow: inset 0 0 18px rgba(255,250,193,.28), 0 0 13px rgba(255,221,82,.58); }
 }
 
 @keyframes gt-ref-spin {
-  0%,100% { box-shadow: 0 0 16px rgba(255,190,20,.5), 0 0 32px rgba(255,65,0,.3); transform: scale(1); }
-  50% { box-shadow: 0 0 23px rgba(255,228,92,.95), 0 0 46px rgba(255,83,0,.65); transform: scale(1.022); }
+  0%,100% { box-shadow: 0 0 14px rgba(255,190,20,.46), 0 0 28px rgba(255,65,0,.25); transform: scale(1); }
+  50% { box-shadow: 0 0 21px rgba(255,228,92,.86), 0 0 40px rgba(255,83,0,.52); transform: scale(1.018); }
 }
 
 @keyframes gt-ref-ambient-sweep {
-  0%,100% { background-position: 0 0, 22px 38px, 46px 12px, -130% 0; opacity: .23; }
-  52% { background-position: 0 0, 22px 38px, 46px 12px, 130% 0; opacity: .42; }
+  0%,100% { background-position: 0 0, 22px 38px, 46px 12px, -130% 0; opacity: .2; }
+  52% { background-position: 0 0, 22px 38px, 46px 12px, 130% 0; opacity: .36; }
 }
 
 .gt-ref-machine__ambient {
@@ -41,79 +41,40 @@
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 15% 19%, rgba(255,244,164,.8) 0 1px, transparent 2px),
-    radial-gradient(circle at 82% 14%, rgba(255,210,80,.75) 0 1px, transparent 2px),
-    radial-gradient(circle at 71% 47%, rgba(255,132,35,.6) 0 1.5px, transparent 2.5px),
-    linear-gradient(112deg, transparent 36%, rgba(255,239,147,.13) 47%, transparent 59%);
+    radial-gradient(circle at 15% 19%, rgba(255,244,164,.76) 0 1px, transparent 2px),
+    radial-gradient(circle at 82% 14%, rgba(255,210,80,.7) 0 1px, transparent 2px),
+    radial-gradient(circle at 71% 47%, rgba(255,132,35,.54) 0 1.5px, transparent 2.5px),
+    linear-gradient(112deg, transparent 36%, rgba(255,239,147,.11) 47%, transparent 59%);
   background-size: 92px 108px, 126px 146px, 148px 174px, 210% 100%;
   background-position: 0 0, 22px 38px, 46px 12px, -130% 0;
   mix-blend-mode: screen;
-  animation: gt-ref-ambient-sweep 5.6s ease-in-out infinite;
+  animation: gt-ref-ambient-sweep 5.8s ease-in-out infinite;
 }
 
-.gt-ref-spinning { animation: gt-ref-reel-fall .18s linear infinite alternate; }
-.gt-ref-land { animation: gt-ref-land .32s cubic-bezier(.2,.8,.25,1.08) both; }
-.gt-ref-anticipate { animation: gt-ref-anticipate .78s ease-in-out infinite; }
-.gt-ref-scatter { animation: gt-ref-scatter .84s ease-in-out infinite; }
-.gt-ref-win { animation: gt-ref-win .9s ease-in-out infinite; }
-.gt-ref-spin-button { animation: gt-ref-spin 1.55s ease-in-out infinite; }
+.gt-ref-spinning {
+  animation: gt-ref-reel-fall .16s linear infinite alternate;
+  will-change: transform, opacity;
+}
+
+.gt-ref-land {
+  animation: gt-ref-land .3s cubic-bezier(.2,.8,.25,1.05) both;
+  will-change: transform;
+}
+
+.gt-ref-anticipate { animation: gt-ref-anticipate .8s ease-in-out infinite; }
+.gt-ref-scatter { animation: gt-ref-scatter .86s ease-in-out infinite; }
+.gt-ref-win { animation: gt-ref-win .92s ease-in-out infinite; }
+.gt-ref-spin-button { animation: gt-ref-spin 1.6s ease-in-out infinite; }
 .gt-ref-spin-button:active:not(:disabled) { transform: scale(.95); }
 
-/* The reference artwork already contains example values. These panels must fully cover them. */
-.gt-ref-machine > [class*="bg-[#270006]"] {
-  isolation: isolate;
-  overflow: visible;
-  white-space: nowrap;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1;
-  letter-spacing: -.025em;
-  background: #270006 !important;
-  box-shadow:
-    0 .8rem 0 .28rem #270006,
-    inset 0 0 7px rgba(255,202,55,.18) !important;
-}
-
-.gt-ref-machine > [class*="bg-[#270006]"]::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  left: -5%;
-  right: -5%;
-  top: -10%;
-  bottom: -72%;
-  border-radius: .55rem;
-  background: #270006;
-}
-
-.gt-ref-machine > [class*="bg-[#270006]"]:nth-of-type(1),
-.gt-ref-machine > [class*="bg-[#270006]"]:nth-of-type(3) {
-  font-size: clamp(.58rem, 2.8vw, .82rem) !important;
-}
-
-.gt-ref-machine > [class*="bg-[#270006]"]:nth-of-type(2) {
-  font-size: clamp(.9rem, 4.6vw, 1.42rem) !important;
-}
-
-/* Stable near-bonus reaction: glow only. No pseudo-character transforms or :has() selectors. */
+/* Near-bonus feedback stays inside the reel cell only; no full-cabinet pseudo transforms. */
 .gt-ref-anticipate::after {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 50% 50%, rgba(255,241,145,.18), transparent 62%);
+  background: radial-gradient(circle at 50% 50%, rgba(255,241,145,.16), transparent 64%);
   mix-blend-mode: screen;
-}
-
-@media (max-width: 390px) {
-  .gt-ref-machine > [class*="bg-[#270006]"]:nth-of-type(1),
-  .gt-ref-machine > [class*="bg-[#270006]"]:nth-of-type(3) {
-    font-size: clamp(.54rem, 2.65vw, .76rem) !important;
-  }
-
-  .gt-ref-machine > [class*="bg-[#270006]"]:nth-of-type(2) {
-    font-size: clamp(.82rem, 4.25vw, 1.22rem) !important;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
