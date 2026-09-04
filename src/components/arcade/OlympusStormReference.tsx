@@ -352,6 +352,12 @@ export function OlympusStormReference() {
           </div>
         )}
 
+        {win >= bet * 10 && !spinning && (
+          <div className="os-ref-big-win pointer-events-none absolute left-1/2 top-[43%] z-[64] -translate-x-1/2 rounded-2xl border-2 border-yellow-100 bg-[#071b58]/94 px-5 py-3 text-center font-serif text-3xl font-black text-yellow-100 shadow-[0_0_42px_rgba(95,205,255,.82)]">
+            BIG WIN
+          </div>
+        )}
+
         <div className="absolute left-[25.5%] top-[77.7%] z-35 flex h-[6.5%] w-[49%] items-center justify-center rounded-[18px] bg-[#002a62]/95 px-2 text-center shadow-[inset_0_0_12px_rgba(70,175,255,.45)]">
           <div>
             <p className="text-[8px] font-black uppercase tracking-[.18em] text-blue-200">WIN</p>
