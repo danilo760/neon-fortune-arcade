@@ -211,6 +211,7 @@ export function CandyCascadeHQ() {
       await wait(turbo ? 42 : 72);
     }
     setGrid(current);
+    setInitialRolling(false);
     await wait(turbo ? 80 : 190);
 
     let total = 0;
@@ -245,8 +246,10 @@ export function CandyCascadeHQ() {
       current = collapseGrid(current, removed);
       setGrid(current);
       setCascadeIndex(cascades);
+      setCascadeDropping(true);
       playSound("tick", soundEnabled);
       await wait(turbo ? 160 : 420);
+      setCascadeDropping(false);
     }
 
     const payout = Math.round(total);
