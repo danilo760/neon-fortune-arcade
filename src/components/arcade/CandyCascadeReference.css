@@ -1,3 +1,5 @@
+@import "./CandyCascadeOrchestration.css";
+
 @keyframes ccRefRoll {
   0% { transform: translateY(-6%) scale(1.012); opacity: .96; }
   50% { transform: translateY(6%) scale(.995); opacity: 1; }
@@ -12,15 +14,9 @@
 }
 
 @keyframes ccRefWin {
-  0%,100% { transform: scale(1); box-shadow: inset 0 0 10px rgba(255,255,255,.24), 0 0 10px rgba(255,79,211,.34); }
-  48% { transform: scale(1.028); box-shadow: inset 0 0 16px rgba(255,255,255,.46), 0 0 16px rgba(255,79,211,.56), 0 0 22px rgba(255,212,63,.3); }
-}
-
-@keyframes ccRefBomb {
-  0% { transform: translate(-50%, 7px) scale(.86); opacity: 0; }
-  30% { transform: translate(-50%, -1px) scale(1.035); opacity: 1; }
-  78% { transform: translate(-50%, 0) scale(1); opacity: 1; }
-  100% { transform: translate(-50%, -7px) scale(1.01); opacity: 0; }
+  0% { transform: scale(.96); box-shadow: inset 0 0 10px rgba(255,255,255,.24), 0 0 10px rgba(255,79,211,.34); }
+  52% { transform: scale(1.04); box-shadow: inset 0 0 18px rgba(255,255,255,.5), 0 0 17px rgba(255,79,211,.62), 0 0 24px rgba(255,212,63,.32); }
+  100% { transform: scale(.9); opacity: .88; }
 }
 
 @keyframes ccSpinReady {
@@ -46,27 +42,9 @@
   100% { opacity: 0; transform: scale(.66) rotate(18deg); }
 }
 
-@keyframes ccRefSugarSweep {
-  0% { opacity: 0; transform: translateX(-130%) skewX(-20deg); }
-  40% { opacity: .7; }
-  100% { opacity: 0; transform: translateX(130%) skewX(-20deg); }
-}
-
-.cc-ref-roll > div {
-  animation: ccRefRoll .18s linear infinite;
-  will-change: transform, opacity;
-}
-
-.cc-ref-land > div {
-  animation: ccRefLand .31s cubic-bezier(.2,.8,.2,1);
-  will-change: transform;
-}
-
-.cc-ref-win {
-  z-index: 8;
-  animation: ccRefWin .62s ease-in-out infinite;
-}
-
+.cc-ref-roll > div { animation: ccRefRoll .18s linear infinite; will-change: transform, opacity; }
+.cc-ref-land > div { animation: ccRefLand .31s cubic-bezier(.2,.8,.2,1); will-change: transform; }
+.cc-ref-win { z-index: 8; animation: ccRefWin .38s cubic-bezier(.2,.8,.2,1) both; }
 .cc-ref-win::before {
   content: "";
   position: absolute;
@@ -78,26 +56,10 @@
     radial-gradient(circle at 18% 25%, #fff7c7 0 2.5%, transparent 3.5%),
     radial-gradient(circle at 78% 20%, #ff9cf0 0 2.5%, transparent 3.5%),
     radial-gradient(circle at 84% 76%, #73efff 0 2.5%, transparent 3.5%),
-    radial-gradient(circle at 22% 82%, #ffe65d 0 2.5%, transparent 3.5%),
-    radial-gradient(circle, rgba(255,255,255,.1), transparent 68%);
+    radial-gradient(circle at 22% 82%, #ffe65d 0 2.5%, transparent 3.5%);
   filter: drop-shadow(0 0 5px rgba(255,136,230,.62));
-  animation: ccRefSparkPop .68s ease-out infinite;
+  animation: ccRefSparkPop .5s ease-out both;
 }
-
-.cc-ref-win::after {
-  content: "";
-  position: absolute;
-  z-index: 6;
-  top: -6%;
-  bottom: -6%;
-  width: 22%;
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgba(255,246,201,.68), transparent);
-  mix-blend-mode: screen;
-  animation: ccRefSugarSweep .92s ease-in-out infinite;
-}
-
-.cc-ref-bomb { animation: ccRefBomb .66s cubic-bezier(.2,.9,.2,1) both; }
 .cc-ref-spin-ready { animation: ccSpinReady 1.6s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -105,10 +67,6 @@
   .cc-ref-land > div,
   .cc-ref-win,
   .cc-ref-win::before,
-  .cc-ref-win::after,
-  .cc-ref-bomb,
-  .cc-ref-spin-ready {
-    animation: none !important;
-  }
+  .cc-ref-spin-ready,
   .cc-ref-result-win { animation: none !important; }
 }
