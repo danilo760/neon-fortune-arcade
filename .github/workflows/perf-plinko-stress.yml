@@ -1,0 +1,99 @@
+name: Perf Plinko stress
+
+on:
+  push:
+    branches:
+      - perf/plinko-off-react-state
+
+jobs:
+  validate-and-profile:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run test
+      - run: bun run build
+      - name: Static trajectory audit
+        run: |
+          echo "setActiveBalls_calls="$(grep -c "setActiveBalls" src/components/arcade/PlinkoReference.tsx)
+          echo "updateBall_calls="$(grep -c "updateBall" src/components/arcade/PlinkoReference.tsx || true)
+          echo "trail_map_calls="$(grep -c "trail.map" src/components/arcade/PlinkoReference.tsx || true)
+          echo "element_animate_calls="$(grep -c "\.animate(" src/components/arcade/PlinkoReference.tsx)
+      - name: Profile 10 balls x 16 rows x Auto at CPU 4x
+        env:
+          AFTER_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          cp scripts/profile-plinko-cdp.mjs /tmp/profile-plinko-cdp.mjs
+
+          inject_render_counter() {
+            python3 - <<'PY'
+          from pathlib import Path
+          path = Path('src/components/arcade/PlinkoReference.tsx')
+          text = path.read_text()
+          marker = 'export function PlinkoReference() {\n'
+          injection = '''export function PlinkoReference() {\n  if (typeof window !== "undefined") {\n    const perfWindow = window as Window & { __plinkoRenderCount?: number };\n    perfWindow.__plinkoRenderCount = (perfWindow.__plinkoRenderCount ?? 0) + 1;\n  }\n'''
+          if marker not in text:
+              raise SystemExit('PlinkoReference marker missing')
+          path.write_text(text.replace(marker, injection, 1))
+          PY
+          }
+
+          start_runtime() {
+            bun run preview -- --host 127.0.0.1 --port 4173 >/tmp/vite-preview.log 2>&1 &
+            VITE_PID=$!
+            CHROME_BIN=$(command -v google-chrome || command -v chromium || command -v chromium-browser)
+            "$CHROME_BIN" --headless=new --no-sandbox --disable-dev-shm-usage --autoplay-policy=no-user-gesture-required --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-profiler about:blank >/tmp/chrome.log 2>&1 &
+            CHROME_PID=$!
+            for i in $(seq 1 80); do
+              if curl -sf http://127.0.0.1:9222/json/version >/dev/null && curl -sf http://127.0.0.1:4173/game/neon-plinko >/dev/null; then return; fi
+              sleep .25
+            done
+            cat /tmp/vite-preview.log || true
+            cat /tmp/chrome.log || true
+            exit 1
+          }
+
+          stop_runtime() {
+            kill "$VITE_PID" "$CHROME_PID" 2>/dev/null || true
+            wait "$VITE_PID" 2>/dev/null || true
+            wait "$CHROME_PID" 2>/dev/null || true
+            rm -rf /tmp/chrome-profiler
+          }
+
+          profile_ref() {
+            REF="$1"
+            LABEL="$2"
+            git checkout --force "$REF"
+            bun install --frozen-lockfile >/dev/null
+            inject_render_counter
+            bun run build >/tmp/build-$LABEL.log 2>&1
+            start_runtime
+            STRESS_MS=60000 node /tmp/profile-plinko-cdp.mjs >"/tmp/$LABEL.json"
+            stop_runtime
+            echo "$LABEL=$(cat /tmp/$LABEL.json)"
+          }
+
+          profile_ref 315945a7c26769d1146bab8a4edbee180e36a3a6 before
+          profile_ref "$AFTER_SHA" after
+
+          node - <<'NODE'
+          const fs = require('fs');
+          const before = JSON.parse(fs.readFileSync('/tmp/before.json', 'utf8'));
+          const after = JSON.parse(fs.readFileSync('/tmp/after.json', 'utf8'));
+          const pct = (a, b) => a ? ((b - a) / a) * 100 : 0;
+          console.log('=== PLINKO PERF COMPARISON ===');
+          console.log(JSON.stringify({ before, after, delta: {
+            avgFpsPct: pct(before.avgFps, after.avgFps),
+            renderCountPct: pct(before.renderCount, after.renderCount),
+            longTasks: after.longTasks - before.longTasks,
+            heapDeltaBytes: after.jsHeapDelta - before.jsHeapDelta,
+            maxDomNodes: after.maxDomNodes - before.maxDomNodes,
+          }}, null, 2));
+          NODE
