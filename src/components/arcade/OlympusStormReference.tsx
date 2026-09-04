@@ -1,4 +1,6 @@
 import { Link } from "@tanstack/react-router";
+
+import { AnimatedWinCounter } from "./AnimatedWinCounter";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { olympusStormReferenceBase64 } from "@/assets/olympus-storm/referenceData";
@@ -48,34 +50,6 @@ const INITIAL_GRID: OlympusSymbolId[] = [
 
 function wait(ms: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
-}
-
-function motionReduced() {
-  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
-async function countUp(
-  from: number,
-  to: number,
-  duration: number,
-  update: (value: number) => void,
-) {
-  if (to <= from || duration <= 0 || motionReduced()) {
-    update(to);
-    return;
-  }
-
-  await new Promise<void>((resolve) => {
-    const started = performance.now();
-    const frame = (now: number) => {
-      const progress = Math.min(1, (now - started) / duration);
-      const eased = 1 - (1 - progress) ** 3;
-      update(Math.round(from + (to - from) * eased));
-      if (progress < 1) requestAnimationFrame(frame);
-      else resolve();
-    };
-    requestAnimationFrame(frame);
-  });
 }
 
 function useReferenceBlob() {
@@ -133,6 +107,7 @@ export function OlympusStormReference() {
   const [bet, setBet] = useState<number>(200);
   const [grid, setGrid] = useState<OlympusSymbolId[]>(INITIAL_GRID);
   const [win, setWin] = useState(0);
+  const [winDuration, setWinDuration] = useState(0);
   const [roundBusy, setRoundBusy] = useState(false);
   const [phase, setPhase] = useState<PresentationPhase>("idle");
   const [winning, setWinning] = useState<Set<number>>(() => new Set());
@@ -162,6 +137,7 @@ export function OlympusStormReference() {
     setStormMultiplier(1);
     setCascadeNumber(0);
     setClusterCount(0);
+    setWinDuration(0);
     setWin(0);
     playSound("spin", soundEnabled);
 
@@ -204,12 +180,10 @@ export function OlympusStormReference() {
       }
 
       const targetTotal = displayedTotal + cascade.payout;
-      await countUp(
-        displayedTotal,
-        targetTotal,
-        turbo ? 140 : cascade.multiplier > 1 ? 620 : 360,
-        setWin,
-      );
+      const winDuration = turbo ? 140 : cascade.multiplier > 1 ? 620 : 360;
+      setWinDuration(winDuration);
+      setWin(targetTotal);
+      await wait(winDuration);
       displayedTotal = targetTotal;
 
       setWinning(new Set());
@@ -356,7 +330,7 @@ export function OlympusStormReference() {
               {roundBusy && cascadeNumber > 0 ? `CASCADE ${cascadeNumber} · ${clusterCount} CLUSTER${clusterCount === 1 ? "" : "S"}` : "WIN"}
             </p>
             <p className="font-serif text-[clamp(1.1rem,7vw,2rem)] font-black leading-none text-[#ffd95b] tabular-nums drop-shadow-[0_2px_0_#5b3100]">
-              {formatCoins(win)}
+              <AnimatedWinCounter value={win} duration={winDuration} />
             </p>
             {stormMultiplier > 1 && stormActive && (
               <p className="mt-0.5 text-[8px] font-black text-cyan-200">STORM ×{stormMultiplier}</p>

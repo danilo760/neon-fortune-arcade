@@ -1,4 +1,6 @@
 import { Link } from "@tanstack/react-router";
+
+import { AnimatedWinCounter } from "./AnimatedWinCounter";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import candyReference from "@/assets/candy-cascade/reference-hd.webp";
@@ -37,28 +39,6 @@ const CROPS: Record<CandySymbolId, Crop> = {
 
 function wait(ms: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
-}
-
-function reducedMotion() {
-  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
-async function countUp(from: number, to: number, duration: number, update: (value: number) => void) {
-  if (to <= from || reducedMotion()) {
-    update(to);
-    return;
-  }
-  await new Promise<void>((resolve) => {
-    const start = performance.now();
-    const tick = (now: number) => {
-      const progress = Math.min(1, (now - start) / duration);
-      const eased = 1 - (1 - progress) ** 3;
-      update(Math.round(from + (to - from) * eased));
-      if (progress < 1) requestAnimationFrame(tick);
-      else resolve();
-    };
-    requestAnimationFrame(tick);
-  });
 }
 
 function CandySymbol({ id }: { id: CandySymbolId }) {
@@ -102,6 +82,7 @@ export function CandyCascadeHQ() {
   const [bet, setBet] = useState<number>(200);
   const [grid, setGrid] = useState<CandySymbolId[]>(() => makeCandyGrid());
   const [win, setWin] = useState(0);
+  const [winDuration, setWinDuration] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle");
   const [winning, setWinning] = useState<Set<number>>(() => new Set());
@@ -131,6 +112,7 @@ export function CandyCascadeHQ() {
     setCascadeIndex(0);
     setSugarMultiplier(1);
     setActiveBomb(null);
+    setWinDuration(0);
     setWin(0);
     playSound("spin", soundEnabled);
 
@@ -170,7 +152,10 @@ export function CandyCascadeHQ() {
       }
 
       const target = displayed + cascade.payout;
-      await countUp(displayed, target, turbo ? 120 : 340, setWin);
+      const winDuration = turbo ? 120 : 340;
+      setWinDuration(winDuration);
+      setWin(target);
+      await wait(winDuration);
       displayed = target;
 
       setWinning(new Set());
@@ -248,7 +233,7 @@ export function CandyCascadeHQ() {
         <div className={cn("absolute left-[25%] top-[76.4%] z-[35] flex h-[7.7%] w-[50%] items-center justify-center rounded-[20px] bg-[#4a075f]/96 text-center shadow-[inset_0_0_18px_rgba(255,85,238,.4)]", win > 0 && !spinning && "cc-ref-result-win")}>
           <div>
             <p className="text-[8px] font-black uppercase tracking-[.16em] text-pink-100">{spinning && cascadeIndex > 0 ? `CASCADE ${cascadeIndex}` : "WIN"}</p>
-            <p className="font-serif text-[clamp(1.25rem,7vw,2.15rem)] font-black leading-none text-[#ffe35f] tabular-nums drop-shadow-[0_2px_0_#6b2b00]">{formatCoins(win)}</p>
+            <p className="font-serif text-[clamp(1.25rem,7vw,2.15rem)] font-black leading-none text-[#ffe35f] tabular-nums drop-shadow-[0_2px_0_#6b2b00]"><AnimatedWinCounter value={win} duration={winDuration} /></p>
             {(cascadeIndex > 0 || sugarMultiplier > 1) && <p className="mt-0.5 text-[8px] font-black text-pink-100">SUGAR ×{sugarMultiplier}</p>}
           </div>
         </div>

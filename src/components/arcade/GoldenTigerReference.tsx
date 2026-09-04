@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Volume2, VolumeX } from "lucide-react";
+
+import { AnimatedWinCounter } from "./AnimatedWinCounter";
 import {
   useCallback,
   useEffect,
@@ -192,6 +194,7 @@ export function GoldenTigerReference() {
   const [bet, setBet] = useState<number>(200);
   const [grid, setGrid] = useState<GoldenTigerSymbolId[]>(INITIAL_GRID);
   const [win, setWin] = useState(0);
+  const [winDuration, setWinDuration] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [stoppedColumns, setStoppedColumns] = useState(5);
   const [landingColumn, setLandingColumn] = useState(-1);
@@ -214,7 +217,6 @@ export function GoldenTigerReference() {
   const autoStopRef = useRef(false);
   const bonusRef = useRef(false);
   const rollingRef = useRef<number | null>(null);
-  const winFrameRef = useRef<number | null>(null);
   const presentationRngRef = useRef<() => number>(createPresentationRng());
 
   useEffect(() => hydrateFromStorage(), []);
@@ -222,38 +224,8 @@ export function GoldenTigerReference() {
   useEffect(
     () => () => {
       if (rollingRef.current !== null) window.clearInterval(rollingRef.current);
-      if (winFrameRef.current !== null) window.cancelAnimationFrame(winFrameRef.current);
     },
     [],
-  );
-
-  const animateWin = useCallback(
-    (target: number, tier: GoldenTigerWinTier) =>
-      new Promise<void>((resolve) => {
-        if (winFrameRef.current !== null) window.cancelAnimationFrame(winFrameRef.current);
-        if (target <= 0 || reducedMotion || tier === "none") {
-          setWin(target);
-          winFrameRef.current = null;
-          resolve();
-          return;
-        }
-
-        const duration = tier === "small" ? 320 : tier === "nice" ? 620 : tier === "big" ? 980 : 1_350;
-        const startedAt = performance.now();
-        const frame = (now: number) => {
-          const progress = Math.min(1, (now - startedAt) / duration);
-          const eased = 1 - (1 - progress) ** 3;
-          setWin(Math.round(target * eased));
-          if (progress >= 1) {
-            winFrameRef.current = null;
-            resolve();
-            return;
-          }
-          winFrameRef.current = window.requestAnimationFrame(frame);
-        };
-        winFrameRef.current = window.requestAnimationFrame(frame);
-      }),
-    [reducedMotion],
   );
 
   const spinRound = useCallback(
@@ -277,6 +249,7 @@ export function GoldenTigerReference() {
       setScatters(new Set());
       setAnticipation(0);
       setWinTier("none");
+      setWinDuration(0);
       setWin(0);
       playSound("spin", soundEnabled);
 
@@ -402,6 +375,7 @@ export function GoldenTigerReference() {
       }
 
       if (result.bonusAward > 0) {
+        setWinDuration(0);
         setWin(result.payout);
         setPhase("bonusTrigger");
         setTigerReaction("celebrate");
@@ -410,7 +384,11 @@ export function GoldenTigerReference() {
         const tier = goldenTigerWinTier(result.payout, bet);
         setWinTier(tier);
         setPhase(tierPhase(tier));
-        await animateWin(result.payout, tier);
+        const duration = tier === "small" ? 320 : tier === "nice" ? 620 : tier === "big" ? 980 : 1_350;
+        const animatedDuration = result.payout > 0 && !reducedMotion && tier !== "none" ? duration : 0;
+        setWinDuration(animatedDuration);
+        setWin(result.payout);
+        if (animatedDuration > 0) await wait(animatedDuration);
         playSound(
           tier === "big" || tier === "mega" ? "bigWin" : result.payout > 0 ? "win" : "lose",
           soundEnabled,
@@ -423,7 +401,7 @@ export function GoldenTigerReference() {
       busyRef.current = false;
       return result;
     },
-    [animateWin, bet, soundEnabled, turbo],
+    [bet, reducedMotion, soundEnabled, turbo],
   );
 
   const runBonus = useCallback(
@@ -656,7 +634,7 @@ export function GoldenTigerReference() {
           {formatCoins(balance)}
         </NumberPatch>
         <NumberPatch className="left-[34.4%] top-[77.9%] h-[4.4%] w-[31.2%] text-[clamp(1rem,6vw,1.65rem)] tabular-nums text-[#ffd73f]">
-          {formatCoins(win)}
+          <AnimatedWinCounter value={win} duration={winDuration} />
         </NumberPatch>
         <NumberPatch className="left-[75%] top-[79.1%] h-[3.4%] w-[16.6%] text-[clamp(.7rem,4vw,1.08rem)] tabular-nums">
           {formatCoins(bet)}
@@ -731,7 +709,7 @@ export function GoldenTigerReference() {
         {(winTier === "big" || winTier === "mega") && win > 0 && phase === "bigWin" && (
           <div className={cn("gt-ref-win-callout", `gt-ref-win-callout--${winTier}`)} aria-live="polite">
             <span>{tierLabel(winTier)}</span>
-            <strong>{formatCoins(win)}</strong>
+            <strong><AnimatedWinCounter value={win} duration={winDuration} /></strong>
           </div>
         )}
 
