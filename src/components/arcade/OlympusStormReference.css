@@ -36,6 +36,18 @@
   50% { box-shadow: 0 0 22px rgba(56,194,255,.62), 0 0 36px rgba(35,116,255,.24); }
 }
 
+@keyframes os-zeus-aura {
+  0%,100% { opacity: .14; transform: scale(.96); }
+  48% { opacity: .58; transform: scale(1.045); }
+  72% { opacity: .3; transform: scale(1.015); }
+}
+
+@keyframes os-bolt-spark {
+  0%,100% { opacity: 0; transform: translateY(-6%) scale(.82); }
+  24% { opacity: .92; }
+  52% { opacity: .38; transform: translateY(6%) scale(1.02); }
+}
+
 .os-ref-spinning > div {
   animation: os-reel-fall .18s linear infinite;
   transform-origin: center;
@@ -56,6 +68,7 @@
 
 .os-ref-lightning-flash {
   background:
+    radial-gradient(circle at 52% 18%, rgba(225,249,255,.42), transparent 15%),
     radial-gradient(circle at 52% 34%, rgba(255,255,255,.78), rgba(129,216,255,.38) 11%, transparent 31%),
     linear-gradient(112deg, transparent 43%, rgba(234,249,255,.74) 46%, rgba(76,193,255,.5) 47%, transparent 50%),
     linear-gradient(72deg, transparent 52%, rgba(255,255,255,.66) 54%, rgba(48,165,255,.44) 55%, transparent 58%);
@@ -63,9 +76,28 @@
   animation: os-lightning-flash .56s ease-out both;
 }
 
+.os-ref-lightning-flash::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: 36%;
+  top: 4.5%;
+  width: 34%;
+  height: 24%;
+  pointer-events: none;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 47% 42%, rgba(225,249,255,.7) 0 2%, transparent 3%),
+    radial-gradient(circle at 58% 42%, rgba(225,249,255,.7) 0 2%, transparent 3%),
+    radial-gradient(circle, rgba(52,173,255,.34), rgba(33,103,255,.12) 42%, transparent 70%);
+  filter: drop-shadow(0 0 10px rgba(119,218,255,.65));
+  animation: os-zeus-aura .52s ease-in-out 2;
+}
+
 .os-ref-lightning-flash::after {
   content: "";
   position: absolute;
+  z-index: 2;
   right: 17%;
   top: 5.5%;
   width: 9%;
@@ -74,6 +106,7 @@
   clip-path: polygon(43% 0, 70% 0, 55% 35%, 82% 35%, 28% 100%, 40% 56%, 12% 56%);
   background: linear-gradient(180deg, #fff, #8ee6ff 42%, #299dff 76%, #dffaff);
   filter: drop-shadow(0 0 6px #b7edff) drop-shadow(0 0 11px #3bbcff);
+  animation: os-bolt-spark .56s ease-out both;
 }
 
 .os-ref-storm-message { animation: os-storm-pop .34s cubic-bezier(.2,.9,.3,1.08) both; }
@@ -85,6 +118,8 @@
   .os-ref-land > div,
   .os-ref-win,
   .os-ref-lightning-flash,
+  .os-ref-lightning-flash::before,
+  .os-ref-lightning-flash::after,
   .os-ref-storm-message,
   .os-ref-spin-button {
     animation: none !important;
