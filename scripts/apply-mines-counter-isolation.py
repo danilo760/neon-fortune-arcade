@@ -94,3 +94,5 @@ if old_render not in text:
 text = text.replace(old_render, new_render, 1)
 
 PATH.write_text(text)
+
+# Trigger validation after workflow registration.
