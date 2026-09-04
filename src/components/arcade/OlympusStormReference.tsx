@@ -538,7 +538,7 @@ export function OlympusStormReference() {
   const cascadeEnergy = Math.min(4, cascadeNumber);
   const levelThreshold = stormLevel >= 5 ? 1 : (OLYMPUS_STORM_LEVEL_THRESHOLDS[stormLevel - 1] ?? 1);
   const energyPercent = stormLevel >= 5 ? 100 : Math.min(100, (stormEnergy / levelThreshold) * 100);
-  const levelMultiplier = OLYMPUS_STORM_LEVEL_MULTIPLIERS[stormLevel - 1];
+  const levelMultiplier = OLYMPUS_STORM_LEVEL_MULTIPLIERS[stormLevel - 1] ?? 1;
   const zeusState = phase === "stormHit"
     ? "strike"
     : phase === "stormCharge" || anticipationActive
