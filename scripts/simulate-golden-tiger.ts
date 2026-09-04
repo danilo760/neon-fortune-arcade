@@ -1,4 +1,6 @@
 import {
+  GOLDEN_TIGER_FEATURE_BUY_COST_MULTIPLIER,
+  GOLDEN_TIGER_FEATURE_BUY_INITIAL_SPINS,
   GOLDEN_TIGER_MAX_RETRIGGERS,
   evaluateGoldenTiger,
   makeGoldenTigerGrid,
@@ -6,6 +8,10 @@ import {
 
 const requested = Number(process.env.SPINS ?? 1_000_000);
 const baseSpins = Number.isFinite(requested) && requested >= 1 ? Math.floor(requested) : 1_000_000;
+const requestedFeatures = Number(process.env.FEATURE_ENTRIES ?? 1_000_000);
+const featureEntries = Number.isFinite(requestedFeatures) && requestedFeatures >= 1
+  ? Math.floor(requestedFeatures)
+  : 1_000_000;
 
 let state = 0x7f4a7c15;
 function rng() {
@@ -69,6 +75,37 @@ for (let index = 0; index < baseSpins; index += 1) {
   maxBonusSpins = Math.max(maxBonusSpins, bonus.totalSpins);
 }
 
+const featureOutcomes = new Float64Array(featureEntries);
+let featurePayoutTotal = 0;
+let featureSquareTotal = 0;
+let featureSpinTotal = 0;
+let featureRetriggerTotal = 0;
+let featureWithRetrigger = 0;
+let featureMax = 0;
+let featureMaxSpins = 0;
+
+for (let index = 0; index < featureEntries; index += 1) {
+  const feature = simulateBonus(GOLDEN_TIGER_FEATURE_BUY_INITIAL_SPINS);
+  featureOutcomes[index] = feature.payout;
+  featurePayoutTotal += feature.payout;
+  featureSquareTotal += feature.payout * feature.payout;
+  featureSpinTotal += feature.totalSpins;
+  featureRetriggerTotal += feature.retriggers;
+  if (feature.retriggers > 0) featureWithRetrigger += 1;
+  featureMax = Math.max(featureMax, feature.payout);
+  featureMaxSpins = Math.max(featureMaxSpins, feature.totalSpins);
+}
+
+featureOutcomes.sort();
+const mid = Math.floor(featureEntries / 2);
+const featureMedian = featureEntries % 2 === 0
+  ? ((featureOutcomes[mid - 1] ?? 0) + (featureOutcomes[mid] ?? 0)) / 2
+  : (featureOutcomes[mid] ?? 0);
+const featureMean = featurePayoutTotal / featureEntries;
+const featureVariance = Math.max(0, featureSquareTotal / featureEntries - featureMean ** 2);
+const featureStdDev = Math.sqrt(featureVariance);
+const featureRtp = featureMean / GOLDEN_TIGER_FEATURE_BUY_COST_MULTIPLIER;
+
 const triggerCount = scatter3 + scatter4 + scatter5Plus;
 const percent = (value: number) => `${(value * 100).toFixed(4)}%`;
 const round = (value: number) => Number(value.toFixed(6));
@@ -98,6 +135,21 @@ const report = {
     freeSpinContribution: round(bonusPayout / baseSpins),
     combined: round((basePayout + bonusPayout) / baseSpins),
     baseHitFrequency: percent(baseHits / baseSpins),
+  },
+  featureBuy: {
+    name: "Golden Fortune",
+    entries: featureEntries,
+    initialSpins: GOLDEN_TIGER_FEATURE_BUY_INITIAL_SPINS,
+    costMultiple: GOLDEN_TIGER_FEATURE_BUY_COST_MULTIPLIER,
+    featureRtp: percent(featureRtp),
+    averageWinMultiple: round(featureMean),
+    medianWinMultiple: round(featureMedian),
+    standardDeviation: round(featureStdDev),
+    maxObservedWinMultiple: round(featureMax),
+    averageFinalSpins: round(featureSpinTotal / featureEntries),
+    retriggerFrequency: percent(featureWithRetrigger / featureEntries),
+    averageRetriggers: round(featureRetriggerTotal / featureEntries),
+    maxFinalSpinsFound: featureMaxSpins,
   },
 };
 
