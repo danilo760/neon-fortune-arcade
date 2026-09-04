@@ -29,6 +29,20 @@
   35% { opacity: 1; }
   100% { opacity: 0; transform: translate(-50%,-160%) scale(1.35); }
 }
+@keyframes gt-hero-breathe {
+  0%,100% { opacity: .18; transform: translateZ(0) scale(.96); filter: blur(1px); }
+  50% { opacity: .44; transform: translateZ(0) scale(1.035); filter: blur(0); }
+}
+@keyframes gt-card-tension {
+  0% { opacity: 0; transform: translateY(18%) rotate(-12deg) scale(.55); }
+  24% { opacity: 1; transform: translateY(-5%) rotate(4deg) scale(1.08); }
+  58% { opacity: 1; transform: translateY(0) rotate(-2deg) scale(1); }
+  100% { opacity: .25; transform: translateY(-10%) rotate(3deg) scale(1.04); }
+}
+@keyframes gt-hero-tension {
+  0%,100% { opacity: .34; transform: scale(.95); }
+  50% { opacity: .78; transform: scale(1.08); }
+}
 
 .gt-ref-machine__ambient { position: absolute; z-index: 10; inset: 0; pointer-events: none; opacity: .46; background: radial-gradient(circle at 15% 19%, rgba(255,244,164,.9) 0 1px, transparent 2px), radial-gradient(circle at 82% 14%, rgba(255,210,80,.85) 0 1px, transparent 2px), radial-gradient(circle at 71% 47%, rgba(255,132,35,.7) 0 1.5px, transparent 2.5px), linear-gradient(112deg, transparent 36%, rgba(255,239,147,.16) 47%, transparent 59%); background-size: 92px 108px, 126px 146px, 148px 174px, 210% 100%; background-position: 0 0, 22px 38px, 46px 12px, -130% 0; mix-blend-mode: screen; animation: gt-ref-ambient-sweep 5.2s ease-in-out infinite; }
 @keyframes gt-ref-ambient-sweep { 0%, 100% { background-position: 0 0, 22px 38px, 46px 12px, -130% 0; opacity: .28; } 48% { opacity: .56; } 58% { background-position: 0 0, 22px 38px, 46px 12px, 130% 0; opacity: .48; } }
@@ -39,6 +53,96 @@
 .gt-ref-win { animation: gt-ref-win .82s ease-in-out infinite; }
 .gt-ref-spin-button { animation: gt-ref-spin 1.45s ease-in-out infinite; }
 .gt-ref-spin-button:active { transform: scale(.94); }
+
+/* Cover the sample balance/bet numbers baked into the reference artwork. */
+.gt-ref-machine > [class*="bg-[#270006]"] {
+  overflow: visible;
+  white-space: nowrap;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  background: #270006 !important;
+  box-shadow:
+    0 .58rem 0 .22rem #270006,
+    inset 0 0 7px rgba(255,202,55,.18) !important;
+}
+.gt-ref-machine > [class*="bg-[#270006]"]::after {
+  content: "";
+  position: absolute;
+  left: -3%;
+  right: -3%;
+  top: 72%;
+  height: 75%;
+  z-index: -1;
+  border-radius: 0 0 .55rem .55rem;
+  background: #270006;
+}
+
+/* Character-life layer: subtle idle breathing and stronger near-bonus reaction. */
+.gt-ref-machine::before {
+  content: "";
+  position: absolute;
+  z-index: 14;
+  left: 27%;
+  top: 4.2%;
+  width: 47%;
+  height: 22%;
+  pointer-events: none;
+  border-radius: 48%;
+  background:
+    radial-gradient(ellipse at 50% 46%, rgba(255,232,116,.2) 0 18%, rgba(255,128,28,.12) 35%, transparent 67%),
+    radial-gradient(ellipse at 50% 72%, rgba(255,191,50,.14), transparent 62%);
+  mix-blend-mode: screen;
+  animation: gt-hero-breathe 3.2s ease-in-out infinite;
+}
+.gt-ref-machine::after {
+  content: "";
+  position: absolute;
+  z-index: 46;
+  right: 20.5%;
+  top: 14.5%;
+  width: 10.5%;
+  aspect-ratio: .72;
+  pointer-events: none;
+  opacity: 0;
+  border: 2px solid #ffd54e;
+  border-radius: 12%;
+  color: #ffe67d;
+  background: linear-gradient(145deg, #e42116, #7c0708 72%);
+  box-shadow: 0 0 18px rgba(255,62,22,.8), inset 0 0 10px rgba(255,220,88,.42);
+}
+.gt-ref-machine:has(.gt-ref-anticipate)::before {
+  background:
+    radial-gradient(ellipse at 50% 46%, rgba(255,245,166,.42) 0 15%, rgba(255,101,21,.3) 39%, transparent 69%),
+    radial-gradient(ellipse at 50% 72%, rgba(255,196,52,.28), transparent 64%);
+  animation: gt-hero-tension .58s ease-in-out infinite;
+}
+.gt-ref-machine:has(.gt-ref-anticipate)::after {
+  content: "福";
+  display: grid;
+  place-items: center;
+  opacity: 1;
+  font-family: serif;
+  font-size: clamp(.85rem, 4vw, 1.35rem);
+  font-weight: 900;
+  animation: gt-card-tension .7s cubic-bezier(.2,.85,.25,1.2) infinite alternate;
+}
+.gt-ref-machine:has(.gt-ref-scatter)::before {
+  opacity: .58;
+  filter: saturate(1.25);
+}
+
+@media (max-width: 390px) {
+  .gt-ref-machine > [class*="bg-[#270006]"] {
+    font-size: clamp(.66rem, 3.8vw, .96rem) !important;
+    letter-spacing: -.025em;
+  }
+  .gt-ref-machine > [class*="bg-[#270006]"]:nth-of-type(1) {
+    font-size: clamp(.62rem, 3.55vw, .9rem) !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .gt-ref-spinning,.gt-ref-land,.gt-ref-anticipate,.gt-ref-scatter,.gt-ref-win,.gt-ref-spin-button,.gt-ref-machine__ambient { animation: none !important; }
+  .gt-ref-spinning,.gt-ref-land,.gt-ref-anticipate,.gt-ref-scatter,.gt-ref-win,.gt-ref-spin-button,.gt-ref-machine__ambient,.gt-ref-machine::before,.gt-ref-machine::after { animation: none !important; }
+  .gt-ref-machine::before { opacity: .18; }
+  .gt-ref-machine:has(.gt-ref-anticipate)::after { opacity: .85; }
 }
