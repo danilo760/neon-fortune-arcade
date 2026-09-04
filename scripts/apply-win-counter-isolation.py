@@ -24,12 +24,10 @@ def patch_golden() -> None:
         "golden state",
     )
     text = replace_once(text, '  const winFrameRef = useRef<number | null>(null);\n', '', "golden frame ref")
-    text = replace_once(
-        text,
-        '      if (winFrameRef.current !== null) window.cancelAnimationFrame(winFrameRef.current);\n',
-        '',
-        "golden frame cleanup",
-    )
+    frame_cleanup = '      if (winFrameRef.current !== null) window.cancelAnimationFrame(winFrameRef.current);\n'
+    if frame_cleanup not in text:
+        raise SystemExit("golden frame cleanup: missing")
+    text = text.replace(frame_cleanup, '', 1)
     start = text.index("  const animateWin = useCallback(")
     end = text.index("  const spinRound = useCallback(", start)
     text = text[:start] + text[end:]
