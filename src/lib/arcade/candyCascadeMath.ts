@@ -52,14 +52,14 @@ export const CANDY_MIN_CLUSTER = 5;
 export const CANDY_MAX_CASCADES = 8;
 
 const SYMBOLS: readonly SymbolDef[] = [
-  { id: "diamond", weight: 5, pay: 2.2 },
-  { id: "heart", weight: 7, pay: 1.6 },
-  { id: "sprinkle", weight: 9, pay: 1.25 },
-  { id: "cupcake", weight: 11, pay: 1.0 },
-  { id: "lollipop", weight: 13, pay: 0.82 },
-  { id: "star", weight: 15, pay: 0.66 },
-  { id: "jelly", weight: 17, pay: 0.52 },
-  { id: "candy", weight: 19, pay: 0.42 },
+  { id: "diamond", weight: 5, pay: 12.6 },
+  { id: "heart", weight: 7, pay: 9.16 },
+  { id: "sprinkle", weight: 9, pay: 7.16 },
+  { id: "cupcake", weight: 11, pay: 5.73 },
+  { id: "lollipop", weight: 13, pay: 4.7 },
+  { id: "star", weight: 15, pay: 3.78 },
+  { id: "jelly", weight: 17, pay: 2.98 },
+  { id: "candy", weight: 19, pay: 2.41 },
 ];
 
 const TOTAL_WEIGHT = SYMBOLS.reduce((sum, symbol) => sum + symbol.weight, 0);
@@ -158,9 +158,10 @@ export function collapseCandyGrid(
 
 function chooseBombIndex(cluster: CandyCluster) {
   const center = cluster.indexes.reduce((sum, index) => sum + index, 0) / cluster.indexes.length;
-  return cluster.indexes.reduce((best, index) =>
-    Math.abs(index - center) < Math.abs(best - center) ? index : best,
-  cluster.indexes[0] ?? 0);
+  return cluster.indexes.reduce(
+    (best, index) => (Math.abs(index - center) < Math.abs(best - center) ? index : best),
+    cluster.indexes[0] ?? 0,
+  );
 }
 
 export function candyBombForCascade(
