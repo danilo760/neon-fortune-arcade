@@ -6,6 +6,7 @@ import { GoldenTigerReference } from "@/components/arcade/GoldenTigerReference";
 import { MinesGame } from "@/components/arcade/MinesGame";
 import { OlympusStormReference } from "@/components/arcade/OlympusStormReference";
 import { PlinkoReference } from "@/components/arcade/PlinkoReference";
+import "@/components/arcade/PlinkoBallPremium.css";
 import { SlotGame } from "@/components/arcade/SlotGame";
 import { getGame } from "@/lib/arcade/catalog";
 import { SLOT_CONFIGS } from "@/lib/arcade/slot-configs";
