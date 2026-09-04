@@ -62,8 +62,21 @@ export function PlinkoReference() {
 
   const busyRef = useRef(false);
   const autoRef = useRef(false);
+  const autoTimerRef = useRef<number | null>(null);
+  const mountedRef = useRef(true);
 
-  useEffect(() => hydrateFromStorage(), []);
+  useEffect(() => {
+    hydrateFromStorage();
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      autoRef.current = false;
+      if (autoTimerRef.current !== null) {
+        window.clearTimeout(autoTimerRef.current);
+        autoTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const payouts = plinkoPayouts(risk, rows);
   const runCost = bet * ballsPerRun;
@@ -71,8 +84,25 @@ export function PlinkoReference() {
   const inFlight = activeBalls.filter((ball) => ball.status === "falling").length;
   const landedBuckets = new Set(activeBalls.filter((ball) => ball.status === "landed").map((ball) => ball.bucket));
 
+  function clearAutoTimer() {
+    if (autoTimerRef.current !== null) {
+      window.clearTimeout(autoTimerRef.current);
+      autoTimerRef.current = null;
+    }
+  }
+
+  function scheduleAuto(delay: number) {
+    clearAutoTimer();
+    if (!mountedRef.current || !autoRef.current) return;
+    autoTimerRef.current = window.setTimeout(() => {
+      autoTimerRef.current = null;
+      if (mountedRef.current && autoRef.current && !busyRef.current) void runSequence();
+    }, delay);
+  }
+
   function stopAuto() {
     autoRef.current = false;
+    clearAutoTimer();
     setAutoDrop(false);
   }
 
@@ -81,11 +111,8 @@ export function PlinkoReference() {
     autoRef.current = next;
     setAutoDrop(next);
     playSound("click", soundEnabled);
-    if (next && !busyRef.current) {
-      window.setTimeout(() => {
-        if (autoRef.current && !busyRef.current) void runSequence();
-      }, 140);
-    }
+    if (next && !busyRef.current) scheduleAuto(140);
+    if (!next) clearAutoTimer();
   }
 
   function updateBall(id: string, patch: Partial<ActiveBall>) {
@@ -188,11 +215,7 @@ export function PlinkoReference() {
     busyRef.current = false;
     setBusy(false);
 
-    if (autoRef.current) {
-      window.setTimeout(() => {
-        if (autoRef.current && !busyRef.current) void runSequence();
-      }, 240);
-    }
+    if (autoRef.current) scheduleAuto(240);
   }
 
   function moveBet(direction: -1 | 1) {
