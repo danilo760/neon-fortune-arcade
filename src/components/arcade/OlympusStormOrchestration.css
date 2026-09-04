@@ -104,6 +104,10 @@
   animation: os-grid-storm-impact .42s cubic-bezier(.18, .8, .3, 1) both;
 }
 
+.os-ref-grid--bonus {
+  filter: saturate(1.05) brightness(1.03);
+}
+
 .os-ref-cell.os-ref-win {
   z-index: 4;
   animation: os-cluster-break .42s cubic-bezier(.18, .8, .3, 1) both;
@@ -149,15 +153,25 @@
   filter: drop-shadow(0 0 7px #bfefff) drop-shadow(0 0 14px #35b7ff);
 }
 
-.os-ref-zeus-stage.is-charged .os-ref-zeus-aura {
+.os-ref-zeus-stage.is-charged .os-ref-zeus-aura,
+.os-ref-zeus-stage.is-charge .os-ref-zeus-aura,
+.os-ref-zeus-stage.is-strike .os-ref-zeus-aura,
+.os-ref-zeus-stage.is-ascend .os-ref-zeus-aura,
+.os-ref-zeus-stage.is-bonus .os-ref-zeus-aura,
+.os-ref-zeus-stage.is-bigwin .os-ref-zeus-aura {
   animation: os-zeus-charge .46s ease-out both;
 }
 
-.os-ref-zeus-stage.is-charged .os-ref-zeus-bolt {
+.os-ref-zeus-stage.is-charged .os-ref-zeus-bolt,
+.os-ref-zeus-stage.is-charge .os-ref-zeus-bolt,
+.os-ref-zeus-stage.is-ascend .os-ref-zeus-bolt,
+.os-ref-zeus-stage.is-bonus .os-ref-zeus-bolt,
+.os-ref-zeus-stage.is-bigwin .os-ref-zeus-bolt {
   animation: os-zeus-bolt-charge .5s ease-out both;
 }
 
-.os-ref-zeus-stage.is-striking .os-ref-zeus-bolt {
+.os-ref-zeus-stage.is-striking .os-ref-zeus-bolt,
+.os-ref-zeus-stage.is-strike .os-ref-zeus-bolt {
   animation: os-zeus-strike .34s cubic-bezier(.16, .76, .3, 1) both;
 }
 
@@ -181,6 +195,16 @@
   .os-ref-zeus-stage.is-charged .os-ref-zeus-aura,
   .os-ref-zeus-stage.is-charged .os-ref-zeus-bolt,
   .os-ref-zeus-stage.is-striking .os-ref-zeus-bolt,
+  .os-ref-zeus-stage.is-charge .os-ref-zeus-aura,
+  .os-ref-zeus-stage.is-charge .os-ref-zeus-bolt,
+  .os-ref-zeus-stage.is-strike .os-ref-zeus-aura,
+  .os-ref-zeus-stage.is-strike .os-ref-zeus-bolt,
+  .os-ref-zeus-stage.is-ascend .os-ref-zeus-aura,
+  .os-ref-zeus-stage.is-ascend .os-ref-zeus-bolt,
+  .os-ref-zeus-stage.is-bonus .os-ref-zeus-aura,
+  .os-ref-zeus-stage.is-bonus .os-ref-zeus-bolt,
+  .os-ref-zeus-stage.is-bigwin .os-ref-zeus-aura,
+  .os-ref-zeus-stage.is-bigwin .os-ref-zeus-bolt,
   .os-ref-energy-4::after {
     animation: none !important;
   }
