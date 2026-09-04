@@ -264,6 +264,8 @@ export function CandyCascadeHQ() {
     });
 
     setSpinning(false);
+    setInitialRolling(false);
+    setCascadeDropping(false);
     setWinning(new Set());
     playSound(payout >= bet * 10 ? "bigWin" : payout > 0 ? "win" : "lose", soundEnabled);
     busyRef.current = false;
@@ -313,9 +315,9 @@ export function CandyCascadeHQ() {
               key={index}
               className={cn(
                 "relative overflow-hidden border border-[#f7bd45]/55 bg-[#480529]",
-                spinning && "cc-ref-roll",
+                initialRolling && "cc-ref-roll",
                 winning.has(index) && "cc-ref-win",
-                cascadeIndex > 0 && !spinning && "cc-ref-land",
+                cascadeDropping && "cc-ref-land",
               )}
             >
               <CandySymbol id={symbol} />
