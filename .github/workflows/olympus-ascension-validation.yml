@@ -8,7 +8,7 @@ on:
 jobs:
   olympus-validation:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,23 +20,25 @@ jobs:
         run: npm run typecheck
       - name: Tests
         run: npm test
+      - name: Simulate 1M base spins and 1M feature buys
+        run: BASE_SPINS=1000000 FEATURE_BUYS=1000000 node --import tsx scripts/simulate-olympus.ts
       - name: Build
         run: npm run build
       - name: Install profiler dependency
         run: npm install --no-save --ignore-scripts puppeteer-core@24.16.0
-      - name: Start preview
+      - name: Start Vite validation server
         run: |
-          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/olympus-preview.log 2>&1 &
-          echo $! > /tmp/olympus-preview.pid
+          npx vite --host 127.0.0.1 --port 4173 > /tmp/olympus-vite.log 2>&1 &
+          echo $! > /tmp/olympus-vite.pid
           for i in {1..40}; do
             if curl -fsS http://127.0.0.1:4173/game/olympus-storm >/dev/null; then exit 0; fi
             sleep 1
           done
-          cat /tmp/olympus-preview.log
+          cat /tmp/olympus-vite.log
           exit 1
       - name: Locate Chrome
         run: |
-          if command -v google-chrome >/dev/null; then echo "CHROME_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV"; 
+          if command -v google-chrome >/dev/null; then echo "CHROME_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV";
           elif command -v google-chrome-stable >/dev/null; then echo "CHROME_PATH=$(command -v google-chrome-stable)" >> "$GITHUB_ENV";
           elif command -v chromium >/dev/null; then echo "CHROME_PATH=$(command -v chromium)" >> "$GITHUB_ENV";
           else echo "Chrome not found"; exit 1; fi
@@ -44,3 +46,5 @@ jobs:
         env:
           OLYMPUS_PROFILE_RUNS: "3"
         run: node scripts/profile-olympus.mjs
+      - name: Audit feature buy and mobile viewports
+        run: node scripts/audit-olympus-feature.mjs
