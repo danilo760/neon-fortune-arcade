@@ -67,3 +67,5 @@ result.jsHeapBefore = metric(before, "JSHeapUsedSize"); result.jsHeapAfter = met
 result.taskDuration = metric(after, "TaskDuration") - metric(before, "TaskDuration"); result.scriptDuration = metric(after, "ScriptDuration") - metric(before, "ScriptDuration"); result.layoutDuration = metric(after, "LayoutDuration") - metric(before, "LayoutDuration"); result.recalcStyleDuration = metric(after, "RecalcStyleDuration") - metric(before, "RecalcStyleDuration");
 if (!result.busySamples || result.renderCount < 5) throw new Error(`Invalid Candy stress run: ${JSON.stringify(result)}`);
 console.log(JSON.stringify(result)); cdp.close();
+
+// Trigger profile after workflow registration.
