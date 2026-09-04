@@ -1,0 +1,43 @@
+name: Perf win counter validation
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - perf/isolate-animated-win-counters
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: perf/isolate-animated-win-counters
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Apply idempotent source transform
+        run: python3 scripts/apply-win-counter-isolation.py
+      - run: git diff --check
+      - run: bun run typecheck
+      - run: bun run test
+      - run: bun run build
+      - name: Report high-frequency parent win writes
+        run: |
+          echo "parent_requestAnimationFrame_calls="$(grep -h "requestAnimationFrame" src/components/arcade/GoldenTigerReference.tsx src/components/arcade/OlympusStormReference.tsx src/components/arcade/CandyCascadeHQ.tsx | wc -l)
+          echo "parent_setWin_calls="$(grep -h "setWin(" src/components/arcade/GoldenTigerReference.tsx src/components/arcade/OlympusStormReference.tsx src/components/arcade/CandyCascadeHQ.tsx | wc -l)
+          echo "counter_requestAnimationFrame_calls="$(grep -c "requestAnimationFrame" src/components/arcade/AnimatedWinCounter.tsx)
+      - name: Commit validated transform
+        run: |
+          if git diff --quiet; then
+            echo "No source transform left to commit."
+            exit 0
+          fi
+          git config user.name "danilo760"
+          git config user.email "62104537+danilo760@users.noreply.github.com"
+          git add src/components/arcade/GoldenTigerReference.tsx src/components/arcade/OlympusStormReference.tsx src/components/arcade/CandyCascadeHQ.tsx
+          git commit -m "perf: isolate animated win counters"
+          git push origin HEAD:perf/isolate-animated-win-counters
