@@ -1,5 +1,7 @@
 @import "./CandyCascadeOrchestration.css";
 
+.cc-grid { contain: layout paint; }
+
 @keyframes ccRefRoll {
   0% { transform: translateY(-6%) scale(1.012); opacity: .96; }
   50% { transform: translateY(6%) scale(.995); opacity: 1; }
