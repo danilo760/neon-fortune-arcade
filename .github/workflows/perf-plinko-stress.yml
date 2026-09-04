@@ -1,5 +1,6 @@
 name: Perf Plinko stress
 
+# Re-run after the validated collision-scheduler budget is committed.
 on:
   push:
     branches:
