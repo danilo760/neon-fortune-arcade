@@ -1,4 +1,194 @@
-/* Numeric HUD safety. Visual-only: keeps live values readable without wrapping or ellipsis. */
+/*
+ * Final HUD hardening for the five playable arcade games.
+ * Visual only: do not touch game math, payouts or state.
+ *
+ * Golden Tiger / Olympus / Candy use reference art with sample labels and
+ * amounts baked into the bitmap. Small number-only patches can still expose
+ * those samples at some viewport sizes, so the rules below replace the whole
+ * label + value area with fully opaque live panels.
+ */
+
+/* ---------- GOLDEN TIGER ---------- */
+.gt-ref-machine > div[class*="left-[5%]"][class*="top-[79.1%]"],
+.gt-ref-machine > div[class*="left-[34.4%]"][class*="top-[77.9%]"],
+.gt-ref-machine > div[class*="left-[75%]"][class*="top-[79.1%]"] {
+  z-index: 44 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 1px !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+  padding: .22rem .25rem .18rem !important;
+  border: 1px solid rgba(255, 203, 53, .82) !important;
+  border-radius: .7rem !important;
+  background: linear-gradient(180deg, #310005 0%, #1d0003 100%) !important;
+  box-shadow: inset 0 0 10px rgba(255, 189, 32, .18), 0 0 0 2px rgba(83, 0, 3, .75) !important;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  text-overflow: clip !important;
+}
+
+.gt-ref-machine > div[class*="left-[5%]"][class*="top-[79.1%]"] {
+  top: 77.35% !important;
+  height: 5.45% !important;
+  width: 25.7% !important;
+  font-size: clamp(.68rem, 3.65vw, 1.02rem) !important;
+}
+.gt-ref-machine > div[class*="left-[5%]"][class*="top-[79.1%]"]::before {
+  content: "SALDO";
+}
+
+.gt-ref-machine > div[class*="left-[34.4%]"][class*="top-[77.9%]"] {
+  top: 76.95% !important;
+  height: 6.05% !important;
+  width: 31.2% !important;
+  color: #ffe45d !important;
+  font-size: clamp(.95rem, 5.1vw, 1.48rem) !important;
+}
+.gt-ref-machine > div[class*="left-[34.4%]"][class*="top-[77.9%]"]::before {
+  content: "GANHO";
+  color: #fff1b8;
+}
+
+.gt-ref-machine > div[class*="left-[75%]"][class*="top-[79.1%]"] {
+  left: 75.7% !important;
+  top: 77.35% !important;
+  height: 5.45% !important;
+  width: 14.6% !important;
+  font-size: clamp(.68rem, 3.45vw, .98rem) !important;
+}
+.gt-ref-machine > div[class*="left-[75%]"][class*="top-[79.1%]"]::before {
+  content: "APOSTA";
+}
+
+.gt-ref-machine > div[class*="left-[5%]"][class*="top-[79.1%]"]::before,
+.gt-ref-machine > div[class*="left-[34.4%]"][class*="top-[77.9%]"]::before,
+.gt-ref-machine > div[class*="left-[75%]"][class*="top-[79.1%]"]::before {
+  display: block;
+  flex: 0 0 auto;
+  font-family: Georgia, serif;
+  font-size: clamp(.38rem, 1.9vw, .58rem);
+  font-weight: 900;
+  letter-spacing: .12em;
+  line-height: 1;
+  color: #ffd96a;
+  text-shadow: 0 1px 0 #5a1300;
+}
+
+/* Long anticipation copy must stay inside its plaque. */
+.gt-ref-machine > div[class*="top-[63.7%]"] p {
+  max-width: 100%;
+  overflow-wrap: normal;
+  text-wrap: balance;
+  line-height: 1.05 !important;
+}
+
+/* ---------- OLYMPUS STORM ---------- */
+div[class*="left-[3.2%]"][class*="top-[85.1%]"],
+div[class*="right-[3.1%]"][class*="top-[85.1%]"],
+div[class*="left-[25.5%]"][class*="top-[77.7%]"] {
+  z-index: 44 !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  text-overflow: clip !important;
+  border: 1px solid rgba(111, 204, 255, .72) !important;
+  background: linear-gradient(180deg, #032852 0%, #01162f 100%) !important;
+  box-shadow: inset 0 0 12px rgba(65, 186, 255, .25), 0 0 0 2px rgba(0, 38, 83, .86) !important;
+}
+
+div[class*="left-[3.2%]"][class*="top-[85.1%]"],
+div[class*="right-[3.1%]"][class*="top-[85.1%]"] {
+  top: 83.65% !important;
+  height: 5.9% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 1px;
+  padding: .18rem .22rem !important;
+  font-size: clamp(.65rem, 3.45vw, .94rem) !important;
+}
+
+div[class*="left-[3.2%]"][class*="top-[85.1%]"]::before,
+div[class*="right-[3.1%]"][class*="top-[85.1%]"]::before {
+  display: block;
+  font-family: Georgia, serif;
+  font-size: clamp(.36rem, 1.75vw, .54rem);
+  font-weight: 900;
+  letter-spacing: .12em;
+  color: #bfeaff;
+  line-height: 1;
+}
+div[class*="left-[3.2%]"][class*="top-[85.1%]"]::before { content: "SALDO"; }
+div[class*="right-[3.1%]"][class*="top-[85.1%]"]::before { content: "APOSTA"; }
+
+div[class*="left-[25.5%]"][class*="top-[77.7%]"] {
+  top: 77.15% !important;
+  height: 6.95% !important;
+}
+div[class*="left-[25.5%]"][class*="top-[77.7%]"] p {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+
+/* ---------- CANDY CASCADE ---------- */
+div[class*="left-[3%]"][class*="top-[85.1%]"],
+div[class*="right-[3%]"][class*="top-[85.1%]"],
+div[class*="left-[25%]"][class*="top-[76.4%]"] {
+  z-index: 44 !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  text-overflow: clip !important;
+  border: 1px solid rgba(255, 126, 225, .68) !important;
+  background: linear-gradient(180deg, #3d082d 0%, #210519 100%) !important;
+  box-shadow: inset 0 0 12px rgba(255, 95, 221, .2), 0 0 0 2px rgba(83, 3, 54, .82) !important;
+}
+
+div[class*="left-[3%]"][class*="top-[85.1%]"],
+div[class*="right-[3%]"][class*="top-[85.1%]"] {
+  top: 83.55% !important;
+  height: 6.65% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 1px;
+  padding: .18rem .24rem !important;
+  font-size: clamp(.64rem, 3.35vw, .92rem) !important;
+}
+
+div[class*="left-[3%]"][class*="top-[85.1%]"]::before,
+div[class*="right-[3%]"][class*="top-[85.1%]"]::before {
+  display: block;
+  font-family: Georgia, serif;
+  font-size: clamp(.36rem, 1.75vw, .53rem);
+  font-weight: 900;
+  letter-spacing: .12em;
+  color: #ffd6f5;
+  line-height: 1;
+}
+div[class*="left-[3%]"][class*="top-[85.1%]"]::before { content: "SALDO"; }
+div[class*="right-[3%]"][class*="top-[85.1%]"]::before { content: "APOSTA"; }
+
+div[class*="left-[25%]"][class*="top-[76.4%]"] {
+  top: 75.95% !important;
+  height: 8.25% !important;
+}
+div[class*="left-[25%]"][class*="top-[76.4%]"] p {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+
+/* ---------- PLINKO + MINES ---------- */
 .plinko-ref-hud > div,
 .plinko-ref-last,
 .plinko-ref-bet-row,
@@ -19,9 +209,7 @@
 .mines-premium__action strong {
   display: block;
   max-width: 100%;
-  overflow: hidden;
   white-space: nowrap;
-  text-overflow: clip;
   line-height: 1;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
@@ -31,18 +219,50 @@
 .plinko-ref-last strong { font-size: clamp(.72rem, 3.5vw, 1rem); letter-spacing: -.03em; }
 .plinko-ref-last span { font-size: clamp(.46rem, 2.2vw, .68rem); }
 .plinko-ref-bet-row strong { font-size: clamp(.62rem, 3vw, .86rem); letter-spacing: -.025em; }
-
 .mines-premium__status strong { font-size: clamp(.62rem, 3vw, .86rem); letter-spacing: -.02em; }
 .mines-premium__telemetry strong { font-size: clamp(.58rem, 2.8vw, .78rem); letter-spacing: -.02em; }
 .mines-premium__possible strong { font-size: clamp(1rem, 5vw, 1.42rem); letter-spacing: -.025em; }
 .mines-premium__action strong { font-size: clamp(.68rem, 3.1vw, .9rem); letter-spacing: -.02em; }
 
-@media (max-width: 380px) {
-  .plinko-ref-hud strong { font-size: clamp(.54rem, 2.6vw, .72rem); }
-  .plinko-ref-last strong { font-size: clamp(.66rem, 3.2vw, .9rem); }
-  .plinko-ref-bet-row strong { font-size: clamp(.56rem, 2.7vw, .76rem); }
-  .mines-premium__status strong { font-size: clamp(.56rem, 2.8vw, .76rem); }
-  .mines-premium__telemetry strong { font-size: clamp(.54rem, 2.6vw, .7rem); }
-  .mines-premium__possible strong { font-size: clamp(.92rem, 4.8vw, 1.22rem); }
-  .mines-premium__action strong { font-size: clamp(.62rem, 2.9vw, .8rem); }
+/* Keep reel motion isolated from the HUD so transforms/filters cannot smear text. */
+.gt-ref-spinning,
+.gt-ref-land,
+.gt-ref-anticipate,
+.gt-ref-win,
+.os-ref-spinning,
+.os-ref-land,
+.os-ref-win,
+.cc-ref-roll,
+.cc-ref-land,
+.cc-ref-win {
+  contain: paint;
+  isolation: isolate;
+  backface-visibility: hidden;
+}
+
+@media (max-width: 390px) {
+  .gt-ref-machine > div[class*="left-[5%]"][class*="top-[79.1%]"] { font-size: clamp(.6rem, 3.3vw, .82rem) !important; }
+  .gt-ref-machine > div[class*="left-[34.4%]"][class*="top-[77.9%]"] { font-size: clamp(.82rem, 4.5vw, 1.16rem) !important; }
+  .gt-ref-machine > div[class*="left-[75%]"][class*="top-[79.1%]"] { font-size: clamp(.58rem, 3.1vw, .8rem) !important; }
+
+  div[class*="left-[3.2%]"][class*="top-[85.1%]"],
+  div[class*="right-[3.1%]"][class*="top-[85.1%]"],
+  div[class*="left-[3%]"][class*="top-[85.1%]"],
+  div[class*="right-[3%]"][class*="top-[85.1%]"] {
+    font-size: clamp(.56rem, 3vw, .8rem) !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .gt-ref-machine > div[class*="left-[5%]"][class*="top-[79.1%]"] { font-size: .64rem !important; }
+  .gt-ref-machine > div[class*="left-[34.4%]"][class*="top-[77.9%]"] { font-size: .88rem !important; }
+  .gt-ref-machine > div[class*="left-[75%]"][class*="top-[79.1%]"] { font-size: .61rem !important; }
+
+  .plinko-ref-hud strong { font-size: .56rem; }
+  .plinko-ref-last strong { font-size: .67rem; }
+  .plinko-ref-bet-row strong { font-size: .58rem; }
+  .mines-premium__status strong { font-size: .58rem; }
+  .mines-premium__telemetry strong { font-size: .54rem; }
+  .mines-premium__possible strong { font-size: 1rem; }
+  .mines-premium__action strong { font-size: .63rem; }
 }
