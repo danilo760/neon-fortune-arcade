@@ -1,0 +1,192 @@
+@keyframes os-grid-spin {
+  0%, 100% { transform: translateY(-1.4%); filter: brightness(.92) saturate(.94); }
+  50% { transform: translateY(1.4%); filter: brightness(1.08) saturate(1.06); }
+}
+
+@keyframes os-grid-land-6x5 {
+  0% { transform: translateY(-3.5%) scaleY(1.025); filter: brightness(1.18); }
+  62% { transform: translateY(1.1%) scaleY(.992); }
+  100% { transform: translateY(0) scaleY(1); filter: brightness(1); }
+}
+
+@keyframes os-collapse {
+  0% { transform: translateY(-1%); opacity: .76; }
+  68% { transform: translateY(2.8%); opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes os-cluster-break {
+  0% { transform: scale(.94); filter: brightness(.95); }
+  42% { transform: scale(1.07); filter: brightness(1.38) saturate(1.18); }
+  78% { transform: scale(.98); filter: brightness(1.12); }
+  100% { transform: scale(.9); filter: brightness(1.28); opacity: .86; }
+}
+
+@keyframes os-zeus-charge {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.72); }
+  58% { opacity: .88; transform: translate(-50%, -50%) scale(1.08); }
+  100% { opacity: .62; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes os-zeus-bolt-charge {
+  0% { opacity: 0; transform: translate(-50%, -50%) scaleY(.18) rotate(5deg); }
+  62% { opacity: 1; transform: translate(-50%, -50%) scaleY(.82) rotate(-2deg); }
+  100% { opacity: .9; transform: translate(-50%, -50%) scaleY(1) rotate(0deg); }
+}
+
+@keyframes os-zeus-strike {
+  0% { opacity: .75; transform: translate(-50%, -50%) scaleY(.86); }
+  28% { opacity: 1; transform: translate(-50%, 46%) scaleY(2.2); }
+  100% { opacity: 0; transform: translate(-50%, 120%) scaleY(3); }
+}
+
+@keyframes os-grid-storm-impact {
+  0% { transform: scale(1); filter: brightness(1); }
+  26% { transform: scale(.988); filter: brightness(1.65) saturate(.8); }
+  62% { transform: scale(1.012); filter: brightness(1.14) saturate(1.1); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+@keyframes os-energy-surge {
+  0%, 100% { opacity: .12; }
+  50% { opacity: .32; }
+}
+
+.os-ref-machine {
+  isolation: isolate;
+}
+
+.os-ref-machine::after {
+  content: "";
+  position: absolute;
+  z-index: 12;
+  inset: 0;
+  pointer-events: none;
+  opacity: .12;
+  background:
+    radial-gradient(circle at 50% 17%, rgba(86, 204, 255, .36), transparent 24%),
+    radial-gradient(circle at 18% 44%, rgba(30, 120, 255, .18), transparent 26%),
+    radial-gradient(circle at 82% 52%, rgba(52, 170, 255, .2), transparent 28%);
+  mix-blend-mode: screen;
+  transition: opacity .22s ease;
+}
+
+.os-ref-energy-2::after { opacity: .18; }
+.os-ref-energy-3::after { opacity: .24; }
+.os-ref-energy-4::after { opacity: .3; animation: os-energy-surge .72s ease-in-out infinite; }
+.os-ref-machine--storm::after { opacity: .42; }
+
+.os-ref-grid {
+  transform-origin: center;
+  transition: filter .16s ease, transform .16s ease;
+}
+
+.os-ref-cell {
+  min-width: 0;
+  min-height: 0;
+  transform-origin: center;
+}
+
+.os-ref-grid--spinning {
+  animation: os-grid-spin .14s linear infinite;
+  will-change: transform, filter;
+}
+
+.os-ref-grid--landing {
+  animation: os-grid-land-6x5 .28s cubic-bezier(.2, .82, .2, 1) both;
+}
+
+.os-ref-grid--collapse {
+  animation: os-collapse .24s cubic-bezier(.2, .76, .28, 1) both;
+}
+
+.os-ref-grid--storm-hit {
+  animation: os-grid-storm-impact .42s cubic-bezier(.18, .8, .3, 1) both;
+}
+
+.os-ref-cell.os-ref-win {
+  z-index: 4;
+  animation: os-cluster-break .42s cubic-bezier(.18, .8, .3, 1) both;
+  outline: 1px solid rgba(188, 239, 255, .86);
+  outline-offset: -1px;
+  box-shadow: inset 0 0 12px rgba(224, 249, 255, .34), 0 0 10px rgba(44, 190, 255, .46);
+}
+
+.os-ref-zeus-stage {
+  position: absolute;
+  z-index: 34;
+  inset: 0;
+  pointer-events: none;
+}
+
+.os-ref-zeus-aura {
+  position: absolute;
+  left: 50%;
+  top: 12.8%;
+  width: 38%;
+  height: 20%;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(.8);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 45% 38%, rgba(225, 249, 255, .8) 0 2%, transparent 4%),
+    radial-gradient(circle at 58% 38%, rgba(225, 249, 255, .8) 0 2%, transparent 4%),
+    radial-gradient(ellipse, rgba(76, 190, 255, .42), rgba(34, 104, 255, .16) 44%, transparent 72%);
+  filter: drop-shadow(0 0 12px rgba(102, 218, 255, .72));
+}
+
+.os-ref-zeus-bolt {
+  position: absolute;
+  left: 62%;
+  top: 18%;
+  width: 10%;
+  height: 24%;
+  opacity: 0;
+  transform: translate(-50%, -50%) scaleY(.2);
+  transform-origin: 50% 0;
+  clip-path: polygon(44% 0, 74% 0, 58% 36%, 84% 36%, 28% 100%, 41% 56%, 13% 56%);
+  background: linear-gradient(180deg, #fff 0%, #bcefff 28%, #46c4ff 66%, #e8fbff 100%);
+  filter: drop-shadow(0 0 7px #bfefff) drop-shadow(0 0 14px #35b7ff);
+}
+
+.os-ref-zeus-stage.is-charged .os-ref-zeus-aura {
+  animation: os-zeus-charge .46s ease-out both;
+}
+
+.os-ref-zeus-stage.is-charged .os-ref-zeus-bolt {
+  animation: os-zeus-bolt-charge .5s ease-out both;
+}
+
+.os-ref-zeus-stage.is-striking .os-ref-zeus-bolt {
+  animation: os-zeus-strike .34s cubic-bezier(.16, .76, .3, 1) both;
+}
+
+.os-ref-storm-message {
+  min-width: 9rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 430px) {
+  .os-ref-cell {
+    border-width: .5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .os-ref-grid--spinning,
+  .os-ref-grid--landing,
+  .os-ref-grid--collapse,
+  .os-ref-grid--storm-hit,
+  .os-ref-cell.os-ref-win,
+  .os-ref-zeus-stage.is-charged .os-ref-zeus-aura,
+  .os-ref-zeus-stage.is-charged .os-ref-zeus-bolt,
+  .os-ref-zeus-stage.is-striking .os-ref-zeus-bolt,
+  .os-ref-energy-4::after {
+    animation: none !important;
+  }
+
+  .os-ref-grid,
+  .os-ref-machine::after {
+    transition: none !important;
+  }
+}
