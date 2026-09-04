@@ -4,7 +4,9 @@ import { ArrowLeft, Volume2, VolumeX } from "lucide-react";
 import { AnimatedWinCounter } from "./AnimatedWinCounter";
 import {
   useCallback,
+  memo,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -140,7 +142,7 @@ function useReferenceBlob() {
   return { src, failed };
 }
 
-function ReferenceSymbol({ id, src }: { id: GoldenTigerSymbolId; src: string }) {
+const ReferenceSymbol = memo(function ReferenceSymbol({ id, src }: { id: GoldenTigerSymbolId; src: string }) {
   const crop = CROPS[id];
   return (
     <div className="absolute inset-0 overflow-hidden bg-[#4c0612]">
@@ -158,7 +160,7 @@ function ReferenceSymbol({ id, src }: { id: GoldenTigerSymbolId; src: string }) 
       />
     </div>
   );
-}
+});
 
 function NumberPatch({ className, children }: { className: string; children: ReactNode }) {
   return (
@@ -515,6 +517,10 @@ export function GoldenTigerReference() {
   const targetX =
     flyingCardColumn === null ? 50 : 6.7 + (flyingCardColumn + 0.5) * (85.1 / 5);
   const tigerStyle = { "--gt-target-x": `${targetX}%` } as CSSProperties;
+  const scatterOrderByIndex = useMemo(() => {
+    const ordered = [...scatters].sort((a, b) => a - b);
+    return new Map(ordered.map((index, order) => [index, order]));
+  }, [scatters]);
   const currentTierLabel = tierLabel(winTier);
   const statusText =
     anticipation === 2
@@ -581,15 +587,13 @@ export function GoldenTigerReference() {
         </button>
 
         {src && (
-          <div className="absolute left-[6.7%] top-[32.53%] z-20 grid h-[31.4%] w-[85.1%] grid-cols-5 grid-rows-3 overflow-hidden">
+          <div className="gt-ref-grid absolute left-[6.7%] top-[32.53%] z-20 grid h-[31.4%] w-[85.1%] grid-cols-5 grid-rows-3 overflow-hidden">
             {grid.map((symbol, index) => {
               const column = index % 5;
               const isRolling = spinning && column >= stoppedColumns;
               const isLanding = spinning && landingColumn === column;
               const isAnticipating = spinning && anticipation > 0 && column >= stoppedColumns;
-              const scatterOrder = scatters.has(index)
-                ? [...scatters].sort((a, b) => a - b).indexOf(index)
-                : -1;
+              const scatterOrder = scatterOrderByIndex.get(index) ?? -1;
               const tileStyle =
                 scatterOrder >= 0
                   ? ({ "--gt-scatter-order": scatterOrder } as CSSProperties)

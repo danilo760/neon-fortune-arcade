@@ -1,3 +1,5 @@
+
+.gt-ref-grid { contain: layout paint; }
 @keyframes gt-ref-reel-fall {
   0% { transform: translateY(-7%) scaleY(1.018); opacity: .94; }
   100% { transform: translateY(7%) scaleY(.985); opacity: 1; }
