@@ -1,4 +1,4 @@
-/* Numeric HUD safety. Visual-only: prevents large live values from wrapping or leaking. */
+/* Numeric HUD safety. Visual-only: keeps live values readable without wrapping or ellipsis. */
 .plinko-ref-hud > div,
 .plinko-ref-last,
 .plinko-ref-bet-row,
@@ -21,38 +21,28 @@
   max-width: 100%;
   overflow: hidden;
   white-space: nowrap;
-  text-overflow: ellipsis;
+  text-overflow: clip;
   line-height: 1;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
 }
 
-@media (max-width: 430px) {
-  .plinko-ref-hud strong,
-  .plinko-ref-last strong,
-  .plinko-ref-bet-row strong {
-    letter-spacing: -.025em;
-  }
+.plinko-ref-hud strong { font-size: clamp(.58rem, 2.7vw, .82rem); letter-spacing: -.025em; }
+.plinko-ref-last strong { font-size: clamp(.72rem, 3.5vw, 1rem); letter-spacing: -.03em; }
+.plinko-ref-last span { font-size: clamp(.46rem, 2.2vw, .68rem); }
+.plinko-ref-bet-row strong { font-size: clamp(.62rem, 3vw, .86rem); letter-spacing: -.025em; }
 
-  .mines-premium__status strong,
-  .mines-premium__telemetry strong {
-    letter-spacing: -.02em;
-  }
-}
+.mines-premium__status strong { font-size: clamp(.62rem, 3vw, .86rem); letter-spacing: -.02em; }
+.mines-premium__telemetry strong { font-size: clamp(.58rem, 2.8vw, .78rem); letter-spacing: -.02em; }
+.mines-premium__possible strong { font-size: clamp(1rem, 5vw, 1.42rem); letter-spacing: -.025em; }
+.mines-premium__action strong { font-size: clamp(.68rem, 3.1vw, .9rem); letter-spacing: -.02em; }
 
 @media (max-width: 380px) {
-  .plinko-ref-hud strong,
-  .plinko-ref-last strong,
-  .plinko-ref-bet-row strong {
-    font-size: clamp(.55rem, 3vw, .78rem);
-  }
-
-  .mines-premium__status strong,
-  .mines-premium__telemetry strong {
-    font-size: clamp(.58rem, 3.2vw, .8rem);
-  }
-
-  .mines-premium__possible strong {
-    font-size: clamp(1rem, 5vw, 1.35rem);
-  }
+  .plinko-ref-hud strong { font-size: clamp(.54rem, 2.6vw, .72rem); }
+  .plinko-ref-last strong { font-size: clamp(.66rem, 3.2vw, .9rem); }
+  .plinko-ref-bet-row strong { font-size: clamp(.56rem, 2.7vw, .76rem); }
+  .mines-premium__status strong { font-size: clamp(.56rem, 2.8vw, .76rem); }
+  .mines-premium__telemetry strong { font-size: clamp(.54rem, 2.6vw, .7rem); }
+  .mines-premium__possible strong { font-size: clamp(.92rem, 4.8vw, 1.22rem); }
+  .mines-premium__action strong { font-size: clamp(.62rem, 2.9vw, .8rem); }
 }
