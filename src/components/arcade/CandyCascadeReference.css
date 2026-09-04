@@ -28,6 +28,19 @@
   50% { transform: scale(1.016); box-shadow: 0 0 18px rgba(255,226,74,.32); }
 }
 
+@keyframes ccRefSparkPop {
+  0% { opacity: 0; transform: scale(.55) rotate(0deg); }
+  28% { opacity: .9; transform: scale(1.08) rotate(12deg); }
+  72% { opacity: .45; transform: scale(.88) rotate(-8deg); }
+  100% { opacity: 0; transform: scale(.66) rotate(18deg); }
+}
+
+@keyframes ccRefSugarSweep {
+  0% { opacity: 0; transform: translateX(-130%) skewX(-20deg); }
+  40% { opacity: .7; }
+  100% { opacity: 0; transform: translateX(130%) skewX(-20deg); }
+}
+
 .cc-ref-roll > div {
   animation: ccRefRoll .18s linear infinite;
   will-change: transform, opacity;
@@ -43,6 +56,36 @@
   animation: ccRefWin .62s ease-in-out infinite;
 }
 
+.cc-ref-win::before {
+  content: "";
+  position: absolute;
+  z-index: 5;
+  inset: 12%;
+  pointer-events: none;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 18% 25%, #fff7c7 0 2.5%, transparent 3.5%),
+    radial-gradient(circle at 78% 20%, #ff9cf0 0 2.5%, transparent 3.5%),
+    radial-gradient(circle at 84% 76%, #73efff 0 2.5%, transparent 3.5%),
+    radial-gradient(circle at 22% 82%, #ffe65d 0 2.5%, transparent 3.5%),
+    radial-gradient(circle, rgba(255,255,255,.1), transparent 68%);
+  filter: drop-shadow(0 0 5px rgba(255,136,230,.62));
+  animation: ccRefSparkPop .68s ease-out infinite;
+}
+
+.cc-ref-win::after {
+  content: "";
+  position: absolute;
+  z-index: 6;
+  top: -6%;
+  bottom: -6%;
+  width: 22%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255,246,201,.68), transparent);
+  mix-blend-mode: screen;
+  animation: ccRefSugarSweep .92s ease-in-out infinite;
+}
+
 .cc-ref-bomb { animation: ccRefBomb .66s cubic-bezier(.2,.9,.2,1) both; }
 .cc-ref-spin-ready { animation: ccSpinReady 1.6s ease-in-out infinite; }
 
@@ -50,6 +93,8 @@
   .cc-ref-roll > div,
   .cc-ref-land > div,
   .cc-ref-win,
+  .cc-ref-win::before,
+  .cc-ref-win::after,
   .cc-ref-bomb,
   .cc-ref-spin-ready {
     animation: none !important;
