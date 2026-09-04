@@ -1,6 +1,9 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 
+import polishCss from "../../arcade-polish.css?url";
+import hudFixesCss from "../../arcade-hud-fixes.css?url";
+import motionPolishCss from "../../arcade-motion-polish.css?url";
 import { GameShell } from "@/components/arcade/GameShell";
 import { getGame } from "@/lib/arcade/catalog";
 import { SLOT_CONFIGS } from "@/lib/arcade/slot-configs";
@@ -48,6 +51,11 @@ export const Route = createFileRoute("/game/$slug")({
         name: "description",
         content: loaderData?.game.tagline ?? "Arcade privado com moedas fictícias",
       },
+    ],
+    links: [
+      { rel: "stylesheet", href: polishCss },
+      { rel: "stylesheet", href: hudFixesCss },
+      { rel: "stylesheet", href: motionPolishCss },
     ],
   }),
   component: GameRoute,
