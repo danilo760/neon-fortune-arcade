@@ -30,6 +30,13 @@ export type GoldenTigerSpinResult = {
 };
 
 export const GOLDEN_TIGER_MAX_RETRIGGERS = 2;
+export const GOLDEN_TIGER_FEATURE_BUY_INITIAL_SPINS = 8;
+export const GOLDEN_TIGER_FEATURE_BUY_TARGET_RETURN = 0.95;
+/**
+ * Calibrated from purchased-feature Monte Carlo without changing reel or bonus math.
+ * 8-spin Golden Fortune averaged about 13.85x bet; 14.5x prices the feature near 95% return.
+ */
+export const GOLDEN_TIGER_FEATURE_BUY_COST_MULTIPLIER = 14.5;
 
 export const GOLDEN_TIGER_PAYLINES = [
   [0, 1, 2, 3, 4],
@@ -64,6 +71,11 @@ function weightFor(symbol: SymbolDef, mode: GoldenTigerMode) {
 
 function totalWeight(mode: GoldenTigerMode) {
   return SYMBOLS.reduce((sum, symbol) => sum + weightFor(symbol, mode), 0);
+}
+
+export function goldenTigerFeatureBuyCost(bet: number) {
+  if (!Number.isFinite(bet) || bet <= 0) return 0;
+  return Math.round(bet * GOLDEN_TIGER_FEATURE_BUY_COST_MULTIPLIER);
 }
 
 export function pickGoldenTigerSymbol(
