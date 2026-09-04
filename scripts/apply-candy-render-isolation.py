@@ -29,3 +29,5 @@ if rule.strip() not in css:
         raise SystemExit('Candy CSS import marker not found')
     css = css.replace(marker, marker + rule, 1)
 CSS.write_text(css)
+
+# Trigger validation after workflow registration.
