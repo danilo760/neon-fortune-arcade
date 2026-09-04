@@ -1,0 +1,58 @@
+/* Numeric HUD safety. Visual-only: prevents large live values from wrapping or leaking. */
+.plinko-ref-hud > div,
+.plinko-ref-last,
+.plinko-ref-bet-row,
+.mines-premium__status,
+.mines-premium__telemetry > div,
+.mines-premium__possible-copy,
+.mines-premium__action {
+  min-width: 0;
+}
+
+.plinko-ref-hud strong,
+.plinko-ref-last strong,
+.plinko-ref-last span,
+.plinko-ref-bet-row strong,
+.mines-premium__status strong,
+.mines-premium__telemetry strong,
+.mines-premium__possible strong,
+.mines-premium__action strong {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+@media (max-width: 430px) {
+  .plinko-ref-hud strong,
+  .plinko-ref-last strong,
+  .plinko-ref-bet-row strong {
+    letter-spacing: -.025em;
+  }
+
+  .mines-premium__status strong,
+  .mines-premium__telemetry strong {
+    letter-spacing: -.02em;
+  }
+}
+
+@media (max-width: 380px) {
+  .plinko-ref-hud strong,
+  .plinko-ref-last strong,
+  .plinko-ref-bet-row strong {
+    font-size: clamp(.55rem, 3vw, .78rem);
+  }
+
+  .mines-premium__status strong,
+  .mines-premium__telemetry strong {
+    font-size: clamp(.58rem, 3.2vw, .8rem);
+  }
+
+  .mines-premium__possible strong {
+    font-size: clamp(1rem, 5vw, 1.35rem);
+  }
+}
