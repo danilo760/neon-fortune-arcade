@@ -1,0 +1,44 @@
+name: Apply Mines counter isolation
+
+on:
+  push:
+    branches: [perf/mines-counter-isolation]
+    paths:
+      - scripts/apply-mines-counter-isolation.py
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: python3 scripts/apply-mines-counter-isolation.py
+      - run: git diff --check
+      - run: bun run typecheck
+      - run: bun run test
+      - run: bun run build
+      - name: Static RAF audit
+        run: |
+          if grep -q 'requestAnimationFrame' src/components/arcade/MinesGame.tsx; then
+            echo 'MinesGame still owns requestAnimationFrame work'
+            exit 1
+          fi
+      - name: Commit validated source change
+        run: |
+          if git diff --quiet -- src/components/arcade/MinesGame.tsx; then
+            echo 'No product diff to commit'
+            exit 0
+          fi
+          git config user.name 'danilo760'
+          git config user.email '62104537+danilo760@users.noreply.github.com'
+          git add src/components/arcade/MinesGame.tsx
+          git commit -m 'perf: isolate Mines possible win counter'
+          git push origin HEAD:perf/mines-counter-isolation
