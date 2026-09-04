@@ -81,7 +81,11 @@ export function PlinkoReference() {
     autoRef.current = next;
     setAutoDrop(next);
     playSound("click", soundEnabled);
-    if (next && !busyRef.current) window.setTimeout(() => void runSequence(), 140);
+    if (next && !busyRef.current) {
+      window.setTimeout(() => {
+        if (autoRef.current && !busyRef.current) void runSequence();
+      }, 140);
+    }
   }
 
   function updateBall(id: string, patch: Partial<ActiveBall>) {
@@ -121,7 +125,8 @@ export function PlinkoReference() {
 
   async function runSequence() {
     if (busyRef.current) return;
-    if (runCost > balance) {
+    const currentBalance = arcadeActions.getBalance();
+    if (runCost > currentBalance) {
       playSound("lose", soundEnabled);
       stopAuto();
       return;
@@ -183,7 +188,11 @@ export function PlinkoReference() {
     busyRef.current = false;
     setBusy(false);
 
-    if (autoRef.current) window.setTimeout(() => void runSequence(), 240);
+    if (autoRef.current) {
+      window.setTimeout(() => {
+        if (autoRef.current && !busyRef.current) void runSequence();
+      }, 240);
+    }
   }
 
   function moveBet(direction: -1 | 1) {
