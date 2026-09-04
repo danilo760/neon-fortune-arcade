@@ -5,7 +5,7 @@ import { GameShell } from "@/components/arcade/GameShell";
 import { GoldenTigerReference } from "@/components/arcade/GoldenTigerReference";
 import { MinesGame } from "@/components/arcade/MinesGame";
 import { OlympusStormReference } from "@/components/arcade/OlympusStormReference";
-import { PlinkoGame } from "@/components/arcade/PlinkoGame";
+import { PlinkoReference } from "@/components/arcade/PlinkoReference";
 import { SlotGame } from "@/components/arcade/SlotGame";
 import { getGame } from "@/lib/arcade/catalog";
 import { SLOT_CONFIGS } from "@/lib/arcade/slot-configs";
@@ -43,17 +43,15 @@ function GameRoute() {
     return <CandyCascadeReference />;
   }
 
+  if (game.slug === "neon-plinko") {
+    return <PlinkoReference />;
+  }
+
   const slotConfig = SLOT_CONFIGS[game.slug];
 
   return (
     <GameShell game={game}>
-      {slotConfig ? (
-        <SlotGame config={slotConfig} />
-      ) : game.slug === "neon-mines" ? (
-        <MinesGame />
-      ) : (
-        <PlinkoGame />
-      )}
+      {slotConfig ? <SlotGame config={slotConfig} /> : <MinesGame />}
     </GameShell>
   );
 }
