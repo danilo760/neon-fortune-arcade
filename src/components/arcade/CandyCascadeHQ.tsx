@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 
 import { AnimatedWinCounter } from "./AnimatedWinCounter";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 
 import candyReference from "@/assets/candy-cascade/reference-hd.webp";
 import {
@@ -41,7 +41,7 @@ function wait(ms: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 }
 
-function CandySymbol({ id }: { id: CandySymbolId }) {
+const CandySymbol = memo(function CandySymbol({ id }: { id: CandySymbolId }) {
   const crop = CROPS[id];
   return (
     <div className="absolute inset-0 overflow-hidden bg-[#480529]">
@@ -59,7 +59,7 @@ function CandySymbol({ id }: { id: CandySymbolId }) {
       />
     </div>
   );
-}
+});
 
 function BombOnGrid({ bomb, phase }: { bomb: CandyBombEvent; phase: Phase }) {
   const row = Math.floor(bomb.index / COLS);
