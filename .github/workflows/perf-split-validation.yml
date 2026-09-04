@@ -1,0 +1,25 @@
+name: Perf split validation
+
+on:
+  push:
+    branches:
+      - perf/split-arcade-game-bundles
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run test
+      - run: bun run build
+      - name: Report built assets
+        run: |
+          echo "=== JS ASSETS (bytes) ==="
+          find .output/public/assets -maxdepth 1 -type f -name '*.js' -printf '%f %s\n' | sort -k2 -n
+          echo "=== CSS ASSETS (bytes) ==="
+          find .output/public/assets -maxdepth 1 -type f -name '*.css' -printf '%f %s\n' | sort -k2 -n
