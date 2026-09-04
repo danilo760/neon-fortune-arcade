@@ -1,6 +1,6 @@
 name: Perf Plinko stress
 
-# Re-run after the validated collision-scheduler budget is committed.
+# Re-run after collision visuals were moved to compositor timelines.
 on:
   push:
     branches:
