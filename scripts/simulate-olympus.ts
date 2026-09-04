@@ -2,6 +2,7 @@ import { planOlympusRound } from "../src/lib/arcade/olympusStormMath";
 
 const requested = Number(process.env.SPINS ?? 250_000);
 const spins = Number.isFinite(requested) && requested >= 1 ? Math.floor(requested) : 250_000;
+const bet = 100;
 
 let state = 0x43f6a888;
 function rng() {
@@ -20,17 +21,17 @@ const cascadeDistribution = new Map<number, number>();
 const multiplierDistribution = new Map<number, number>();
 
 for (let index = 0; index < spins; index += 1) {
-  const round = planOlympusRound(1, rng);
-  totalPayout += round.payout;
-  totalCascades += round.cascades.length;
-  totalStormHits += round.stormHits;
-  if (round.payout > 0) hitSpins += 1;
-  maxCascades = Math.max(maxCascades, round.cascades.length);
+  const planned = planOlympusRound(bet, rng);
+  totalPayout += planned.payout;
+  totalCascades += planned.cascades.length;
+  totalStormHits += planned.stormHits;
+  if (planned.payout > 0) hitSpins += 1;
+  maxCascades = Math.max(maxCascades, planned.cascades.length);
   cascadeDistribution.set(
-    round.cascades.length,
-    (cascadeDistribution.get(round.cascades.length) ?? 0) + 1,
+    planned.cascades.length,
+    (cascadeDistribution.get(planned.cascades.length) ?? 0) + 1,
   );
-  for (const cascade of round.cascades) {
+  for (const cascade of planned.cascades) {
     multiplierDistribution.set(
       cascade.multiplier,
       (multiplierDistribution.get(cascade.multiplier) ?? 0) + 1,
@@ -45,13 +46,14 @@ const ordered = (map: Map<number, number>) =>
 
 console.log(JSON.stringify({
   spins,
+  bet,
   grid: "6x5",
   clusterMinimum: 5,
   hitFrequency: percent(hitSpins / spins),
   averageCascades: round(totalCascades / spins),
   maxCascades,
   stormHitsPerSpin: round(totalStormHits / spins),
-  payoutRelativeToBet: round(totalPayout / spins),
+  payoutRelativeToBet: round(totalPayout / (spins * bet)),
   cascadeDistribution: ordered(cascadeDistribution),
   multiplierDistribution: ordered(multiplierDistribution),
 }, null, 2));
