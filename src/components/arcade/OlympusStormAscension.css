@@ -104,11 +104,6 @@
 .os-ref-machine--ascended .os-ref-mid-mist,
 .os-ref-machine--anticipation .os-ref-mid-mist,
 .os-ref-machine--storm .os-ref-mid-mist {
-}
-
-.os-ref-machine--ascended .os-ref-mid-mist,
-.os-ref-machine--anticipation .os-ref-mid-mist,
-.os-ref-machine--storm .os-ref-mid-mist {
   animation: os-cloud-drift 9s ease-in-out infinite;
 }
 

@@ -128,34 +128,22 @@ const ReferenceSymbol = memo(function ReferenceSymbol({ id, src }: { id: Olympus
   );
 });
 
-const OlympusGrid = memo(function OlympusGrid({
+const OlympusGridCells = memo(function OlympusGridCells({
   grid,
   src,
   winning,
-  phase,
-  revealedColumns,
+  hiddenColumns,
 }: {
   grid: OlympusSymbolId[];
   src: string;
   winning: Set<number>;
-  phase: PresentationPhase;
-  revealedColumns: number;
+  hiddenColumns: number;
 }) {
   return (
-    <div
-      className={cn(
-        "os-ref-grid absolute left-[7.95%] top-[24.76%] z-20 grid h-[53.05%] w-[82.9%] grid-cols-6 grid-rows-5 overflow-hidden",
-        phase === "spinning" && "os-ref-grid--spinning",
-        phase === "landing" && "os-ref-grid--landing",
-        phase === "anticipation" && "os-ref-grid--anticipation",
-        phase === "collapse" && "os-ref-grid--collapse",
-        phase === "stormHit" && "os-ref-grid--storm-hit",
-        phase === "bonusPlaying" && "os-ref-grid--bonus",
-      )}
-    >
+    <>
       {grid.map((symbol, index) => {
         const column = index % OLYMPUS_COLUMNS;
-        const hidden = phase === "landing" || phase === "anticipation" ? column >= revealedColumns : false;
+        const hidden = column >= hiddenColumns;
         return (
           <div
             key={index}
@@ -170,6 +158,45 @@ const OlympusGrid = memo(function OlympusGrid({
           </div>
         );
       })}
+    </>
+  );
+});
+
+const OlympusGrid = memo(function OlympusGrid({
+  grid,
+  src,
+  winning,
+  phase,
+  revealedColumns,
+}: {
+  grid: OlympusSymbolId[];
+  src: string;
+  winning: Set<number>;
+  phase: PresentationPhase;
+  revealedColumns: number;
+}) {
+  const hiddenColumns = phase === "landing" || phase === "anticipation"
+    ? revealedColumns
+    : OLYMPUS_COLUMNS;
+
+  return (
+    <div
+      className={cn(
+        "os-ref-grid absolute left-[7.95%] top-[24.76%] z-20 grid h-[53.05%] w-[82.9%] grid-cols-6 grid-rows-5 overflow-hidden",
+        phase === "spinning" && "os-ref-grid--spinning",
+        phase === "landing" && "os-ref-grid--landing",
+        phase === "anticipation" && "os-ref-grid--anticipation",
+        phase === "collapse" && "os-ref-grid--collapse",
+        phase === "stormHit" && "os-ref-grid--storm-hit",
+        phase === "bonusPlaying" && "os-ref-grid--bonus",
+      )}
+    >
+      <OlympusGridCells
+        grid={grid}
+        src={src}
+        winning={winning}
+        hiddenColumns={hiddenColumns}
+      />
     </div>
   );
 });
