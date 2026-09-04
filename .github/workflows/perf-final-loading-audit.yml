@@ -1,0 +1,72 @@
+name: Perf final loading audit
+
+on:
+  push:
+    branches: [perf/defer-game-only-css]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run test
+      - run: bun run build
+      - name: Measure deferred CSS payload
+        run: |
+          echo 'Game-only source CSS bytes:'
+          wc -c src/arcade-polish.css src/arcade-hud-fixes.css src/arcade-motion-polish.css
+          gzip -c src/arcade-polish.css | wc -c | xargs echo 'arcade-polish gzip bytes:'
+          gzip -c src/arcade-hud-fixes.css | wc -c | xargs echo 'arcade-hud-fixes gzip bytes:'
+          gzip -c src/arcade-motion-polish.css | wc -c | xargs echo 'arcade-motion-polish gzip bytes:'
+      - name: Verify route-scoped stylesheet loading
+        run: |
+          set -euo pipefail
+          bun run dev -- --host 127.0.0.1 --port 4173 >/tmp/final-audit-vite.log 2>&1 &
+          VITE_PID=$!
+          cleanup() { kill "$VITE_PID" 2>/dev/null || true; wait "$VITE_PID" 2>/dev/null || true; }
+          trap cleanup EXIT
+          for i in $(seq 1 120); do
+            if curl -sf http://127.0.0.1:4173/ >/tmp/lobby.html && curl -sf http://127.0.0.1:4173/game/golden-tiger >/tmp/game.html; then break; fi
+            sleep .25
+          done
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          class Links(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.styles = []
+              def handle_starttag(self, tag, attrs):
+                  if tag != 'link':
+                      return
+                  data = dict(attrs)
+                  if data.get('rel') == 'stylesheet':
+                      self.styles.append(data.get('href', ''))
+
+          def styles(path):
+              parser = Links()
+              parser.feed(Path(path).read_text())
+              return parser.styles
+
+          lobby = styles('/tmp/lobby.html')
+          game = styles('/tmp/game.html')
+          names = ('arcade-polish', 'arcade-hud-fixes', 'arcade-motion-polish')
+          print('LOBBY_STYLES=', lobby)
+          print('GAME_STYLES=', game)
+          leaked = [name for name in names if any(name in href for href in lobby)]
+          missing = [name for name in names if not any(name in href for href in game)]
+          if leaked:
+              raise SystemExit(f'Lobby still loads game-only CSS: {leaked}')
+          if missing:
+              raise SystemExit(f'Game route lost required CSS: {missing}')
+          print('Route-scoped CSS audit: PASS')
+          PY
