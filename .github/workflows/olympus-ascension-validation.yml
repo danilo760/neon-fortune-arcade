@@ -49,4 +49,4 @@ jobs:
       - name: Audit feature buy and mobile viewports
         run: node scripts/audit-olympus-feature.mjs
 
-# Trigger calibration patch and validation sequence.
+# Trigger final grid isolation patch.
