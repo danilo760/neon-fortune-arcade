@@ -76,6 +76,7 @@ export function MinesGame() {
   }
 
   function revealCell(index: number) {
+    if (settledRef.current || !roundActiveRef.current) return;
     if (status !== "playing" || revealedRef.current.has(index)) return;
     if (mineSet.has(index)) {
       settledRef.current = true;
