@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import premiumCss from "../premium.css?url";
+import polishCss from "../arcade-polish.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -95,6 +96,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: premiumCss },
+      { rel: "stylesheet", href: polishCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
