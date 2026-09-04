@@ -162,40 +162,6 @@ const OlympusGridCells = memo(function OlympusGridCells({
   );
 });
 
-const OlympusGridCells = memo(function OlympusGridCells({
-  grid,
-  src,
-  winning,
-  hiddenColumns,
-}: {
-  grid: OlympusSymbolId[];
-  src: string;
-  winning: Set<number>;
-  hiddenColumns: number;
-}) {
-  return (
-    <>
-      {grid.map((symbol, index) => {
-        const column = index % OLYMPUS_COLUMNS;
-        const hidden = column >= hiddenColumns;
-        return (
-          <div
-            key={index}
-            className={cn(
-              "os-ref-cell relative overflow-hidden border border-[#9fdcff]/20 bg-[#031735]",
-              winning.has(index) && "os-ref-win",
-              hidden && "os-ref-cell--hidden",
-              symbol === "scatter" && "os-ref-cell--scatter",
-            )}
-          >
-            <ReferenceSymbol id={symbol} src={src} />
-          </div>
-        );
-      })}
-    </>
-  );
-});
-
 const OlympusGrid = memo(function OlympusGrid({
   grid,
   src,
