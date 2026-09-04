@@ -36,6 +36,24 @@
   50% { box-shadow: 0 0 34px rgba(56, 194, 255, .88), 0 0 54px rgba(35, 116, 255, .38); }
 }
 
+@keyframes os-hero-breathe {
+  0%,100% { opacity: .16; transform: scale(.96); filter: blur(1px); }
+  50% { opacity: .4; transform: scale(1.035); filter: blur(0); }
+}
+
+@keyframes os-hero-charge {
+  0%,100% { opacity: .28; transform: scale(.94); }
+  50% { opacity: .82; transform: scale(1.08); }
+}
+
+@keyframes os-bolt-live {
+  0%,100% { opacity: .25; transform: rotate(8deg) scale(.92); filter: brightness(1); }
+  18% { opacity: .92; transform: rotate(5deg) scale(1.06); filter: brightness(1.8); }
+  34% { opacity: .36; transform: rotate(10deg) scale(.97); }
+  52% { opacity: 1; transform: rotate(6deg) scale(1.12); filter: brightness(2); }
+  68% { opacity: .3; transform: rotate(9deg) scale(.95); }
+}
+
 .os-ref-spinning > div {
   animation: os-reel-fall .2s linear infinite;
   transform-origin: center;
@@ -75,13 +93,85 @@
   filter: brightness(1.25);
 }
 
+/* Fully cover values that are already printed in the reference art. */
+main:has(.os-ref-spin-button) > div > [class*="bg-[#021b3a]"] {
+  overflow: visible;
+  white-space: nowrap;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  background: #021b3a !important;
+  box-shadow: 0 .58rem 0 .22rem #021b3a !important;
+}
+main:has(.os-ref-spin-button) > div > [class*="bg-[#002a62]"] {
+  background: #002a62 !important;
+  box-shadow: 0 .38rem 0 .18rem #002a62, inset 0 0 12px rgba(70,175,255,.45) !important;
+}
+
+/* Zeus reaction layer. It charges while reels are moving and flashes on Storm wins. */
+main:has(.os-ref-spin-button) > div::before {
+  content: "";
+  position: absolute;
+  z-index: 14;
+  left: 29%;
+  top: 2%;
+  width: 45%;
+  height: 20%;
+  pointer-events: none;
+  border-radius: 48%;
+  background:
+    radial-gradient(ellipse at 50% 48%, rgba(219,248,255,.26) 0 16%, rgba(52,184,255,.18) 38%, transparent 68%),
+    radial-gradient(ellipse at 56% 74%, rgba(64,142,255,.18), transparent 64%);
+  mix-blend-mode: screen;
+  animation: os-hero-breathe 3s ease-in-out infinite;
+}
+main:has(.os-ref-spin-button) > div::after {
+  content: "";
+  position: absolute;
+  z-index: 18;
+  right: 18%;
+  top: 6.5%;
+  width: 8.5%;
+  height: 18%;
+  pointer-events: none;
+  opacity: .12;
+  transform: rotate(8deg);
+  transform-origin: 50% 0;
+  clip-path: polygon(43% 0, 70% 0, 55% 35%, 82% 35%, 28% 100%, 40% 56%, 12% 56%);
+  background: linear-gradient(180deg, #ffffff, #8ee6ff 42%, #299dff 76%, #dffaff);
+  filter: drop-shadow(0 0 8px #b7edff) drop-shadow(0 0 16px #3bbcff);
+}
+main:has(.os-ref-spinning) > div::before {
+  animation: os-hero-charge .68s ease-in-out infinite;
+}
+main:has(.os-ref-spinning) > div::after,
+main:has(.os-ref-storm-message) > div::after {
+  animation: os-bolt-live .48s steps(2,end) infinite;
+}
+main:has(.os-ref-storm-message) > div::before {
+  opacity: .88;
+  background:
+    radial-gradient(ellipse at 50% 48%, rgba(255,255,255,.55) 0 10%, rgba(78,202,255,.38) 37%, transparent 70%),
+    radial-gradient(ellipse at 56% 74%, rgba(76,145,255,.3), transparent 66%);
+}
+
+@media (max-width: 390px) {
+  main:has(.os-ref-spin-button) > div > [class*="bg-[#021b3a]"] {
+    font-size: clamp(.64rem, 3.45vw, .92rem) !important;
+    letter-spacing: -.02em;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .os-ref-spinning > div,
   .os-ref-land > div,
   .os-ref-win,
   .os-ref-lightning-flash,
   .os-ref-storm-message,
-  .os-ref-spin-button {
+  .os-ref-spin-button,
+  main:has(.os-ref-spin-button) > div::before,
+  main:has(.os-ref-spin-button) > div::after {
     animation: none !important;
   }
+  main:has(.os-ref-spin-button) > div::before { opacity: .18; }
+  main:has(.os-ref-spin-button) > div::after { opacity: .16; }
 }
