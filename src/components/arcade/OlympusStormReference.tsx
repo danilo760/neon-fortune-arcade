@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 
 import { AnimatedWinCounter } from "./AnimatedWinCounter";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 
 import { olympusStormReferenceBase64 } from "@/assets/olympus-storm/referenceData";
 import { formatCoins } from "@/lib/arcade/format";
@@ -79,7 +79,7 @@ function useReferenceBlob() {
   return { src, failed };
 }
 
-function ReferenceSymbol({ id, src }: { id: OlympusSymbolId; src: string }) {
+const ReferenceSymbol = memo(function ReferenceSymbol({ id, src }: { id: OlympusSymbolId; src: string }) {
   const crop = CROPS[id];
   return (
     <div className="absolute inset-0 overflow-hidden bg-[#031735]">
@@ -97,7 +97,7 @@ function ReferenceSymbol({ id, src }: { id: OlympusSymbolId; src: string }) {
       />
     </div>
   );
-}
+});
 
 export function OlympusStormReference() {
   const balance = useArcade((state) => state.balance);
@@ -296,7 +296,7 @@ export function OlympusStormReference() {
           >
             {grid.map((symbol, index) => (
               <div
-                key={`${index}-${symbol}`}
+                key={index}
                 className={cn(
                   "os-ref-cell relative overflow-hidden border border-[#9fdcff]/20 bg-[#031735]",
                   winning.has(index) && "os-ref-win",

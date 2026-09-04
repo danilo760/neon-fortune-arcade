@@ -1,5 +1,7 @@
 @import "./OlympusStormOrchestration.css";
 
+.os-ref-grid { contain: layout paint; }
+
 @keyframes os-reel-fall {
   0% { transform: translateY(-7%) scaleY(1.018); opacity: .95; }
   50% { transform: translateY(7%) scaleY(.985); opacity: 1; }
