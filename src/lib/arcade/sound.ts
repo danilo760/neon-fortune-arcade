@@ -64,7 +64,8 @@ export type SoundName =
   | "tigerScatter" | "tigerThrow" | "tigerImpact" | "tigerBonus" | "tigerRetrigger" | "tigerMiss"
   | "olympusCluster" | "olympusFall" | "olympusCharge" | "olympusHit" | "olympusMultiplier"
   | "candyPop" | "candyBreak" | "candyBounce" | "candyBomb" | "candyExplosion" | "candyStreak"
-  | "minesMetal" | "minesUnlock" | "minesCrystal" | "minesDanger" | "minesExplosion" | "minesCashout";
+  | "minesMetal" | "minesUnlock" | "minesCrystal" | "minesDanger" | "minesExplosion" | "minesCashout"
+  | "plinkoPortal" | "plinkoLaunch" | "plinkoPeg" | "plinkoBucket" | "plinkoHigh";
 
 export function playSound(name: SoundName, enabled: boolean) {
   if (!enabled) return;
@@ -127,6 +128,19 @@ export function playSound(name: SoundName, enabled: boolean) {
       noise(0.28,0.035,0,1900); tone(88,0.38,"sine",0.06,0,42); tone(1180,0.1,"square",0.018,0.01,420); break;
     case "minesCashout":
       [523,659,880,1174].forEach((f,i)=>tone(f,0.2,"sine",0.04,i*0.045,f*1.05)); break;
+    case "plinkoPortal":
+      tone(118,0.32,"sine",0.034,0,240); tone(236,0.28,"triangle",0.026,0.04,710); noise(0.22,0.007,0.06,2300); break;
+    case "plinkoLaunch":
+      tone(190,0.16,"sawtooth",0.028,0,720); tone(760,0.11,"sine",0.024,0.035,1120); break;
+    case "plinkoPeg": {
+      const variants = [0.94,0.98,1,1.035,1.07] as const;
+      const ratio = variants[Math.floor(Math.random() * variants.length)] ?? 1;
+      tone(920*ratio,0.044,"triangle",0.016,0,690*ratio); tone(1380*ratio,0.032,"sine",0.009,0.006,1080*ratio); break;
+    }
+    case "plinkoBucket":
+      tone(360,0.12,"triangle",0.026,0,520); tone(720,0.13,"sine",0.023,0.025,980); break;
+    case "plinkoHigh":
+      noise(0.18,0.012,0,3200); [659,880,1174,1568].forEach((f,i)=>tone(f,0.21,"sine",0.04,i*0.05,f*1.08)); break;
     case "click":
       tone(560,0.055,"triangle",0.03,0,720); break;
     case "win":
