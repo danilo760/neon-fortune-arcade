@@ -83,6 +83,13 @@ let featureRetriggerTotal = 0;
 let featureWithRetrigger = 0;
 let featureMax = 0;
 let featureMaxSpins = 0;
+const featureDistribution = {
+  zero: 0,
+  belowCost: 0,
+  costTo2x: 0,
+  twoTo5x: 0,
+  fiveXPlus: 0,
+};
 
 for (let index = 0; index < featureEntries; index += 1) {
   const feature = simulateBonus(GOLDEN_TIGER_FEATURE_BUY_INITIAL_SPINS);
@@ -94,6 +101,12 @@ for (let index = 0; index < featureEntries; index += 1) {
   if (feature.retriggers > 0) featureWithRetrigger += 1;
   featureMax = Math.max(featureMax, feature.payout);
   featureMaxSpins = Math.max(featureMaxSpins, feature.totalSpins);
+
+  if (feature.payout <= 0) featureDistribution.zero += 1;
+  else if (feature.payout < GOLDEN_TIGER_FEATURE_BUY_COST_MULTIPLIER) featureDistribution.belowCost += 1;
+  else if (feature.payout < GOLDEN_TIGER_FEATURE_BUY_COST_MULTIPLIER * 2) featureDistribution.costTo2x += 1;
+  else if (feature.payout < GOLDEN_TIGER_FEATURE_BUY_COST_MULTIPLIER * 5) featureDistribution.twoTo5x += 1;
+  else featureDistribution.fiveXPlus += 1;
 }
 
 featureOutcomes.sort();
@@ -150,6 +163,13 @@ const report = {
     retriggerFrequency: percent(featureWithRetrigger / featureEntries),
     averageRetriggers: round(featureRetriggerTotal / featureEntries),
     maxFinalSpinsFound: featureMaxSpins,
+    hitDistribution: {
+      zero: percent(featureDistribution.zero / featureEntries),
+      belowCost: percent(featureDistribution.belowCost / featureEntries),
+      costTo2x: percent(featureDistribution.costTo2x / featureEntries),
+      twoTo5x: percent(featureDistribution.twoTo5x / featureEntries),
+      fiveXPlus: percent(featureDistribution.fiveXPlus / featureEntries),
+    },
   },
 };
 
