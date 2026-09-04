@@ -501,6 +501,17 @@
   box-shadow: 0 8px 20px rgba(0,0,0,.24);
 }
 
+@keyframes mines-cashout-confirm {
+  0% { transform: translateY(8px) scale(.94); filter: brightness(1.65); }
+  55% { transform: translateY(-1px) scale(1.025); filter: brightness(1.18); }
+  100% { transform: translateY(0) scale(1); filter: brightness(1); }
+}
+
+.mines-premium__result--cashout {
+  animation: mines-cashout-confirm .4s cubic-bezier(.18,.9,.25,1.15) both;
+  box-shadow: 0 0 24px rgba(80,255,194,.3), 0 8px 20px rgba(0,0,0,.24);
+}
+
 .mines-premium__controls {
   position: relative;
   z-index: 3;
