@@ -1,10 +1,40 @@
-name: Olympus Final Render Optimization Disabled
+name: Olympus Remove Duplicate Grid Helper
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - codex/olympus-storm-ascension
+
+permissions:
+  contents: write
 
 jobs:
-  noop:
+  patch:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Olympus render optimization already applied"
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/olympus-storm-ascension
+          fetch-depth: 0
+      - name: Remove duplicate helper
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/components/arcade/OlympusStormReference.tsx')
+          text = path.read_text()
+          marker = 'const OlympusGridCells = memo(function OlympusGridCells({' 
+          first = text.index(marker)
+          second = text.find(marker, first + len(marker))
+          if second != -1:
+              grid_start = text.index('const OlympusGrid = memo(function OlympusGrid({', second)
+              text = text[:second] + text[grid_start:]
+              path.write_text(text)
+          PY
+      - name: Commit fix
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "danilo760"
+          git config user.email "62104537+danilo760@users.noreply.github.com"
+          git add src/components/arcade/OlympusStormReference.tsx
+          git commit -m "fix: remove duplicate Olympus grid helper"
+          git push origin HEAD:codex/olympus-storm-ascension
