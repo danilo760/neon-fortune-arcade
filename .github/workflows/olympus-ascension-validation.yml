@@ -48,3 +48,5 @@ jobs:
         run: node scripts/profile-olympus.mjs
       - name: Audit feature buy and mobile viewports
         run: node scripts/audit-olympus-feature.mjs
+
+# Connector-triggered validation after the multiplier guard patch.
