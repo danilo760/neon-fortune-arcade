@@ -15,24 +15,26 @@ import "./PlinkoReference.css";
 import "./PlinkoInteraction.css";
 
 const BALL_COUNTS = [1, 3, 5, 10] as const;
+const TRAIL_ECHO_COUNT = 2;
+const AUDIO_LAG_BUDGET_MS = 70;
 type BallCount = (typeof BALL_COUNTS)[number];
-type BallStatus = "queued" | "falling" | "landed";
 type PortalPhase = "idle" | "charging" | "launching";
 
 type ActiveBall = {
   id: string;
   ballNumber: number;
   path: number[];
-  step: number;
   bucket: number;
   multiplier: number;
   payout: number;
-  status: BallStatus;
 };
+
+type BoardPoint = { left: number; top: number };
+type MotionEntry = { at: number; point: BoardPoint };
 
 const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 
-function ballPosition(path: readonly number[], step: number, rows: number, bucket?: number, bucketCount?: number) {
+function ballPosition(path: readonly number[], step: number, rows: number, bucket?: number, bucketCount?: number): BoardPoint {
   if (step >= rows && bucket !== undefined && bucketCount) {
     return { left: ((bucket + 0.5) / bucketCount) * 100, top: 87.5 };
   }
@@ -43,6 +45,56 @@ function ballPosition(path: readonly number[], step: number, rows: number, bucke
     left: 50 + (rights - (bounded + 1) / 2) * (73 / rows),
     top: 8 + ((bounded + 1) / rows) * 72,
   };
+}
+
+function stepDuration(step: number, rows: number) {
+  return 58 + Math.round((step / Math.max(1, rows - 1)) * 24);
+}
+
+function pointTransform(point: BoardPoint, width: number, height: number, scale = 1) {
+  const x = ((point.left - 50) / 100) * width;
+  const y = ((point.top - 4.5) / 100) * height;
+  return `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) translate(-50%, -50%) scale(${scale})`;
+}
+
+function buildBallMotion(ball: ActiveBall, rows: number, bucketCount: number, width: number, height: number) {
+  const initial = ballPosition(ball.path, -1, rows, ball.bucket, bucketCount);
+  const entries: MotionEntry[] = [{ at: 0, point: initial }];
+  let at = 72;
+
+  for (let step = 0; step < rows; step += 1) {
+    entries.push({ at, point: ballPosition(ball.path, step, rows, ball.bucket, bucketCount) });
+    at += stepDuration(step, rows);
+  }
+
+  entries.push({ at, point: ballPosition(ball.path, rows, rows, ball.bucket, bucketCount) });
+  const duration = Math.max(1, at);
+  const keyframes: Keyframe[] = entries.map((entry) => ({
+    transform: pointTransform(entry.point, width, height),
+    offset: entry.at / duration,
+  }));
+  keyframes[keyframes.length - 1] = {
+    transform: pointTransform(entries[entries.length - 1]!.point, width, height),
+    offset: 1,
+  };
+  return { entries, keyframes, duration };
+}
+
+function buildImpactKeyframes(entries: readonly MotionEntry[], duration: number, width: number, height: number): Keyframe[] {
+  const frames: Keyframe[] = [{ opacity: 0, transform: pointTransform(entries[0]!.point, width, height, .45), offset: 0 }];
+  for (let index = 1; index < entries.length - 1; index += 1) {
+    const entry = entries[index]!;
+    const offset = entry.at / duration;
+    const pulse = Math.min(.022, 24 / duration);
+    const transform = pointTransform(entry.point, width, height);
+    frames.push(
+      { opacity: 0, transform: `${transform} scale(.45)`, offset: Math.max(0, offset - .001) },
+      { opacity: .9, transform: `${transform} scale(.45)`, offset },
+      { opacity: 0, transform: `${transform} scale(1.5)`, offset: Math.min(1, offset + pulse) },
+    );
+  }
+  frames.push({ opacity: 0, transform: pointTransform(entries[entries.length - 1]!.point, width, height, 1), offset: 1 });
+  return frames;
 }
 
 export function PlinkoReference() {
@@ -57,6 +109,7 @@ export function PlinkoReference() {
   const [runWin, setRunWin] = useState(0);
   const [lastWin, setLastWin] = useState<{ payout: number; multiplier: number } | null>(null);
   const [lastSettledBucket, setLastSettledBucket] = useState<number | null>(null);
+  const [landedBuckets, setLandedBuckets] = useState<Set<number>>(() => new Set());
   const [launched, setLaunched] = useState(0);
   const [settled, setSettled] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -68,6 +121,12 @@ export function PlinkoReference() {
   const autoRef = useRef(false);
   const autoTimerRef = useRef<number | null>(null);
   const mountedRef = useRef(true);
+  const boardRef = useRef<HTMLDivElement | null>(null);
+  const ballRefs = useRef(new Map<string, HTMLDivElement>());
+  const trailRefs = useRef(new Map<string, Array<HTMLElement | null>>());
+  const impactRefs = useRef(new Map<string, HTMLElement>());
+  const collisionRafRef = useRef<number | null>(null);
+  const activeAnimationsRef = useRef(new Set<Animation>());
 
   useEffect(() => {
     hydrateFromStorage();
@@ -79,14 +138,22 @@ export function PlinkoReference() {
         window.clearTimeout(autoTimerRef.current);
         autoTimerRef.current = null;
       }
+      if (collisionRafRef.current !== null) {
+        window.cancelAnimationFrame(collisionRafRef.current);
+        collisionRafRef.current = null;
+      }
+      for (const animation of activeAnimationsRef.current) animation.cancel();
+      activeAnimationsRef.current.clear();
+      ballRefs.current.clear();
+      trailRefs.current.clear();
+      impactRefs.current.clear();
     };
   }, []);
 
   const payouts = plinkoPayouts(risk, rows);
   const runCost = bet * ballsPerRun;
   const insufficient = runCost > balance;
-  const inFlight = activeBalls.filter((ball) => ball.status === "falling").length;
-  const landedBuckets = new Set(activeBalls.filter((ball) => ball.status === "landed").map((ball) => ball.bucket));
+  const inFlight = Math.max(0, launched - settled);
 
   function clearAutoTimer() {
     if (autoTimerRef.current !== null) {
@@ -119,24 +186,106 @@ export function PlinkoReference() {
     if (!next) clearAutoTimer();
   }
 
-  function updateBall(id: string, patch: Partial<ActiveBall>) {
-    setActiveBalls((balls) => balls.map((ball) => (ball.id === id ? { ...ball, ...patch } : ball)));
+  function resetImperativeMotion() {
+    if (collisionRafRef.current !== null) {
+      window.cancelAnimationFrame(collisionRafRef.current);
+      collisionRafRef.current = null;
+    }
+    for (const animation of activeAnimationsRef.current) animation.cancel();
+    activeAnimationsRef.current.clear();
+  }
+
+  function trackAnimation(animation: Animation) {
+    activeAnimationsRef.current.add(animation);
+    void animation.finished.catch(() => undefined).finally(() => activeAnimationsRef.current.delete(animation));
+    return animation;
+  }
+
+  function startAudioScheduler(balls: ActiveBall[], stagger: number) {
+    const events: number[] = [];
+    balls.forEach((_ball, ballIndex) => {
+      let at = ballIndex * stagger + 72;
+      for (let step = 0; step < rows; step += 1) {
+        if (step % 2 === 0 || ballsPerRun <= 3) events.push(at);
+        at += stepDuration(step, rows);
+      }
+    });
+    events.sort((a, b) => a - b);
+
+    const startedAt = performance.now();
+    let cursor = 0;
+    const frame = (now: number) => {
+      const elapsed = now - startedAt;
+      while (cursor < events.length && events[cursor]! < elapsed - AUDIO_LAG_BUDGET_MS) cursor += 1;
+      if (cursor < events.length && events[cursor]! <= elapsed) {
+        playSound("plinkoPeg", soundEnabled);
+        cursor += 1;
+      }
+      if (cursor < events.length && mountedRef.current) collisionRafRef.current = requestAnimationFrame(frame);
+      else collisionRafRef.current = null;
+    };
+    collisionRafRef.current = requestAnimationFrame(frame);
   }
 
   async function animateBall(ball: ActiveBall, launchDelay: number) {
     await wait(launchDelay);
+    if (!mountedRef.current) return ball;
+
+    const element = ballRefs.current.get(ball.id);
+    const board = boardRef.current;
+    if (!element || !board) return ball;
+    const rect = board.getBoundingClientRect();
+    const tone = ((ball.ballNumber - 1) % 3) + 1;
+    const initial = ballPosition(ball.path, -1, rows, ball.bucket, payouts.length);
+    const final = ballPosition(ball.path, rows, rows, ball.bucket, payouts.length);
+    const motion = buildBallMotion(ball, rows, payouts.length, rect.width, rect.height);
+
     setLaunched((value) => value + 1);
-    updateBall(ball.id, { status: "falling", step: 0 });
+    element.className = `plinko-ref-ball plinko-ref-ball--falling plinko-ref-ball--tone-${tone}`;
+    element.style.transform = pointTransform(initial, rect.width, rect.height);
+    element.style.willChange = "transform";
     playSound("plinkoLaunch", soundEnabled);
 
-    for (let step = 0; step < rows; step += 1) {
-      updateBall(ball.id, { step });
-      if (step % 2 === 0 || ballsPerRun <= 3) playSound("plinkoPeg", soundEnabled);
-      await wait(58 + Math.round((step / Math.max(1, rows - 1)) * 24));
+    const trailNodes = trailRefs.current.get(ball.id) ?? [];
+    trailNodes.forEach((node, index) => {
+      if (!node) return;
+      const echo = trackAnimation(node.animate(
+        motion.keyframes.map((frame) => ({ ...frame, opacity: .42 - index * .12 })),
+        { duration: motion.duration, delay: 22 * (index + 1), easing: "linear" },
+      ));
+      echo.playbackRate = 1;
+    });
+
+    const impactNode = impactRefs.current.get(ball.id);
+    if (impactNode) {
+      trackAnimation(impactNode.animate(
+        buildImpactKeyframes(motion.entries, motion.duration, rect.width, rect.height),
+        { duration: motion.duration, easing: "linear" },
+      ));
     }
 
-    updateBall(ball.id, { status: "landed", step: rows });
+    const animation = trackAnimation(element.animate(motion.keyframes, {
+      duration: motion.duration,
+      easing: "linear",
+      fill: "forwards",
+    }));
+    try {
+      await animation.finished;
+    } catch {
+      return ball;
+    }
+
+    if (!mountedRef.current) return ball;
+    element.style.transform = pointTransform(final, rect.width, rect.height, 1.2);
+    element.style.willChange = "auto";
+    element.className = `plinko-ref-ball plinko-ref-ball--landed plinko-ref-ball--tone-${tone}`;
+
     setLastSettledBucket(ball.bucket);
+    setLandedBuckets((current) => {
+      const next = new Set(current);
+      next.add(ball.bucket);
+      return next;
+    });
     setSettled((value) => value + 1);
     setRunWin((value) => value + ball.payout);
     setLastWin({ payout: ball.payout, multiplier: ball.multiplier });
@@ -171,10 +320,12 @@ export function PlinkoReference() {
     }
 
     busyRef.current = true;
+    resetImperativeMotion();
     setBusy(true);
     setRunWin(0);
     setLastWin(null);
     setLastSettledBucket(null);
+    setLandedBuckets(new Set());
     setBigWin(null);
     setLaunched(0);
     setSettled(0);
@@ -182,7 +333,7 @@ export function PlinkoReference() {
     const stamp = Date.now();
     const prepared: ActiveBall[] = [];
 
-    // Cada resultado, bucket, multiplicador e débito é definido antes da primeira animação.
+    // Resultado, bucket, multiplicador e débito permanecem definidos antes da apresentação.
     for (let ballNumber = 1; ballNumber <= ballsPerRun; ballNumber += 1) {
       if (!arcadeActions.placeBet(bet)) {
         stopAuto();
@@ -194,11 +345,9 @@ export function PlinkoReference() {
         id: `${stamp}-${ballNumber}`,
         ballNumber,
         path: outcome.path,
-        step: -1,
         bucket: outcome.bucket,
         multiplier,
         payout: Math.round(bet * multiplier),
-        status: "queued",
       });
     }
 
@@ -216,6 +365,7 @@ export function PlinkoReference() {
     await wait(100);
 
     const stagger = ballsPerRun >= 10 ? 88 : ballsPerRun >= 5 ? 108 : 136;
+    startAudioScheduler(prepared, stagger);
     const completed = await Promise.all(prepared.map((ball, index) => animateBall(ball, index * stagger)));
     setPortalPhase("idle");
 
@@ -228,7 +378,9 @@ export function PlinkoReference() {
       await wait(460);
     }
 
+    resetImperativeMotion();
     setActiveBalls([]);
+    setLandedBuckets(new Set());
     setLaunched(0);
     setSettled(0);
     busyRef.current = false;
@@ -245,7 +397,7 @@ export function PlinkoReference() {
 
   return (
     <div className="plinko-ref-page">
-      <div className={cn("plinko-ref-machine", bigWin && "is-celebrating", portalPhase !== "idle" && "is-portal-active")}>
+      <div className={cn("plinko-ref-machine", bigWin && "is-celebrating")}>
         <img className="plinko-ref-machine__art" src={neonPlinkoReference} alt="Neon Plinko Skyfall Tower" draggable={false} />
         <div className="plinko-ref-machine__vignette" aria-hidden />
 
@@ -264,36 +416,44 @@ export function PlinkoReference() {
           <strong>{busy ? `${settled}/${ballsPerRun} PAGAS` : `${ballsPerRun} BOLAS`}</strong>
         </div>
 
-        <div className="plinko-ref-board" aria-label="Torre Plinko">
+        <div ref={boardRef} className="plinko-ref-board" aria-label="Torre Plinko">
           <div className={cn("plinko-ref-board__portal", `is-${portalPhase}`)} aria-hidden><i /><i /></div>
 
           {activeBalls.map((ball) => {
-            const position = ballPosition(ball.path, ball.step, rows, ball.bucket, payouts.length);
-            const trailStart = Math.max(0, ball.step - 6);
-            const trail = ball.status === "falling"
-              ? Array.from({ length: Math.max(0, ball.step - trailStart + 1) }, (_, index) => trailStart + index)
-              : [];
             const tone = ((ball.ballNumber - 1) % 3) + 1;
             return (
               <div key={ball.id} className="plinko-ref-ball-layer" aria-hidden>
-                {trail.map((trailStep, index) => {
-                  const point = ballPosition(ball.path, trailStep, rows);
-                  return <i key={`${ball.id}-${trailStep}`} className={cn("plinko-ref-trail", `plinko-ref-trail--tone-${tone}`)} style={{ left: `${point.left}%`, top: `${point.top}%`, opacity: (index + 1) / (trail.length + 2) }} />;
-                })}
-                {ball.status === "falling" && ball.step >= 0 && (
+                {Array.from({ length: TRAIL_ECHO_COUNT }, (_, index) => (
                   <i
-                    key={`${ball.id}-impact-${ball.step}`}
-                    className={cn("plinko-ref-impact", `plinko-ref-impact--tone-${tone}`)}
-                    style={{ left: `${position.left}%`, top: `${Math.min(82, position.top + 1.4)}%` }}
+                    key={`${ball.id}-trail-${index}`}
+                    ref={(node) => {
+                      const pool = trailRefs.current.get(ball.id) ?? Array.from({ length: TRAIL_ECHO_COUNT }, () => null);
+                      pool[index] = node;
+                      trailRefs.current.set(ball.id, pool);
+                    }}
+                    className={cn("plinko-ref-trail", "plinko-ref-trail--echo", `plinko-ref-trail--tone-${tone}`)}
                   />
-                )}
+                ))}
+                <i
+                  ref={(node) => {
+                    if (node) impactRefs.current.set(ball.id, node);
+                    else impactRefs.current.delete(ball.id);
+                  }}
+                  className={cn("plinko-ref-impact", "plinko-ref-impact--timeline", `plinko-ref-impact--tone-${tone}`)}
+                />
                 <div
-                  className={cn("plinko-ref-ball", `plinko-ref-ball--${ball.status}`, `plinko-ref-ball--tone-${tone}`)}
-                  style={{ left: `${position.left}%`, top: `${position.top}%`, zIndex: 20 + (ball.ballNumber % 6) }}
+                  ref={(node) => {
+                    if (node) ballRefs.current.set(ball.id, node);
+                    else ballRefs.current.delete(ball.id);
+                  }}
+                  className={cn("plinko-ref-ball", "plinko-ref-ball--queued", `plinko-ref-ball--tone-${tone}`)}
+                  style={{ left: "50%", top: "4.5%", zIndex: 20 + (ball.ballNumber % 6) }}
                 ><span /></div>
               </div>
             );
           })}
+
+
 
           {!busy && <div className="plinko-ref-ball plinko-ref-ball--idle" style={{ left: "50%", top: "4.5%" }} aria-hidden><span /></div>}
 

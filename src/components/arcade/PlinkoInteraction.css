@@ -65,6 +65,29 @@
   box-shadow: 0 0 0 1px rgba(255, 246, 184, .24), 0 0 12px rgba(255, 218, 69, .38);
 }
 
+/* High-frequency trajectory is compositor-driven; React only mounts/unmounts the run. */
+.plinko-ref-ball-layer .plinko-ref-ball {
+  transition: none;
+}
+
+.plinko-ref-ball-layer .plinko-ref-ball--falling {
+  will-change: transform;
+}
+
+.plinko-ref-trail--echo,
+.plinko-ref-impact--timeline {
+  left: 50%;
+  top: 4.5%;
+  opacity: 0;
+  animation: none;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.plinko-ref-board {
+  contain: paint;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .plinko-ref-bucket.is-latest-winner {
     animation: none !important;
@@ -75,5 +98,9 @@
   .plinko-ref-drop:not(:disabled),
   .plinko-ref-drop:not(:disabled):active {
     transition: none !important;
+  }
+
+  .plinko-ref-ball-layer .plinko-ref-ball--falling {
+    will-change: auto;
   }
 }
