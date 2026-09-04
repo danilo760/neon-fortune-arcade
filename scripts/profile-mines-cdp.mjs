@@ -119,3 +119,4 @@ console.log(JSON.stringify(result));
 cdp.close();
 
 // Trigger profile after workflow registration.
+// Second trigger after GitHub registered the workflow.
