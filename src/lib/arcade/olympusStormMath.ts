@@ -37,13 +37,13 @@ export const OLYMPUS_MIN_CLUSTER = 5;
 export const OLYMPUS_MAX_CASCADES = 8;
 
 const SYMBOLS: readonly SymbolDef[] = [
-  { id: "zeus", weight: 5, pay: 6 },
-  { id: "bolt", weight: 8, pay: 4.6 },
-  { id: "crown", weight: 10, pay: 3.6 },
-  { id: "chalice", weight: 12, pay: 2.9 },
-  { id: "hammer", weight: 14, pay: 2.4 },
-  { id: "orb", weight: 16, pay: 1.95 },
-  { id: "coin", weight: 18, pay: 1.55 },
+  { id: "zeus", weight: 5, pay: 6.64 },
+  { id: "bolt", weight: 8, pay: 5.09 },
+  { id: "crown", weight: 10, pay: 3.98 },
+  { id: "chalice", weight: 12, pay: 3.21 },
+  { id: "hammer", weight: 14, pay: 2.65 },
+  { id: "orb", weight: 16, pay: 2.16 },
+  { id: "coin", weight: 18, pay: 1.71 },
 ];
 
 const TOTAL_WEIGHT = SYMBOLS.reduce((sum, symbol) => sum + symbol.weight, 0);
