@@ -1,57 +1,10 @@
-name: Olympus Calibrate And Optimize
+name: Olympus Calibrate And Optimize Disabled
 
 on:
-  push:
-    branches:
-      - codex/olympus-storm-ascension
-
-permissions:
-  contents: write
+  workflow_dispatch:
 
 jobs:
-  patch:
+  noop:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: codex/olympus-storm-ascension
-          fetch-depth: 0
-      - name: Calibrate bonus and remove idle animation cost
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          math = Path('src/lib/arcade/olympusStormMath.ts')
-          text = math.read_text()
-          text = text.replace('export const OLYMPUS_FREE_SCATTER_CHANCE = 0.01;', 'export const OLYMPUS_FREE_SCATTER_CHANCE = 0.02;')
-          if 'OLYMPUS_FREE_PAY_SCALE' not in text:
-              text = text.replace('export const OLYMPUS_BASE_PAY_SCALE = 0.98;', 'export const OLYMPUS_BASE_PAY_SCALE = 0.98;\nexport const OLYMPUS_FREE_PAY_SCALE = 0.92;')
-          text = text.replace('return mode === "freeSpins" ? 1 : OLYMPUS_BASE_PAY_SCALE;', 'return mode === "freeSpins" ? OLYMPUS_FREE_PAY_SCALE : OLYMPUS_BASE_PAY_SCALE;')
-          text = text.replace('((OLYMPUS_STORM_LEVEL_MULTIPLIERS[levelAtCascade - 1] ?? 1) ?? 1)', '(OLYMPUS_STORM_LEVEL_MULTIPLIERS[levelAtCascade - 1] ?? 1)')
-          math.write_text(text)
-
-          css = Path('src/components/arcade/OlympusStormAscension.css')
-          text = css.read_text()
-          text = text.replace('  animation: os-cloud-drift 9s ease-in-out infinite;\n', '')
-          text = text.replace('''\n.os-ref-cell:not(.os-ref-cell--hidden) {\n  animation: os-hidden-column-in .2s ease-out both;\n}\n''', '\n')
-          marker = '.os-ref-machine--ascended .os-ref-sky-depth { opacity: .36; }'
-          addition = '''.os-ref-machine--ascended .os-ref-mid-mist,\n.os-ref-machine--anticipation .os-ref-mid-mist,\n.os-ref-machine--storm .os-ref-mid-mist {\n  animation: os-cloud-drift 9s ease-in-out infinite;\n}\n\n'''
-          if addition not in text:
-              text = text.replace(marker, addition + marker)
-          css.write_text(text)
-
-          component = Path('src/components/arcade/OlympusStormReference.tsx')
-          text = component.read_text()
-          text = text.replace('        data-phase={phase}\n', '')
-          old = ''': cascadeNumber > 0 && roundBusy\n              ? "watch"\n              : "idle";'''
-          text = text.replace(old, ': "idle";')
-          component.write_text(text)
-          PY
-      - name: Commit optimization
-        run: |
-          if git diff --quiet; then exit 0; fi
-          git config user.name "danilo760"
-          git config user.email "62104537+danilo760@users.noreply.github.com"
-          git add src/lib/arcade/olympusStormMath.ts src/components/arcade/OlympusStormAscension.css src/components/arcade/OlympusStormReference.tsx
-          git commit -m "perf: calibrate and optimize Olympus ascension"
-          git push origin HEAD:codex/olympus-storm-ascension
+      - run: echo "Olympus calibration already applied"
