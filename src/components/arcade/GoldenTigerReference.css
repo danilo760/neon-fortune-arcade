@@ -29,6 +29,9 @@
   35% { opacity: 1; }
   100% { opacity: 0; transform: translate(-50%,-160%) scale(1.35); }
 }
+
+.gt-ref-machine__ambient { position: absolute; z-index: 10; inset: 0; pointer-events: none; opacity: .46; background: radial-gradient(circle at 15% 19%, rgba(255,244,164,.9) 0 1px, transparent 2px), radial-gradient(circle at 82% 14%, rgba(255,210,80,.85) 0 1px, transparent 2px), radial-gradient(circle at 71% 47%, rgba(255,132,35,.7) 0 1.5px, transparent 2.5px), linear-gradient(112deg, transparent 36%, rgba(255,239,147,.16) 47%, transparent 59%); background-size: 92px 108px, 126px 146px, 148px 174px, 210% 100%; background-position: 0 0, 22px 38px, 46px 12px, -130% 0; mix-blend-mode: screen; animation: gt-ref-ambient-sweep 5.2s ease-in-out infinite; }
+@keyframes gt-ref-ambient-sweep { 0%, 100% { background-position: 0 0, 22px 38px, 46px 12px, -130% 0; opacity: .28; } 48% { opacity: .56; } 58% { background-position: 0 0, 22px 38px, 46px 12px, 130% 0; opacity: .48; } }
 .gt-ref-spinning { animation: gt-ref-reel-fall .19s linear infinite alternate; }
 .gt-ref-land { animation: gt-ref-land .42s cubic-bezier(.18,.9,.22,1.35) both; }
 .gt-ref-anticipate { animation: gt-ref-anticipate .72s ease-in-out infinite; }
@@ -37,5 +40,5 @@
 .gt-ref-spin-button { animation: gt-ref-spin 1.45s ease-in-out infinite; }
 .gt-ref-spin-button:active { transform: scale(.94); }
 @media (prefers-reduced-motion: reduce) {
-  .gt-ref-spinning,.gt-ref-land,.gt-ref-anticipate,.gt-ref-scatter,.gt-ref-win,.gt-ref-spin-button { animation: none !important; }
+  .gt-ref-spinning,.gt-ref-land,.gt-ref-anticipate,.gt-ref-scatter,.gt-ref-win,.gt-ref-spin-button,.gt-ref-machine__ambient { animation: none !important; }
 }
