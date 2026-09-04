@@ -74,13 +74,14 @@
   will-change: transform;
 }
 
-.plinko-ref-trail--pooled,
-.plinko-ref-impact--pooled {
+.plinko-ref-trail--echo,
+.plinko-ref-impact--timeline {
   left: 50%;
   top: 4.5%;
   opacity: 0;
   animation: none;
   pointer-events: none;
+  will-change: transform, opacity;
 }
 
 .plinko-ref-board {

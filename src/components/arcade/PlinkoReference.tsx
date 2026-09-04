@@ -15,10 +15,8 @@ import "./PlinkoReference.css";
 import "./PlinkoInteraction.css";
 
 const BALL_COUNTS = [1, 3, 5, 10] as const;
-const IMPACT_POOL_SIZE = 12;
-const TRAIL_POOL_SIZE = 6;
-const MAX_COLLISIONS_PER_FRAME = 4;
-const TRAIL_LAG_BUDGET_MS = 34;
+const TRAIL_ECHO_COUNT = 2;
+const AUDIO_LAG_BUDGET_MS = 70;
 type BallCount = (typeof BALL_COUNTS)[number];
 type PortalPhase = "idle" | "charging" | "launching";
 
@@ -32,7 +30,7 @@ type ActiveBall = {
 };
 
 type BoardPoint = { left: number; top: number };
-type CollisionEvent = { at: number; ball: ActiveBall; step: number };
+type MotionEntry = { at: number; point: BoardPoint };
 
 const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 
@@ -61,7 +59,7 @@ function pointTransform(point: BoardPoint, width: number, height: number, scale 
 
 function buildBallMotion(ball: ActiveBall, rows: number, bucketCount: number, width: number, height: number) {
   const initial = ballPosition(ball.path, -1, rows, ball.bucket, bucketCount);
-  const entries: Array<{ at: number; point: BoardPoint }> = [{ at: 0, point: initial }];
+  const entries: MotionEntry[] = [{ at: 0, point: initial }];
   let at = 72;
 
   for (let step = 0; step < rows; step += 1) {
@@ -79,7 +77,24 @@ function buildBallMotion(ball: ActiveBall, rows: number, bucketCount: number, wi
     transform: pointTransform(entries[entries.length - 1]!.point, width, height),
     offset: 1,
   };
-  return { keyframes, duration };
+  return { entries, keyframes, duration };
+}
+
+function buildImpactKeyframes(entries: readonly MotionEntry[], duration: number, width: number, height: number): Keyframe[] {
+  const frames: Keyframe[] = [{ opacity: 0, transform: pointTransform(entries[0]!.point, width, height, .45), offset: 0 }];
+  for (let index = 1; index < entries.length - 1; index += 1) {
+    const entry = entries[index]!;
+    const offset = entry.at / duration;
+    const pulse = Math.min(.022, 24 / duration);
+    const transform = pointTransform(entry.point, width, height);
+    frames.push(
+      { opacity: 0, transform: `${transform} scale(.45)`, offset: Math.max(0, offset - .001) },
+      { opacity: .9, transform: `${transform} scale(.45)`, offset },
+      { opacity: 0, transform: `${transform} scale(1.5)`, offset: Math.min(1, offset + pulse) },
+    );
+  }
+  frames.push({ opacity: 0, transform: pointTransform(entries[entries.length - 1]!.point, width, height, 1), offset: 1 });
+  return frames;
 }
 
 export function PlinkoReference() {
@@ -109,9 +124,7 @@ export function PlinkoReference() {
   const boardRef = useRef<HTMLDivElement | null>(null);
   const ballRefs = useRef(new Map<string, HTMLDivElement>());
   const trailRefs = useRef(new Map<string, Array<HTMLElement | null>>());
-  const trailCursorRef = useRef(new Map<string, number>());
-  const impactRefs = useRef<Array<HTMLElement | null>>([]);
-  const impactCursorRef = useRef(0);
+  const impactRefs = useRef(new Map<string, HTMLElement>());
   const collisionRafRef = useRef<number | null>(null);
   const activeAnimationsRef = useRef(new Set<Animation>());
 
@@ -133,7 +146,7 @@ export function PlinkoReference() {
       activeAnimationsRef.current.clear();
       ballRefs.current.clear();
       trailRefs.current.clear();
-      trailCursorRef.current.clear();
+      impactRefs.current.clear();
     };
   }, []);
 
@@ -180,89 +193,33 @@ export function PlinkoReference() {
     }
     for (const animation of activeAnimationsRef.current) animation.cancel();
     activeAnimationsRef.current.clear();
-    trailCursorRef.current.clear();
-    impactCursorRef.current = 0;
   }
 
-  function emitTrail(ball: ActiveBall, point: BoardPoint, width: number, height: number) {
-    const pool = trailRefs.current.get(ball.id);
-    if (!pool?.length) return;
-    const cursor = trailCursorRef.current.get(ball.id) ?? 0;
-    const node = pool[cursor % pool.length];
-    trailCursorRef.current.set(ball.id, cursor + 1);
-    if (!node) return;
-
-    for (const animation of node.getAnimations()) animation.cancel();
-    const tone = ((ball.ballNumber - 1) % 3) + 1;
-    node.className = `plinko-ref-trail plinko-ref-trail--pooled plinko-ref-trail--tone-${tone}`;
-    const transform = pointTransform(point, width, height);
-    node.style.transform = transform;
-    node.style.opacity = "0";
-    node.animate(
-      [
-        { opacity: 0.78, transform: `${transform} scale(1)` },
-        { opacity: 0, transform: `${transform} scale(.42)` },
-      ],
-      { duration: 330, easing: "ease-out" },
-    );
+  function trackAnimation(animation: Animation) {
+    activeAnimationsRef.current.add(animation);
+    void animation.finished.catch(() => undefined).finally(() => activeAnimationsRef.current.delete(animation));
+    return animation;
   }
 
-  function emitImpact(ball: ActiveBall, point: BoardPoint, width: number, height: number) {
-    const node = impactRefs.current[impactCursorRef.current % IMPACT_POOL_SIZE];
-    impactCursorRef.current += 1;
-    if (!node) return;
-
-    for (const animation of node.getAnimations()) animation.cancel();
-    const tone = ((ball.ballNumber - 1) % 3) + 1;
-    node.className = `plinko-ref-impact plinko-ref-impact--pooled plinko-ref-impact--tone-${tone}`;
-    const transform = pointTransform(point, width, height);
-    node.style.transform = transform;
-    node.style.opacity = "0";
-    node.animate(
-      [
-        { opacity: 0.92, transform: `${transform} scale(.45)` },
-        { opacity: 0, transform: `${transform} scale(1.55)` },
-      ],
-      { duration: 240, easing: "ease-out" },
-    );
-  }
-
-  function startCollisionScheduler(balls: ActiveBall[], stagger: number) {
-    const board = boardRef.current;
-    if (!board) return;
-    const rect = board.getBoundingClientRect();
-    const events: CollisionEvent[] = [];
-
-    balls.forEach((ball, ballIndex) => {
+  function startAudioScheduler(balls: ActiveBall[], stagger: number) {
+    const events: number[] = [];
+    balls.forEach((_ball, ballIndex) => {
       let at = ballIndex * stagger + 72;
       for (let step = 0; step < rows; step += 1) {
-        events.push({ at, ball, step });
+        if (step % 2 === 0 || ballsPerRun <= 3) events.push(at);
         at += stepDuration(step, rows);
       }
     });
-    events.sort((a, b) => a.at - b.at);
+    events.sort((a, b) => a - b);
 
     const startedAt = performance.now();
     let cursor = 0;
     const frame = (now: number) => {
       const elapsed = now - startedAt;
-      let processed = 0;
-      while (
-        cursor < events.length &&
-        events[cursor]!.at <= elapsed &&
-        processed < MAX_COLLISIONS_PER_FRAME
-      ) {
-        const event = events[cursor]!;
-        const point = ballPosition(event.ball.path, event.step, rows, event.ball.bucket, payouts.length);
-        const lateBy = Math.max(0, elapsed - event.at);
-
-        // Impacts communicate gameplay and are never removed. The trail is secondary and
-        // can be skipped only when the scheduler is already outside its frame budget.
-        if (lateBy <= TRAIL_LAG_BUDGET_MS) emitTrail(event.ball, point, rect.width, rect.height);
-        emitImpact(event.ball, point, rect.width, rect.height);
-        if (event.step % 2 === 0 || ballsPerRun <= 3) playSound("plinkoPeg", soundEnabled);
+      while (cursor < events.length && events[cursor]! < elapsed - AUDIO_LAG_BUDGET_MS) cursor += 1;
+      if (cursor < events.length && events[cursor]! <= elapsed) {
+        playSound("plinkoPeg", soundEnabled);
         cursor += 1;
-        processed += 1;
       }
       if (cursor < events.length && mountedRef.current) collisionRafRef.current = requestAnimationFrame(frame);
       else collisionRafRef.current = null;
@@ -289,18 +246,33 @@ export function PlinkoReference() {
     element.style.willChange = "transform";
     playSound("plinkoLaunch", soundEnabled);
 
-    const animation = element.animate(motion.keyframes, {
+    const trailNodes = trailRefs.current.get(ball.id) ?? [];
+    trailNodes.forEach((node, index) => {
+      if (!node) return;
+      const echo = trackAnimation(node.animate(
+        motion.keyframes.map((frame) => ({ ...frame, opacity: .42 - index * .12 })),
+        { duration: motion.duration, delay: 22 * (index + 1), easing: "linear" },
+      ));
+      echo.playbackRate = 1;
+    });
+
+    const impactNode = impactRefs.current.get(ball.id);
+    if (impactNode) {
+      trackAnimation(impactNode.animate(
+        buildImpactKeyframes(motion.entries, motion.duration, rect.width, rect.height),
+        { duration: motion.duration, easing: "linear" },
+      ));
+    }
+
+    const animation = trackAnimation(element.animate(motion.keyframes, {
       duration: motion.duration,
       easing: "linear",
       fill: "forwards",
-    });
-    activeAnimationsRef.current.add(animation);
+    }));
     try {
       await animation.finished;
     } catch {
       return ball;
-    } finally {
-      activeAnimationsRef.current.delete(animation);
     }
 
     if (!mountedRef.current) return ball;
@@ -393,7 +365,7 @@ export function PlinkoReference() {
     await wait(100);
 
     const stagger = ballsPerRun >= 10 ? 88 : ballsPerRun >= 5 ? 108 : 136;
-    startCollisionScheduler(prepared, stagger);
+    startAudioScheduler(prepared, stagger);
     const completed = await Promise.all(prepared.map((ball, index) => animateBall(ball, index * stagger)));
     setPortalPhase("idle");
 
@@ -451,17 +423,24 @@ export function PlinkoReference() {
             const tone = ((ball.ballNumber - 1) % 3) + 1;
             return (
               <div key={ball.id} className="plinko-ref-ball-layer" aria-hidden>
-                {Array.from({ length: TRAIL_POOL_SIZE }, (_, index) => (
+                {Array.from({ length: TRAIL_ECHO_COUNT }, (_, index) => (
                   <i
                     key={`${ball.id}-trail-${index}`}
                     ref={(node) => {
-                      const pool = trailRefs.current.get(ball.id) ?? Array.from({ length: TRAIL_POOL_SIZE }, () => null);
+                      const pool = trailRefs.current.get(ball.id) ?? Array.from({ length: TRAIL_ECHO_COUNT }, () => null);
                       pool[index] = node;
                       trailRefs.current.set(ball.id, pool);
                     }}
-                    className={cn("plinko-ref-trail", "plinko-ref-trail--pooled", `plinko-ref-trail--tone-${tone}`)}
+                    className={cn("plinko-ref-trail", "plinko-ref-trail--echo", `plinko-ref-trail--tone-${tone}`)}
                   />
                 ))}
+                <i
+                  ref={(node) => {
+                    if (node) impactRefs.current.set(ball.id, node);
+                    else impactRefs.current.delete(ball.id);
+                  }}
+                  className={cn("plinko-ref-impact", "plinko-ref-impact--timeline", `plinko-ref-impact--tone-${tone}`)}
+                />
                 <div
                   ref={(node) => {
                     if (node) ballRefs.current.set(ball.id, node);
@@ -474,14 +453,7 @@ export function PlinkoReference() {
             );
           })}
 
-          {Array.from({ length: IMPACT_POOL_SIZE }, (_, index) => (
-            <i
-              key={`impact-pool-${index}`}
-              ref={(node) => { impactRefs.current[index] = node; }}
-              className="plinko-ref-impact plinko-ref-impact--pooled"
-              aria-hidden
-            />
-          ))}
+
 
           {!busy && <div className="plinko-ref-ball plinko-ref-ball--idle" style={{ left: "50%", top: "4.5%" }} aria-hidden><span /></div>}
 
