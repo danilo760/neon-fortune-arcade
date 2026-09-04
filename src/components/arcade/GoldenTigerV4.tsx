@@ -113,7 +113,6 @@ function evaluateLine(grid: readonly GoldenTigerSymbolId[], line: readonly numbe
   if (ids.length !== 5) return { payout: 0, indexes: [] as number[] };
 
   const target = ids.find((id) => id !== "wild" && id !== "scatter") ?? "wild";
-  if (target === "scatter") return { payout: 0, indexes: [] as number[] };
 
   let count = 0;
   for (const id of ids) {

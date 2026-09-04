@@ -61,7 +61,7 @@ function Index() {
     { id: "favorites", label: "Favoritos" },
   ];
 
-  const goldenTiger = GAMES[0];
+  const goldenTiger = GAMES.find((game) => game.slug === "golden-tiger");
 
   return (
     <div id="top" className="arcade-lobby min-h-screen pb-24 lg:pb-10">
@@ -155,7 +155,7 @@ function Index() {
             ))}
           </div>
 
-          {filter === "featured" && !search && (
+          {filter === "featured" && !search && goldenTiger && (
             <div className="featured-showcase mb-4">
               <div className="featured-showcase__art"><GameArtwork game={goldenTiger} /></div>
               <div className="featured-showcase__copy">

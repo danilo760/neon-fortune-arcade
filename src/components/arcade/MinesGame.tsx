@@ -33,18 +33,22 @@ export function MinesGame() {
   const [status, setStatus] = useState<RoundStatus>("idle");
   const [lastPayout, setLastPayout] = useState(0);
   const settledRef = useRef(true);
+  const roundActiveRef = useRef(false);
+  const revealedRef = useRef<Set<number>>(new Set());
 
   const multiplier = minesMultiplier(mineCount, revealed.size);
   const nextMultiplier = nextMinesMultiplier(mineCount, revealed.size);
   const mineSet = useMemo(() => new Set(mineField), [mineField]);
 
   function startRound() {
-    if (status === "playing" || !arcadeActions.placeBet(bet)) {
+    if (status === "playing" || roundActiveRef.current || !arcadeActions.placeBet(bet)) {
       if (bet > balance) playSound("lose", soundEnabled);
       return;
     }
+    roundActiveRef.current = true;
     setMineField(createMineField(createRng(), mineCount));
-    setRevealed(new Set());
+    revealedRef.current = new Set();
+    setRevealed(revealedRef.current);
     setLastPayout(0);
     setStatus("playing");
     settledRef.current = false;
@@ -54,6 +58,7 @@ export function MinesGame() {
   function settleWin(safeCells: number) {
     if (settledRef.current) return;
     settledRef.current = true;
+    roundActiveRef.current = false;
     const finalMultiplier = minesMultiplier(mineCount, safeCells);
     const payout = Math.round(bet * finalMultiplier);
     arcadeActions.credit(payout);
@@ -71,9 +76,10 @@ export function MinesGame() {
   }
 
   function revealCell(index: number) {
-    if (status !== "playing" || revealed.has(index)) return;
+    if (status !== "playing" || revealedRef.current.has(index)) return;
     if (mineSet.has(index)) {
       settledRef.current = true;
+      roundActiveRef.current = false;
       setStatus("lost");
       arcadeActions.recordRound({
         slug: "neon-mines",
@@ -87,8 +93,9 @@ export function MinesGame() {
       return;
     }
 
-    const next = new Set(revealed);
+    const next = new Set(revealedRef.current);
     next.add(index);
+    revealedRef.current = next;
     setRevealed(next);
     playSound("tick", soundEnabled);
     if (next.size === 25 - mineCount) settleWin(next.size);
