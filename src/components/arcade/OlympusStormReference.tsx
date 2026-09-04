@@ -419,7 +419,7 @@ export function OlympusStormReference() {
         <button
           type="button"
           onClick={setMaxBet}
-          disabled={spinning}
+          disabled={spinning || autoLeft > 0}
           aria-label="Aposta máxima"
           className="absolute right-[4.4%] top-[92.6%] z-50 h-[5.7%] w-[25.5%] rounded-xl disabled:opacity-40"
         />
