@@ -206,6 +206,66 @@
   filter: saturate(1.12) brightness(1.06);
 }
 
+/* GOLDEN TIGER */
+@keyframes gt-polish-stop-flare {
+  0% { opacity: 0; transform: scale(.5) rotate(-12deg); }
+  36% { opacity: 1; transform: scale(1.02) rotate(8deg); }
+  100% { opacity: 0; transform: scale(1.42) rotate(32deg); }
+}
+@keyframes gt-polish-win-sweep {
+  0% { transform: translateX(-155%) skewX(-16deg); opacity: 0; }
+  24% { opacity: .9; }
+  100% { transform: translateX(180%) skewX(-16deg); opacity: 0; }
+}
+@keyframes gt-polish-anticipate-halo {
+  0%,100% { box-shadow: inset 0 0 14px rgba(255,198,46,.18), 0 0 10px rgba(255,76,20,.18); }
+  50% { box-shadow: inset 0 0 28px rgba(255,222,92,.38), 0 0 28px rgba(255,75,22,.48); }
+}
+
+.gt-ref-land {
+  position: relative;
+  z-index: 4;
+}
+.gt-ref-land::after {
+  content: "✦";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 15;
+  pointer-events: none;
+  color: #fff5a8;
+  font-size: clamp(.8rem, 4vw, 1.35rem);
+  text-shadow: 0 0 8px #fff, 0 0 18px #ffbd2e;
+  animation: gt-polish-stop-flare .42s ease-out both;
+}
+.gt-ref-win {
+  position: relative;
+  overflow: hidden;
+}
+.gt-ref-win::after {
+  content: "";
+  position: absolute;
+  inset: -25% -35%;
+  z-index: 12;
+  pointer-events: none;
+  background: linear-gradient(108deg, transparent 38%, rgba(255,246,170,.8) 48%, rgba(255,255,255,.92) 51%, transparent 63%);
+  mix-blend-mode: screen;
+  animation: gt-polish-win-sweep 1.05s ease-in-out infinite;
+}
+.gt-ref-scatter {
+  filter: brightness(1.08) saturate(1.12) drop-shadow(0 0 8px rgba(255,220,75,.42));
+}
+.gt-ref-anticipate {
+  animation: gt-ref-anticipate .72s ease-in-out infinite, gt-polish-anticipate-halo .72s ease-in-out infinite;
+}
+.gt-ref-spin-button:not(:disabled) {
+  filter: drop-shadow(0 0 11px rgba(255,219,72,.5)) drop-shadow(0 0 24px rgba(64,220,120,.22));
+}
+.gt-ref-spin-button:active:not(:disabled) {
+  transform: scale(.91);
+  filter: brightness(1.16) drop-shadow(0 0 16px rgba(255,229,103,.62));
+}
+
 @media (prefers-reduced-motion: reduce) {
   .os-ref-land::after,
   .os-ref-win::after,
@@ -217,6 +277,9 @@
   .mines-premium__action,
   .plinko-ref-impact,
   .plinko-ref-bucket.is-winner,
-  .plinko-ref-drop { animation: none !important; }
+  .plinko-ref-drop,
+  .gt-ref-land::after,
+  .gt-ref-win::after,
+  .gt-ref-anticipate { animation: none !important; }
   .plinko-ref-ball { transition-duration: 0ms !important; }
 }
