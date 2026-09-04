@@ -79,7 +79,13 @@ export type SoundName =
   | "lose"
   | "click"
   | "cash"
-  | "bonus";
+  | "bonus"
+  | "tigerScatter"
+  | "tigerThrow"
+  | "tigerImpact"
+  | "tigerBonus"
+  | "tigerRetrigger"
+  | "tigerMiss";
 
 export function playSound(name: SoundName, enabled: boolean) {
   if (!enabled) return;
@@ -98,6 +104,38 @@ export function playSound(name: SoundName, enabled: boolean) {
       tone(264, 0.2, "triangle", 0.028, 0.08, 352);
       tone(420, 0.16, "sine", 0.025, 0.18, 620);
       noise(0.25, 0.008, 0.08, 900);
+      break;
+    case "tigerScatter":
+      tone(880, 0.16, "sine", 0.038, 0, 1320);
+      tone(440, 0.2, "triangle", 0.025, 0.035, 660);
+      noise(0.11, 0.006, 0.02, 2600);
+      break;
+    case "tigerThrow":
+      noise(0.22, 0.012, 0, 3200);
+      tone(220, 0.28, "sawtooth", 0.028, 0, 760);
+      tone(660, 0.2, "triangle", 0.03, 0.08, 1180);
+      break;
+    case "tigerImpact":
+      noise(0.12, 0.022, 0, 2100);
+      tone(170, 0.16, "triangle", 0.045, 0, 105);
+      tone(1180, 0.09, "sine", 0.022, 0.01, 780);
+      break;
+    case "tigerBonus":
+      noise(0.5, 0.015, 0, 3300);
+      tone(118, 0.7, "sine", 0.055, 0, 82);
+      [392, 523, 659, 784, 1046, 1318].forEach((frequency, index) => {
+        tone(frequency, 0.32, index % 2 === 0 ? "triangle" : "sine", 0.058, 0.09 + index * 0.07, frequency * 1.06);
+      });
+      break;
+    case "tigerRetrigger":
+      [784, 1046, 1318, 1568].forEach((frequency, index) => {
+        tone(frequency, 0.22, "sine", 0.05, index * 0.06, frequency * 1.05);
+      });
+      tone(262, 0.38, "triangle", 0.03, 0.04, 524);
+      break;
+    case "tigerMiss":
+      tone(410, 0.16, "triangle", 0.022, 0, 330);
+      tone(290, 0.2, "sine", 0.018, 0.08, 210);
       break;
     case "click":
       tone(560, 0.055, "triangle", 0.03, 0, 720);
