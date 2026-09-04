@@ -355,6 +355,9 @@
 .plinko-ref-last strong { color: #fff2a0; font-size: clamp(.58rem, 2.7vw, .8rem); }
 .plinko-ref-last span { color: #67edff; font-size: .48rem; font-weight: 900; }
 
+@keyframes plinko-last-win-in { 0% { transform: scale(.9); filter: brightness(1.55); } 60% { transform: scale(1.04); filter: brightness(1.14); } 100% { transform: scale(1); filter: brightness(1); } }
+.plinko-ref-last--win { animation: plinko-last-win-in .36s cubic-bezier(.18,.9,.25,1.15) both; box-shadow: 0 0 20px rgba(93,231,255,.36), 0 0 28px rgba(255,106,232,.2); }
+
 .plinko-ref-hud {
   position: absolute;
   z-index: 44;
@@ -455,6 +458,7 @@
   .plinko-ref-impact,
   .plinko-ref-drop,
   .plinko-ref-bigwin,
+  .plinko-ref-last--win,
   .plinko-ref-machine.is-celebrating { animation: none !important; }
   .plinko-ref-ball { transition: none !important; }
 }
