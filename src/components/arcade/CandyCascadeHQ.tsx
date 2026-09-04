@@ -172,6 +172,8 @@ export function CandyCascadeHQ() {
   const [grid, setGrid] = useState<SymbolId[]>(makeGrid);
   const [win, setWin] = useState(0);
   const [spinning, setSpinning] = useState(false);
+  const [initialRolling, setInitialRolling] = useState(false);
+  const [cascadeDropping, setCascadeDropping] = useState(false);
   const [winning, setWinning] = useState<Set<number>>(() => new Set());
   const [cascadeIndex, setCascadeIndex] = useState(0);
   const [bombMultiplier, setBombMultiplier] = useState(1);
@@ -194,6 +196,8 @@ export function CandyCascadeHQ() {
 
     busyRef.current = true;
     setSpinning(true);
+    setInitialRolling(true);
+    setCascadeDropping(false);
     setWinning(new Set());
     setCascadeIndex(0);
     setBombMultiplier(1);
@@ -207,6 +211,7 @@ export function CandyCascadeHQ() {
       await wait(turbo ? 42 : 72);
     }
     setGrid(current);
+    setInitialRolling(false);
     await wait(turbo ? 80 : 190);
 
     let total = 0;
@@ -241,8 +246,10 @@ export function CandyCascadeHQ() {
       current = collapseGrid(current, removed);
       setGrid(current);
       setCascadeIndex(cascades);
+      setCascadeDropping(true);
       playSound("tick", soundEnabled);
       await wait(turbo ? 160 : 420);
+      setCascadeDropping(false);
     }
 
     const payout = Math.round(total);
@@ -257,6 +264,8 @@ export function CandyCascadeHQ() {
     });
 
     setSpinning(false);
+    setInitialRolling(false);
+    setCascadeDropping(false);
     setWinning(new Set());
     playSound(payout >= bet * 10 ? "bigWin" : payout > 0 ? "win" : "lose", soundEnabled);
     busyRef.current = false;
@@ -306,9 +315,9 @@ export function CandyCascadeHQ() {
               key={index}
               className={cn(
                 "relative overflow-hidden border border-[#f7bd45]/55 bg-[#480529]",
-                spinning && "cc-ref-roll",
+                initialRolling && "cc-ref-roll",
                 winning.has(index) && "cc-ref-win",
-                cascadeIndex > 0 && !spinning && "cc-ref-land",
+                cascadeDropping && "cc-ref-land",
               )}
             >
               <CandySymbol id={symbol} />
