@@ -210,7 +210,7 @@ export function MinesGame() {
           </div>
         )}
         {status === "won" && (
-          <div className="mines-result mines-result--won mines-premium__result" role="status">
+          <div className="mines-result mines-result--won mines-premium__result mines-premium__result--cashout" role="status">
             <Trophy className="size-5" />
             <div><strong>Crystal secured</strong><span>+ {formatCoins(lastPayout)} moedas fictícias</span></div>
           </div>
