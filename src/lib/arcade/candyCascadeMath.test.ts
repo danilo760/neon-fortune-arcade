@@ -109,9 +109,9 @@ test("natural Sugar Party frequency stays in the explicit 1/100 to 1/60 band", (
 test("Sugar Meter persists through feature spins and level multiplier is monotonic", () => {
   assert.equal(candySugarLevel(0), 1);
   assert.equal(candySugarLevel(1), 2);
-  assert.equal(candySugarLevel(3), 3);
-  assert.equal(candySugarLevel(6), 4);
-  assert.equal(candySugarLevel(10), 5);
+  assert.equal(candySugarLevel(2), 3);
+  assert.equal(candySugarLevel(3), 4);
+  assert.equal(candySugarLevel(4), 5);
   assert.ok(candySugarMultiplierForLevel(5) > candySugarMultiplierForLevel(4));
   assert.ok(candySugarMultiplierForLevel(4) > candySugarMultiplierForLevel(1));
 });
