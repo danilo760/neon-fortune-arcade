@@ -721,10 +721,10 @@ export function OlympusStormReference() {
           <span>BÔNUS</span>
         </button>
 
-        <div className="absolute left-[3.2%] top-[85.1%] z-35 flex h-[4.2%] w-[27.5%] items-center justify-center rounded-lg bg-[#021b3a]/95 px-1 font-black text-white tabular-nums">
+        <div className="absolute left-[3.2%] top-[84.5%] z-35 flex h-[5.3%] w-[27.5%] items-center justify-center rounded-lg border border-cyan-100/25 bg-[#021b3a] px-1 font-black text-white shadow-[inset_0_0_10px_rgba(91,198,255,.16)] tabular-nums">
           {formatCoins(balance)}
         </div>
-        <div className="absolute right-[3.1%] top-[85.1%] z-35 flex h-[4.2%] w-[23.5%] items-center justify-center rounded-lg bg-[#021b3a]/95 px-1 font-black text-white tabular-nums">
+        <div className="absolute right-[3.1%] top-[84.5%] z-35 flex h-[5.3%] w-[23.5%] items-center justify-center rounded-lg border border-cyan-100/25 bg-[#021b3a] px-1 font-black text-white shadow-[inset_0_0_10px_rgba(91,198,255,.16)] tabular-nums">
           {formatCoins(bet)}
         </div>
 
