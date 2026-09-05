@@ -1,11 +1,11 @@
 @keyframes mines-plate-press {
   0% { transform: translateY(0) scale(1); }
-  100% { transform: translateY(3px) scale(.965); box-shadow: inset 0 0 18px rgba(146,255,215,.08), 0 2px 0 #020604; }
+  100% { transform: translateY(3px) scale(.965); }
 }
 
 @keyframes mines-lock-turn {
-  0% { transform: rotate(0deg) scale(1); filter: brightness(1); }
-  65% { transform: rotate(68deg) scale(1.12); filter: brightness(1.6); }
+  0% { transform: rotate(0deg) scale(1); opacity: 1; }
+  65% { transform: rotate(68deg) scale(1.12); opacity: .78; }
   100% { transform: rotate(90deg) scale(.86); opacity: .2; }
 }
 
@@ -16,9 +16,9 @@
 }
 
 @keyframes mines-gem-rise {
-  0% { opacity: 0; transform: translateY(12%) scale(.72); filter: brightness(1.7); }
-  62% { opacity: 1; transform: translateY(-8%) scale(1.08); filter: brightness(1.25); }
-  100% { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1); }
+  0% { opacity: 0; transform: translateY(12%) scale(.72); }
+  62% { opacity: 1; transform: translateY(-8%) scale(1.08); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes mines-red-underlight {
@@ -33,8 +33,8 @@
 }
 
 @keyframes mines-vault-dim {
-  0% { filter: saturate(1) brightness(1); }
-  100% { filter: saturate(.68) brightness(.86); }
+  0% { opacity: 1; }
+  100% { opacity: .92; }
 }
 
 @keyframes mines-cash-converge-left {
@@ -50,9 +50,9 @@
 }
 
 @keyframes mines-cash-lock {
-  0% { transform: scale(1); filter: brightness(1); }
-  40% { transform: scale(.97); filter: brightness(1.32); }
-  100% { transform: scale(1); filter: brightness(1.1); }
+  0% { transform: scale(1); opacity: 1; }
+  40% { transform: scale(.97); opacity: .92; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .mines-premium__tile--pressing {
