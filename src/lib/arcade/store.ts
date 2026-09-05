@@ -132,7 +132,8 @@ export function useArcade<T>(selector: (s: ArcadeState) => T): T {
 
 export const arcadeActions = {
   addCoins(amount = TOPUP_AMOUNT) {
-    setState({ balance: Math.max(STARTING_BALANCE, state.balance + amount) });
+    if (!Number.isFinite(amount) || amount <= 0) return;
+    setState({ balance: state.balance + Math.round(amount) });
   },
   refillToStart() {
     setState({ balance: Math.max(state.balance, STARTING_BALANCE) });
