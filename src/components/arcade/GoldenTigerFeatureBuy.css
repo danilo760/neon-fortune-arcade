@@ -153,16 +153,22 @@
 }
 
 .gt-ref-feature-modal__card {
+  position:relative;
+  overflow:hidden;
   width: min(92%, 370px);
   border: 2px solid rgba(255,225,112,.92);
   border-radius: 24px;
   background:
-    radial-gradient(circle at 50% 0%, rgba(255,179,43,.2), transparent 30%),
-    linear-gradient(180deg, #7d1009 0%, #490505 58%, #210102 100%);
+    linear-gradient(90deg, rgba(255,225,126,.12), transparent 14% 86%, rgba(255,225,126,.12)),
+    radial-gradient(circle at 50% 0%, rgba(255,179,43,.26), transparent 30%),
+    repeating-linear-gradient(135deg, rgba(255,255,255,.025) 0 2px, transparent 2px 7px),
+    linear-gradient(180deg, #8e140a 0%, #560506 58%, #250102 100%);
   padding: 1.05rem .95rem .9rem;
   text-align: center;
   box-shadow: 0 0 44px rgba(255,113,15,.42), inset 0 0 22px rgba(255,222,113,.08);
 }
+.gt-ref-feature-modal__card::before { content:""; position:absolute; inset:.32rem; pointer-events:none; border:1px solid rgba(255,231,147,.36); border-radius:19px; box-shadow:inset 0 0 18px rgba(255,222,113,.12); }
+.gt-ref-feature-modal__card > * { position:relative; z-index:1; }
 
 .gt-ref-feature-modal__kicker { display:block; font-size:.55rem; font-weight:900; letter-spacing:.14em; color:#ffca65; }
 .gt-ref-feature-modal h2 { margin-top:.35rem; font-family:Georgia,"Times New Roman",serif; font-size:clamp(1.45rem,8vw,2.4rem); font-weight:900; color:#fff1a8; text-shadow:0 3px 0 #6c1200; }
@@ -178,6 +184,7 @@
 .gt-ref-feature-modal__actions button { min-height:44px; border-radius:13px; border:1px solid rgba(255,222,119,.52); font-size:.68rem; font-weight:900; letter-spacing:.06em; }
 .gt-ref-feature-modal__actions button:first-child { background:#2d0505; color:#e9caa0; }
 .gt-ref-feature-modal__actions button:last-child { background:linear-gradient(180deg,#f2bb45,#b3650c); color:#2b0a00; box-shadow:0 0 16px rgba(255,186,50,.35); }
+.gt-ref-feature-modal__actions button:active:not(:disabled) { transform:translateY(2px) scale(.98); filter:brightness(1.08); }
 .gt-ref-feature-modal__actions button:disabled { opacity:.42; cursor:not-allowed; }
 
 @media (prefers-reduced-motion: reduce) {

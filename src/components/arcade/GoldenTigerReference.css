@@ -1,6 +1,43 @@
 @import "./GoldenTigerFeatureBuy.css";
 
-.gt-ref-grid { contain: layout paint; }
+.gt-ref-grid {
+  contain: layout paint;
+  isolation: isolate;
+  border: 2px solid rgba(255,226,121,.9);
+  border-radius: .7rem;
+  background: linear-gradient(145deg, #fff1a4 0%, #b87611 6%, #411004 10%, #200103 92%, #d5961c 97%, #fff0a0);
+  box-shadow: 0 0 0 3px rgba(73,8,3,.88), 0 0 22px rgba(255,183,44,.36), inset 0 2px 0 rgba(255,250,194,.78), inset 0 -12px 18px rgba(0,0,0,.48);
+  padding: .22rem;
+}
+.gt-ref-grid::after {
+  content: "";
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(116deg, rgba(255,255,255,.18) 0 14%, transparent 25% 68%, rgba(255,229,143,.1) 79%, transparent 92%);
+  box-shadow: inset 0 10px 14px rgba(255,255,230,.08), inset 0 -14px 17px rgba(0,0,0,.34);
+  mix-blend-mode: screen;
+}
+.gt-ref-reel-cell {
+  z-index: 1;
+  border-color: rgba(255,230,142,.72) !important;
+  box-shadow: inset 1px 1px 0 rgba(255,250,195,.48), inset -3px -4px 7px rgba(44,0,3,.52), 1px 1px 0 rgba(88,21,2,.82);
+  transition: filter .18s ease, opacity .18s ease, box-shadow .18s ease;
+}
+.gt-ref-cell--premium-symbol::before {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: 6% 8% 50%;
+  pointer-events: none;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255,255,245,.36), transparent);
+  mix-blend-mode: screen;
+}
+.gt-ref-machine--has-win .gt-ref-cell--dim { opacity: .48; filter: brightness(.58) saturate(.62); }
+.gt-ref-machine--has-win .gt-ref-win { z-index: 4; box-shadow: inset 0 0 0 2px rgba(255,246,166,.94), inset 0 0 22px rgba(255,223,93,.34), 0 0 17px rgba(255,194,39,.82); }
 @keyframes gt-ref-reel-fall {
   0% { transform: translateY(-7%) scaleY(1.018); opacity: .94; }
   100% { transform: translateY(7%) scaleY(.985); opacity: 1; }

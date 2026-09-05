@@ -722,6 +722,7 @@ export function GoldenTigerReference() {
     return new Map(ordered.map((index, order) => [index, order]));
   }, [scatters]);
   const currentTierLabel = tierLabel(winTier);
+  const hasWinningSymbols = !spinning && winning.size > 0;
   const statusText =
     anticipation === 2
       ? "2 CARTINHAS... FALTA SÓ 1!"
@@ -737,11 +738,12 @@ export function GoldenTigerReference() {
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-black sm:px-3 sm:py-2">
-      <div
-        className={cn(
-          "gt-ref-machine relative mx-auto aspect-[940/1672] w-full max-w-[430px] overflow-hidden bg-[#240003] shadow-[0_0_90px_rgba(0,0,0,.96)] sm:rounded-[22px]",
-          bonusActive && "gt-ref-bonus-mode",
-          featureBuyRunning && "gt-ref-feature-running",
+        <div
+          className={cn(
+            "gt-ref-machine relative mx-auto aspect-[940/1672] w-full max-w-[430px] overflow-hidden bg-[#240003] shadow-[0_0_90px_rgba(0,0,0,.96)] sm:rounded-[22px]",
+            bonusActive && "gt-ref-bonus-mode",
+            featureBuyRunning && "gt-ref-feature-running",
+            hasWinningSymbols && "gt-ref-machine--has-win",
         )}
         data-phase={phase}
         data-tiger={tigerReaction}
@@ -799,12 +801,14 @@ export function GoldenTigerReference() {
                   key={index}
                   style={tileStyle}
                   className={cn(
-                    "relative overflow-hidden border-[1px] border-[#f8bd35]/45 bg-[#4b0710]",
+                    "gt-ref-reel-cell relative overflow-hidden border-[1px] border-[#f8bd35]/45 bg-[#4b0710]",
                     isRolling && "gt-ref-spinning",
                     isLanding && "gt-ref-land",
                     isAnticipating && "gt-ref-anticipate",
                     scatters.has(index) && "gt-ref-scatter",
                     !spinning && winning.has(index) && "gt-ref-win",
+                    hasWinningSymbols && !winning.has(index) && "gt-ref-cell--dim",
+                    ["ingot", "jade", "fortuneBag", "wild"].includes(symbol) && "gt-ref-cell--premium-symbol",
                   )}
                 >
                   <ReferenceSymbol id={symbol} src={src} />
