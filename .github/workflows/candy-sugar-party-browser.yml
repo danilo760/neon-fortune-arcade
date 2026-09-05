@@ -1,0 +1,29 @@
+name: Candy Sugar Party Browser Audit
+on:
+  push:
+    branches: [feat/candy-sugar-party]
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --ignore-scripts
+      - run: npm install --no-save --ignore-scripts puppeteer-core@24.16.0
+      - name: Locate Chrome
+        run: |
+          if command -v google-chrome >/dev/null; then echo "CHROME_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV";
+          elif command -v chromium >/dev/null; then echo "CHROME_PATH=$(command -v chromium)" >> "$GITHUB_ENV";
+          else exit 1; fi
+      - name: Start local Candy preview
+        run: |
+          npx vite --host 127.0.0.1 --port 4173 > /tmp/candy-vite.log 2>&1 &
+          for i in {1..60}; do curl -fsS http://127.0.0.1:4173 >/dev/null && exit 0; sleep 1; done
+          cat /tmp/candy-vite.log
+          exit 1
+      - name: Play 30 spins and 5 Sugar Party buys
+        run: node scripts/audit-candy-sugar-party.mjs
