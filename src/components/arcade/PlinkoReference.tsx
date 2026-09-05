@@ -27,6 +27,10 @@ type ActiveBall = {
   bucket: number;
   multiplier: number;
   payout: number;
+  bet: number;
+  risk: PlinkoRisk;
+  rows: number;
+  runBallCount: BallCount;
 };
 
 type BoardPoint = { left: number; top: number };
@@ -127,6 +131,8 @@ export function PlinkoReference() {
   const impactRefs = useRef(new Map<string, HTMLElement>());
   const collisionRafRef = useRef<number | null>(null);
   const activeAnimationsRef = useRef(new Set<Animation>());
+  const pendingSettlementsRef = useRef(new Map<string, ActiveBall>());
+  const settledOutcomeIdsRef = useRef(new Set<string>());
 
   useEffect(() => {
     hydrateFromStorage();
@@ -144,6 +150,9 @@ export function PlinkoReference() {
       }
       for (const animation of activeAnimationsRef.current) animation.cancel();
       activeAnimationsRef.current.clear();
+      for (const ball of pendingSettlementsRef.current.values()) settleBallOutcome(ball, false);
+      pendingSettlementsRef.current.clear();
+      busyRef.current = false;
       ballRefs.current.clear();
       trailRefs.current.clear();
       impactRefs.current.clear();
@@ -201,6 +210,43 @@ export function PlinkoReference() {
     return animation;
   }
 
+  function settleBallOutcome(ball: ActiveBall, present = true) {
+    if (settledOutcomeIdsRef.current.has(ball.id)) return false;
+    settledOutcomeIdsRef.current.add(ball.id);
+    pendingSettlementsRef.current.delete(ball.id);
+
+    if (ball.payout > 0) arcadeActions.credit(ball.payout);
+    arcadeActions.recordRound({
+      slug: "neon-plinko",
+      gameName: "Neon Plinko",
+      bet: ball.bet,
+      payout: ball.payout,
+      multiplier: ball.multiplier,
+      note: `Bola ${ball.ballNumber}/${ball.runBallCount} · Risco ${RISK_LABELS[ball.risk]} · ${ball.rows} linhas`,
+    });
+
+    if (!present || !mountedRef.current) return true;
+
+    setLastSettledBucket(ball.bucket);
+    setLandedBuckets((current) => {
+      const next = new Set(current);
+      next.add(ball.bucket);
+      return next;
+    });
+    setSettled((value) => value + 1);
+    setRunWin((value) => value + ball.payout);
+    setLastWin({ payout: ball.payout, multiplier: ball.multiplier });
+    playSound("plinkoBucket", soundEnabled);
+
+    if (ball.multiplier >= 10) {
+      playSound("plinkoHigh", soundEnabled);
+      playSound("bigWin", soundEnabled);
+    } else {
+      playSound(ball.payout >= ball.bet ? "win" : "lose", soundEnabled);
+    }
+    return true;
+  }
+
   function startAudioScheduler(balls: ActiveBall[], stagger: number) {
     const events: number[] = [];
     balls.forEach((_ball, ballIndex) => {
@@ -229,11 +275,17 @@ export function PlinkoReference() {
 
   async function animateBall(ball: ActiveBall, launchDelay: number) {
     await wait(launchDelay);
-    if (!mountedRef.current) return ball;
+    if (!mountedRef.current) {
+      settleBallOutcome(ball, false);
+      return ball;
+    }
 
     const element = ballRefs.current.get(ball.id);
     const board = boardRef.current;
-    if (!element || !board) return ball;
+    if (!element || !board) {
+      settleBallOutcome(ball);
+      return ball;
+    }
     const rect = board.getBoundingClientRect();
     const tone = ((ball.ballNumber - 1) % 3) + 1;
     const initial = ballPosition(ball.path, -1, rows, ball.bucket, payouts.length);
@@ -272,41 +324,19 @@ export function PlinkoReference() {
     try {
       await animation.finished;
     } catch {
+      settleBallOutcome(ball, mountedRef.current);
       return ball;
     }
 
-    if (!mountedRef.current) return ball;
+    if (!mountedRef.current) {
+      settleBallOutcome(ball, false);
+      return ball;
+    }
     element.style.transform = pointTransform(final, rect.width, rect.height, 1.2);
     element.style.willChange = "auto";
     element.className = `plinko-ref-ball plinko-ref-ball--landed plinko-ref-ball--tone-${tone}`;
 
-    setLastSettledBucket(ball.bucket);
-    setLandedBuckets((current) => {
-      const next = new Set(current);
-      next.add(ball.bucket);
-      return next;
-    });
-    setSettled((value) => value + 1);
-    setRunWin((value) => value + ball.payout);
-    setLastWin({ payout: ball.payout, multiplier: ball.multiplier });
-    playSound("plinkoBucket", soundEnabled);
-
-    if (ball.payout > 0) arcadeActions.credit(ball.payout);
-    arcadeActions.recordRound({
-      slug: "neon-plinko",
-      gameName: "Neon Plinko",
-      bet,
-      payout: ball.payout,
-      multiplier: ball.multiplier,
-      note: `Bola ${ball.ballNumber}/${ballsPerRun} · Risco ${RISK_LABELS[risk]} · ${rows} linhas`,
-    });
-
-    if (ball.multiplier >= 10) {
-      playSound("plinkoHigh", soundEnabled);
-      playSound("bigWin", soundEnabled);
-    } else {
-      playSound(ball.payout >= bet ? "win" : "lose", soundEnabled);
-    }
+    settleBallOutcome(ball);
     return ball;
   }
 
@@ -341,14 +371,20 @@ export function PlinkoReference() {
       }
       const outcome = dropBall(createRng(), rows);
       const multiplier = payouts[outcome.bucket] ?? 0;
-      prepared.push({
+      const ball: ActiveBall = {
         id: `${stamp}-${ballNumber}`,
         ballNumber,
         path: outcome.path,
         bucket: outcome.bucket,
         multiplier,
         payout: Math.round(bet * multiplier),
-      });
+        bet,
+        risk,
+        rows,
+        runBallCount: ballsPerRun,
+      };
+      prepared.push(ball);
+      pendingSettlementsRef.current.set(ball.id, ball);
     }
 
     if (!prepared.length) {
@@ -361,21 +397,41 @@ export function PlinkoReference() {
     setPortalPhase("charging");
     playSound("plinkoPortal", soundEnabled);
     await wait(180);
+    if (!mountedRef.current) {
+      busyRef.current = false;
+      return;
+    }
     setPortalPhase("launching");
     await wait(100);
+    if (!mountedRef.current) {
+      busyRef.current = false;
+      return;
+    }
 
     const stagger = ballsPerRun >= 10 ? 88 : ballsPerRun >= 5 ? 108 : 136;
     startAudioScheduler(prepared, stagger);
     const completed = await Promise.all(prepared.map((ball, index) => animateBall(ball, index * stagger)));
+    if (!mountedRef.current) {
+      busyRef.current = false;
+      return;
+    }
     setPortalPhase("idle");
 
     const best = completed.reduce<ActiveBall | null>((current, ball) => (!current || ball.multiplier > current.multiplier ? ball : current), null);
     if (best && best.multiplier >= 10) {
       setBigWin({ payout: best.payout, multiplier: best.multiplier });
       await wait(940);
+      if (!mountedRef.current) {
+        busyRef.current = false;
+        return;
+      }
       setBigWin(null);
     } else {
       await wait(460);
+      if (!mountedRef.current) {
+        busyRef.current = false;
+        return;
+      }
     }
 
     resetImperativeMotion();
@@ -452,8 +508,6 @@ export function PlinkoReference() {
               </div>
             );
           })}
-
-
 
           {!busy && <div className="plinko-ref-ball plinko-ref-ball--idle" style={{ left: "50%", top: "4.5%" }} aria-hidden><span /></div>}
 
