@@ -158,14 +158,17 @@ const OlympusGrid = memo(function OlympusGrid({
       {grid.map((symbol, index) => {
         const column = index % OLYMPUS_COLUMNS;
         const hidden = phase === "landing" || phase === "anticipation" ? column >= revealedColumns : false;
+        const premiumSymbol = ["zeus", "bolt", "crown", "chalice"].includes(symbol);
         return (
           <div
             key={index}
             className={cn(
               "os-ref-cell relative overflow-hidden border border-[#9fdcff]/20 bg-[#031735]",
               winning.has(index) && "os-ref-win",
+              winning.size > 0 && !winning.has(index) && "os-ref-cell--dim",
               hidden && "os-ref-cell--hidden",
               symbol === "scatter" && "os-ref-cell--scatter",
+              premiumSymbol && "os-ref-cell--premium",
             )}
           >
             <ReferenceSymbol id={symbol} src={src} />

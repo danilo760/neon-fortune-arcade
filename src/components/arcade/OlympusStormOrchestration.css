@@ -51,6 +51,14 @@
   0%, 100% { opacity: .12; }
   50% { opacity: .32; }
 }
+@keyframes os-zeus-idle-rim {
+  0%,100% { opacity: .14; transform: translate(-50%,-50%) scale(.96); }
+  48% { opacity: .3; transform: translate(-50%,-51%) scale(1.035); }
+}
+@keyframes os-local-afterglow {
+  0% { opacity: .92; transform: scale(.72); }
+  100% { opacity: 0; transform: scale(1.55); }
+}
 
 .os-ref-machine {
   isolation: isolate;
@@ -104,6 +112,20 @@
 .os-ref-grid--storm-hit {
   animation: os-grid-storm-impact .42s cubic-bezier(.18, .8, .3, 1) both;
 }
+.os-ref-grid--storm-hit::before {
+  content: "";
+  position: absolute;
+  z-index: 7;
+  left: 58%;
+  top: 43%;
+  width: 27%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255,255,255,.9) 0 4%, rgba(126,224,255,.64) 13%, rgba(50,164,255,.22) 36%, transparent 68%);
+  box-shadow: 0 0 20px rgba(104,214,255,.78);
+  animation: os-local-afterglow .58s ease-out both;
+}
 
 .os-ref-grid--bonus {
   filter: saturate(1.05) brightness(1.03);
@@ -144,6 +166,7 @@
   opacity: .11;
   transform: translate(-50%, -50%) scale(.94);
 }
+.os-ref-zeus-stage.is-idle .os-ref-zeus-rim { animation: os-zeus-idle-rim 3.4s ease-in-out infinite; }
 
 .os-ref-zeus-bolt {
   position: absolute;
@@ -202,6 +225,8 @@
   .os-ref-grid--landing,
   .os-ref-grid--collapse,
   .os-ref-grid--storm-hit,
+  .os-ref-grid--storm-hit::before,
+  .os-ref-zeus-stage.is-idle .os-ref-zeus-rim,
   .os-ref-cell.os-ref-win,
   .os-ref-zeus-stage.is-charged .os-ref-zeus-aura,
   .os-ref-zeus-stage.is-charged .os-ref-zeus-bolt,

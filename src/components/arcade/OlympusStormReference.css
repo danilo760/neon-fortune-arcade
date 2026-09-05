@@ -1,7 +1,28 @@
 @import "./OlympusStormOrchestration.css";
 @import "./OlympusStormAscension.css";
 
-.os-ref-grid { contain: layout paint; }
+.os-ref-grid {
+  contain: layout paint;
+  isolation: isolate;
+  padding: .28rem;
+  border: 2px solid rgba(232, 211, 139, .9);
+  border-radius: .72rem;
+  background:
+    linear-gradient(145deg, #f4e7bf 0%, #a78955 6%, #263c56 10%, #071c37 88%, #96733a 96%, #f7e9bd),
+    linear-gradient(180deg, #173451, #06142e);
+  box-shadow: 0 0 0 3px rgba(3, 13, 32, .9), 0 0 22px rgba(82, 191, 255, .26), inset 0 2px 1px rgba(255,255,236,.72), inset 0 -14px 18px rgba(0,0,0,.55);
+}
+.os-ref-grid::after {
+  content: "";
+  position: absolute;
+  z-index: 8;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(116deg, rgba(255,255,255,.16) 0 12%, transparent 24% 69%, rgba(167,226,255,.09) 81%, transparent 94%);
+  box-shadow: inset 0 11px 15px rgba(227,247,255,.09), inset 0 -15px 19px rgba(0,3,14,.42);
+  mix-blend-mode: screen;
+}
 
 @keyframes os-reel-fall {
   0% { transform: translateY(-7%) scaleY(1.018); opacity: .95; }
@@ -96,6 +117,26 @@
   animation: os-win-pulse .82s ease-in-out infinite;
   outline: 1px solid rgba(168,231,255,.72);
   outline-offset: -2px;
+}
+
+.os-ref-cell {
+  border-color: rgba(176, 225, 255, .38) !important;
+  box-shadow: inset 1px 1px 0 rgba(239,250,255,.34), inset -3px -4px 7px rgba(0,8,31,.58), 1px 1px 0 rgba(4,23,55,.84);
+  transition: filter .18s ease, opacity .18s ease, box-shadow .18s ease;
+}
+.os-ref-cell--dim { opacity: .46; filter: brightness(.56) saturate(.68); }
+.os-ref-cell--premium::before {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: 5% 9% 50%;
+  pointer-events: none;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255,255,245,.36), transparent);
+  mix-blend-mode: screen;
+}
+.os-ref-cell.os-ref-win {
+  box-shadow: inset 0 0 0 2px rgba(233,251,255,.92), inset 0 0 22px rgba(87,207,255,.42), 0 0 17px rgba(65,190,255,.78);
 }
 
 .os-ref-lightning-flash {
