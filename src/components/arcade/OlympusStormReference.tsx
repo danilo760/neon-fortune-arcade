@@ -139,12 +139,18 @@ const OlympusGrid = memo(function OlympusGrid({
   src,
   winning,
   phase,
+  stoppedColumns,
+  landingColumn,
 }: {
   grid: OlympusSymbolId[];
   src: string;
   winning: Set<number>;
   phase: PresentationPhase;
+  stoppedColumns: number;
+  landingColumn: number;
 }) {
+  const reelPresentation = phase === "spinning" || phase === "landing" || phase === "anticipation";
+
   return (
     <div
       className={cn(
@@ -158,12 +164,20 @@ const OlympusGrid = memo(function OlympusGrid({
       )}
     >
       {grid.map((symbol, index) => {
+        const column = index % OLYMPUS_COLUMNS;
         const premiumSymbol = ["zeus", "bolt", "crown", "chalice"].includes(symbol);
+        const isRolling = reelPresentation && column >= stoppedColumns;
+        const isLanding =
+          (phase === "landing" || phase === "anticipation") &&
+          (landingColumn === OLYMPUS_COLUMNS || column === landingColumn);
+
         return (
           <div
             key={index}
             className={cn(
               "os-ref-cell relative overflow-hidden border border-[#9fdcff]/20 bg-[#031735]",
+              isRolling && "os-ref-cell--rolling",
+              isLanding && "os-ref-cell--landing",
               winning.has(index) && "os-ref-win",
               winning.size > 0 && !winning.has(index) && "os-ref-cell--dim",
               symbol === "scatter" && "os-ref-cell--scatter",
@@ -195,6 +209,8 @@ export function OlympusStormReference() {
   const [roundBusy, setRoundBusy] = useState(false);
   const [phase, setPhase] = useState<PresentationPhase>("idle");
   const [winning, setWinning] = useState<Set<number>>(() => new Set());
+  const [stoppedColumns, setStoppedColumns] = useState(OLYMPUS_COLUMNS);
+  const [landingColumn, setLandingColumn] = useState(-1);
   const [stormMultiplier, setStormMultiplier] = useState(1);
   const [cascadeNumber, setCascadeNumber] = useState(0);
   const [clusterCount, setClusterCount] = useState(0);
@@ -220,34 +236,50 @@ export function OlympusStormReference() {
   useEffect(() => hydrateFromStorage(), []);
 
   const revealInitialGrid = useCallback(async (plan: OlympusRoundPlan) => {
-    setGrid(plan.initialGrid);
     setWinning(new Set());
-    setPhase("landing");
 
     if (turbo) {
+      setGrid(plan.initialGrid);
+      setStoppedColumns(OLYMPUS_COLUMNS);
+      setLandingColumn(OLYMPUS_COLUMNS);
+      setPhase("landing");
       playSound(plan.scatterCount > 0 ? "olympusScatter" : "tick", soundEnabled);
       await wait(90);
+      setLandingColumn(-1);
       return;
     }
 
     let previousScatterCount = 0;
-    for (let columns = 1; columns <= OLYMPUS_COLUMNS; columns += 1) {
-      const scatterCount = visibleScatterCount(plan.initialGrid, columns);
+    for (let column = 0; column < OLYMPUS_COLUMNS; column += 1) {
+      setPhase("landing");
+      setGrid((current) =>
+        current.map((symbol, index) =>
+          index % OLYMPUS_COLUMNS === column ? (plan.initialGrid[index] ?? symbol) : symbol,
+        ),
+      );
+      setStoppedColumns(column + 1);
+      setLandingColumn(column);
+
+      const scatterCount = visibleScatterCount(plan.initialGrid, column + 1);
       if (scatterCount > previousScatterCount) {
         playSound("olympusScatter", soundEnabled);
-        previousScatterCount = scatterCount;
       } else {
         playSound("tick", soundEnabled);
       }
 
-      if (scatterCount >= 2 && columns < OLYMPUS_COLUMNS) {
+      const hasAnticipation = scatterCount >= 2 && column < OLYMPUS_COLUMNS - 1;
+      if (hasAnticipation) {
         setPhase("anticipation");
         playSound("olympusAnticipation", soundEnabled);
         await wait(360);
-        setPhase("landing");
+      } else {
+        await wait(72);
       }
-      await wait(scatterCount >= 2 && columns < OLYMPUS_COLUMNS ? 120 : 72);
+      previousScatterCount = scatterCount;
     }
+
+    setStoppedColumns(OLYMPUS_COLUMNS);
+    setLandingColumn(-1);
   }, [soundEnabled, turbo]);
 
   const presentRound = useCallback(async (
@@ -255,6 +287,8 @@ export function OlympusStormReference() {
     displayedTotalStart: number,
     isBonusRound: boolean,
   ) => {
+    setStoppedColumns(0);
+    setLandingColumn(-1);
     setPhase("spinning");
     setWinning(new Set());
     setStormMultiplier(1);
@@ -326,6 +360,8 @@ export function OlympusStormReference() {
 
     setGrid(plan.finalGrid);
     setWinning(new Set());
+    setStoppedColumns(OLYMPUS_COLUMNS);
+    setLandingColumn(-1);
     setStormMultiplier(1);
     setStormLevel(plan.stormLevelEnd);
     setStormEnergy(plan.stormEnergyEnd);
@@ -623,6 +659,8 @@ export function OlympusStormReference() {
             src={src}
             winning={winning}
             phase={phase}
+            stoppedColumns={stoppedColumns}
+            landingColumn={landingColumn}
           />
         )}
 
