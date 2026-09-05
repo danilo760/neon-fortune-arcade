@@ -46,25 +46,42 @@
 }
 
 @keyframes os-native-symbol-flow {
-  0% { transform: translate3d(0,-15%,0) scaleY(1.04); opacity: .86; }
-  52% { opacity: 1; }
-  100% { transform: translate3d(0,15%,0) scaleY(.98); opacity: .9; }
+  0% { transform: translate3d(0,-16%,0) scaleY(1.045); opacity: .82; filter: blur(.35px) brightness(.94); }
+  52% { opacity: 1; filter: blur(0) brightness(1.06); }
+  100% { transform: translate3d(0,16%,0) scaleY(.975); opacity: .88; filter: blur(.25px) brightness(.96); }
 }
 
-.os-ref-grid--spinning {
+@keyframes os-native-symbol-land {
+  0% { transform: translate3d(0,-12%,0) scaleY(1.035); filter: brightness(1.18); }
+  62% { transform: translate3d(0,2.8%,0) scaleY(.985); filter: brightness(1.08); }
+  84% { transform: translate3d(0,-.9%,0) scaleY(1.006); }
+  100% { transform: translate3d(0,0,0) scaleY(1); filter: brightness(1); }
+}
+
+.os-ref-grid--spinning,
+.os-ref-grid--landing,
+.os-ref-grid--anticipation {
   animation: none !important;
   transform: none !important;
   filter: none !important;
 }
-.os-ref-grid--spinning .os-ref-cell > div {
+.os-ref-cell--rolling > div {
   animation: os-native-symbol-flow .115s linear infinite;
-  will-change: transform, opacity;
+  will-change: transform, opacity, filter;
 }
-.os-ref-grid--spinning .os-ref-cell:nth-child(6n + 2) > div { animation-delay: -.018s; }
-.os-ref-grid--spinning .os-ref-cell:nth-child(6n + 3) > div { animation-delay: -.036s; }
-.os-ref-grid--spinning .os-ref-cell:nth-child(6n + 4) > div { animation-delay: -.054s; }
-.os-ref-grid--spinning .os-ref-cell:nth-child(6n + 5) > div { animation-delay: -.072s; }
-.os-ref-grid--spinning .os-ref-cell:nth-child(6n + 6) > div { animation-delay: -.09s; }
+.os-ref-cell--rolling:nth-child(6n + 2) > div { animation-delay: -.018s; }
+.os-ref-cell--rolling:nth-child(6n + 3) > div { animation-delay: -.036s; }
+.os-ref-cell--rolling:nth-child(6n + 4) > div { animation-delay: -.054s; }
+.os-ref-cell--rolling:nth-child(6n + 5) > div { animation-delay: -.072s; }
+.os-ref-cell--rolling:nth-child(6n + 6) > div { animation-delay: -.09s; }
+.os-ref-cell--landing > div {
+  animation: os-native-symbol-land .235s cubic-bezier(.18,.82,.22,1.05) both !important;
+  will-change: transform, filter;
+}
+.os-ref-cell--landing {
+  z-index: 5;
+  box-shadow: inset 0 0 0 1px rgba(214,246,255,.52), 0 0 10px rgba(82,199,255,.24);
+}
 .os-ref-spin-glow {
   animation: none !important;
   opacity: .62;
@@ -102,10 +119,12 @@
 @media (prefers-reduced-motion: reduce) {
   .gt-ref-spinning > div,
   .gt-ref-land > div,
-  .os-ref-grid--spinning .os-ref-cell > div,
+  .os-ref-cell--rolling > div,
+  .os-ref-cell--landing > div,
   .cc-grid.is-spinning .cc-cell > div {
     animation: none !important;
     transform: none !important;
+    filter: none !important;
   }
 
   .gt-ref-spin-button,
