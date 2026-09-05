@@ -32,11 +32,11 @@ jobs:
           if command -v google-chrome >/dev/null; then echo "CHROME_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV";
           elif command -v chromium >/dev/null; then echo "CHROME_PATH=$(command -v chromium)" >> "$GITHUB_ENV";
           else exit 1; fi
-      - name: Start Vite
+      - name: Start production preview
         run: |
-          npx vite --host 127.0.0.1 --port 4173 > /tmp/mines-vite.log 2>&1 &
+          npx vite preview --host 127.0.0.1 --port 4173 > /tmp/mines-preview.log 2>&1 &
           for i in {1..60}; do curl -fsS http://127.0.0.1:4173 >/dev/null && exit 0; sleep 1; done
-          cat /tmp/mines-vite.log
+          cat /tmp/mines-preview.log
           exit 1
       - name: Browser performance and safety QA
         run: node scripts/qa-neon-mines.mjs
