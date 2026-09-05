@@ -1,0 +1,40 @@
+name: Neon Mines Safety QA
+on:
+  push:
+    branches: [audit/neon-mines-after-8f2b44]
+permissions:
+  contents: read
+jobs:
+  qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --ignore-scripts
+      - run: npm install --no-save --ignore-scripts puppeteer-core@24.16.0
+      - name: Verify Mines math unchanged
+        run: test "$(git hash-object src/lib/arcade/mines.ts)" = "2015ddf72b0d148a06d32277a751a87bc005b90e"
+      - name: Code gates
+        run: |
+          npm test -- --run
+          npm run typecheck
+          npm run build
+          git diff --check e06150c20e510a080d665388c52692578b9012e8..HEAD
+      - name: Locate Chrome
+        run: |
+          if command -v google-chrome >/dev/null; then echo "CHROME_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV";
+          elif command -v chromium >/dev/null; then echo "CHROME_PATH=$(command -v chromium)" >> "$GITHUB_ENV";
+          else exit 1; fi
+      - name: Start unthrottled dev server for functional QA only
+        run: |
+          npx vite --host 127.0.0.1 --port 4173 > /tmp/mines-vite.log 2>&1 &
+          for i in {1..60}; do curl -fsS http://127.0.0.1:4173/game/neon-mines >/dev/null && exit 0; sleep 1; done
+          cat /tmp/mines-vite.log
+          exit 1
+      - name: Safety, PT-BR, reduced motion and mobile QA
+        run: node scripts/qa-neon-mines-safety.mjs
