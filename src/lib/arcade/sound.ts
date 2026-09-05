@@ -102,27 +102,27 @@ function waveform(kind: CueTone["wave"], phase: number) {
 function cueSpec(name: CachedCueName, ratio: number): CueSpec {
   if (name === "plinkoPeg") {
     return {
-      duration: .062,
+      duration: .052,
       tones: [
-        { start: 920 * ratio, end: 690 * ratio, gain: .016, wave: "triangle" },
-        { start: 1380 * ratio, end: 1080 * ratio, gain: .009, delay: .006, wave: "sine" },
+        { start: 860 * ratio, end: 690 * ratio, gain: .012, wave: "triangle" },
+        { start: 1290 * ratio, end: 1030 * ratio, gain: .0065, delay: .005, wave: "sine" },
       ],
     };
   }
   if (name === "plinkoLaunch") {
     return {
-      duration: .18,
+      duration: .16,
       tones: [
-        { start: 190 * ratio, end: 720 * ratio, gain: .021, wave: "saw" },
-        { start: 760 * ratio, end: 1120 * ratio, gain: .019, delay: .035, wave: "sine" },
+        { start: 205 * ratio, end: 670 * ratio, gain: .018, wave: "saw" },
+        { start: 700 * ratio, end: 1030 * ratio, gain: .016, delay: .03, wave: "sine" },
       ],
     };
   }
   return {
-    duration: .15,
+    duration: .13,
     tones: [
-      { start: 360 * ratio, end: 520 * ratio, gain: .023, wave: "triangle" },
-      { start: 720 * ratio, end: 980 * ratio, gain: .02, delay: .025, wave: "sine" },
+      { start: 330 * ratio, end: 500 * ratio, gain: .02, wave: "triangle" },
+      { start: 690 * ratio, end: 930 * ratio, gain: .016, delay: .022, wave: "sine" },
     ],
   };
 }
@@ -153,7 +153,7 @@ function makeCueBuffer(audio: AudioContext, spec: CueSpec) {
 function getCueBuffers(audio: AudioContext, name: CachedCueName) {
   const cached = cachedCueBuffers.get(name);
   if (cached?.[0]?.sampleRate === audio.sampleRate) return cached;
-  const ratios = name === "plinkoPeg" ? [.94, .98, 1, 1.035, 1.07] : [.98, 1, 1.025];
+  const ratios = name === "plinkoPeg" ? [.95, .98, 1, 1.03, 1.06] : [.98, 1, 1.025];
   const buffers = ratios.map((ratio) => makeCueBuffer(audio, cueSpec(name, ratio)));
   cachedCueBuffers.set(name, buffers);
   return buffers;
@@ -226,9 +226,9 @@ export function playOlympusLevelUp(level: number, enabled: boolean) {
   if (!enabled) return;
   const clamped = Math.max(2, Math.min(5, Math.round(level)));
   const ratio = 1 + (clamped - 2) * .09;
-  tone(220 * ratio, .18, "triangle", .028, 0, 360 * ratio);
-  tone(440 * ratio, .2, "sine", .025, .04, 660 * ratio);
-  noise(.14, .006, 0, 1400);
+  tone(220 * ratio, .17, "triangle", .026, 0, 360 * ratio);
+  tone(440 * ratio, .19, "sine", .023, .04, 660 * ratio);
+  noise(.1, .0045, 0, 1400);
 }
 
 export function playSound(name: SoundName, enabled: boolean) {
@@ -244,85 +244,85 @@ export function playSound(name: SoundName, enabled: boolean) {
     case "tick":
       tone(980, 0.045, "square", 0.018, 0, 720); tone(1450, 0.035, "sine", 0.012, 0.008, 1050); break;
     case "anticipation":
-      tone(132, 0.34, "sine", 0.042, 0, 168); tone(264, 0.2, "triangle", 0.028, 0.08, 352); tone(420, 0.16, "sine", 0.025, 0.18, 620); noise(0.25, 0.008, 0.08, 900); break;
+      tone(132, 0.34, "sine", 0.038, 0, 168); tone(264, 0.2, "triangle", 0.024, 0.08, 352); tone(420, 0.16, "sine", 0.021, 0.18, 620); noise(0.22, 0.006, 0.08, 900); break;
     case "tigerScatter":
-      tone(880, 0.16, "sine", 0.038, 0, 1320); tone(440, 0.2, "triangle", 0.025, 0.035, 660); noise(0.11, 0.006, 0.02, 2600); break;
+      tone(840, 0.14, "sine", 0.034, 0, 1260); tone(420, 0.18, "triangle", 0.022, 0.03, 650); noise(0.08, 0.0045, 0.02, 2500); break;
     case "tigerFeatureOpen":
-      tone(392,0.16,"triangle",0.026,0,523); tone(659,0.2,"sine",0.032,0.055,880); tone(1046,0.18,"sine",0.022,0.11,1318); break;
+      tone(392,0.14,"triangle",0.024,0,523); tone(659,0.18,"sine",0.028,0.05,880); tone(1046,0.16,"sine",0.019,0.1,1318); break;
     case "tigerCardAppear":
-      tone(760,0.12,"triangle",0.03,0,1180); tone(1520,0.1,"sine",0.018,0.025,1040); noise(0.08,0.004,0.01,3100); break;
+      tone(760,0.105,"triangle",0.026,0,1140); tone(1450,0.085,"sine",0.015,0.022,1060); noise(0.055,0.003,0.008,3000); break;
     case "tigerFeatureStart":
-      noise(0.34,0.012,0,3400); tone(98,0.62,"sine",0.05,0,72); [523,659,784,1046,1318].forEach((f,i)=>tone(f,0.28,i%2===0?"triangle":"sine",0.05,0.06+i*0.06,f*1.06)); break;
+      noise(0.24,0.009,0,3000); tone(104,0.48,"sine",0.045,0,76); [523,659,880,1174].forEach((f,i)=>tone(f,0.24,i%2===0?"triangle":"sine",0.042,0.055+i*0.06,f*1.05)); break;
     case "tigerThrow":
-      noise(0.22, 0.012, 0, 3200); tone(220, 0.28, "sawtooth", 0.028, 0, 760); tone(660, 0.2, "triangle", 0.03, 0.08, 1180); break;
+      noise(0.14, 0.008, 0, 3000); tone(240, 0.23, "sawtooth", 0.023, 0, 700); tone(690, 0.16, "triangle", 0.025, 0.065, 1120); break;
     case "tigerImpact":
-      noise(0.12, 0.022, 0, 2100); tone(170, 0.16, "triangle", 0.045, 0, 105); tone(1180, 0.09, "sine", 0.022, 0.01, 780); break;
+      noise(0.095, 0.016, 0, 1900); tone(155, 0.15, "triangle", 0.038, 0, 96); tone(1240, 0.075, "sine", 0.018, 0.012, 820); break;
     case "tigerBonus":
-      noise(0.5, 0.015, 0, 3300); tone(118, 0.7, "sine", 0.055, 0, 82); [392,523,659,784,1046,1318].forEach((f,i)=>tone(f,0.32,i%2===0?"triangle":"sine",0.058,0.09+i*0.07,f*1.06)); break;
+      noise(0.32, 0.011, 0, 3000); tone(124, 0.5, "sine", 0.046, 0, 86); [392,523,659,880,1174].forEach((f,i)=>tone(f,0.26,i%2===0?"triangle":"sine",0.046,0.075+i*0.065,f*1.05)); break;
     case "tigerRetrigger":
-      [784,1046,1318,1568].forEach((f,i)=>tone(f,0.22,"sine",0.05,i*0.06,f*1.05)); tone(262,0.38,"triangle",0.03,0.04,524); break;
+      [740,988,1318].forEach((f,i)=>tone(f,0.19,"sine",0.041,i*0.055,f*1.06)); tone(294,0.28,"triangle",0.024,0.035,560); break;
     case "tigerMiss":
-      tone(410,0.16,"triangle",0.022,0,330); tone(290,0.2,"sine",0.018,0.08,210); break;
+      tone(390,0.14,"triangle",0.018,0,318); tone(265,0.18,"sine",0.014,0.07,205); break;
     case "olympusSpin":
-      noise(.28,.009,0,1000); tone(82,.28,"sine",.025,0,105); tone(164,.2,"triangle",.012,.04,210); break;
+      noise(.22,.007,0,950); tone(82,.25,"sine",.022,0,108); tone(164,.18,"triangle",.011,.04,210); break;
     case "olympusBonusSpin":
-      noise(.3,.011,0,1250); tone(86,.3,"sine",.028,0,118); tone(172,.22,"triangle",.015,.035,245); break;
+      noise(.24,.008,0,1150); tone(86,.26,"sine",.025,0,118); tone(172,.2,"triangle",.013,.035,245); break;
     case "olympusScatter":
-      tone(410,.16,"triangle",.028,0,690); tone(820,.17,"sine",.018,.035,1180); noise(.1,.004,.01,2600); break;
+      tone(410,.14,"triangle",.025,0,690); tone(820,.15,"sine",.016,.035,1180); noise(.075,.0035,.01,2500); break;
     case "olympusAnticipation":
-      tone(72,.4,"sine",.034,0,88); tone(144,.3,"triangle",.014,.06,230); noise(.26,.006,.05,720); break;
+      tone(72,.36,"sine",.031,0,88); tone(144,.28,"triangle",.012,.06,226); noise(.22,.0048,.05,720); break;
     case "olympusFeatureOpen":
-      noise(.3,.012,0,1700); tone(62,.58,"sine",.05,0,96); tone(310,.4,"triangle",.022,.08,720); break;
+      noise(.22,.008,0,1600); tone(62,.5,"sine",.043,0,96); tone(310,.34,"triangle",.019,.08,700); break;
     case "olympusBonusIntro":
-      noise(.34,.014,0,2200); tone(72,.5,"sine",.05,0,48); [294,392,523,698].forEach((f,i)=>tone(f,.25,i%2===0?"triangle":"sine",.034,.08+i*.055,f*1.08)); break;
+      noise(.24,.009,0,2000); tone(72,.43,"sine",.044,0,48); [294,392,523,698].forEach((f,i)=>tone(f,.22,i%2===0?"triangle":"sine",.029,.075+i*.055,f*1.07)); break;
     case "olympusRetrigger":
-      tone(92,.34,"sine",.035,0,126); [440,660,880].forEach((f,i)=>tone(f,.2,"sine",.035,.05+i*.055,f*1.08)); break;
+      tone(92,.29,"sine",.03,0,126); [440,660,880].forEach((f,i)=>tone(f,.18,"sine",.03,.045+i*.055,f*1.07)); break;
     case "olympusBonusEnd":
-      [262,392,523].forEach((f,i)=>tone(f,.2,"triangle",.028,i*.055,f*1.04)); tone(82,.28,"sine",.022,0,62); break;
+      [262,392,523].forEach((f,i)=>tone(f,.18,"triangle",.025,i*.05,f*1.04)); tone(82,.24,"sine",.018,0,62); break;
     case "olympusBigWin":
-      noise(.25,.018,0,2400); tone(64,.5,"sine",.055,0,42); [330,494,659,988].forEach((f,i)=>tone(f,.24,i%2===0?"triangle":"sine",.038,.055+i*.06,f*1.06)); break;
+      noise(.19,.012,0,2200); tone(64,.42,"sine",.048,0,42); [330,494,659,988].forEach((f,i)=>tone(f,.22,i%2===0?"triangle":"sine",.033,.05+i*.06,f*1.055)); break;
     case "olympusCluster":
-      tone(420,.1,"triangle",.026,0,610); tone(690,.08,"sine",.016,.025,840); noise(.07,.006,0,2200); break;
+      tone(430,.085,"triangle",.022,0,620); tone(700,.065,"sine",.013,.02,850); noise(.045,.004,0,2100); break;
     case "olympusFall":
-      noise(0.18,0.012,0,1100); tone(250,0.16,"sine",0.022,0,170); break;
+      noise(0.14,0.008,0,1050); tone(250,0.13,"sine",0.018,0,172); break;
     case "olympusCharge":
-      tone(96,.46,"sine",.04,0,150); tone(220,.38,"sawtooth",.024,.05,680); noise(.3,.007,.08,1450); break;
+      tone(96,.4,"sine",.035,0,150); tone(220,.32,"sawtooth",.02,.045,650); noise(.22,.005,.07,1350); break;
     case "olympusHit":
-      noise(.16,.027,0,3300); tone(1180,.09,"square",.024,0,560); tone(76,.34,"sine",.055,.015,48); noise(.2,.009,.08,820); break;
+      noise(.115,.022,0,3200); tone(1200,.075,"square",.019,0,590); tone(76,.28,"sine",.05,.012,48); noise(.14,.006,.065,780); break;
     case "olympusMultiplier":
-      tone(659,.14,"triangle",.034,0,880); tone(1046,.16,"sine",.032,.045,1318); break;
+      tone(659,.12,"triangle",.03,0,880); tone(1046,.14,"sine",.028,.04,1318); break;
     case "candyPop": {
-      const v = 0.97 + Math.random() * 0.06;
-      tone(620*v,0.11,"triangle",0.028,0,980*v); break;
+      const v = 0.975 + Math.random() * 0.05;
+      tone(600*v,0.09,"triangle",0.023,0,920*v); break;
     }
     case "candyBreak": {
-      const v = 0.97 + Math.random() * 0.06;
-      tone(880*v,0.14,"triangle",0.03,0,410*v); tone(1240*v,0.09,"sine",0.018,0.025,700*v); break;
+      const v = 0.975 + Math.random() * 0.05;
+      tone(820*v,0.105,"triangle",0.024,0,430*v); tone(1180*v,0.075,"sine",0.013,0.02,720*v); break;
     }
     case "candyBounce":
-      tone(320,0.12,"triangle",0.024,0,520); break;
+      tone(300,0.095,"triangle",0.019,0,500); break;
     case "candyBomb":
-      tone(210,0.34,"sine",0.036,0,680); tone(440,0.25,"triangle",0.025,0.08,1120); break;
+      tone(190,0.28,"sine",0.03,0,610); tone(410,0.2,"triangle",0.02,0.07,980); break;
     case "candyExplosion":
-      noise(0.2,0.02,0,2800); tone(180,0.28,"sine",0.045,0,72); tone(1320,0.13,"triangle",0.025,0.01,420); break;
+      noise(0.15,0.014,0,2500); tone(170,0.22,"sine",0.036,0,78); tone(1220,0.09,"triangle",0.018,0.012,460); break;
     case "candyStreak":
-      [520,660,820].forEach((f,i)=>tone(f,0.14,"triangle",0.024,i*0.045,f*1.2)); break;
+      [520,680,860].forEach((f,i)=>tone(f,0.115,"triangle",0.019,i*0.04,f*1.16)); break;
     case "minesMetal":
-      noise(0.055,0.015,0,1500); tone(210,0.09,"triangle",0.024,0,155); break;
+      noise(0.045,0.011,0,1450); tone(205,0.075,"triangle",0.019,0,158); break;
     case "minesUnlock":
-      tone(460,0.12,"square",0.018,0,640); tone(720,0.1,"sine",0.02,0.055,940); break;
+      tone(450,0.105,"square",0.014,0,630); tone(710,0.085,"sine",0.017,0.048,920); break;
     case "minesCrystal": {
-      const v = 0.96 + Math.random() * 0.08;
-      tone(760*v,0.18,"sine",0.035,0,1280*v); tone(1140*v,0.16,"triangle",0.022,0.04,1540*v); break;
+      const v = 0.97 + Math.random() * 0.06;
+      tone(760*v,0.15,"sine",0.03,0,1250*v); tone(1120*v,0.13,"triangle",0.018,0.035,1500*v); break;
     }
     case "minesDanger":
-      tone(92,0.3,"sine",0.036,0,76); tone(184,0.24,"sawtooth",0.014,0.04,132); break;
+      tone(94,0.26,"sine",0.03,0,78); tone(188,0.2,"sawtooth",0.011,0.04,136); break;
     case "minesExplosion":
-      noise(0.28,0.035,0,1900); tone(88,0.38,"sine",0.06,0,42); tone(1180,0.1,"square",0.018,0.01,420); break;
+      noise(0.21,0.025,0,1700); tone(88,0.3,"sine",0.052,0,44); tone(1120,0.075,"square",0.013,0.012,440); break;
     case "minesCashout":
-      [523,659,880,1174].forEach((f,i)=>tone(f,0.2,"sine",0.04,i*0.045,f*1.05)); break;
+      [523,698,932].forEach((f,i)=>tone(f,0.17,"sine",0.034,i*0.05,f*1.05)); break;
     case "plinkoPortal":
-      tone(118,0.32,"sine",0.034,0,240); tone(236,0.28,"triangle",0.026,0.04,710); noise(0.22,0.007,0.06,2300); break;
+      tone(118,0.27,"sine",0.028,0,230); tone(236,0.23,"triangle",0.021,0.038,660); noise(0.16,0.0048,0.055,2100); break;
     case "plinkoLaunch":
       bufferedCue("plinkoLaunch"); break;
     case "plinkoPeg":
@@ -330,7 +330,7 @@ export function playSound(name: SoundName, enabled: boolean) {
     case "plinkoBucket":
       bufferedCue("plinkoBucket"); break;
     case "plinkoHigh":
-      noise(0.18,0.012,0,3200); [659,880,1174,1568].forEach((f,i)=>tone(f,0.21,"sine",0.04,i*0.05,f*1.08)); break;
+      noise(0.12,0.0075,0,2900); [659,880,1174].forEach((f,i)=>tone(f,0.18,"sine",0.033,i*0.05,f*1.07)); break;
     case "click":
       tone(560,0.055,"triangle",0.03,0,720); break;
     case "win":
