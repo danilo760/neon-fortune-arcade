@@ -94,10 +94,12 @@ export const CANDY_SCATTER_CHANCE: Readonly<Record<CandyMode, number>> = {
   freeSpins: 0.008,
 };
 
-// Party Candy reduces regular-cluster density. These scales are intentionally
-// mode-specific and are validated by Monte Carlo before release.
+// The first 1,000,000-spin calibration produced 100.768448% combined return at
+// base=0.94. Reducing only the paid-spin scale keeps the measured 1/76.63
+// trigger frequency intact while bringing the combined base+natural-feature
+// return back near the common fictional target band.
 export const CANDY_PAY_SCALE: Readonly<Record<CandyMode, number>> = {
-  base: 0.94,
+  base: 0.875,
   freeSpins: 0.64,
 };
 
