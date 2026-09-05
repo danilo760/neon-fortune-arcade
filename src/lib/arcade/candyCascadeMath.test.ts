@@ -136,6 +136,16 @@ test("feature payout is non-negative and every planned grid remains 6x5", () => 
   }
 });
 
+test("deterministic Sugar Bomb fixture reaches Level 5 through the real feature plan", () => {
+  const plan = planCandyFeature(100, 10, () => 0.5);
+  assert.equal(plan.finalSugarLevel, 5);
+  assert.ok(plan.finalSugarEnergy >= 10);
+  const energies = plan.spins.map((spin) => spin.round.finalSugarEnergy);
+  for (let index = 1; index < energies.length; index += 1) {
+    assert.ok((energies[index] ?? 0) >= (energies[index - 1] ?? 0));
+  }
+});
+
 test("continuous retriggers respect MAX_RETRIGGERS", () => {
   const plan = planCandyFeature(100, 10, () => 0);
   assert.equal(plan.retriggers, CANDY_MAX_RETRIGGERS);
