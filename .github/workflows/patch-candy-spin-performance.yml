@@ -1,0 +1,43 @@
+name: Patch Candy Spin Performance
+on:
+  push:
+    branches: [feat/candy-sugar-party]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'perf: move candy spin presentation off react grid'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Replace artificial grid churn with compositor presentation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/components/arcade/CandyCascadeHQ.tsx')
+          text = path.read_text()
+          old = '''    for (let step = 0; step < (turbo ? 4 : 8); step += 1) {
+                setGrid(makeCandyGrid(Math.random, "base"));
+                await wait(turbo ? 38 : 62);
+              }
+              setGrid(plan.initialGrid);
+              await wait(turbo ? 55 : 140);'''
+          new = '''    // The result is already precomputed. Keep the existing grid mounted and let
+              // .cc-grid.is-spinning animate it on the compositor instead of rebuilding
+              // 30 React cells several times just to fake reel motion.
+              await wait(turbo ? 190 : 470);
+              setGrid(plan.initialGrid);
+              await wait(turbo ? 55 : 140);'''
+          if old not in text:
+              raise SystemExit('target spin loop not found')
+          path.write_text(text.replace(old, new, 1))
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name 'danilo760'
+          git config user.email '62104537+danilo760@users.noreply.github.com'
+          git add src/components/arcade/CandyCascadeHQ.tsx
+          git commit -m 'perf: move candy spin presentation off react grid'
+          git push origin HEAD:feat/candy-sugar-party
