@@ -1,0 +1,214 @@
+name: Olympus Storm Public Final
+on:
+  push:
+    branches: [audit/olympus-public-final-f6f9a1]
+permissions:
+  contents: read
+jobs:
+  qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        run: |
+          npm install --ignore-scripts
+          npm install --no-save --ignore-scripts puppeteer-core@24.16.0
+      - name: Locate Chrome
+        run: |
+          if command -v google-chrome >/dev/null; then echo "CHROME_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV";
+          elif command -v chromium >/dev/null; then echo "CHROME_PATH=$(command -v chromium)" >> "$GITHUB_ENV";
+          else exit 1; fi
+      - name: Product gates and scope
+        run: |
+          test "$(git hash-object src/lib/arcade/olympusStormMath.ts)" = "35b794b1014eae09d9f5f53b6a2487dcc432e1ac"
+          npm test -- --run
+          npm run typecheck
+          npm run build
+          git diff --check f9f32f307dfd6b88f363ccd99aaa274c8a786c66..f6f9a1fad88f45615f47c76ddd39fa9d70a190c5
+          ACTUAL="$(git diff --name-only f9f32f307dfd6b88f363ccd99aaa274c8a786c66..f6f9a1fad88f45615f47c76ddd39fa9d70a190c5 | sort)"
+          EXPECTED="$(printf '%s\n' src/components/arcade/OlympusStormAscension.css src/components/arcade/OlympusStormOrchestration.css src/components/arcade/OlympusStormReference.css src/components/arcade/OlympusStormReference.tsx src/lib/arcade/sound.ts | sort)"
+          test "$ACTUAL" = "$EXPECTED"
+      - name: Public mobile, sound, functional and performance QA
+        run: |
+          node --input-type=module <<'NODE'
+          import puppeteer from 'puppeteer-core';
+          const url='https://lucky-glow-arcade.lovable.app/game/olympus-storm';
+          const key='lucky-neon-arcade:v1';
+          const seed={balance:1000000000,favorites:[],soundEnabled:true,history:[],totalSpins:0,bestWin:0};
+          const baselineFps=59.89;
+          const browser=await puppeteer.launch({executablePath:process.env.CHROME_PATH,headless:'new',args:['--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling']});
+          const page=await browser.newPage();
+          await page.setViewport({width:390,height:844,deviceScaleFactor:1});
+          const cdp=await page.target().createCDPSession();
+          await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});
+          const errors=[];
+          page.on('pageerror',e=>errors.push(`pageerror:${e.message}`));
+          page.on('console',m=>{if(m.type()==='error')errors.push(`console:${m.text()}`)});
+          await page.evaluateOnNewDocument(({key,seed})=>{if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(seed))},{key,seed});
+
+          // Wait specifically for the final deployment, not an older cached build.
+          let deployed=false;
+          for(let attempt=0;attempt<30;attempt++){
+            await page.goto(`${url}?qa=${Date.now()}`,{waitUntil:'networkidle2',timeout:60000});
+            deployed=await page.evaluate(()=>{
+              const sound=document.querySelector('[data-testid="olympus-sound-toggle"]');
+              const spin=[...document.querySelectorAll('button')].find(b=>b.getAttribute('aria-label')==='Girar Olympus Storm');
+              const r=spin?.getBoundingClientRect();
+              return !!sound && !!r && Math.abs(r.width-r.height)<2;
+            });
+            if(deployed)break;
+            await new Promise(r=>setTimeout(r,10000));
+          }
+          if(!deployed)throw new Error('Final Olympus deployment did not become visible');
+
+          const reset=async(custom=seed)=>{await page.evaluate(({key,custom})=>localStorage.setItem(key,JSON.stringify(custom)),{key,custom});await page.reload({waitUntil:'networkidle2',timeout:60000});await page.waitForSelector('[data-testid="olympus-sound-toggle"]');};
+          const byLabel=async label=>page.evaluate(label=>{const b=[...document.querySelectorAll('button')].find(x=>x.getAttribute('aria-label')===label);if(!(b instanceof HTMLButtonElement))throw new Error(`missing ${label}`);return{disabled:b.disabled,label:b.getAttribute('aria-label'),pressed:b.getAttribute('aria-pressed')}},label);
+          const clickLabel=async label=>page.evaluate(label=>{const b=[...document.querySelectorAll('button')].find(x=>x.getAttribute('aria-label')===label&&!x.disabled);if(!(b instanceof HTMLButtonElement))throw new Error(`missing enabled ${label}`);b.click()},label);
+          const waitEnabled=async label=>page.waitForFunction(label=>[...document.querySelectorAll('button')].some(b=>b.getAttribute('aria-label')===label&&!b.disabled),{timeout:240000},label);
+
+          // Visible global sound control + persistence.
+          await reset();
+          let sound=await byLabel('Desativar som');
+          if(sound.pressed!=='true')throw new Error(`sound initial pressed=${sound.pressed}`);
+          await clickLabel('Desativar som');
+          await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(b=>b.getAttribute('aria-label')==='Ativar som'));
+          let stored=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)||'{}').soundEnabled,key);
+          if(stored!==false)throw new Error('sound OFF not persisted');
+          await page.reload({waitUntil:'networkidle2'});
+          await page.waitForSelector('[data-testid="olympus-sound-toggle"]');
+          if(!(await page.evaluate(()=>[...document.querySelectorAll('button')].some(b=>b.getAttribute('aria-label')==='Ativar som'))))throw new Error('sound OFF lost on reload');
+          await clickLabel('Ativar som');
+          await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(b=>b.getAttribute('aria-label')==='Desativar som'));
+          stored=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)||'{}').soundEnabled,key);
+          if(stored!==true)throw new Error('sound ON not persisted');
+
+          // Mobile geometry and Feature Buy modal safe area.
+          const mobile=[];
+          for(const [w,h] of [[360,800],[390,844],[430,932]]){
+            await page.setViewport({width:w,height:h,deviceScaleFactor:1});
+            await reset();
+            const g=await page.evaluate(()=>{
+              const rect=e=>{const r=e?.getBoundingClientRect();return r?{top:+r.top.toFixed(1),bottom:+r.bottom.toFixed(1),left:+r.left.toFixed(1),right:+r.right.toFixed(1),width:+r.width.toFixed(1),height:+r.height.toFixed(1)}:null};
+              const label=x=>[...document.querySelectorAll('button')].find(b=>b.getAttribute('aria-label')===x);
+              return{viewport:{w:innerWidth,h:innerHeight},machine:rect(document.querySelector('.os-ref-machine')),sound:rect(document.querySelector('[data-testid="olympus-sound-toggle"]')),spin:rect(label('Girar Olympus Storm')),bonus:rect(label('Abrir Storm Ascension')),turbo:rect(label('Alternar turbo')),auto:rect(label('Auto play')),max:rect(label('Aposta máxima')),overflow:document.documentElement.scrollWidth>innerWidth+1};
+            });
+            for(const name of ['sound','spin','bonus','turbo','auto','max']){
+              const r=g[name]; if(!r)throw new Error(`${w}x${h} missing ${name}`);
+              if(r.top<-.5||r.left<-.5||r.right>w+.5||r.bottom>h+.5)throw new Error(`${w}x${h} ${name} outside viewport ${JSON.stringify(r)}`);
+            }
+            if(g.spin.bottom>g.machine.bottom+1)throw new Error(`${w}x${h} spin leaks cabinet ${JSON.stringify(g)}`);
+            if(g.overflow)throw new Error(`${w}x${h} horizontal overflow`);
+            await clickLabel('Abrir Storm Ascension');
+            await page.waitForSelector('[data-testid="olympus-feature-modal"]');
+            const modal=await page.evaluate(()=>{
+              const panel=document.querySelector('.os-feature-panel'); const r=panel?.getBoundingClientRect();
+              const cancel=[...document.querySelectorAll('button')].find(b=>b.textContent?.trim()==='CANCELAR');
+              const activate=document.querySelector('[data-testid="olympus-feature-activate"]');
+              const rr=e=>{const x=e?.getBoundingClientRect();return x?{top:+x.top.toFixed(1),bottom:+x.bottom.toFixed(1),left:+x.left.toFixed(1),right:+x.right.toFixed(1),height:+x.height.toFixed(1)}:null};
+              return{panel:r?{top:+r.top.toFixed(1),bottom:+r.bottom.toFixed(1),height:+r.height.toFixed(1),clientHeight:panel.clientHeight,scrollHeight:panel.scrollHeight}:null,cancel:rr(cancel),activate:rr(activate),overflowX:document.documentElement.scrollWidth>innerWidth+1};
+            });
+            if(!modal.panel||modal.panel.top<0||modal.panel.bottom>h||modal.overflowX)throw new Error(`${w}x${h} modal bounds ${JSON.stringify(modal)}`);
+            if(!modal.cancel||!modal.activate||modal.cancel.height<43||modal.activate.height<43||modal.cancel.bottom>h||modal.activate.bottom>h)throw new Error(`${w}x${h} modal actions ${JSON.stringify(modal)}`);
+            mobile.push({...g,modal});
+            await clickLabel('Fechar Storm Ascension');
+          }
+
+          // Double-click Feature Buy: one history entry and exactly one cost debit plus one payout credit.
+          await page.setViewport({width:390,height:844,deviceScaleFactor:1});
+          await reset();
+          await clickLabel('Abrir Storm Ascension');
+          await page.waitForSelector('[data-testid="olympus-feature-activate"]');
+          const beforeDouble=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)||'{}'),key);
+          await page.evaluate(()=>{const b=document.querySelector('[data-testid="olympus-feature-activate"]');if(!(b instanceof HTMLButtonElement))throw new Error('activate missing');b.click();b.click();});
+          await page.waitForFunction(()=>document.querySelector('.os-ref-machine')?.getAttribute('data-bonus-active')==='true',{timeout:60000});
+          await page.waitForFunction(()=>document.querySelector('.os-ref-machine')?.getAttribute('data-bonus-active')==='false',{timeout:240000});
+          await waitEnabled('Girar Olympus Storm');
+          const afterDouble=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)||'{}'),key);
+          const beforeFeature=beforeDouble.history.filter(x=>x?.bet===1800), afterFeature=afterDouble.history.filter(x=>x?.bet===1800);
+          if(afterFeature.length-beforeFeature.length!==1)throw new Error(`double Feature Buy history delta ${afterFeature.length-beforeFeature.length}`);
+          const beforePay=beforeFeature.reduce((s,x)=>s+(Number(x.payout)||0),0), afterPay=afterFeature.reduce((s,x)=>s+(Number(x.payout)||0),0);
+          const payoutDelta=afterPay-beforePay;
+          if(Math.abs(afterDouble.balance-(beforeDouble.balance-1800+payoutDelta))>.001)throw new Error(`double Feature Buy accounting mismatch before=${beforeDouble.balance} after=${afterDouble.balance} payout=${payoutDelta}`);
+
+          // Insufficient balance must not activate or debit.
+          await reset({...seed,balance:100,history:[]});
+          await clickLabel('Abrir Storm Ascension');
+          await page.waitForSelector('[data-testid="olympus-feature-activate"]');
+          const insufficient=await page.evaluate(()=>{const b=document.querySelector('[data-testid="olympus-feature-activate"]');return{disabled:b instanceof HTMLButtonElement?b.disabled:null,text:document.querySelector('.os-feature-panel')?.textContent||''}});
+          if(insufficient.disabled!==true||!insufficient.text.includes('Saldo fictício insuficiente'))throw new Error(`insufficient guard ${JSON.stringify(insufficient)}`);
+          const lowBefore=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)||'{}'),key);
+          await page.evaluate(()=>{const b=document.querySelector('[data-testid="olympus-feature-activate"]');if(b instanceof HTMLButtonElement)b.click()});
+          await new Promise(r=>setTimeout(r,250));
+          const lowAfter=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)||'{}'),key);
+          if(lowAfter.balance!==lowBefore.balance||lowAfter.history.length!==lowBefore.history.length)throw new Error('insufficient Feature Buy changed accounting');
+
+          // Reset to the exact baseline workload and instrument only gameplay.
+          await page.setViewport({width:390,height:844,deviceScaleFactor:1});
+          await reset();
+          await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});
+          await page.evaluate(()=>{
+            const cabinet=document.querySelector('.os-ref-machine');
+            window.__olFinal={frames:[],longTasks:0,mutations:0,overflow:false,last:performance.now(),phases:[],lastPhase:null,stormHits:0,stormImpacts:0,orderErrors:[],levelUps:0,bonusOutros:0,bonusIntros:0};
+            const p=window.__olFinal;
+            const scan=()=>{
+              const c=document.querySelector('.os-ref-machine'); const phase=c?.getAttribute('data-phase');
+              if(phase&&phase!==p.lastPhase){p.phases.push(phase);p.lastPhase=phase;
+                if(phase==='stormHit'){
+                  p.stormHits++;
+                  if(!document.querySelector('.os-ref-grid--storm-hit'))p.orderErrors.push('grid impact absent during stormHit');
+                  if((document.querySelector('.os-ref-storm-message')?.textContent||'').includes('×'))p.orderErrors.push('multiplier visible during stormHit');
+                }
+                if(phase==='stormImpact'){
+                  p.stormImpacts++;
+                  if(document.querySelector('.os-ref-grid--storm-hit'))p.orderErrors.push('grid impact continued into multiplier phase');
+                  const mult=Number(c?.getAttribute('data-storm-multiplier')||1);
+                  if(mult>1&&!((document.querySelector('.os-ref-storm-message')?.textContent||'').includes('×')))p.orderErrors.push('multiplier absent during stormImpact');
+                }
+                if(phase==='levelUp')p.levelUps++;
+                if(phase==='bonusOutro')p.bonusOutros++;
+                if(phase==='bonusIntro'||phase==='featureCinematic'||phase==='bonusTrigger')p.bonusIntros++;
+              }
+            };
+            scan();
+            const tick=now=>{const dt=now-p.last;p.last=now;if(dt>0&&dt<1000)p.frames.push(dt);p.overflow ||= document.documentElement.scrollWidth>innerWidth+1;requestAnimationFrame(tick)};
+            requestAnimationFrame(tick);
+            try{new PerformanceObserver(list=>{p.longTasks+=list.getEntries().length}).observe({entryTypes:['longtask']})}catch{}
+            new MutationObserver(records=>{p.mutations+=records.length;scan()}).observe(document.body,{subtree:true,childList:true,attributes:true,characterData:true});
+          });
+
+          const spin=async()=>{await waitEnabled('Girar Olympus Storm');await clickLabel('Girar Olympus Storm');await page.waitForFunction(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.getAttribute('aria-label')==='Girar Olympus Storm');return b instanceof HTMLButtonElement&&b.disabled},{timeout:30000});await waitEnabled('Girar Olympus Storm');};
+          for(let i=0;i<15;i++)await spin();
+          const featureRuns=[];
+          for(let i=0;i<3;i++){
+            await waitEnabled('Abrir Storm Ascension');
+            await clickLabel('Abrir Storm Ascension');
+            await page.waitForSelector('[data-testid="olympus-feature-modal"]');
+            const before=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)||'{}'),key);
+            await page.click('[data-testid="olympus-feature-activate"]');
+            await page.waitForFunction(()=>document.querySelector('.os-ref-machine')?.getAttribute('data-bonus-active')==='true',{timeout:60000});
+            await page.waitForFunction(()=>document.querySelector('.os-ref-machine')?.getAttribute('data-bonus-active')==='false',{timeout:240000});
+            await waitEnabled('Girar Olympus Storm');
+            const after=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)||'{}'),key);
+            const bf=before.history.filter(x=>x?.bet===1800), af=after.history.filter(x=>x?.bet===1800);
+            const payoutDelta=af.reduce((s,x)=>s+(Number(x.payout)||0),0)-bf.reduce((s,x)=>s+(Number(x.payout)||0),0);
+            if(af.length-bf.length!==1||Math.abs(after.balance-(before.balance-1800+payoutDelta))>.001)throw new Error(`feature ${i+1} accounting mismatch`);
+            featureRuns.push({historyDelta:af.length-bf.length,balanceBefore:before.balance,balanceAfter:after.balance,payout:payoutDelta});
+          }
+          await new Promise(r=>setTimeout(r,300));
+          const perf=await page.evaluate(()=>window.__olFinal);
+          const frames=perf.frames.slice(10),sorted=[...frames].sort((a,b)=>a-b),mean=frames.reduce((a,b)=>a+b,0)/frames.length,worst=Math.max(...frames),p95=sorted[Math.min(sorted.length-1,Math.floor(sorted.length*.95))];
+          const sequences=perf.phases.join('>');
+          const report={viewport:'390x844',cpuThrottle:4,baseSpins:15,featureBuys:3,fpsAverage:+(1000/mean).toFixed(2),fpsMinimum:+(1000/worst).toFixed(2),worstFrameMs:+worst.toFixed(2),p95FrameMs:+p95.toFixed(2),longTasks:perf.longTasks,domMutations:perf.mutations,overflowHorizontal:perf.overflow||await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),consoleErrors:errors,stormHits:perf.stormHits,stormImpacts:perf.stormImpacts,levelUps:perf.levelUps,bonusIntros:perf.bonusIntros,bonusOutros:perf.bonusOutros,orderErrors:perf.orderErrors,hasOrderedStorm:sequences.includes('stormCharge>stormHit>stormImpact'),featureRuns,mobile,doubleClick:{featureEntriesAdded:afterFeature.length-beforeFeature.length,accountingOk:true},sound:{persistedOff:true,persistedOn:true}};
+          console.log('OLYMPUS_FINAL',JSON.stringify(report));
+          if(report.fpsAverage<baselineFps*.95)throw new Error(`FPS budget failed ${report.fpsAverage} < ${(baselineFps*.95).toFixed(2)}`);
+          if(report.orderErrors.length||!report.hasOrderedStorm||report.stormHits<1||report.stormImpacts<1)throw new Error(`storm order failed ${JSON.stringify({errors:report.orderErrors,has:report.hasOrderedStorm,hits:report.stormHits,impacts:report.stormImpacts})}`);
+          if(report.overflowHorizontal||errors.length)throw new Error(`browser issue overflow=${report.overflowHorizontal} errors=${errors.join('|')}`);
+          if(report.bonusIntros<3||report.bonusOutros<3)throw new Error(`bonus presentation incomplete intros=${report.bonusIntros} outros=${report.bonusOutros}`);
+          await browser.close();
+          NODE
