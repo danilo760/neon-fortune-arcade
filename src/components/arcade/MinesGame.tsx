@@ -250,7 +250,7 @@ export function MinesGame() {
         <div className={cn("mines-premium__telemetry", revealPhase === "gem" && "mines-premium__telemetry--counting")} aria-label="Informações da rodada">
           <div><small>RISCO</small><strong data-risk={minesRiskLevel(mineCount)}>{minesRiskLabel(mineCount)}</strong></div>
           <div><small>MULTIPLICADOR</small><strong>{formatMultiplier(status === "playing" ? multiplier : 1)}</strong></div>
-          <div><small>ENCONTRADAS</small><strong>{revealed.size}</strong></div>
+          <div><small>GEMAS ABERTAS</small><strong>{revealed.size}</strong></div>
         </div>
 
         <div className="mines-premium__grid-frame">
@@ -335,7 +335,7 @@ export function MinesGame() {
         )}
 
         <div className="mines-controls mines-premium__controls">
-          <div className="mines-controls__bet mines-premium__bet"><BetControls value={bet} onChange={setBet} disabled={configurationLocked} /></div>
+          <div className="mines-controls__bet mines-premium__bet"><BetControls value={bet} onChange={(value) => { setBet(value); playSound("click", soundEnabled); }} disabled={configurationLocked} /></div>
           <section className="mines-selector mines-premium__selector">
             <small>MINAS / RISCO</small>
             <div>
@@ -347,7 +347,7 @@ export function MinesGame() {
                     size="sm"
                     variant={mineCount === count ? "gold" : "outline"}
                     disabled={configurationLocked}
-                    onClick={() => setMineCount(count)}
+                    onClick={() => { setMineCount(count); playSound("click", soundEnabled); }}
                     aria-label={`${count} minas, risco ${label.toLowerCase()}`}
                     aria-pressed={mineCount === count}
                   >
@@ -387,7 +387,7 @@ export function MinesGame() {
         </div>
       </section>
 
-      <p className="game-machine-note mines-premium__note">Cada casa segura aumenta o multiplicador. A matemática, o campo pré-calculado, a aposta e o crédito continuam usando a lógica fictícia existente.</p>
+      <p className="game-machine-note mines-premium__note">Revele cristais, aumente o multiplicador e garanta o ganho antes de encontrar uma mina. Apenas moedas fictícias.</p>
     </div>
   );
 }
