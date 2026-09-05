@@ -97,9 +97,9 @@ export const CANDY_SCATTER_CHANCE: Readonly<Record<CandyMode, number>> = {
 // The first 1,000,000-spin calibration produced 100.768448% combined return at
 // base=0.94. Reducing only the paid-spin scale keeps the measured 1/76.63
 // trigger frequency intact while bringing the combined base+natural-feature
-// return back near the common fictional target band.
+// return back near the common fictional target band. Final verification uses 0.857.
 export const CANDY_PAY_SCALE: Readonly<Record<CandyMode, number>> = {
-  base: 0.875,
+  base: 0.857,
   freeSpins: 0.64,
 };
 
