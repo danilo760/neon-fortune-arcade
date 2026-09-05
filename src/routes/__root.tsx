@@ -12,7 +12,6 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import premiumCss from "../premium.css?url";
 import mobilePolishCss from "../arcade-mobile-polish.css?url";
-import arcadePolishCss from "../arcade-polish.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -98,7 +97,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: premiumCss },
       { rel: "stylesheet", href: mobilePolishCss },
-      { rel: "stylesheet", href: arcadePolishCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
