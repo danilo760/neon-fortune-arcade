@@ -279,6 +279,8 @@ export function GoldenTigerReference() {
   const [anticipation, setAnticipation] = useState(0);
   const [turbo, setTurbo] = useState(false);
   const [autoLeft, setAutoLeft] = useState(0);
+  const [autoOpen, setAutoOpen] = useState(false);
+  const [autoRounds, setAutoRounds] = useState(10);
   const [bonusActive, setBonusActive] = useState(false);
   const [bonusSpins, setBonusSpins] = useState(0);
   const [bonusWin, setBonusWin] = useState(0);
@@ -581,7 +583,8 @@ export function GoldenTigerReference() {
   const startAuto = useCallback(async () => {
     if (busyRef.current || bonusRef.current || autoLeft > 0 || featureBuyOpen || featureBuyRunning) return;
     autoStopRef.current = false;
-    for (let left = 10; left > 0; left -= 1) {
+    setAutoOpen(false);
+    for (let left = autoRounds; left > 0; left -= 1) {
       if (autoStopRef.current) break;
       setAutoLeft(left);
       const played = await spin();
@@ -589,7 +592,7 @@ export function GoldenTigerReference() {
       await wait(turbo ? 110 : 280);
     }
     setAutoLeft(0);
-  }, [autoLeft, featureBuyOpen, featureBuyRunning, spin, turbo]);
+  }, [autoLeft, autoRounds, featureBuyOpen, featureBuyRunning, spin, turbo]);
 
   const openFeatureBuy = useCallback(() => {
     const availability = goldenFortuneAvailability({
@@ -881,9 +884,11 @@ export function GoldenTigerReference() {
           aria-label="Alternar turbo"
           className={cn(
             "absolute left-[4.2%] top-[86.1%] z-50 h-[8.3%] w-[17.7%] rounded-[28px]",
-            turbo && "ring-2 ring-yellow-200 shadow-[0_0_25px_#ffb000]",
+            turbo && "ring-2 ring-yellow-200 bg-amber-300/20 shadow-[0_0_25px_#ffb000]",
           )}
-        />
+        >
+          <span className={cn("absolute inset-x-0 bottom-1 text-center text-[8px] font-black tracking-wide", turbo ? "text-yellow-100" : "text-yellow-100/70")}>{turbo ? "TURBO ATIVO" : "TURBO"}</span>
+        </button>
         {autoLeft > 0 ? (
           <button
             type="button"
@@ -900,11 +905,24 @@ export function GoldenTigerReference() {
         ) : (
           <button
             type="button"
-            onClick={() => void startAuto()}
+            onClick={() => setAutoOpen(true)}
             disabled={spinning || bonusActive || insufficient || !src || featureBuyOpen || featureBuyRunning}
-            aria-label="Auto play"
+            aria-label={`Configurar auto play: ${autoRounds} rodadas`
             className="absolute left-[22.4%] top-[86.1%] z-50 h-[8.3%] w-[17.8%] rounded-[28px] disabled:opacity-40"
           />
+        )}
+        {autoOpen && (
+          <div className="absolute inset-0 z-[80] grid place-items-end bg-black/60 px-5 pb-[18%]" role="dialog" aria-modal="true" aria-label="Configurar auto play">
+            <div className="w-full rounded-2xl border border-yellow-300/70 bg-[#3a0508] p-4 text-center shadow-[0_12px_40px_rgba(0,0,0,.75)]">
+              <p className="text-xs font-black tracking-[.18em] text-yellow-200">AUTO PLAY</p>
+              <p className="mt-1 text-[11px] text-yellow-50/80">{formatCoins(bet)} MOEDAS por rodada</p>
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                {[10, 25, 50, 100].map((rounds) => <button key={rounds} type="button" onClick={() => setAutoRounds(rounds)} className={cn("min-h-11 rounded-lg border text-xs font-black", autoRounds === rounds ? "border-yellow-200 bg-yellow-400 text-[#4a0800]" : "border-yellow-200/35 bg-black/25 text-yellow-100")}>{rounds}</button>)}
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2"><button type="button" onClick={() => setAutoOpen(false)} className="min-h-11 rounded-lg border border-yellow-200/35 text-xs font-black text-yellow-100">CANCELAR</button><button type="button" onClick={() => void startAuto()} className="min-h-11 rounded-lg bg-yellow-400 text-xs font-black text-[#4a0800]">INICIAR {autoRounds}</button></div>
+              <small className="mt-2 block text-[9px] font-bold text-yellow-50/65">MOEDAS FICTÍCIAS · SEM VALOR REAL</small>
+            </div>
+          </div>
         )}
         <button
           type="button"
