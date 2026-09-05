@@ -925,12 +925,6 @@ export function GoldenTigerReference() {
           )}
           />
 
-        <div className="gt-ref-control-labels" aria-hidden>
-          <span className="gt-ref-control-labels__turbo">TURBO</span>
-          <span className="gt-ref-control-labels__auto">AUTO</span>
-          <span className="gt-ref-control-labels__max">APOSTA<br />MÁX.</span>
-        </div>
-
         {(winTier === "big" || winTier === "mega") && win > 0 && phase === "bigWin" && (
           <div
             className={cn("gt-ref-win-callout", `gt-ref-win-callout--${winTier}`)}
