@@ -152,6 +152,7 @@ export function PlinkoReference() {
       activeAnimationsRef.current.clear();
       for (const ball of pendingSettlementsRef.current.values()) settleBallOutcome(ball, false);
       pendingSettlementsRef.current.clear();
+      settledOutcomeIdsRef.current.clear();
       busyRef.current = false;
       ballRefs.current.clear();
       trailRefs.current.clear();
@@ -439,6 +440,7 @@ export function PlinkoReference() {
     setLandedBuckets(new Set());
     setLaunched(0);
     setSettled(0);
+    if (pendingSettlementsRef.current.size === 0) settledOutcomeIdsRef.current.clear();
     busyRef.current = false;
     setBusy(false);
 
