@@ -1,8 +1,8 @@
 import { CANDY_FEATURE_BUY_INITIAL_SPINS } from "./candyCascadeMath";
 
-// Calibrated from Candy's own Sugar Party Monte Carlo. This value is not
-// shared with Golden Tiger or Olympus Storm.
-export const CANDY_FEATURE_BUY_COST_MULTIPLIER = 11;
+// Calibrated from Candy's own 1,000,000-purchase Sugar Party Monte Carlo.
+// 13.47286564x average win / 14.1x cost ~= 95.55% fictitious feature return.
+export const CANDY_FEATURE_BUY_COST_MULTIPLIER = 14.1;
 
 export function candyFeatureBuyCost(bet: number) {
   if (!Number.isFinite(bet) || bet <= 0) return 0;
