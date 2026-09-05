@@ -151,7 +151,7 @@ const OlympusGrid = memo(function OlympusGrid({
         phase === "landing" && "os-ref-grid--landing",
         phase === "anticipation" && "os-ref-grid--anticipation",
         phase === "collapse" && "os-ref-grid--collapse",
-        phase === "stormImpact" && "os-ref-grid--storm-hit",
+        phase === "stormHit" && "os-ref-grid--storm-hit",
         phase === "bonusPlaying" && "os-ref-grid--bonus",
       )}
     >
