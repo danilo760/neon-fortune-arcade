@@ -95,20 +95,24 @@ jobs:
           }
 
           async function revealOne() {
-            const label = await page.evaluate(() => [...document.querySelectorAll('button')].find(b => (b.getAttribute('aria-label') || '').startsWith('Revelar casa') && !b.disabled)?.getAttribute('aria-label') || null);
-            if (!label) throw new Error('No revealable tile');
+            const meta = await page.evaluate(() => {
+              const tile = [...document.querySelectorAll('button')].find(b => (b.getAttribute('aria-label') || '').startsWith('Revelar casa') && !b.disabled);
+              const label = tile?.getAttribute('aria-label') || null;
+              const index = label ? Number(label.match(/(\d+)/)?.[1] || 0) : 0;
+              return { label, index };
+            });
+            if (!meta.label || !meta.index) throw new Error('No revealable tile');
             const t0 = performance.now();
-            await clickByAria(label);
-            await page.waitForFunction(label => {
-              const tile = [...document.querySelectorAll('button')].find(b => b.getAttribute('aria-label') === label || (b.getAttribute('aria-label') || '').startsWith(label.replace('Revelar', 'Casa').split(',')[0]));
+            await clickByAria(meta.label);
+            await page.waitForFunction(index => {
+              const safe = [...document.querySelectorAll('button')].some(b => (b.getAttribute('aria-label') || '') === `Casa ${index}, segura`);
               const lost = [...document.querySelectorAll('[role="status"]')].some(el => /Vault breached|Cofre violado/i.test(el.textContent || ''));
-              return lost || (tile && /segura/i.test(tile.getAttribute('aria-label') || ''));
-            }, {}, label);
+              return lost || safe;
+            }, {}, meta.index);
 
             const lost = await page.evaluate(() => [...document.querySelectorAll('[role="status"]')].some(el => /Vault breached|Cofre violado/i.test(el.textContent || '')));
             if (lost) {
-              const elapsed = performance.now() - t0;
-              mineTimes.push(elapsed);
+              mineTimes.push(performance.now() - t0);
               losses += 1;
               await page.waitForFunction(() => [...document.querySelectorAll('button')].some(b => (b.getAttribute('aria-label') || '').startsWith('Abrir cofre apostando') && !b.disabled));
               return 'mine';
@@ -128,14 +132,12 @@ jobs:
             await page.waitForFunction(() => [...document.querySelectorAll('button')].some(b => (b.getAttribute('aria-label') || '').startsWith('Abrir cofre apostando') && !b.disabled));
           }
 
-          // Five rounds intended for a quick cashout; early mines count toward mine samples.
           while (cashouts < 5 && rounds < 14) {
             await startRound();
             const result = await revealOne();
             if (result === 'safe') await cashout();
           }
 
-          // Continue playing fresh rounds until at least five mine reveals are measured.
           while (losses < 5 && rounds < 20) {
             await startRound();
             while (true) {
