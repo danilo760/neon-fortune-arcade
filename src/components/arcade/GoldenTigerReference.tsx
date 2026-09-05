@@ -789,6 +789,7 @@ export function GoldenTigerReference() {
           type="button"
           onClick={() => arcadeActions.toggleSound()}
           aria-label={soundEnabled ? "Desativar som" : "Ativar som"}
+          aria-pressed={soundEnabled}
           className="absolute right-[9.3%] top-[.8%] z-50 size-[8.8%] rounded-full bg-transparent"
         >
           {soundEnabled ? (
