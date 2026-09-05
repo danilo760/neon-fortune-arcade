@@ -1,0 +1,67 @@
+name: Neon Mines Public Functional
+on:
+  push:
+    branches: [audit/neon-mines-public-f9f32f]
+permissions:
+  contents: read
+jobs:
+  qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --ignore-scripts puppeteer-core@24.16.0
+      - name: Locate Chrome
+        run: |
+          if command -v google-chrome >/dev/null; then echo "CHROME_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV";
+          elif command -v chromium >/dev/null; then echo "CHROME_PATH=$(command -v chromium)" >> "$GITHUB_ENV";
+          else exit 1; fi
+      - name: Public risks, mobile and functional QA
+        run: |
+          node --input-type=module <<'NODE'
+          import puppeteer from 'puppeteer-core';
+          const url='https://lucky-glow-arcade.lovable.app/game/neon-mines';
+          const key='lucky-neon-arcade:v1';
+          const seed={balance:1000000,favorites:[],soundEnabled:true,history:[],totalSpins:0,bestWin:0};
+          const browser=await puppeteer.launch({executablePath:process.env.CHROME_PATH,headless:'new',args:['--no-sandbox','--disable-dev-shm-usage']});
+          const page=await browser.newPage();
+          await page.setViewport({width:390,height:844,deviceScaleFactor:1});
+          const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
+          await page.evaluateOnNewDocument(({key,seed})=>localStorage.setItem(key,JSON.stringify(seed)),{key,seed});
+          await page.goto(url,{waitUntil:'networkidle2',timeout:60000});
+          await page.waitForFunction(()=>document.body.innerText.includes('GEMAS SEGURAS'));
+          const click=async prefix=>page.evaluate(prefix=>{const b=[...document.querySelectorAll('button')].find(x=>(x.getAttribute('aria-label')||'').startsWith(prefix));if(!(b instanceof HTMLButtonElement))throw new Error(`missing ${prefix}`);b.click()},prefix);
+          const reset=async()=>{await page.evaluate(({key,seed})=>localStorage.setItem(key,JSON.stringify(seed)),{key,seed});await page.reload({waitUntil:'networkidle2'});};
+          const setRisk=async n=>{await page.waitForFunction(n=>[...document.querySelectorAll('button')].some(b=>(b.getAttribute('aria-label')||'').startsWith(`${n} minas, risco`)&&!b.disabled),{},n);await click(`${n} minas, risco`)};
+          const start=async()=>{await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(b=>(b.getAttribute('aria-label')||'').startsWith('Abrir cofre apostando')&&!b.disabled));await click('Abrir cofre apostando');await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(b=>(b.getAttribute('aria-label')||'').startsWith('Revelar casa')&&!b.disabled));};
+          const reveal=async()=>{const m=await page.evaluate(()=>{const b=[...document.querySelectorAll('button')].find(x=>(x.getAttribute('aria-label')||'').startsWith('Revelar casa')&&!x.disabled),label=b?.getAttribute('aria-label')||'';return{label,index:+(label.match(/\d+/)?.[0]||0)}});if(!m.index)throw new Error('no tile');await click(m.label);await page.waitForFunction(i=>{const c=document.querySelector('.mines-premium__cabinet');return c?.getAttribute('data-round-status')==='lost'||(c?.getAttribute('data-reveal-phase')==='idle'&&[...document.querySelectorAll('button')].some(b=>b.getAttribute('aria-label')===`Casa ${i}, segura`))},{},m.index);return await page.evaluate(()=>document.querySelector('.mines-premium__cabinet')?.getAttribute('data-round-status')==='lost'?'mine':'safe')};
+          const cash=async()=>{await click('Garantir ganho de');await page.waitForFunction(()=>document.querySelector('.mines-premium__cabinet')?.getAttribute('data-round-status')==='won')};
+
+          const ui=await page.evaluate(()=>{const t=document.body.innerText;return{forbidden:['SAFE GEMS','remaining','NEXT WIN','POSSIBLE WIN','MINES / RISK','SECURING','OPEN VAULT','Vault breached','Crystal secured','CASH OUT'].filter(x=>t.includes(x)),required:['GEMAS SEGURAS','PRÓXIMO GANHO','RISCO','MULTIPLICADOR','ENCONTRADAS','GANHO POSSÍVEL','MINAS / RISCO','ABRIR COFRE'].filter(x=>t.includes(x))}});
+          if(ui.forbidden.length||ui.required.length!==8)throw new Error(`PT-BR audit failed ${JSON.stringify(ui)}`);
+
+          const mobile=[];
+          for(const [w,h] of [[360,800],[390,844],[430,932]]){await page.setViewport({width:w,height:h,deviceScaleFactor:1});await reset();const x=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth+1,grid:!!document.querySelector('.mines-premium__grid'),start:[...document.querySelectorAll('button')].some(b=>(b.getAttribute('aria-label')||'').startsWith('Abrir cofre apostando')),risks:[...document.querySelectorAll('button')].filter(b=>/minas, risco/.test(b.getAttribute('aria-label')||'')).length}));if(x.overflow||!x.grid||!x.start||x.risks!==4)throw new Error(`mobile ${w}x${h} ${JSON.stringify(x)}`);mobile.push({viewport:`${w}x${h}`,...x})}
+
+          await page.setViewport({width:390,height:844,deviceScaleFactor:1});
+          const riskResults=[];
+          for(const risk of [1,3,5,10]){
+            await reset();await setRisk(risk);
+            let mine=false,oneCash=false,threeCash=false,rounds=0;
+            while((!mine||!oneCash||!threeCash)&&rounds<40){
+              await start();rounds++;let safe=0;
+              while(true){const out=await reveal();if(out==='mine'){mine=true;break;}safe++;
+                if(!oneCash&&safe===1){await cash();oneCash=true;break;}
+                if(!threeCash&&safe>=3){await cash();threeCash=true;break;}
+              }
+            }
+            if(!mine||!oneCash||!threeCash)throw new Error(`risk ${risk} incomplete ${JSON.stringify({mine,oneCash,threeCash,rounds})}`);
+            riskResults.push({risk,mine,oneCash,threeCash,rounds});
+          }
+          if(errors.length)throw new Error(`console errors ${errors.join(' | ')}`);
+          console.log('MINES_PUBLIC_FUNCTIONAL',JSON.stringify({ui,mobile,riskResults,errors}));
+          await browser.close();
+          NODE
