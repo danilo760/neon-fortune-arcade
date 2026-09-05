@@ -1,0 +1,77 @@
+name: Neon Mines Public Final
+on:
+  push:
+    branches: [audit/neon-mines-public-f9f32f]
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --ignore-scripts puppeteer-core@24.16.0
+      - name: Locate Chrome
+        run: |
+          if command -v google-chrome >/dev/null; then echo "CHROME_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV";
+          elif command -v chromium >/dev/null; then echo "CHROME_PATH=$(command -v chromium)" >> "$GITHUB_ENV";
+          else exit 1; fi
+      - name: Wait for new public deploy and measure
+        run: |
+          node --input-type=module <<'NODE'
+          import puppeteer from 'puppeteer-core';
+          const url='https://lucky-glow-arcade.lovable.app/game/neon-mines';
+          const storageKey='lucky-neon-arcade:v1';
+          const browser=await puppeteer.launch({executablePath:process.env.CHROME_PATH,headless:'new',args:['--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling']});
+          const page=await browser.newPage();
+          await page.setViewport({width:390,height:844,deviceScaleFactor:1});
+          const cdp=await page.target().createCDPSession();
+          await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});
+          const errors=[];
+          page.on('pageerror',e=>errors.push(`pageerror:${e.message}`));
+          page.on('console',m=>{if(m.type()==='error')errors.push(`console:${m.text()}`)});
+          await page.evaluateOnNewDocument(({storageKey})=>localStorage.setItem(storageKey,JSON.stringify({balance:1000000,favorites:[],soundEnabled:true,history:[],totalSpins:0,bestWin:0})),{storageKey});
+          let ready=false;
+          for(let attempt=0;attempt<36;attempt+=1){
+            await page.goto(url,{waitUntil:'networkidle2',timeout:60000});
+            ready=await page.evaluate(()=>document.body.innerText.includes('GEMAS SEGURAS')&&[...document.querySelectorAll('button')].some(b=>(b.getAttribute('aria-label')||'').startsWith('3 minas, risco')));
+            if(ready)break;
+            await new Promise(r=>setTimeout(r,15000));
+          }
+          if(!ready)throw new Error('Public deploy did not expose new Neon Mines UI within smoke window');
+          await page.evaluate(()=>{
+            window.__minesPerf={frames:[],longTasks:0,mutations:0,overflow:false,last:performance.now(),phases:new Set()};
+            const p=window.__minesPerf;
+            const tick=now=>{const dt=now-p.last;p.last=now;if(dt>0&&dt<1000)p.frames.push(dt);p.overflow ||= document.documentElement.scrollWidth>innerWidth+1;const phase=document.querySelector('.mines-premium__cabinet')?.getAttribute('data-reveal-phase');if(phase)p.phases.add(phase);requestAnimationFrame(tick)};
+            requestAnimationFrame(tick);
+            try{new PerformanceObserver(list=>{p.longTasks+=list.getEntries().length}).observe({entryTypes:['longtask']})}catch{}
+            new MutationObserver(records=>{p.mutations+=records.length}).observe(document.body,{subtree:true,childList:true,attributes:true,characterData:true});
+          });
+          const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+          const median=a=>{const s=[...a].sort((x,y)=>x-y),i=Math.floor(s.length/2);return s.length%2?s[i]:(s[i-1]+s[i])/2};
+          const summarize=a=>({samples:a.length,meanMs:+mean(a).toFixed(1),medianMs:+median(a).toFixed(1),minMs:+Math.min(...a).toFixed(1),maxMs:+Math.max(...a).toFixed(1)});
+          async function clickPrefix(prefix){await page.evaluate(prefix=>{const b=[...document.querySelectorAll('button')].find(x=>(x.getAttribute('aria-label')||'').startsWith(prefix));if(!(b instanceof HTMLButtonElement))throw new Error(`missing ${prefix}`);b.click()},prefix)}
+          await clickPrefix('3 minas, risco');
+          async function start(){await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(b=>(b.getAttribute('aria-label')||'').startsWith('Abrir cofre apostando')&&!b.disabled));await clickPrefix('Abrir cofre apostando');await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(b=>(b.getAttribute('aria-label')||'').startsWith('Revelar casa')&&!b.disabled));}
+          async function reveal(){const meta=await page.evaluate(()=>{const b=[...document.querySelectorAll('button')].find(x=>(x.getAttribute('aria-label')||'').startsWith('Revelar casa')&&!x.disabled);const label=b?.getAttribute('aria-label')||'';return{label,index:+(label.match(/\d+/)?.[0]||0)}});if(!meta.index)throw new Error('no tile');const t0=performance.now();await clickPrefix(meta.label);await page.waitForFunction(index=>{const c=document.querySelector('.mines-premium__cabinet');return c?.getAttribute('data-round-status')==='lost'||[...document.querySelectorAll('button')].some(b=>b.getAttribute('aria-label')===`Casa ${index}, segura`)},{},meta.index);const lost=await page.evaluate(()=>document.querySelector('.mines-premium__cabinet')?.getAttribute('data-round-status')==='lost');if(lost)return{outcome:'mine',elapsed:performance.now()-t0};await page.waitForFunction(()=>document.querySelector('.mines-premium__cabinet')?.getAttribute('data-reveal-phase')==='idle'&&[...document.querySelectorAll('button')].some(b=>(b.getAttribute('aria-label')||'').startsWith('Revelar casa')&&!b.disabled));return{outcome:'safe',elapsed:performance.now()-t0};}
+          async function cash(){const t0=performance.now();await clickPrefix('Garantir ganho de');await page.waitForFunction(()=>document.querySelector('.mines-premium__cabinet')?.getAttribute('data-round-status')==='won');return performance.now()-t0;}
+          const safe=[],mine=[],cashout=[];let rounds=0,cashouts=0,losses=0;
+          while(cashouts<5&&rounds<14){await start();rounds++;const r=await reveal();if(r.outcome==='mine'){mine.push(r.elapsed);losses++;}else{safe.push(r.elapsed);cashout.push(await cash());cashouts++;}}
+          while(losses<5&&rounds<20){await start();rounds++;while(true){const r=await reveal();if(r.outcome==='mine'){mine.push(r.elapsed);losses++;break}else safe.push(r.elapsed)}}
+          if(rounds<10||safe.length<5||mine.length<5||cashout.length<5)throw new Error(`insufficient samples rounds=${rounds} safe=${safe.length} mine=${mine.length} cash=${cashout.length}`);
+          await new Promise(r=>setTimeout(r,300));
+          const perf=await page.evaluate(()=>{const p=window.__minesPerf;return{frames:p.frames,longTasks:p.longTasks,mutations:p.mutations,overflow:p.overflow,phases:[...p.phases]}});
+          const frames=perf.frames.slice(5),sorted=[...frames].sort((a,b)=>a-b),worst=Math.max(...frames),p95=sorted[Math.min(sorted.length-1,Math.floor(sorted.length*.95))];
+          const ui=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth+1,text:document.body.innerText}));
+          const report={viewport:'390x844',cpuThrottle:4,mines:3,rounds,safeReveal:summarize(safe),mineReveal:summarize(mine),cashout:summarize(cashout),fpsAverage:+(1000/mean(frames)).toFixed(2),fpsMinimum:+(1000/worst).toFixed(2),worstFrameMs:+worst.toFixed(2),p95FrameMs:+p95.toFixed(2),longTasks:perf.longTasks,domMutations:perf.mutations,overflowHorizontal:perf.overflow||ui.overflow,consoleErrors:errors,phases:perf.phases};
+          console.log('MINES_PUBLIC_FINAL',JSON.stringify(report));
+          if(report.safeReveal.medianMs<320||report.safeReveal.medianMs>420)throw new Error(`Safe reveal missed gate ${report.safeReveal.medianMs}`);
+          if(report.mineReveal.medianMs<400||report.mineReveal.medianMs>550)throw new Error(`Mine reveal missed gate ${report.mineReveal.medianMs}`);
+          if(report.cashout.medianMs<450||report.cashout.medianMs>650)throw new Error(`Cashout missed gate ${report.cashout.medianMs}`);
+          if(report.overflowHorizontal||errors.length)throw new Error(`browser errors overflow=${report.overflowHorizontal} errors=${errors.join('|')}`);
+          for(const phase of ['press','unlock','gem','danger','explode','cashout'])if(!report.phases.includes(phase))throw new Error(`phase not observed: ${phase}`);
+          await browser.close();
+          NODE
