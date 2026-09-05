@@ -35,7 +35,6 @@ function reducedMotion() {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-
 export function MinesGame() {
   const balance = useArcade((state) => state.balance);
   const soundEnabled = useArcade((state) => state.soundEnabled);
@@ -192,9 +191,23 @@ export function MinesGame() {
   const showMines = status === "lost" || status === "won";
   const insufficient = bet > balance;
   const gemsLeft = Math.max(0, 25 - mineCount - revealed.size);
-  const possibleWin = status === "playing" ? displayedPossibleWin : lastPayout > 0 ? lastPayout : bet;
-  const progress = Math.min(100, (revealed.size / Math.max(1, 25 - mineCount)) * 100);
   const interactionLocked = revealPhase !== "idle";
+  const configurationLocked = status === "playing" || interactionLocked;
+  const possibleWin = status === "playing"
+    ? displayedPossibleWin
+    : status === "won"
+      ? lastPayout
+      : status === "lost"
+        ? 0
+        : bet;
+  const possibleWinCaption = status === "playing"
+    ? `${revealed.size} ${revealed.size === 1 ? "gema garantida" : "gemas garantidas"}`
+    : status === "won"
+      ? "Ganho garantido"
+      : status === "lost"
+        ? "Rodada encerrada"
+        : "Abra o cofre de cristal";
+  const progress = Math.min(100, (revealed.size / Math.max(1, 25 - mineCount)) * 100);
 
   return (
     <div className="mines-machine mines-premium">
@@ -298,7 +311,7 @@ export function MinesGame() {
           <div className="mines-premium__possible-copy">
             <small>GANHO POSSÍVEL</small>
             <strong><AnimatedWinCounter value={possibleWin} duration={possibleWinDuration} /></strong>
-            <span>{status === "playing" ? `${revealed.size} ${revealed.size === 1 ? "gema garantida" : "gemas garantidas"}` : "Abra o cofre de cristal"}</span>
+            <span>{possibleWinCaption}</span>
           </div>
           <div className="mines-premium__progress" aria-hidden><span style={{ width: `${progress}%` }} /></div>
           <div className="mines-multipliers mines-premium__multipliers" aria-hidden>
@@ -322,7 +335,7 @@ export function MinesGame() {
         )}
 
         <div className="mines-controls mines-premium__controls">
-          <div className="mines-controls__bet mines-premium__bet"><BetControls value={bet} onChange={setBet} disabled={status === "playing"} /></div>
+          <div className="mines-controls__bet mines-premium__bet"><BetControls value={bet} onChange={setBet} disabled={configurationLocked} /></div>
           <section className="mines-selector mines-premium__selector">
             <small>MINAS / RISCO</small>
             <div>
@@ -333,7 +346,7 @@ export function MinesGame() {
                     key={count}
                     size="sm"
                     variant={mineCount === count ? "gold" : "outline"}
-                    disabled={status === "playing"}
+                    disabled={configurationLocked}
                     onClick={() => setMineCount(count)}
                     aria-label={`${count} minas, risco ${label.toLowerCase()}`}
                     aria-pressed={mineCount === count}
