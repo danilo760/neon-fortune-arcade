@@ -1,0 +1,21 @@
+name: Candy Sugar Party Gate
+on:
+  push:
+    branches: [feat/candy-sugar-party]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test -- --run
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Simulate 1M base + 1M feature buys
+        run: node --import tsx scripts/simulate-candy-sugar-party.ts
