@@ -135,13 +135,11 @@ const OlympusGrid = memo(function OlympusGrid({
   src,
   winning,
   phase,
-  revealedColumns,
 }: {
   grid: OlympusSymbolId[];
   src: string;
   winning: Set<number>;
   phase: PresentationPhase;
-  revealedColumns: number;
 }) {
   return (
     <div
@@ -156,8 +154,6 @@ const OlympusGrid = memo(function OlympusGrid({
       )}
     >
       {grid.map((symbol, index) => {
-        const column = index % OLYMPUS_COLUMNS;
-        const hidden = phase === "landing" || phase === "anticipation" ? column >= revealedColumns : false;
         const premiumSymbol = ["zeus", "bolt", "crown", "chalice"].includes(symbol);
         return (
           <div
@@ -166,7 +162,6 @@ const OlympusGrid = memo(function OlympusGrid({
               "os-ref-cell relative overflow-hidden border border-[#9fdcff]/20 bg-[#031735]",
               winning.has(index) && "os-ref-win",
               winning.size > 0 && !winning.has(index) && "os-ref-cell--dim",
-              hidden && "os-ref-cell--hidden",
               symbol === "scatter" && "os-ref-cell--scatter",
               premiumSymbol && "os-ref-cell--premium",
             )}
@@ -202,7 +197,6 @@ export function OlympusStormReference() {
   const [flashKey, setFlashKey] = useState(0);
   const [turbo, setTurbo] = useState(false);
   const [autoLeft, setAutoLeft] = useState(0);
-  const [revealedColumns, setRevealedColumns] = useState(OLYMPUS_COLUMNS);
   const [bonusActive, setBonusActive] = useState(false);
   const [bonusSource, setBonusSource] = useState<BonusSource>(null);
   const [freeSpinsLeft, setFreeSpinsLeft] = useState(0);
@@ -227,16 +221,13 @@ export function OlympusStormReference() {
     setPhase("landing");
 
     if (turbo) {
-      setRevealedColumns(OLYMPUS_COLUMNS);
       playSound(plan.scatterCount > 0 ? "olympusScatter" : "tick", soundEnabled);
       await wait(90);
       return;
     }
 
-    setRevealedColumns(0);
     let previousScatterCount = 0;
     for (let columns = 1; columns <= OLYMPUS_COLUMNS; columns += 1) {
-      setRevealedColumns(columns);
       const scatterCount = visibleScatterCount(plan.initialGrid, columns);
       if (scatterCount > previousScatterCount) {
         playSound("olympusScatter", soundEnabled);
@@ -628,7 +619,6 @@ export function OlympusStormReference() {
             src={src}
             winning={winning}
             phase={phase}
-            revealedColumns={revealedColumns}
           />
         )}
 
@@ -643,7 +633,7 @@ export function OlympusStormReference() {
         )}
 
         {bonusActive && (
-          <div className="os-storm-level-hud absolute left-[8%] top-[18.2%] z-[57] w-[84%]" key={`level-${stormLevel}-${levelPulseKey}`}>
+          <div className="os-storm-level-hud absolute left-[8%] top-[20.8%] z-[57] w-[84%]" key={`level-${stormLevel}-${levelPulseKey}`}>
             <div className="os-storm-hud-row">
               <span><small>FREE SPINS</small><strong>{freeSpinsLeft}</strong></span>
               <span><small>STORM LEVEL</small><strong>{stormLevel}</strong></span>

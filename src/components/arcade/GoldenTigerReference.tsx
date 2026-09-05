@@ -762,6 +762,17 @@ export function GoldenTigerReference() {
           </div>
         )}
         <div className="gt-ref-machine__ambient" aria-hidden />
+        <div className="gt-ref-branding" aria-label="Golden Tiger">
+          <span>NEON FORTUNE</span>
+          <strong>GOLDEN<br />TIGER</strong>
+        </div>
+        <div className="gt-ref-jackpots" aria-label="Jackpots em moedas fictícias">
+          <p><span>GRAND</span><b>1.250.000</b></p>
+          <p><span>MAJOR</span><b>125.000</b></p>
+          <p><span>MINOR</span><b>25.000</b></p>
+          <p><span>MINI</span><b>5.000</b></p>
+          <small>MOEDAS</small>
+        </div>
         <TigerStage flyingCardColumn={flyingCardColumn} />
 
         <Link
