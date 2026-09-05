@@ -11,10 +11,10 @@ import {
 import { CANDY_FEATURE_BUY_INITIAL_SPINS, planCandyFeature } from "./candyCascadeMath";
 import { arcadeActions } from "./store";
 
-test("Candy feature buy cost uses the independently calibrated 14.1x multiple", () => {
-  assert.equal(CANDY_FEATURE_BUY_COST_MULTIPLIER, 14.1);
-  assert.equal(candyFeatureBuyCost(100), 1_410);
-  assert.equal(candyFeatureBuyCost(200), 2_820);
+test("Candy feature buy cost uses the independently calibrated 15.2x multiple", () => {
+  assert.equal(CANDY_FEATURE_BUY_COST_MULTIPLIER, 15.2);
+  assert.equal(candyFeatureBuyCost(100), 1_520);
+  assert.equal(candyFeatureBuyCost(200), 3_040);
   assert.equal(candyFeatureBuyCost(0), 0);
 });
 
