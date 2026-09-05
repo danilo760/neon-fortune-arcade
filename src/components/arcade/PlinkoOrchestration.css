@@ -26,12 +26,6 @@
   100% { opacity: 0; transform: translate(-50%, 115%) scale(.25); }
 }
 
-@keyframes plinko-ball-mass-hit {
-  0%,100% { transform: translate(-50%, -50%) scale(1); }
-  38% { transform: translate(-50%, -50%) scale(1.16,.82); }
-  64% { transform: translate(-50%, -50%) scale(.94,1.1); }
-}
-
 @keyframes plinko-bucket-energy {
   0% { opacity: 0; transform: translateX(-8%) scaleX(.18); }
   35% { opacity: .9; transform: translateX(0) scaleX(1); }
@@ -108,11 +102,9 @@
   transform-origin: center;
 }
 
-.plinko-ref-impact + .plinko-ref-ball--falling,
-.plinko-ref-ball--falling:has(+ .plinko-ref-impact) {
-  animation: plinko-ball-mass-hit .16s ease-out;
-}
-
+/* Ball position/transform is controlled exclusively by Web Animations in
+   PlinkoReference.tsx. Do not add CSS transform animations here: they compete
+   with the trajectory and create visible jumps at launch/peg impacts. */
 .plinko-ref-impact--tone-1 { animation-duration: .18s; }
 .plinko-ref-impact--tone-2 { animation-duration: .22s; }
 .plinko-ref-impact--tone-3 { animation-duration: .26s; }
@@ -163,8 +155,6 @@
   .plinko-ref-board__portal.is-launching i + i,
   .plinko-ref-board__portal.is-charging::before,
   .plinko-ref-board__portal.is-launching::before,
-  .plinko-ref-impact + .plinko-ref-ball--falling,
-  .plinko-ref-ball--falling:has(+ .plinko-ref-impact),
   .plinko-ref-bucket.is-latest-winner::after,
   .plinko-ref-machine.is-celebrating,
   .plinko-ref-machine.is-celebrating .plinko-ref-board::after {
