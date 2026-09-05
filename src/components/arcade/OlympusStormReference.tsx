@@ -519,7 +519,7 @@ export function OlympusStormReference() {
   }, [autoLeft, bet, bonusActive, featurePending, presentFeature, soundEnabled, turbo]);
 
   const changeBet = (direction: -1 | 1) => {
-    if (roundBusy || autoLeft > 0 || bonusActive || featureModalOpen) return;
+    if (roundBusy || autoLeft > 0 || bonusActive || featureModalOpen || featurePending) return;
     const current = Math.max(0, BET_STEPS.findIndex((value) => value === bet));
     const next = Math.max(0, Math.min(BET_STEPS.length - 1, current + direction));
     const value = BET_STEPS[next];
@@ -527,7 +527,7 @@ export function OlympusStormReference() {
   };
 
   const setMaxBet = () => {
-    if (roundBusy || autoLeft > 0 || bonusActive || featureModalOpen) return;
+    if (roundBusy || autoLeft > 0 || bonusActive || featureModalOpen || featurePending) return;
     const affordable = [...BET_STEPS].reverse().find((value) => value <= balance);
     if (affordable !== undefined) setBet(affordable);
   };
@@ -735,14 +735,14 @@ export function OlympusStormReference() {
         <button
           type="button"
           onClick={() => changeBet(-1)}
-          disabled={roundBusy || autoLeft > 0 || bonusActive || featureModalOpen}
+          disabled={roundBusy || autoLeft > 0 || bonusActive || featureModalOpen || featurePending}
           aria-label="Diminuir aposta"
           className="os-ref-control absolute right-[27.8%] top-[84.3%] z-50 w-[7%] aspect-square rounded-full disabled:opacity-40"
         />
         <button
           type="button"
           onClick={() => changeBet(1)}
-          disabled={roundBusy || autoLeft > 0 || bonusActive || featureModalOpen}
+          disabled={roundBusy || autoLeft > 0 || bonusActive || featureModalOpen || featurePending}
           aria-label="Aumentar aposta"
           className="os-ref-control absolute right-[1.2%] top-[84.3%] z-50 w-[7%] aspect-square rounded-full disabled:opacity-40"
         />
@@ -752,7 +752,7 @@ export function OlympusStormReference() {
           onClick={() => setTurbo((value) => !value)}
           aria-label="Alternar turbo"
           aria-pressed={turbo}
-          disabled={roundBusy || bonusActive || featureModalOpen}
+          disabled={roundBusy || autoLeft > 0 || bonusActive || featureModalOpen || featurePending}
           className={cn(
             "os-ref-control absolute right-[1.3%] top-[78.1%] z-50 w-[8.8%] aspect-square rounded-full disabled:opacity-50",
             turbo && "ring-2 ring-cyan-100 shadow-[0_0_25px_#45c8ff]",
@@ -781,7 +781,7 @@ export function OlympusStormReference() {
         <button
           type="button"
           onClick={setMaxBet}
-          disabled={roundBusy || autoLeft > 0 || bonusActive || featureModalOpen}
+          disabled={roundBusy || autoLeft > 0 || bonusActive || featureModalOpen || featurePending}
           aria-label="Aposta máxima"
           className="os-ref-control absolute right-[4.4%] top-[92.6%] z-50 h-[5.7%] w-[25.5%] rounded-xl disabled:opacity-40"
         />
