@@ -1,0 +1,84 @@
+name: Live Mines Audit
+
+on:
+  push:
+    branches:
+      - audit/live-five-games-final
+
+jobs:
+  mines:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --ignore-scripts puppeteer-core@24.16.0
+      - name: Locate Chrome
+        run: |
+          if command -v google-chrome >/dev/null; then echo "CHROME_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV";
+          elif command -v chromium >/dev/null; then echo "CHROME_PATH=$(command -v chromium)" >> "$GITHUB_ENV";
+          else exit 1; fi
+      - name: Play Mines live
+        run: |
+          node --input-type=module <<'NODE'
+          import puppeteer from 'puppeteer-core';
+          const sleep = ms => new Promise(r => setTimeout(r, ms));
+          const browser = await puppeteer.launch({ executablePath: process.env.CHROME_PATH, headless: 'new', args: ['--no-sandbox'] });
+          const page = await browser.newPage();
+          await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 1 });
+          const client = await page.target().createCDPSession();
+          await client.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+          const errors = [];
+          page.on('pageerror', e => errors.push(e.message));
+          page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+          await page.goto('https://lucky-glow-arcade.lovable.app/game/neon-mines', { waitUntil: 'networkidle2', timeout: 60000 });
+          await page.evaluate(() => {
+            window.__qa = { start: performance.now(), frames: [], last: 0, long: [] };
+            try { new PerformanceObserver(list => { for (const e of list.getEntries()) window.__qa.long.push(e.duration); }).observe({ entryTypes:['longtask'] }); } catch {}
+            const tick = t => { if (window.__qa.last) window.__qa.frames.push(t-window.__qa.last); window.__qa.last=t; requestAnimationFrame(tick); };
+            requestAnimationFrame(tick);
+          });
+          const clickText = async text => {
+            const h = await page.evaluateHandle(t => [...document.querySelectorAll('button')].find(b => (b.textContent||'').includes(t) && !b.disabled) || null, text);
+            const el = h.asElement(); if (!el) throw new Error('button not found: '+text); await el.click(); await h.dispose();
+          };
+          const clickAria = async part => {
+            const h = await page.evaluateHandle(t => [...document.querySelectorAll('button')].find(b => (b.getAttribute('aria-label')||'').includes(t) && !b.disabled) || null, part);
+            const el = h.asElement(); if (!el) throw new Error('aria not found: '+part); await el.click(); await h.dispose();
+          };
+          await clickAria('3 minas');
+          let rounds=0, cashouts=0, losses=0; const revealMs=[];
+          for (let i=0;i<10;i++) {
+            await page.waitForFunction(() => [...document.querySelectorAll('button')].some(b => (b.textContent||'').includes('OPEN VAULT') && !b.disabled), { timeout:10000 });
+            await clickText('OPEN VAULT');
+            await page.waitForFunction(() => [...document.querySelectorAll('button')].some(b => (b.getAttribute('aria-label')||'').startsWith('Revelar casa') && !b.disabled), { timeout:5000 });
+            const t0=Date.now();
+            const tile = await page.evaluateHandle(() => [...document.querySelectorAll('button')].find(b => (b.getAttribute('aria-label')||'').startsWith('Revelar casa') && !b.disabled) || null);
+            await tile.asElement().click(); await tile.dispose();
+            await page.waitForFunction(() => ![...document.querySelectorAll('button')].some(b => b.getAttribute('aria-busy')==='true'), { timeout:10000 }).catch(()=>{});
+            await sleep(120);
+            revealMs.push(Date.now()-t0);
+            const canCash = await page.evaluate(() => [...document.querySelectorAll('button')].some(b => (b.getAttribute('aria-label')||'').startsWith('Cash out por') && !b.disabled));
+            if (canCash) { await clickAria('Cash out por'); cashouts++; await sleep(650); }
+            else { losses++; await sleep(450); }
+            rounds++;
+          }
+          const result = await page.evaluate(({rounds,cashouts,losses,revealMs,errors}) => {
+            const a=window.__qa; const elapsed=performance.now()-a.start; const sorted=[...a.frames].sort((x,y)=>x-y);
+            return {
+              rounds,cashouts,losses,
+              avgRevealMs: revealMs.reduce((s,v)=>s+v,0)/revealMs.length,
+              minRevealMs: Math.min(...revealMs), maxRevealMs: Math.max(...revealMs),
+              fps: a.frames.length/(elapsed/1000), worstFrameMs: sorted.at(-1)||0, p95FrameMs: sorted[Math.floor(sorted.length*.95)]||0,
+              longTasks:a.long.length, maxLongTaskMs:Math.max(0,...a.long),
+              overflowX:document.documentElement.scrollWidth>innerWidth+1,
+              mixedLanguage:/SAFE GEMS|NEXT WIN|RISK|CURRENT|FOUND|POSSIBLE WIN|OPEN VAULT|Vault breached|Crystal secured/.test(document.body.innerText),
+              body:document.body.innerText.replace(/\s+/g,' ').slice(0,1800), errors,
+              storage:Object.fromEntries(Object.entries(localStorage)),
+            };
+          }, {rounds,cashouts,losses,revealMs,errors});
+          console.log('MINES_FINAL', JSON.stringify(result));
+          await browser.close();
+          NODE
