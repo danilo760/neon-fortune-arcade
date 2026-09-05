@@ -1,12 +1,17 @@
+import { mkdir } from "node:fs/promises";
 import puppeteer from "puppeteer-core";
 
 const ROOT = process.env.CANDY_AUDIT_URL ?? "http://127.0.0.1:4173";
 const GAME = `${ROOT}/game/candy-cascade`;
 const STORAGE_KEY = "lucky-neon-arcade:v1";
+const BASELINE_FPS = 59.8453379742887;
+const MIN_BASE_FPS = BASELINE_FPS * 0.95;
 
 function state(balance = 1_000_000) {
   return { balance, favorites: [], soundEnabled: false, history: [], totalSpins: 0, bestWin: 0 };
 }
+
+await mkdir("audit-artifacts", { recursive: true });
 
 const browser = await puppeteer.launch({
   executablePath: process.env.CHROME_PATH,
@@ -33,12 +38,33 @@ await page.evaluate(() => {
     }).observe({ entryTypes: ["longtask"] });
   } catch {}
   const tick = (time) => {
-    if (window.__candyQa.last) window.__candyQa.frames.push(time - window.__candyQa.last);
-    window.__candyQa.last = time;
+    const qa = window.__candyQa;
+    if (qa.last) qa.frames.push(time - qa.last);
+    qa.last = time;
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
 });
+
+async function resetMetrics() {
+  await page.evaluate(() => { window.__candyQa = { start: performance.now(), frames: [], last: 0, long: [] }; });
+}
+
+async function readMetrics() {
+  return page.evaluate(() => {
+    const qa = window.__candyQa;
+    const elapsed = performance.now() - qa.start;
+    const sorted = [...qa.frames].sort((a, b) => a - b);
+    return {
+      fps: qa.frames.length / Math.max(.001, elapsed / 1000),
+      worstFrameMs: sorted.at(-1) ?? 0,
+      p95FrameMs: sorted[Math.floor(sorted.length * .95)] ?? 0,
+      longTasks: qa.long.length,
+      maxLongTaskMs: Math.max(0, ...qa.long),
+      heap: performance.memory?.usedJSHeapSize ?? null,
+    };
+  });
+}
 
 async function buttonByAria(part, enabledOnly = true) {
   const handle = await page.evaluateHandle(({ part, enabledOnly }) => [...document.querySelectorAll("button")].find((button) => {
@@ -68,6 +94,7 @@ async function readState() {
 }
 
 await clickAria("Ativar turbo");
+await resetMetrics();
 let baseSpins = 0;
 for (let index = 0; index < 30; index += 1) {
   await waitSpinIdle();
@@ -76,8 +103,11 @@ for (let index = 0; index < 30; index += 1) {
   await waitSpinIdle();
   baseSpins += 1;
 }
+const baseMetrics = await readMetrics();
+await page.screenshot({ path: "audit-artifacts/candy-base-390x844.png" });
 
 const beforeFeatures = await readState();
+await resetMetrics();
 let featureBuys = 0;
 let doubleClickPassed = false;
 let accountingPassed = true;
@@ -87,6 +117,7 @@ for (let index = 0; index < 5; index += 1) {
   await clickAria("Abrir Sugar Party Bonus Buy");
   await page.waitForSelector('[data-testid="candy-feature-modal"]', { timeout: 5_000 });
   modalText = await page.$eval('[data-testid="candy-feature-modal"]', (node) => node.textContent?.replace(/\s+/g, " ").trim() ?? "");
+  if (index === 0) await page.screenshot({ path: "audit-artifacts/candy-feature-modal-390x844.png" });
   const before = await readState();
 
   if (index === 0) {
@@ -115,6 +146,8 @@ for (let index = 0; index < 5; index += 1) {
   accountingPassed = accountingPassed && newEntries.length === 1 && after.balance === before.balance - entry.bet + entry.payout;
   featureBuys += 1;
 }
+const featureMetrics = await readMetrics();
+await page.screenshot({ path: "audit-artifacts/candy-after-features-390x844.png" });
 
 const afterFeatures = await readState();
 const featureSpinsDidNotDebit = afterFeatures.totalSpins === beforeFeatures.totalSpins;
@@ -124,32 +157,21 @@ await clickAria(afterFeatures.soundEnabled ? "Desativar som" : "Ativar som");
 const toggledState = await readState();
 const soundTogglePassed = toggledState.soundEnabled !== afterFeatures.soundEnabled;
 
-const qa390 = await page.evaluate(({ baseSpins, featureBuys, errors, modalText, doubleClickPassed, accountingPassed, featureSpinsDidNotDebit, soundTogglePassed, featureEntries }) => {
-  const qa = window.__candyQa;
-  const elapsed = performance.now() - qa.start;
-  const sorted = [...qa.frames].sort((a, b) => a - b);
-  return {
-    viewport: [innerWidth, innerHeight],
-    baseSpins,
-    featureBuys,
-    fps: qa.frames.length / (elapsed / 1000),
-    worstFrameMs: sorted.at(-1) ?? 0,
-    p95FrameMs: sorted[Math.floor(sorted.length * .95)] ?? 0,
-    longTasks: qa.long.length,
-    maxLongTaskMs: Math.max(0, ...qa.long),
-    heap: performance.memory?.usedJSHeapSize ?? null,
-    overflowX: document.documentElement.scrollWidth > innerWidth + 1,
-    errors,
-    modalText,
-    doubleClickPassed,
-    accountingPassed,
-    featureSpinsDidNotDebit,
-    soundTogglePassed,
-    aggregatedFeatureEntries: featureEntries.length,
-    bonusButtonVisible: [...document.querySelectorAll("button")].some((button) => (button.getAttribute("aria-label") ?? "").includes("Abrir Sugar Party Bonus Buy")),
-    soundButtonVisible: [...document.querySelectorAll("button")].some((button) => /som/.test(button.getAttribute("aria-label") ?? "")),
-  };
-}, { baseSpins, featureBuys, errors, modalText, doubleClickPassed, accountingPassed, featureSpinsDidNotDebit, soundTogglePassed, featureEntries });
+const qa390 = await page.evaluate(({ baseSpins, featureBuys, errors, modalText, doubleClickPassed, accountingPassed, featureSpinsDidNotDebit, soundTogglePassed, featureEntries }) => ({
+  viewport: [innerWidth, innerHeight],
+  baseSpins,
+  featureBuys,
+  overflowX: document.documentElement.scrollWidth > innerWidth + 1,
+  errors,
+  modalText,
+  doubleClickPassed,
+  accountingPassed,
+  featureSpinsDidNotDebit,
+  soundTogglePassed,
+  aggregatedFeatureEntries: featureEntries.length,
+  bonusButtonVisible: [...document.querySelectorAll("button")].some((button) => (button.getAttribute("aria-label") ?? "").includes("Abrir Sugar Party Bonus Buy")),
+  soundButtonVisible: [...document.querySelectorAll("button")].some((button) => /som/.test(button.getAttribute("aria-label") ?? "")),
+}), { baseSpins, featureBuys, errors, modalText, doubleClickPassed, accountingPassed, featureSpinsDidNotDebit, soundTogglePassed, featureEntries });
 
 const viewportResults = [];
 for (const [width, height] of [[360, 800], [430, 932]]) {
@@ -178,7 +200,7 @@ const insufficient = await page.evaluate(() => {
 });
 const insufficientPassed = insufficient.activateDisabled === true && /insuficiente/i.test(insufficient.text);
 
-const result = { ...qa390, viewportResults, insufficientPassed };
+const result = { ...qa390, baseMetrics, featureMetrics, viewportResults, insufficientPassed };
 console.log("CANDY_BROWSER_AUDIT", JSON.stringify(result));
 
 if (result.baseSpins !== 30 || result.featureBuys !== 5) throw new Error("QA did not complete 30 spins + 5 Feature Buys");
@@ -186,5 +208,8 @@ if (!result.doubleClickPassed || !result.accountingPassed || !result.featureSpin
 if (!result.soundTogglePassed || !result.bonusButtonVisible || !result.soundButtonVisible) throw new Error("Candy controls QA failed");
 if (result.overflowX || result.viewportResults.some((item) => item.overflowX || !item.bonusVisible || !item.soundVisible)) throw new Error("Candy mobile viewport QA failed");
 if (result.errors.length) throw new Error(`Browser console errors: ${result.errors.join(" | ")}`);
+if (result.baseMetrics.fps < MIN_BASE_FPS) throw new Error(`Candy base FPS regression: ${result.baseMetrics.fps.toFixed(2)} < ${MIN_BASE_FPS.toFixed(2)}`);
+if (result.baseMetrics.longTasks > 2) throw new Error(`Candy base introduced recurring long tasks: ${result.baseMetrics.longTasks}`);
+if (result.featureMetrics.longTasks > 5) throw new Error(`Candy feature introduced recurring long tasks: ${result.featureMetrics.longTasks}`);
 
 await browser.close();
