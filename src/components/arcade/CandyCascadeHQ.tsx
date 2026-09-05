@@ -270,7 +270,7 @@ export function CandyCascadeHQ() {
       setSugarLevel(1);
       setFreeSpinsLeft(feature.initialSpins);
       setPhase("bonusIntro");
-      setFeatureOverlay({ title: "SUGAR PARTY", value: `${feature.initialSpins} FREE SPINS`, caption: "Sugar Meter ativo", tone: "trigger" });
+      setFeatureOverlay({ title: "SUGAR PARTY", value: `${feature.initialSpins} FREE SPINS`, caption: "Sugar Meter ativado", tone: "trigger" });
       playCandyFeatureSound("bonusIntro", soundEnabled);
       await wait(turbo ? 180 : 620);
       setFeatureOverlay(null);
@@ -286,7 +286,7 @@ export function CandyCascadeHQ() {
         if (spin.retriggerAward > 0) {
           setFreeSpinsLeft(spin.spinsRemainingAfter);
           setPhase("retrigger");
-          setFeatureOverlay({ title: "SUGAR PARTY RECARREGADA", value: `+${spin.retriggerAward} FREE SPINS`, caption: "Party Candy ativou o retrigger", tone: "retrigger" });
+          setFeatureOverlay({ title: "SUGAR PARTY · RETRIGGER", value: `+${spin.retriggerAward} FREE SPINS`, caption: "Party Candy adicionou Free Spins", tone: "retrigger" });
           playCandyFeatureSound("retrigger", soundEnabled);
           await wait(turbo ? 130 : 430);
           setFeatureOverlay(null);
@@ -299,7 +299,7 @@ export function CandyCascadeHQ() {
 
       setFreeSpinsLeft(0);
       setPhase("bonusOutro");
-      setFeatureOverlay({ title: "TOTAL DO BÔNUS", value: formatCoins(feature.payout), caption: `SUGAR LEVEL FINAL ${feature.finalSugarLevel}`, tone: "outro" });
+      setFeatureOverlay({ title: "TOTAL DO BÔNUS", value: formatCoins(feature.payout), caption: `Sugar Level final · ${feature.finalSugarLevel}`, tone: "outro" });
       playCandyFeatureSound("bonusEnd", soundEnabled);
       await wait(turbo ? 250 : 850);
       setFeatureOverlay(null);
@@ -348,7 +348,7 @@ export function CandyCascadeHQ() {
 
     if (naturalFeature) {
       setPhase("bonusTrigger");
-      setFeatureOverlay({ title: "SUGAR PARTY", value: `${plan.scatterAward} FREE SPINS`, caption: `${plan.scatterCount} Party Candies`, tone: "trigger" });
+      setFeatureOverlay({ title: "SUGAR PARTY", value: `${plan.scatterAward} FREE SPINS`, caption: `${plan.scatterCount} Party Candies na grade`, tone: "trigger" });
       playCandyFeatureSound("trigger", soundEnabled);
       await wait(turbo ? 150 : 480);
       setFeatureOverlay(null);
@@ -463,13 +463,19 @@ export function CandyCascadeHQ() {
     const current = Math.max(0, BET_STEPS.findIndex((value) => value === bet));
     const next = Math.max(0, Math.min(BET_STEPS.length - 1, current + direction));
     const value = BET_STEPS[next];
-    if (value !== undefined) setBet(value);
+    if (value !== undefined) {
+      setBet(value);
+      playSound("click", soundEnabled);
+    }
   };
 
   const setMaxBet = () => {
     if (spinning || autoLeft > 0 || bonusActive || featureModalOpen || featurePending) return;
     const affordable = [...BET_STEPS].reverse().find((value) => value <= balance);
-    if (affordable !== undefined) setBet(affordable);
+    if (affordable !== undefined) {
+      setBet(affordable);
+      playSound("click", soundEnabled);
+    }
   };
 
   const insufficient = bet > balance;
@@ -519,7 +525,7 @@ export function CandyCascadeHQ() {
 
         <div className={cn("absolute left-[25%] top-[76.4%] z-[35] flex h-[7.7%] w-[50%] items-center justify-center rounded-[20px] bg-[#4a075f]/96 text-center shadow-[inset_0_0_18px_rgba(255,85,238,.4)]", win > 0 && !spinning && "cc-ref-result-win")}>
           <div>
-            <p className="text-[8px] font-black uppercase tracking-[.16em] text-pink-100">{bonusActive ? `SUGAR L${sugarLevel}` : spinning && cascadeIndex > 0 ? `CASCADE ${cascadeIndex}` : "WIN"}</p>
+            <p className="text-[8px] font-black uppercase tracking-[.16em] text-pink-100">{bonusActive ? `SUGAR L${sugarLevel}` : spinning && cascadeIndex > 0 ? `CASCATA ${cascadeIndex}` : "GANHO"}</p>
             <p className="font-serif text-[clamp(1.25rem,7vw,2.15rem)] font-black leading-none text-[#ffe35f] tabular-nums drop-shadow-[0_2px_0_#6b2b00]"><AnimatedWinCounter value={win} duration={winDuration} /></p>
             {(cascadeIndex > 0 || sugarMultiplier > 1) && <p className="mt-0.5 text-[8px] font-black text-pink-100">SUGAR ×{sugarMultiplier}{bonusActive ? ` · TOTAL ${formatCoins(bonusTotal)}` : ""}</p>}
           </div>
@@ -529,7 +535,7 @@ export function CandyCascadeHQ() {
           type="button"
           onClick={openFeatureModal}
           disabled={featureButtonBlocked}
-          aria-label="Abrir Sugar Party Bonus Buy"
+          aria-label="Abrir compra do bônus Sugar Party"
           className="cc-feature-button absolute left-[2.8%] top-[78%] z-50 flex h-[5.4%] w-[22%] items-center justify-center gap-1 rounded-xl disabled:opacity-40"
         >
           <Sparkles aria-hidden /><span>BÔNUS</span>
@@ -540,10 +546,10 @@ export function CandyCascadeHQ() {
         <button type="button" onClick={() => changeBet(-1)} disabled={spinning || autoLeft > 0 || bonusActive || featureModalOpen || featurePending} aria-label="Diminuir aposta" className="absolute right-[29.8%] top-[87%] z-50 size-[6.4%] rounded-full disabled:opacity-40" />
         <button type="button" onClick={() => changeBet(1)} disabled={spinning || autoLeft > 0 || bonusActive || featureModalOpen || featurePending} aria-label="Aumentar aposta" className="absolute right-[1.7%] top-[87%] z-50 size-[6.4%] rounded-full disabled:opacity-40" />
         <button type="button" onClick={() => void spinRound()} disabled={spinning || autoLeft > 0 || insufficient || bonusActive || featureModalOpen || featurePending} aria-label="Girar Candy Cascade" aria-busy={spinning} className={cn("absolute left-[34.5%] top-[84.1%] z-50 h-[15.1%] w-[31%] rounded-full disabled:cursor-not-allowed disabled:opacity-40", !spinning && !insufficient && "cc-ref-spin-ready")} />
-        <button type="button" onClick={() => { if (autoLeft > 0) { autoStopRef.current = true; } else { void startAuto(); } }} disabled={(autoLeft === 0 && spinning) || bonusActive || featureModalOpen || featurePending} aria-label={autoLeft > 0 ? "Parar auto play" : "Auto play"} className="absolute left-[8%] top-[93.4%] z-50 h-[5.5%] w-[25%] rounded-xl disabled:opacity-40" />
+        <button type="button" onClick={() => { playSound("click", soundEnabled); if (autoLeft > 0) { autoStopRef.current = true; } else { void startAuto(); } }} disabled={(autoLeft === 0 && spinning) || bonusActive || featureModalOpen || featurePending} aria-label={autoLeft > 0 ? "Parar Auto Play" : "Iniciar Auto Play"} className="absolute left-[8%] top-[93.4%] z-50 h-[5.5%] w-[25%] rounded-xl disabled:opacity-40" />
         <button type="button" onClick={setMaxBet} disabled={spinning || autoLeft > 0 || bonusActive || featureModalOpen || featurePending} aria-label="Aposta máxima" className="absolute right-[8%] top-[93.4%] z-50 h-[5.5%] w-[25%] rounded-xl disabled:opacity-40" />
-        <button type="button" onClick={() => setTurbo((value) => !value)} disabled={spinning || autoLeft > 0 || bonusActive || featureModalOpen || featurePending} aria-label={turbo ? "Desativar turbo" : "Ativar turbo"} aria-pressed={turbo} className={cn("absolute right-[1.8%] top-[77.4%] z-50 size-[8.5%] rounded-full disabled:opacity-40", turbo && "ring-2 ring-yellow-300 ring-offset-1 ring-offset-transparent")} />
-        <button type="button" onClick={() => setShowInfo((value) => !value)} disabled={bonusActive || featureModalOpen} aria-label="Informações do jogo" aria-pressed={showInfo} className="absolute left-[25%] top-[78.2%] z-50 size-[7.2%] rounded-full disabled:opacity-40" />
+        <button type="button" onClick={() => { setTurbo((value) => !value); playSound("click", soundEnabled); }} disabled={spinning || autoLeft > 0 || bonusActive || featureModalOpen || featurePending} aria-label={turbo ? "Desativar turbo" : "Ativar turbo"} aria-pressed={turbo} className={cn("absolute right-[1.8%] top-[77.4%] z-50 size-[8.5%] rounded-full disabled:opacity-40", turbo && "ring-2 ring-yellow-300 ring-offset-1 ring-offset-transparent")} />
+        <button type="button" onClick={() => { setShowInfo((value) => !value); playSound("click", soundEnabled); }} disabled={bonusActive || featureModalOpen} aria-label="Informações do jogo" aria-pressed={showInfo} className="absolute left-[25%] top-[78.2%] z-50 size-[7.2%] rounded-full disabled:opacity-40" />
 
         {featureOverlay && (
           <div className={cn("cc-feature-overlay", `cc-feature-overlay--${featureOverlay.tone}`)} role="status" aria-live="polite">
@@ -563,7 +569,7 @@ export function CandyCascadeHQ() {
               <p className="cc-feature-modal__kicker">CANDY CASCADE</p>
               <h2 id="sugar-party-title">SUGAR PARTY</h2>
               <strong>{CANDY_FEATURE_BUY_INITIAL_SPINS} FREE SPINS</strong>
-              <p>Sugar Bombs carregam o Sugar Meter. O Sugar Meter persiste durante todo o bônus.</p>
+              <p>Sugar Bombs carregam o Sugar Meter, que permanece ativo durante todos os Free Spins.</p>
               <div className="cc-feature-modal__stats">
                 <div><span>APOSTA</span><b>{formatCoins(bet)}</b></div>
                 <div><span>CUSTO</span><b>{formatCoins(featureCost)}</b></div>
@@ -582,7 +588,7 @@ export function CandyCascadeHQ() {
         {showInfo && (
           <div className="absolute inset-x-[8%] top-[18%] z-[90] rounded-3xl border border-pink-200/80 bg-[#4a075f]/95 p-4 text-center text-white shadow-[0_12px_60px_rgba(0,0,0,.6)] backdrop-blur">
             <p className="text-base font-black text-yellow-200">CANDY CASCADE</p>
-            <p className="mt-1 text-xs leading-relaxed text-pink-50">Grade 6×5. Cinco ou mais doces conectados explodem. 3+ Party Candies ativam Sugar Party; Sugar Bombs alimentam o Sugar Meter durante os Free Spins.</p>
+            <p className="mt-1 text-xs leading-relaxed text-pink-50">Grade 6×5. Conecte cinco ou mais doces para criar cascatas. Três ou mais Party Candies ativam Sugar Party, e Sugar Bombs alimentam o Sugar Meter durante os Free Spins.</p>
             <button type="button" onClick={() => setShowInfo(false)} className="mt-3 rounded-full border border-pink-100 px-4 py-1.5 text-xs font-black">FECHAR</button>
           </div>
         )}
