@@ -1,0 +1,31 @@
+name: Neon Mines Final Gates
+on:
+  push:
+    branches: [audit/neon-mines-final-gates-f9f32f]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        run: npm install --ignore-scripts
+      - name: Verify exact product commit and unchanged Mines math
+        run: |
+          test "$(git rev-parse HEAD^)" = "f9f32f307dfd6b88f363ccd99aaa274c8a786c66"
+          test "$(git hash-object src/lib/arcade/mines.ts)" = "2015ddf72b0d148a06d32277a751a87bc005b90e"
+      - name: Tests
+        run: npm test -- --run
+      - name: TypeScript
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Diff check
+        run: git diff --check e06150c20e510a080d665388c52692578b9012e8..f9f32f307dfd6b88f363ccd99aaa274c8a786c66
