@@ -496,7 +496,7 @@ export function GoldenTigerReference() {
       setPhase("bonusIntro");
       setTigerReaction("bonus");
       setBonusOverlay({
-        title: purchased ? "GOLDEN FORTUNE" : "FREE SPINS",
+        title: purchased ? "GOLDEN FORTUNE" : "RODADAS GRÁTIS",
         value: String(initial),
         caption: purchased ? "8 Free Spins ativados · START" : "A sorte dourada começou",
         tone: "bonus",
@@ -729,12 +729,12 @@ export function GoldenTigerReference() {
       : anticipation === 1
         ? "1 CARTINHA... OLHOS NA GRADE"
         : bonusActive
-          ? `FREE SPINS ${bonusSpins}`
+          ? `RODADAS GRÁTIS ${bonusSpins}`
           : featureBuyRunning
             ? "GOLDEN FORTUNE"
             : phase === "bonusTrigger"
               ? "BÔNUS DOURADO!"
-              : currentTierLabel ?? "3 CARTINHAS ATIVAM FREE SPINS!";
+              : currentTierLabel ?? "3 CARTINHAS ATIVAM RODADAS GRÁTIS!";
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-black sm:px-3 sm:py-2">
@@ -961,10 +961,10 @@ export function GoldenTigerReference() {
             <div className="gt-ref-feature-modal__card">
               <span className="gt-ref-feature-modal__kicker">FEATURE BUY · NEON FORTUNE</span>
               <h2 id="golden-fortune-title">GOLDEN FORTUNE</h2>
-              <strong>{GOLDEN_TIGER_FEATURE_BUY_INITIAL_SPINS} FREE SPINS</strong>
+              <strong>{GOLDEN_TIGER_FEATURE_BUY_INITIAL_SPINS} RODADAS GRÁTIS</strong>
               <p>
                 Equivale à entrada normal de 3 cartinhas. Inclui retriggers e a mesma matemática dos
-                Free Spins naturais.
+                rodadas grátis naturais.
               </p>
               <div className="gt-ref-feature-modal__stats">
                 <div>
