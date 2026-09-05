@@ -80,8 +80,12 @@ const CROPS: Record<CandyRegularSymbolId, Crop> = {
   diamond: { x: 305, y: 457, w: 93, h: 87 },
 };
 
+function reducedMotion() {
+  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 function wait(ms: number) {
-  return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+  return new Promise<void>((resolve) => window.setTimeout(resolve, reducedMotion() ? 0 : ms));
 }
 
 const CandySymbol = memo(function CandySymbol({ id }: { id: CandySymbolId }) {
