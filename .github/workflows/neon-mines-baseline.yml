@@ -1,0 +1,184 @@
+name: Neon Mines Baseline
+on:
+  push:
+    branches: [audit/neon-mines-baseline-e06150]
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --ignore-scripts puppeteer-core@24.16.0
+      - name: Locate Chrome
+        run: |
+          if command -v google-chrome >/dev/null; then echo "CHROME_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV";
+          elif command -v chromium >/dev/null; then echo "CHROME_PATH=$(command -v chromium)" >> "$GITHUB_ENV";
+          else exit 1; fi
+      - name: Measure public Neon Mines baseline
+        run: |
+          node --input-type=module <<'NODE'
+          import puppeteer from 'puppeteer-core';
+
+          const url = 'https://lucky-glow-arcade.lovable.app/game/neon-mines';
+          const storageKey = 'lucky-neon-arcade:v1';
+          const browser = await puppeteer.launch({
+            executablePath: process.env.CHROME_PATH,
+            headless: 'new',
+            args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-background-timer-throttling']
+          });
+          const page = await browser.newPage();
+          await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 1 });
+          const cdp = await page.target().createCDPSession();
+          await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+
+          const consoleErrors = [];
+          page.on('pageerror', e => consoleErrors.push(`pageerror:${e.message}`));
+          page.on('console', m => { if (m.type() === 'error') consoleErrors.push(`console:${m.text()}`); });
+
+          await page.evaluateOnNewDocument(({storageKey}) => {
+            localStorage.setItem(storageKey, JSON.stringify({
+              balance: 1000000,
+              favorites: [],
+              soundEnabled: true,
+              history: [],
+              totalSpins: 0,
+              bestWin: 0
+            }));
+          }, { storageKey });
+
+          await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+          await page.waitForFunction(() => document.body.innerText.includes('NEON') && document.body.innerText.includes('MINES'));
+
+          await page.evaluate(() => {
+            window.__minesPerf = { frames: [], longTasks: 0, mutations: 0, overflow: false, last: performance.now() };
+            const perf = window.__minesPerf;
+            const tick = now => {
+              const dt = now - perf.last;
+              perf.last = now;
+              if (dt > 0 && dt < 1000) perf.frames.push(dt);
+              perf.overflow ||= document.documentElement.scrollWidth > innerWidth + 1;
+              requestAnimationFrame(tick);
+            };
+            requestAnimationFrame(tick);
+            try {
+              new PerformanceObserver(list => { perf.longTasks += list.getEntries().length; }).observe({ entryTypes: ['longtask'] });
+            } catch {}
+            new MutationObserver(records => { perf.mutations += records.length; }).observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true });
+          });
+
+          const sleep = ms => new Promise(r => setTimeout(r, ms));
+          const safeTimes = [];
+          const mineTimes = [];
+          const cashoutTimes = [];
+          let rounds = 0;
+          let cashouts = 0;
+          let losses = 0;
+
+          async function clickByAria(prefix) {
+            const handle = await page.evaluateHandle(prefix => [...document.querySelectorAll('button')].find(b => (b.getAttribute('aria-label') || '').startsWith(prefix)) || null, prefix);
+            const el = handle.asElement();
+            if (!el) throw new Error(`Missing button: ${prefix}`);
+            await el.click();
+            await handle.dispose();
+          }
+
+          async function startRound() {
+            await page.waitForFunction(() => [...document.querySelectorAll('button')].some(b => (b.getAttribute('aria-label') || '').startsWith('Abrir cofre apostando') && !b.disabled));
+            await clickByAria('Abrir cofre apostando');
+            rounds += 1;
+            await page.waitForFunction(() => [...document.querySelectorAll('button')].some(b => (b.getAttribute('aria-label') || '').startsWith('Revelar casa') && !b.disabled));
+          }
+
+          async function revealOne() {
+            const label = await page.evaluate(() => [...document.querySelectorAll('button')].find(b => (b.getAttribute('aria-label') || '').startsWith('Revelar casa') && !b.disabled)?.getAttribute('aria-label') || null);
+            if (!label) throw new Error('No revealable tile');
+            const t0 = performance.now();
+            await clickByAria(label);
+            await page.waitForFunction(label => {
+              const tile = [...document.querySelectorAll('button')].find(b => b.getAttribute('aria-label') === label || (b.getAttribute('aria-label') || '').startsWith(label.replace('Revelar', 'Casa').split(',')[0]));
+              const lost = [...document.querySelectorAll('[role="status"]')].some(el => /Vault breached|Cofre violado/i.test(el.textContent || ''));
+              return lost || (tile && /segura/i.test(tile.getAttribute('aria-label') || ''));
+            }, {}, label);
+
+            const lost = await page.evaluate(() => [...document.querySelectorAll('[role="status"]')].some(el => /Vault breached|Cofre violado/i.test(el.textContent || '')));
+            if (lost) {
+              const elapsed = performance.now() - t0;
+              mineTimes.push(elapsed);
+              losses += 1;
+              await page.waitForFunction(() => [...document.querySelectorAll('button')].some(b => (b.getAttribute('aria-label') || '').startsWith('Abrir cofre apostando') && !b.disabled));
+              return 'mine';
+            }
+
+            await page.waitForFunction(() => [...document.querySelectorAll('button')].some(b => (b.getAttribute('aria-label') || '').startsWith('Revelar casa') && !b.disabled));
+            safeTimes.push(performance.now() - t0);
+            return 'safe';
+          }
+
+          async function cashout() {
+            const t0 = performance.now();
+            await clickByAria('Cash out por');
+            await page.waitForFunction(() => [...document.querySelectorAll('[role="status"]')].some(el => /Crystal secured|Cristal garantido/i.test(el.textContent || '')));
+            cashoutTimes.push(performance.now() - t0);
+            cashouts += 1;
+            await page.waitForFunction(() => [...document.querySelectorAll('button')].some(b => (b.getAttribute('aria-label') || '').startsWith('Abrir cofre apostando') && !b.disabled));
+          }
+
+          // Five rounds intended for a quick cashout; early mines count toward mine samples.
+          while (cashouts < 5 && rounds < 14) {
+            await startRound();
+            const result = await revealOne();
+            if (result === 'safe') await cashout();
+          }
+
+          // Continue playing fresh rounds until at least five mine reveals are measured.
+          while (losses < 5 && rounds < 20) {
+            await startRound();
+            while (true) {
+              const result = await revealOne();
+              if (result === 'mine') break;
+            }
+          }
+
+          if (rounds < 10 || safeTimes.length < 5 || mineTimes.length < 5 || cashoutTimes.length < 5) {
+            throw new Error(`Insufficient samples rounds=${rounds} safe=${safeTimes.length} mine=${mineTimes.length} cashout=${cashoutTimes.length}`);
+          }
+
+          await sleep(300);
+          const perf = await page.evaluate(() => window.__minesPerf);
+          const frames = perf.frames.slice(5);
+          const sortedFrames = [...frames].sort((a,b) => a-b);
+          const mean = arr => arr.reduce((a,b) => a+b, 0) / arr.length;
+          const median = arr => { const s=[...arr].sort((a,b)=>a-b); const i=Math.floor(s.length/2); return s.length%2?s[i]:(s[i-1]+s[i])/2; };
+          const summarize = arr => ({
+            samples: arr.length,
+            meanMs: Number(mean(arr).toFixed(1)),
+            medianMs: Number(median(arr).toFixed(1)),
+            minMs: Number(Math.min(...arr).toFixed(1)),
+            maxMs: Number(Math.max(...arr).toFixed(1)),
+          });
+          const worstFrame = Math.max(...frames);
+          const p95Frame = sortedFrames[Math.min(sortedFrames.length - 1, Math.floor(sortedFrames.length * .95))];
+          const report = {
+            viewport: '390x844', cpuThrottle: 4, mines: 3, rounds,
+            safeReveal: summarize(safeTimes),
+            mineReveal: summarize(mineTimes),
+            cashout: summarize(cashoutTimes),
+            fpsAverage: Number((1000 / mean(frames)).toFixed(2)),
+            fpsMinimum: Number((1000 / worstFrame).toFixed(2)),
+            worstFrameMs: Number(worstFrame.toFixed(2)),
+            p95FrameMs: Number(p95Frame.toFixed(2)),
+            longTasks: perf.longTasks,
+            domMutations: perf.mutations,
+            overflowHorizontal: perf.overflow || await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1),
+            consoleErrors,
+          };
+          console.log('MINES_BASELINE', JSON.stringify(report));
+          if (report.overflowHorizontal) throw new Error('Horizontal overflow detected');
+          if (consoleErrors.length) throw new Error('Console errors: ' + consoleErrors.join(' | '));
+          await browser.close();
+          NODE
