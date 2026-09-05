@@ -923,7 +923,13 @@ export function GoldenTigerReference() {
             "gt-ref-spin-button absolute left-[34%] top-[82.7%] z-50 size-[29.5%] rounded-full disabled:cursor-not-allowed disabled:opacity-45",
             spinning && "scale-95",
           )}
-        />
+          />
+
+        <div className="gt-ref-control-labels" aria-hidden>
+          <span className="gt-ref-control-labels__turbo">TURBO</span>
+          <span className="gt-ref-control-labels__auto">AUTO</span>
+          <span className="gt-ref-control-labels__max">APOSTA<br />MÁX.</span>
+        </div>
 
         {(winTier === "big" || winTier === "mega") && win > 0 && phase === "bigWin" && (
           <div
