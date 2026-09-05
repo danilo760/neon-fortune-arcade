@@ -1,39 +1,36 @@
 @keyframes mines-safe-reveal {
   0% {
     transform: scale(.86);
-    filter: brightness(1.7) saturate(1.18);
-    box-shadow: inset 0 0 30px rgba(137,255,216,.28), 0 0 0 rgba(67,255,190,0);
+    opacity: .84;
   }
   52% {
     transform: scale(1.055);
-    filter: brightness(1.2) saturate(1.08);
-    box-shadow: inset 0 0 28px rgba(116,255,210,.24), 0 0 28px rgba(67,255,190,.34);
+    opacity: 1;
   }
   100% {
     transform: scale(1);
-    filter: brightness(1) saturate(1);
-    box-shadow: inset 0 0 24px rgba(98,255,201,.16), 0 5px 0 #02110b, 0 0 22px rgba(39,255,174,.17);
+    opacity: 1;
   }
 }
 
 @keyframes mines-trigger-impact {
   0% {
     transform: scale(.9);
-    filter: brightness(1.65) saturate(1.18);
+    opacity: .88;
   }
   42% {
     transform: scale(1.065);
-    filter: brightness(1.24) saturate(1.12);
+    opacity: 1;
   }
   100% {
     transform: scale(1);
-    filter: brightness(1) saturate(1);
+    opacity: 1;
   }
 }
 
 @keyframes mines-cashout-ready {
-  0% { transform: translateY(2px) scale(.985); filter: brightness(1.28); }
-  100% { transform: translateY(0) scale(1); filter: brightness(1); }
+  0% { transform: translateY(2px) scale(.985); opacity: .9; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 .mines-premium__tile--fresh-gem {
@@ -113,15 +110,26 @@
   }
 }
 
-
 .mines-premium__tile--fresh-gem::after {
-  content: ""; position: absolute; inset: 10%; pointer-events: none; border-radius: 45%;
+  content: "";
+  position: absolute;
+  inset: 10%;
+  pointer-events: none;
+  border-radius: 45%;
   background: radial-gradient(circle at 45% 35%, rgba(236,255,249,.82), rgba(116,255,207,.18) 25%, transparent 58%);
-  opacity: 0; animation: mines-gem-glint .2s ease-out both;
+  opacity: 0;
+  animation: mines-gem-glint .2s ease-out both;
 }
+
 @keyframes mines-gem-glint {
   0% { opacity: 0; transform: scale(.72); }
   42% { opacity: .78; transform: scale(1.04); }
   100% { opacity: 0; transform: scale(1.18); }
 }
-@media (prefers-reduced-motion: reduce) { .mines-premium__tile--fresh-gem::after { animation: none !important; display: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .mines-premium__tile--fresh-gem::after {
+    animation: none !important;
+    display: none;
+  }
+}
