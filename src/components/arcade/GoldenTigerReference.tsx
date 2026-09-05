@@ -110,8 +110,12 @@ const INITIAL_GRID: GoldenTigerSymbolId[] = [
   "orange",
 ];
 
+function reducedMotionNow() {
+  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 function wait(ms: number) {
-  return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+  return new Promise<void>((resolve) => window.setTimeout(resolve, reducedMotionNow() ? 0 : ms));
 }
 
 function createPresentationRng() {
