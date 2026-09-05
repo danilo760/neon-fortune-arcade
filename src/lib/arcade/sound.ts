@@ -270,7 +270,7 @@ export function playSound(name: SoundName, enabled: boolean) {
     case "olympusScatter":
       tone(410,.16,"triangle",.028,0,690); tone(820,.17,"sine",.018,.035,1180); noise(.1,.004,.01,2600); break;
     case "olympusAnticipation":
-      tone(72,.45,"sine",.042,0,90); tone(144,.38,"sawtooth",.018,.06,260); noise(.34,.008,.05,750); break;
+      tone(72,.4,"sine",.034,0,88); tone(144,.3,"triangle",.014,.06,230); noise(.26,.006,.05,720); break;
     case "olympusFeatureOpen":
       noise(.3,.012,0,1700); tone(62,.58,"sine",.05,0,96); tone(310,.4,"triangle",.022,.08,720); break;
     case "olympusBonusIntro":
@@ -282,15 +282,15 @@ export function playSound(name: SoundName, enabled: boolean) {
     case "olympusBigWin":
       noise(.25,.018,0,2400); tone(64,.5,"sine",.055,0,42); [330,494,659,988].forEach((f,i)=>tone(f,.24,i%2===0?"triangle":"sine",.038,.055+i*.06,f*1.06)); break;
     case "olympusCluster":
-      [330,440,554].forEach((f,i)=>tone(f,0.13,"triangle",0.03,i*0.035,f*1.08)); noise(0.12,0.009,0,2400); break;
+      tone(420,.1,"triangle",.026,0,610); tone(690,.08,"sine",.016,.025,840); noise(.07,.006,0,2200); break;
     case "olympusFall":
       noise(0.18,0.012,0,1100); tone(250,0.16,"sine",0.022,0,170); break;
     case "olympusCharge":
-      tone(96,0.52,"sine",0.045,0,150); tone(220,0.42,"sawtooth",0.028,0.05,720); noise(0.38,0.008,0.08,1500); break;
+      tone(96,.46,"sine",.04,0,150); tone(220,.38,"sawtooth",.024,.05,680); noise(.3,.007,.08,1450); break;
     case "olympusHit":
-      noise(0.22,0.028,0,3200); tone(78,0.36,"sine",0.06,0,52); tone(1180,0.11,"square",0.025,0.01,620); break;
+      noise(.16,.027,0,3300); tone(1180,.09,"square",.024,0,560); tone(76,.34,"sine",.055,.015,48); noise(.2,.009,.08,820); break;
     case "olympusMultiplier":
-      [523,784,1046].forEach((f,i)=>tone(f,0.2,"sine",0.04,i*0.055,f*1.05)); break;
+      tone(659,.14,"triangle",.034,0,880); tone(1046,.16,"sine",.032,.045,1318); break;
     case "candyPop": {
       const v = 0.97 + Math.random() * 0.06;
       tone(620*v,0.11,"triangle",0.028,0,980*v); break;
