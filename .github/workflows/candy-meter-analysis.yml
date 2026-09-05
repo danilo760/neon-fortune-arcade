@@ -1,0 +1,16 @@
+name: Candy Meter Analysis
+on:
+  push:
+    branches: [audit/candy-meter-tuning]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --ignore-scripts
+      - run: node --import tsx scripts/analyze-candy-meter.ts
