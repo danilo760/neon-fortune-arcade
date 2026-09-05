@@ -1,8 +1,9 @@
 import { CANDY_FEATURE_BUY_INITIAL_SPINS } from "./candyCascadeMath";
 
-// Calibrated from Candy's own 1,000,000-purchase Sugar Party Monte Carlo.
-// 13.47286564x average win / 14.1x cost ~= 95.55% fictitious feature return.
-export const CANDY_FEATURE_BUY_COST_MULTIPLIER = 14.1;
+// Recalibrated after the measured Sugar Meter thresholds made Level 5
+// meaningfully reachable. 14.50641005x average win / 15.2x cost ~= 95.44%
+// fictitious feature return before the final verification Monte Carlo.
+export const CANDY_FEATURE_BUY_COST_MULTIPLIER = 15.2;
 
 export function candyFeatureBuyCost(bet: number) {
   if (!Number.isFinite(bet) || bet <= 0) return 0;
