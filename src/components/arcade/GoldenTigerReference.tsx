@@ -216,7 +216,7 @@ const GoldenFortuneButton = memo(function GoldenFortuneButton({
       type="button"
       onClick={onOpen}
       disabled={disabled}
-      aria-label="Abrir Golden Fortune Bonus Buy"
+      aria-label="Abrir compra do bônus Golden Fortune"
       className="gt-ref-feature-button absolute left-[4.6%] top-[71.2%] z-50 flex h-[5.8%] w-[28%] items-center justify-center gap-1.5 rounded-[18px] disabled:cursor-not-allowed disabled:opacity-45"
     >
       <Sparkles className="size-3.5" aria-hidden />
@@ -502,9 +502,9 @@ export function GoldenTigerReference() {
       setPhase("bonusIntro");
       setTigerReaction("bonus");
       setBonusOverlay({
-        title: purchased ? "GOLDEN FORTUNE" : "RODADAS GRÁTIS",
+        title: purchased ? "GOLDEN FORTUNE" : "FREE SPINS",
         value: String(initial),
-        caption: purchased ? "8 Free Spins ativados · START" : "A sorte dourada começou",
+        caption: purchased ? "8 Free Spins ativados" : "A rodada bônus começou",
         tone: "bonus",
       });
       playSound(purchased ? "tigerFeatureStart" : "tigerBonus", soundEnabled);
@@ -531,7 +531,7 @@ export function GoldenTigerReference() {
           setTigerReaction("retrigger");
           setBonusOverlay({
             title: "RETRIGGER",
-            value: `+${result.bonusAward}`,
+            value: `+${result.bonusAward} FREE SPINS`,
             caption: `Extensão ${retriggers}/${GOLDEN_TIGER_MAX_RETRIGGERS}`,
             tone: "retrigger",
           });
@@ -736,12 +736,12 @@ export function GoldenTigerReference() {
       : anticipation === 1
         ? "1 CARTINHA... OLHOS NA GRADE"
         : bonusActive
-          ? `RODADAS GRÁTIS ${bonusSpins}`
+          ? `FREE SPINS · ${bonusSpins} RESTANTES`
           : featureBuyRunning
             ? "GOLDEN FORTUNE"
             : phase === "bonusTrigger"
               ? "BÔNUS DOURADO!"
-              : currentTierLabel ?? "3 CARTINHAS ATIVAM RODADAS GRÁTIS!";
+              : currentTierLabel ?? "3 CARTINHAS ATIVAM FREE SPINS";
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-black sm:px-3 sm:py-2">
@@ -791,7 +791,10 @@ export function GoldenTigerReference() {
         </Link>
         <button
           type="button"
-          onClick={() => arcadeActions.toggleSound()}
+          onClick={() => {
+            arcadeActions.toggleSound();
+            playSound("click", !soundEnabled);
+          }}
           aria-label={soundEnabled ? "Desativar som" : "Ativar som"}
           aria-pressed={soundEnabled}
           className="absolute right-[9.3%] top-[.8%] z-50 size-[8.8%] rounded-full bg-transparent"
@@ -943,11 +946,12 @@ export function GoldenTigerReference() {
           onClick={() => void spin()}
           disabled={spinning || bonusActive || autoLeft > 0 || insufficient || !src || featureBuyOpen || featureBuyRunning}
           aria-label="Girar Golden Tiger"
+          aria-busy={spinning}
           className={cn(
             "gt-ref-spin-button absolute left-[34%] top-[82.7%] z-50 size-[29.5%] rounded-full disabled:cursor-not-allowed disabled:opacity-45",
             spinning && "scale-95",
           )}
-          />
+        />
 
         {(winTier === "big" || winTier === "mega") && win > 0 && phase === "bigWin" && (
           <div
@@ -983,12 +987,12 @@ export function GoldenTigerReference() {
             aria-labelledby="golden-fortune-title"
           >
             <div className="gt-ref-feature-modal__card">
-              <span className="gt-ref-feature-modal__kicker">FEATURE BUY · NEON FORTUNE</span>
+              <span className="gt-ref-feature-modal__kicker">COMPRA DE BÔNUS · NEON FORTUNE</span>
               <h2 id="golden-fortune-title">GOLDEN FORTUNE</h2>
-              <strong>{GOLDEN_TIGER_FEATURE_BUY_INITIAL_SPINS} RODADAS GRÁTIS</strong>
+              <strong>{GOLDEN_TIGER_FEATURE_BUY_INITIAL_SPINS} FREE SPINS</strong>
               <p>
-                Equivale à entrada normal de 3 cartinhas. Inclui retriggers e a mesma matemática dos
-                rodadas grátis naturais.
+                Equivale à ativação normal de 3 cartinhas. Inclui retriggers e usa a mesma matemática dos
+                Free Spins naturais.
               </p>
               <div className="gt-ref-feature-modal__stats">
                 <div>
