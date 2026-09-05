@@ -469,6 +469,7 @@ export function PlinkoReference() {
     const current = Math.max(0, BET_STEPS.indexOf(bet as (typeof BET_STEPS)[number]));
     const next = Math.min(BET_STEPS.length - 1, Math.max(0, current + direction));
     setBet(BET_STEPS[next] ?? bet);
+    playSound("click", soundEnabled);
   }
 
   return (
@@ -489,8 +490,8 @@ export function PlinkoReference() {
         </button>
 
         <div className="plinko-ref-status" aria-live="polite">
-          <span>{busy ? `${inFlight} EM QUEDA` : "SKYFALL READY"}</span>
-          <strong>{busy ? `${settled}/${ballsPerRun} PAGAS` : `${ballsPerRun} BOLAS`}</strong>
+          <span>{busy ? `${inFlight} EM QUEDA` : "PRONTO PARA CAIR"}</span>
+          <strong>{busy ? `${settled}/${ballsPerRun} CONCLUÍDAS` : `${ballsPerRun} BOLAS`}</strong>
         </div>
 
         <div ref={boardRef} className="plinko-ref-board" aria-label="Torre Plinko">
@@ -552,27 +553,27 @@ export function PlinkoReference() {
         </div>
 
         <section className="plinko-ref-panel plinko-ref-panel--risk" aria-label="Nível de risco">
-          <small>RISK</small>
-          <div>{(["baixo", "medio", "alto"] as const).map((value) => <button key={value} type="button" className={cn(risk === value && "is-active")} disabled={busy || autoDrop} onClick={() => setRisk(value)} aria-pressed={risk === value}>{RISK_LABELS[value]}</button>)}</div>
+          <small>RISCO</small>
+          <div>{(["baixo", "medio", "alto"] as const).map((value) => <button key={value} type="button" className={cn(risk === value && "is-active")} disabled={busy || autoDrop} onClick={() => { setRisk(value); playSound("click", soundEnabled); }} aria-pressed={risk === value}>{RISK_LABELS[value]}</button>)}</div>
         </section>
 
         <section className="plinko-ref-panel plinko-ref-panel--rows" aria-label="Quantidade de linhas">
-          <small>ROWS</small>
-          <div>{[12, 14, 16].map((value) => <button key={value} type="button" className={cn(rows === value && "is-active")} disabled={busy || autoDrop} onClick={() => setRows(value)} aria-pressed={rows === value}>{value}</button>)}</div>
+          <small>LINHAS</small>
+          <div>{[12, 14, 16].map((value) => <button key={value} type="button" className={cn(rows === value && "is-active")} disabled={busy || autoDrop} onClick={() => { setRows(value); playSound("click", soundEnabled); }} aria-pressed={rows === value}>{value}</button>)}</div>
         </section>
 
         <section className="plinko-ref-panel plinko-ref-panel--balls" aria-label="Bolas por rodada">
-          <small>BALLS</small>
-          <div>{BALL_COUNTS.map((value) => <button key={value} type="button" className={cn(ballsPerRun === value && "is-active")} disabled={busy || autoDrop} onClick={() => setBallsPerRun(value)} aria-pressed={ballsPerRun === value}>{value}</button>)}</div>
+          <small>BOLAS</small>
+          <div>{BALL_COUNTS.map((value) => <button key={value} type="button" className={cn(ballsPerRun === value && "is-active")} disabled={busy || autoDrop} onClick={() => { setBallsPerRun(value); playSound("click", soundEnabled); }} aria-pressed={ballsPerRun === value}>{value}</button>)}</div>
         </section>
 
         <section className="plinko-ref-panel plinko-ref-panel--bet" aria-label="Aposta fictícia">
-          <small>BET</small>
+          <small>APOSTA</small>
           <div className="plinko-ref-bet-row"><button type="button" aria-label="Diminuir aposta" disabled={busy || autoDrop} onClick={() => moveBet(-1)}>−</button><strong>{formatCoins(bet)}</strong><button type="button" aria-label="Aumentar aposta" disabled={busy || autoDrop} onClick={() => moveBet(1)}>+</button></div>
         </section>
 
-        <button type="button" className={cn("plinko-ref-auto", autoDrop && "is-on")} disabled={insufficient && !autoDrop} onClick={toggleAuto} aria-label={autoDrop ? "Desativar auto drop" : "Ativar auto drop"} aria-pressed={autoDrop}>
-          <RotateCw /><span><small>AUTO</small><strong>{autoDrop ? "ON" : "OFF"}</strong></span><i><b /></i>
+        <button type="button" className={cn("plinko-ref-auto", autoDrop && "is-on")} disabled={insufficient && !autoDrop} onClick={toggleAuto} aria-label={autoDrop ? "Desativar Auto Drop" : "Ativar Auto Drop"} aria-pressed={autoDrop}>
+          <RotateCw /><span><small>AUTO DROP</small><strong>{autoDrop ? "ATIVO" : "PARADO"}</strong></span><i><b /></i>
         </button>
 
         <button
@@ -584,20 +585,20 @@ export function PlinkoReference() {
           aria-label={busy ? "Bolas em queda" : `Soltar ${ballsPerRun} bolas por ${formatCoins(runCost)}`}
         >
           {busy ? <CircleDot /> : <Play />}
-          <strong>{busy ? "MULTI DROP" : `DROP ×${ballsPerRun}`}</strong>
+          <strong>{busy ? "EM QUEDA" : `SOLTAR ×${ballsPerRun}`}</strong>
           <small>{busy ? `${inFlight} em queda` : formatCoins(runCost)}</small>
         </button>
 
         <div className="plinko-ref-hud" aria-label="Resumo do jogo">
-          <div><Coins /><span><small>BALANCE</small><strong>{formatCoins(balance)}</strong></span></div>
-          <div><CircleDot /><span><small>RUN BET</small><strong>{formatCoins(runCost)}</strong></span></div>
-          <div><Trophy /><span><small>RUN WIN</small><strong>{formatCoins(runWin)}</strong></span></div>
+          <div><Coins /><span><small>SALDO</small><strong>{formatCoins(balance)}</strong></span></div>
+          <div><CircleDot /><span><small>CUSTO DA RODADA</small><strong>{formatCoins(runCost)}</strong></span></div>
+          <div><Trophy /><span><small>GANHO DA RODADA</small><strong>{formatCoins(runWin)}</strong></span></div>
         </div>
 
         <div className={cn("plinko-ref-last", lastWin && !busy && "plinko-ref-last--win")} role="status" aria-live="polite">
-          <small>{busy ? "MULTI-BALL" : "LAST WIN"}</small>
+          <small>{busy ? "RODADA EM ANDAMENTO" : "ÚLTIMO GANHO"}</small>
           <strong>{busy ? formatCoins(runWin) : lastWin ? formatCoins(lastWin.payout) : "0"}</strong>
-          <span>{lastWin ? formatMultiplier(lastWin.multiplier) : `${ballsPerRun} BALLS`}</span>
+          <span>{lastWin ? formatMultiplier(lastWin.multiplier) : `${ballsPerRun} BOLAS`}</span>
         </div>
 
         {bigWin && <div className="plinko-ref-bigwin" role="status"><Zap /><small>SKYFALL HIT</small><strong>BIG WIN</strong><b>{formatMultiplier(bigWin.multiplier)}</b><span>+ {formatCoins(bigWin.payout)}</span></div>}
