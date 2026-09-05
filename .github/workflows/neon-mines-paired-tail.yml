@@ -1,0 +1,60 @@
+name: Neon Mines Paired Tail
+on:
+  push:
+    branches: [perf/neon-mines-compositor-tail]
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        run: |
+          npm install --ignore-scripts
+          npm install --no-save --ignore-scripts puppeteer-core@24.16.0
+      - name: Locate Chrome
+        run: |
+          if command -v google-chrome >/dev/null; then echo "CHROME_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV";
+          elif command -v chromium >/dev/null; then echo "CHROME_PATH=$(command -v chromium)" >> "$GITHUB_ENV";
+          else exit 1; fi
+      - name: Candidate code gates
+        run: |
+          test "$(git hash-object src/lib/arcade/mines.ts)" = "2015ddf72b0d148a06d32277a751a87bc005b90e"
+          npm test -- --run
+          npm run typecheck
+          npm run build
+          git diff --check f9f32f307dfd6b88f363ccd99aaa274c8a786c66..d4c6c7127b90874e01f4a6063e3980ffe170a2fa
+      - name: Preserve profiler
+        run: cp scripts/profile-neon-mines-paired.mjs /tmp/profile-neon-mines-paired.mjs
+      - name: Profile candidate
+        run: |
+          npx vite --host 127.0.0.1 --port 4173 >/tmp/candidate-vite.log 2>&1 &
+          PID=$!
+          trap 'kill $PID || true' EXIT
+          for i in {1..60}; do curl -fsS http://127.0.0.1:4173/game/neon-mines >/dev/null && break; sleep 1; done
+          echo -n 'CANDIDATE '
+          node /tmp/profile-neon-mines-paired.mjs
+          kill $PID || true
+          wait $PID 2>/dev/null || true
+          trap - EXIT
+      - name: Restore current production CSS
+        run: |
+          git checkout f9f32f307dfd6b88f363ccd99aaa274c8a786c66 -- src/components/arcade/MinesInteraction.css src/components/arcade/MinesOrchestration.css
+      - name: Profile current production
+        run: |
+          npx vite --host 127.0.0.1 --port 4173 >/tmp/baseline-vite.log 2>&1 &
+          PID=$!
+          trap 'kill $PID || true' EXIT
+          for i in {1..60}; do curl -fsS http://127.0.0.1:4173/game/neon-mines >/dev/null && break; sleep 1; done
+          echo -n 'CURRENT '
+          node /tmp/profile-neon-mines-paired.mjs
+          kill $PID || true
+          wait $PID 2>/dev/null || true
+          trap - EXIT
