@@ -9,7 +9,7 @@ import {
   createCandyFeaturePurchaseLock,
 } from "./candyCascadeFeatureBuy";
 import { CANDY_FEATURE_BUY_INITIAL_SPINS, planCandyFeature } from "./candyCascadeMath";
-import { STARTING_BALANCE, arcadeActions } from "./store";
+import { arcadeActions } from "./store";
 
 test("Candy feature buy cost uses the independently calibrated 14.1x multiple", () => {
   assert.equal(CANDY_FEATURE_BUY_COST_MULTIPLIER, 14.1);
@@ -65,7 +65,7 @@ test("fictional accounting is one debit plus one aggregate feature credit", () =
   assert.equal(arcadeActions.getBalance(), starting - cost + plan.payout);
 
   const after = arcadeActions.getBalance();
-  assert.equal(arcadeActions.debitCoins(STARTING_BALANCE + 1), false);
+  assert.equal(arcadeActions.debitCoins(after + 1), false);
   assert.equal(arcadeActions.getBalance(), after);
   arcadeActions.resetAll();
 });
