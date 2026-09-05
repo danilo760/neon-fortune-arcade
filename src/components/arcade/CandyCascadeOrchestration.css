@@ -91,13 +91,20 @@
   box-shadow: 0 0 20px rgba(255,109,228,.9);
 }
 
+/* Party Candy is static in idle/base play. Its pulse is reserved for actual
+   anticipation/bonus events so a persistent scatter cannot tax every frame. */
+.cc-party-candy__halo { animation: none !important; }
+.cc-grid.is-anticipating .cc-party-candy__halo,
+.cc-machine--bonus .cc-party-candy__halo { animation: ccPartyPulse .48s ease-in-out 2 !important; }
+
 @media (prefers-reduced-motion: reduce) {
   .cc-grid.is-spinning,
   .cc-grid.is-falling,
   .cc-grid.is-bomb-impact,
   .cc-grid-bomb,
   .cc-grid-bomb.is-bursting,
-  .cc-machine--streak::after {
+  .cc-machine--streak::after,
+  .cc-party-candy__halo {
     animation: none !important;
   }
 }
