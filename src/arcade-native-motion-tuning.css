@@ -1,0 +1,115 @@
+/*
+ * Motion tuning for the active cabinets.
+ * This file replaces shaky whole-grid loops with compositor-friendly symbol motion.
+ * It does not add outcome logic or touch math/RNG/settlement.
+ */
+
+@keyframes gt-native-reel-flow {
+  0% { transform: translate3d(0,-16%,0) scaleY(1.045); opacity: .84; }
+  55% { opacity: 1; }
+  100% { transform: translate3d(0,16%,0) scaleY(.975); opacity: .9; }
+}
+
+@keyframes gt-native-reel-land {
+  0% { transform: translate3d(0,-13%,0) scaleY(1.035); }
+  68% { transform: translate3d(0,2.5%,0) scaleY(.985); }
+  86% { transform: translate3d(0,-.8%,0) scaleY(1.006); }
+  100% { transform: translate3d(0,0,0) scaleY(1); }
+}
+
+.gt-ref-spinning {
+  animation: none !important;
+  transform: none !important;
+}
+.gt-ref-spinning > div {
+  animation: gt-native-reel-flow .105s linear infinite;
+  will-change: transform, opacity;
+}
+.gt-ref-land {
+  animation: none !important;
+  transform: none !important;
+}
+.gt-ref-land > div {
+  animation: gt-native-reel-land .235s cubic-bezier(.18,.82,.22,1.05) both;
+  will-change: transform;
+}
+.gt-ref-spin-button {
+  animation: none !important;
+  transition: transform .11s ease-out, filter .11s ease-out;
+}
+.gt-ref-spin-button:not(:disabled) {
+  filter: drop-shadow(0 0 10px rgba(255,219,72,.42)) drop-shadow(0 0 20px rgba(255,87,26,.18));
+}
+.gt-ref-spin-button:active:not(:disabled) {
+  transform: scale(.94);
+  filter: brightness(1.12) drop-shadow(0 0 14px rgba(255,229,103,.55));
+}
+
+@keyframes os-native-symbol-flow {
+  0% { transform: translate3d(0,-15%,0) scaleY(1.04); opacity: .86; }
+  52% { opacity: 1; }
+  100% { transform: translate3d(0,15%,0) scaleY(.98); opacity: .9; }
+}
+
+.os-ref-grid--spinning {
+  animation: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+.os-ref-grid--spinning .os-ref-cell > div {
+  animation: os-native-symbol-flow .115s linear infinite;
+  will-change: transform, opacity;
+}
+.os-ref-grid--spinning .os-ref-cell:nth-child(6n + 2) > div { animation-delay: -.018s; }
+.os-ref-grid--spinning .os-ref-cell:nth-child(6n + 3) > div { animation-delay: -.036s; }
+.os-ref-grid--spinning .os-ref-cell:nth-child(6n + 4) > div { animation-delay: -.054s; }
+.os-ref-grid--spinning .os-ref-cell:nth-child(6n + 5) > div { animation-delay: -.072s; }
+.os-ref-grid--spinning .os-ref-cell:nth-child(6n + 6) > div { animation-delay: -.09s; }
+.os-ref-spin-glow {
+  animation: none !important;
+  opacity: .62;
+  transform: scale(.92);
+}
+.os-ref-spin-button {
+  transition: transform .11s ease-out, filter .11s ease-out;
+}
+
+@keyframes cc-native-symbol-flow {
+  0% { transform: translate3d(0,-14%,0) scaleY(1.035); opacity: .86; }
+  54% { opacity: 1; }
+  100% { transform: translate3d(0,14%,0) scaleY(.98); opacity: .9; }
+}
+
+.cc-grid.is-spinning {
+  animation: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+.cc-grid.is-spinning .cc-cell > div {
+  animation: cc-native-symbol-flow .11s linear infinite;
+  will-change: transform, opacity;
+}
+.cc-grid.is-spinning .cc-cell:nth-child(6n + 2) > div { animation-delay: -.018s; }
+.cc-grid.is-spinning .cc-cell:nth-child(6n + 3) > div { animation-delay: -.036s; }
+.cc-grid.is-spinning .cc-cell:nth-child(6n + 4) > div { animation-delay: -.054s; }
+.cc-grid.is-spinning .cc-cell:nth-child(6n + 5) > div { animation-delay: -.072s; }
+.cc-grid.is-spinning .cc-cell:nth-child(6n + 6) > div { animation-delay: -.09s; }
+.cc-ref-spin-ready {
+  animation: none !important;
+  filter: drop-shadow(0 0 8px rgba(255,225,70,.35)) drop-shadow(0 0 14px rgba(255,71,199,.14));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gt-ref-spinning > div,
+  .gt-ref-land > div,
+  .os-ref-grid--spinning .os-ref-cell > div,
+  .cc-grid.is-spinning .cc-cell > div {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .gt-ref-spin-button,
+  .os-ref-spin-button {
+    transition: none !important;
+  }
+}
