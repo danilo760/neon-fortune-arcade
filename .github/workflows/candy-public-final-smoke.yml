@@ -1,0 +1,80 @@
+name: Candy Public Final Smoke
+on:
+  push:
+    branches: [audit/candy-public-final-e06150]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --ignore-scripts puppeteer-core@24.16.0
+      - name: Locate Chrome
+        run: |
+          if command -v google-chrome >/dev/null; then echo "CHROME_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV";
+          elif command -v chromium >/dev/null; then echo "CHROME_PATH=$(command -v chromium)" >> "$GITHUB_ENV";
+          else exit 1; fi
+      - name: Wait for and smoke public Candy deploy
+        run: |
+          node --input-type=module <<'NODE'
+          import puppeteer from 'puppeteer-core';
+          const url = 'https://lucky-glow-arcade.lovable.app/game/candy-cascade';
+          const key = 'lucky-neon-arcade:v1';
+          const browser = await puppeteer.launch({ executablePath: process.env.CHROME_PATH, headless: 'new', args: ['--no-sandbox','--disable-dev-shm-usage'] });
+          const page = await browser.newPage();
+          await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 1 });
+          const errors = [];
+          page.on('pageerror', e => errors.push(e.message));
+          page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+
+          let ready = false;
+          for (let attempt = 0; attempt < 36; attempt += 1) {
+            await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+            ready = await page.evaluate(() => [...document.querySelectorAll('button')].some(b => (b.getAttribute('aria-label') || '').includes('Abrir Sugar Party Bonus Buy')));
+            if (ready) break;
+            await new Promise(r => setTimeout(r, 15000));
+          }
+          if (!ready) throw new Error('Public deploy did not expose Sugar Party within smoke window');
+
+          await page.evaluate(({key}) => localStorage.setItem(key, JSON.stringify({ balance: 1000000, favorites: [], soundEnabled: false, history: [], totalSpins: 0, bestWin: 0 })), {key});
+          await page.reload({ waitUntil: 'networkidle2' });
+
+          const initial = await page.evaluate(({key}) => ({
+            state: JSON.parse(localStorage.getItem(key) || '{}'),
+            overflowX: document.documentElement.scrollWidth > innerWidth + 1,
+            bonus: [...document.querySelectorAll('button')].find(b => (b.getAttribute('aria-label') || '').includes('Abrir Sugar Party Bonus Buy'))?.getBoundingClientRect().toJSON() || null,
+            sound: [...document.querySelectorAll('button')].find(b => /som/.test(b.getAttribute('aria-label') || ''))?.getBoundingClientRect().toJSON() || null,
+          }), {key});
+          if (initial.overflowX || !initial.bonus || !initial.sound) throw new Error('Public Candy controls/overflow smoke failed');
+
+          await page.evaluate(() => [...document.querySelectorAll('button')].find(b => (b.getAttribute('aria-label') || '').includes('Abrir Sugar Party Bonus Buy'))?.click());
+          await page.waitForSelector('[data-testid="candy-feature-modal"]', { timeout: 5000 });
+          const modalText = await page.$eval('[data-testid="candy-feature-modal"]', el => (el.textContent || '').replace(/\s+/g,' ').trim());
+          if (!/SUGAR PARTY/.test(modalText) || !/10 FREE SPINS/.test(modalText) || !/3\.040/.test(modalText) || !/SEM VALOR REAL/.test(modalText)) throw new Error('Public Candy modal content mismatch: ' + modalText);
+
+          const before = initial.state;
+          await page.evaluate(() => {
+            const b = document.querySelector('[data-testid="candy-feature-activate"]');
+            if (!(b instanceof HTMLButtonElement)) throw new Error('activate missing');
+            b.click(); b.click();
+          });
+          await page.waitForFunction(() => !document.querySelector('[data-testid="candy-feature-modal"]'), { timeout: 8000 });
+          await page.waitForFunction(() => {
+            const b = [...document.querySelectorAll('button')].find(x => (x.getAttribute('aria-label') || '').includes('Abrir Sugar Party Bonus Buy'));
+            return b && !b.disabled;
+          }, { timeout: 90000 });
+          const after = await page.evaluate(({key}) => JSON.parse(localStorage.getItem(key) || '{}'), {key});
+          const entries = (after.history || []).filter(e => e.slug === 'candy-cascade' && String(e.note || '').includes('Sugar Party'));
+          if (entries.length !== 1) throw new Error('Double click created ' + entries.length + ' aggregate entries');
+          const entry = entries[0];
+          if (after.balance !== before.balance - entry.bet + entry.payout) throw new Error('Public Candy accounting mismatch');
+          if (after.totalSpins !== before.totalSpins) throw new Error('Feature Buy/free spins incremented paid spin counter');
+          if (errors.length) throw new Error('Console errors: ' + errors.join(' | '));
+
+          console.log('CANDY_PUBLIC_SMOKE', JSON.stringify({ modalText, entry, balanceBefore: before.balance, balanceAfter: after.balance, totalSpins: after.totalSpins, overflowX: false, errors }));
+          await browser.close();
+          NODE
