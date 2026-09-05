@@ -488,6 +488,7 @@ export function CandyCascadeHQ() {
           type="button"
           onClick={() => { arcadeActions.toggleSound(); playSound("click", !soundEnabled); }}
           aria-label={soundEnabled ? "Desativar som" : "Ativar som"}
+          aria-pressed={soundEnabled}
           className="cc-sound-button absolute left-[1.4%] top-[1%] z-[55] grid size-[8.8%] place-items-center rounded-full"
         >
           {soundEnabled ? <Volume2 /> : <VolumeX />}
@@ -537,7 +538,7 @@ export function CandyCascadeHQ() {
         <button type="button" onClick={() => void spinRound()} disabled={spinning || autoLeft > 0 || insufficient || bonusActive || featureModalOpen || featurePending} aria-label="Girar Candy Cascade" aria-busy={spinning} className={cn("absolute left-[34.5%] top-[84.1%] z-50 h-[15.1%] w-[31%] rounded-full disabled:cursor-not-allowed disabled:opacity-40", !spinning && !insufficient && "cc-ref-spin-ready")} />
         <button type="button" onClick={() => { if (autoLeft > 0) { autoStopRef.current = true; } else { void startAuto(); } }} disabled={bonusActive || featureModalOpen || featurePending} aria-label={autoLeft > 0 ? "Parar auto play" : "Auto play"} className="absolute left-[8%] top-[93.4%] z-50 h-[5.5%] w-[25%] rounded-xl disabled:opacity-40" />
         <button type="button" onClick={setMaxBet} disabled={spinning || autoLeft > 0 || bonusActive || featureModalOpen} aria-label="Aposta máxima" className="absolute right-[8%] top-[93.4%] z-50 h-[5.5%] w-[25%] rounded-xl disabled:opacity-40" />
-        <button type="button" onClick={() => setTurbo((value) => !value)} disabled={bonusActive || featureModalOpen} aria-label={turbo ? "Desativar turbo" : "Ativar turbo"} aria-pressed={turbo} className={cn("absolute right-[1.8%] top-[77.4%] z-50 size-[8.5%] rounded-full disabled:opacity-40", turbo && "ring-2 ring-yellow-300 ring-offset-1 ring-offset-transparent")} />
+        <button type="button" onClick={() => setTurbo((value) => !value)} disabled={spinning || autoLeft > 0 || bonusActive || featureModalOpen || featurePending} aria-label={turbo ? "Desativar turbo" : "Ativar turbo"} aria-pressed={turbo} className={cn("absolute right-[1.8%] top-[77.4%] z-50 size-[8.5%] rounded-full disabled:opacity-40", turbo && "ring-2 ring-yellow-300 ring-offset-1 ring-offset-transparent")} />
         <button type="button" onClick={() => setShowInfo((value) => !value)} disabled={bonusActive || featureModalOpen} aria-label="Informações do jogo" className="absolute left-[25%] top-[78.2%] z-50 size-[7.2%] rounded-full disabled:opacity-40" />
 
         {featureOverlay && (
