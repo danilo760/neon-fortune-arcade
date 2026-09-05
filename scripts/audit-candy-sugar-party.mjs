@@ -3,7 +3,6 @@ import puppeteer from "puppeteer-core";
 const ROOT = process.env.CANDY_AUDIT_URL ?? "http://127.0.0.1:4173";
 const GAME = `${ROOT}/game/candy-cascade`;
 const STORAGE_KEY = "lucky-neon-arcade:v1";
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function state(balance = 1_000_000) {
   return { balance, favorites: [], soundEnabled: false, history: [], totalSpins: 0, bestWin: 0 };
@@ -81,7 +80,7 @@ for (let index = 0; index < 30; index += 1) {
 const beforeFeatures = await readState();
 let featureBuys = 0;
 let doubleClickPassed = false;
-let accountingPassed = false;
+let accountingPassed = true;
 let modalText = "";
 
 for (let index = 0; index < 5; index += 1) {
@@ -113,7 +112,7 @@ for (let index = 0; index < 5; index += 1) {
   if (index === 0) doubleClickPassed = newEntries.length === 1;
   const entry = newEntries[0];
   if (!entry) throw new Error(`Feature ${index + 1} did not create one aggregated history entry`);
-  accountingPassed = accountingPassed || after.balance === before.balance - entry.bet + entry.payout;
+  accountingPassed = accountingPassed && newEntries.length === 1 && after.balance === before.balance - entry.bet + entry.payout;
   featureBuys += 1;
 }
 
