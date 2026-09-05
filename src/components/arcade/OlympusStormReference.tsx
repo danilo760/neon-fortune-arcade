@@ -72,8 +72,12 @@ const INITIAL_GRID: OlympusSymbolId[] = [
   "orb", "coin", "chalice", "hammer", "bolt", "crown",
 ];
 
+function reducedMotion() {
+  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 function wait(ms: number) {
-  return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+  return new Promise<void>((resolve) => window.setTimeout(resolve, reducedMotion() ? 0 : ms));
 }
 
 function useReferenceBlob() {
