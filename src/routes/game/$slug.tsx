@@ -46,7 +46,7 @@ export const Route = createFileRoute("/game/$slug")({
   },
   head: ({ loaderData }) => ({
     meta: [
-      { title: `${loaderData?.game.name ?? "Jogo"} | Lucky Neon Arcade` },
+      { title: `${loaderData?.game.name ?? "Jogo"} | Neon Fortune Arcade` },
       {
         name: "description",
         content: loaderData?.game.tagline ?? "Arcade privado com moedas fictícias",
