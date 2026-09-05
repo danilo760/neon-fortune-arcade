@@ -1,0 +1,85 @@
+name: Olympus Storm Baseline
+on:
+  push:
+    branches: [audit/olympus-baseline-f9f32f]
+permissions:
+  contents: read
+jobs:
+  profile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install browser client
+        run: npm install --no-save --ignore-scripts puppeteer-core@24.16.0
+      - name: Locate Chrome
+        run: |
+          if command -v google-chrome >/dev/null; then echo "CHROME_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV";
+          elif command -v chromium >/dev/null; then echo "CHROME_PATH=$(command -v chromium)" >> "$GITHUB_ENV";
+          else exit 1; fi
+      - name: Profile public Olympus
+        run: |
+          node --input-type=module <<'NODE'
+          import puppeteer from 'puppeteer-core';
+          const url='https://lucky-glow-arcade.lovable.app/game/olympus-storm';
+          const key='lucky-neon-arcade:v1';
+          const seed={balance:1000000000,favorites:[],soundEnabled:true,history:[],totalSpins:0,bestWin:0};
+          const browser=await puppeteer.launch({executablePath:process.env.CHROME_PATH,headless:'new',args:['--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling']});
+          const page=await browser.newPage();
+          await page.setViewport({width:390,height:844,deviceScaleFactor:1});
+          const cdp=await page.target().createCDPSession();
+          await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});
+          const errors=[];
+          page.on('pageerror',e=>errors.push(`pageerror:${e.message}`));
+          page.on('console',m=>{if(m.type()==='error')errors.push(`console:${m.text()}`)});
+          await page.evaluateOnNewDocument(({key,seed})=>localStorage.setItem(key,JSON.stringify(seed)),{key,seed});
+          await page.goto(url,{waitUntil:'networkidle2',timeout:60000});
+          await page.waitForSelector('.os-ref-machine',{timeout:60000});
+          await page.evaluate(()=>{
+            window.__olPerf={frames:[],longTasks:0,mutations:0,overflow:false,last:performance.now(),stormHits:0,levelUps:0,bonusOutros:0,bonusIntros:0};
+            const p=window.__olPerf;
+            const tick=now=>{const dt=now-p.last;p.last=now;if(dt>0&&dt<1000)p.frames.push(dt);p.overflow ||= document.documentElement.scrollWidth>innerWidth+1;requestAnimationFrame(tick)};
+            requestAnimationFrame(tick);
+            try{new PerformanceObserver(list=>{p.longTasks+=list.getEntries().length}).observe({entryTypes:['longtask']})}catch{}
+            const scan=()=>{
+              if(document.querySelector('.os-ref-lightning-flash'))p.stormHits++;
+              if(document.querySelector('.os-level-up-toast'))p.levelUps++;
+              if(document.querySelector('.os-bonus-total'))p.bonusOutros++;
+              if(document.querySelector('.os-ascension-intro'))p.bonusIntros++;
+            };
+            new MutationObserver(records=>{p.mutations+=records.length;scan()}).observe(document.body,{subtree:true,childList:true,attributes:true,characterData:true});
+          });
+          const enabledByLabel=label=>page.evaluate(label=>[...document.querySelectorAll('button')].some(b=>b.getAttribute('aria-label')===label&&!b.disabled),label);
+          const clickLabel=label=>page.evaluate(label=>{const b=[...document.querySelectorAll('button')].find(x=>x.getAttribute('aria-label')===label&&!x.disabled);if(!(b instanceof HTMLButtonElement))throw new Error(`missing enabled ${label}`);b.click()},label);
+          const waitEnabled=async label=>page.waitForFunction(label=>[...document.querySelectorAll('button')].some(b=>b.getAttribute('aria-label')===label&&!b.disabled),{timeout:180000},label);
+          const spin=async()=>{await waitEnabled('Girar Olympus Storm');await clickLabel('Girar Olympus Storm');await page.waitForFunction(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.getAttribute('aria-label')==='Girar Olympus Storm');return b instanceof HTMLButtonElement&&b.disabled},{timeout:30000});await waitEnabled('Girar Olympus Storm');};
+          for(let i=0;i<15;i++)await spin();
+          const featureRuns=[];
+          for(let i=0;i<3;i++){
+            await waitEnabled('Abrir Storm Ascension');
+            await clickLabel('Abrir Storm Ascension');
+            await page.waitForSelector('[data-testid="olympus-feature-modal"]',{timeout:30000});
+            const before=await page.evaluate(()=>({balance:JSON.parse(localStorage.getItem('lucky-neon-arcade:v1')||'{}').balance,history:(JSON.parse(localStorage.getItem('lucky-neon-arcade:v1')||'{}').history||[]).length}));
+            await page.click('[data-testid="olympus-feature-activate"]');
+            await page.waitForFunction(()=>document.querySelector('.os-ref-machine')?.getAttribute('data-bonus-active')==='true',{timeout:60000});
+            await page.waitForFunction(()=>document.querySelector('.os-ref-machine')?.getAttribute('data-bonus-active')==='false',{timeout:180000});
+            await waitEnabled('Girar Olympus Storm');
+            const after=await page.evaluate(()=>({balance:JSON.parse(localStorage.getItem('lucky-neon-arcade:v1')||'{}').balance,history:(JSON.parse(localStorage.getItem('lucky-neon-arcade:v1')||'{}').history||[]).length}));
+            featureRuns.push({before,after});
+          }
+          const perf=await page.evaluate(()=>window.__olPerf);
+          const frames=perf.frames.slice(10),sorted=[...frames].sort((a,b)=>a-b),mean=frames.reduce((a,b)=>a+b,0)/frames.length,worst=Math.max(...frames),p95=sorted[Math.min(sorted.length-1,Math.floor(sorted.length*.95))];
+          const geometry=await page.evaluate(()=>{
+            const rect=e=>{const r=e?.getBoundingClientRect();return r?{top:+r.top.toFixed(1),bottom:+r.bottom.toFixed(1),left:+r.left.toFixed(1),right:+r.right.toFixed(1),width:+r.width.toFixed(1),height:+r.height.toFixed(1)}:null};
+            const byLabel=label=>[...document.querySelectorAll('button')].find(b=>b.getAttribute('aria-label')===label);
+            const sound=[...document.querySelectorAll('button')].find(b=>/som|sound/i.test(b.getAttribute('aria-label')||''));
+            return{machine:rect(document.querySelector('.os-ref-machine')),spin:rect(byLabel('Girar Olympus Storm')),bonus:rect(byLabel('Abrir Storm Ascension')),sound:rect(sound),overflow:document.documentElement.scrollWidth>innerWidth+1,viewport:{w:innerWidth,h:innerHeight}};
+          });
+          const report={viewport:'390x844',cpuThrottle:4,baseSpins:15,featureBuys:3,fpsAverage:+(1000/mean).toFixed(2),fpsMinimum:+(1000/worst).toFixed(2),worstFrameMs:+worst.toFixed(2),p95FrameMs:+p95.toFixed(2),longTasks:perf.longTasks,domMutations:perf.mutations,consoleErrors:errors,overflowHorizontal:perf.overflow||geometry.overflow,stormHitsObserved:perf.stormHits,levelUpsObserved:perf.levelUps,bonusIntrosObserved:perf.bonusIntros,bonusOutrosObserved:perf.bonusOutros,geometry,featureRuns};
+          console.log('OLYMPUS_BASELINE',JSON.stringify(report));
+          if(errors.length||report.overflowHorizontal)throw new Error(`baseline browser issue ${JSON.stringify({errors,overflow:report.overflowHorizontal})}`);
+          await browser.close();
+          NODE
