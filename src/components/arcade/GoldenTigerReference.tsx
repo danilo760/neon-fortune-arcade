@@ -880,10 +880,11 @@ export function GoldenTigerReference() {
         <button
           type="button"
           onClick={() => setTurbo((value) => !value)}
+          disabled={spinning || bonusActive || autoLeft > 0 || featureBuyOpen || featureBuyRunning}
           aria-pressed={turbo}
           aria-label="Alternar turbo"
           className={cn(
-            "absolute left-[4.2%] top-[86.1%] z-50 h-[8.3%] w-[17.7%] rounded-[28px]",
+            "absolute left-[4.2%] top-[86.1%] z-50 h-[8.3%] w-[17.7%] rounded-[28px] disabled:cursor-not-allowed disabled:opacity-45",
             turbo && "ring-2 ring-yellow-200 bg-amber-300/20 shadow-[0_0_25px_#ffb000]",
           )}
         >
