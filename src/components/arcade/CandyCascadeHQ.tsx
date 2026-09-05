@@ -59,6 +59,16 @@ const COLS = 6;
 const ROWS = 5;
 const BET_STEPS = [10, 50, 100, 200, 500, 1_000, 5_000, 10_000] as const;
 
+// SSR and hydration must paint the same cabinet. This display-only grid never
+// participates in a result; the first paid spin still uses injected/random RNG.
+const INITIAL_DISPLAY_GRID: readonly CandySymbolId[] = [
+  "lollipop", "star", "jelly", "candy", "cupcake", "heart",
+  "sprinkle", "diamond", "star", "lollipop", "jelly", "candy",
+  "cupcake", "heart", "sprinkle", "diamond", "candy", "star",
+  "jelly", "lollipop", "heart", "cupcake", "diamond", "sprinkle",
+  "star", "candy", "lollipop", "jelly", "cupcake", "heart",
+];
+
 const CROPS: Record<CandyRegularSymbolId, Crop> = {
   lollipop: { x: 24, y: 281, w: 93, h: 87 },
   star: { x: 118, y: 281, w: 93, h: 87 },
@@ -135,7 +145,7 @@ export function CandyCascadeHQ() {
   const balance = useArcade((state) => state.balance);
   const soundEnabled = useArcade((state) => state.soundEnabled);
   const [bet, setBet] = useState<number>(200);
-  const [grid, setGrid] = useState<CandySymbolId[]>(() => makeCandyGrid());
+  const [grid, setGrid] = useState<CandySymbolId[]>(() => [...INITIAL_DISPLAY_GRID]);
   const [win, setWin] = useState(0);
   const [winDuration, setWinDuration] = useState(0);
   const [spinning, setSpinning] = useState(false);
