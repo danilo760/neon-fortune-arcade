@@ -1,0 +1,51 @@
+name: Olympus Impact Order
+on:
+  push:
+    branches: [audit/olympus-impact-order-fda02]
+permissions:
+  contents: write
+jobs:
+  fix-and-validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply one-line presentation fix
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/components/arcade/OlympusStormReference.tsx')
+          s=p.read_text()
+          old='phase === "stormImpact" && "os-ref-grid--storm-hit"'
+          new='phase === "stormHit" && "os-ref-grid--storm-hit"'
+          assert s.count(old)==1, s.count(old)
+          p.write_text(s.replace(old,new,1))
+          PY
+          test "$(git hash-object src/lib/arcade/olympusStormMath.ts)" = "35b794b1014eae09d9f5f53b6a2487dcc432e1ac"
+          git diff --check
+      - name: Install
+        run: npm install --ignore-scripts
+      - name: Product gates
+        run: |
+          npm test -- --run
+          npm run typecheck
+          npm run build
+          git diff --check
+          test "$(git hash-object src/lib/arcade/olympusStormMath.ts)" = "35b794b1014eae09d9f5f53b6a2487dcc432e1ac"
+          test "$(git diff --name-only)" = "src/components/arcade/OlympusStormReference.tsx"
+      - name: Publish validated product commit to fix branch
+        run: |
+          git config user.name "danilo760"
+          git config user.email "62104537+danilo760@users.noreply.github.com"
+          git checkout -b fix/olympus-storm-impact-order
+          git add src/components/arcade/OlympusStormReference.tsx
+          git commit -m "fix: order olympus storm impact before multiplier"
+          git push --force-with-lease origin HEAD:refs/heads/fix/olympus-storm-impact-order
+          echo "PRODUCT_SHA=$(git rev-parse HEAD)"
