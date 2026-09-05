@@ -2,7 +2,7 @@ import { Coins, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { formatCoins } from "@/lib/arcade/format";
-import { arcadeActions, useArcade } from "@/lib/arcade/store";
+import { arcadeActions, TOPUP_AMOUNT, useArcade } from "@/lib/arcade/store";
 import { playSound } from "@/lib/arcade/sound";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +34,7 @@ export function BalanceDisplay({ compact = false, className }: BalanceDisplayPro
           arcadeActions.addCoins();
           playSound("cash", soundEnabled);
         }}
-        aria-label="Recarregar moedas fictícias"
+        aria-label={`Adicionar ${formatCoins(TOPUP_AMOUNT)} moedas fictícias`}
       >
         <Plus className="size-4" aria-hidden />
         {!compact && <span className="hidden text-xs font-semibold sm:inline">Recarregar</span>}
