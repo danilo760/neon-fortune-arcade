@@ -14,6 +14,7 @@ import {
 } from "react";
 
 import { goldenTigerReferenceBase64 } from "@/assets/golden-tiger/referenceData";
+import goldenTigerCabinet from "@/assets/golden-tiger/golden-tiger-cabinet-v2.png";
 import { formatCoins } from "@/lib/arcade/format";
 import {
   createGoldenFortunePurchaseLock,
@@ -751,7 +752,7 @@ export function GoldenTigerReference() {
       >
         {src ? (
           <img
-            src={src}
+            src={goldenTigerCabinet}
             alt="Golden Tiger"
             draggable={false}
             className="absolute inset-0 size-full select-none object-fill"
