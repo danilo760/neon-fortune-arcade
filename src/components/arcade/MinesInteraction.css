@@ -38,7 +38,7 @@
 
 .mines-premium__tile--fresh-gem {
   z-index: 5;
-  animation: mines-safe-reveal .3s cubic-bezier(.18,.85,.26,1.12) both;
+  animation: mines-safe-reveal .2s cubic-bezier(.18,.85,.26,1.12) both;
 }
 
 .mines-premium__tile--fresh-gem .mines-premium__gem {
@@ -47,7 +47,7 @@
 
 .mines-premium__tile--triggered {
   z-index: 6;
-  animation: mines-trigger-impact .34s cubic-bezier(.18,.82,.25,1.08) both;
+  animation: mines-trigger-impact .24s cubic-bezier(.18,.82,.25,1.08) both;
   border-color: rgba(255, 137, 151, .98);
   box-shadow:
     inset 0 0 26px rgba(255, 82, 103, .2),
@@ -83,7 +83,7 @@
     0 8px 0 #03291c,
     0 14px 24px rgba(0,0,0,.35),
     0 0 28px rgba(63,255,190,.24) !important;
-  animation: mines-cashout-ready .26s ease-out both;
+  animation: mines-cashout-ready .2s ease-out both;
 }
 
 .mines-premium__action--cashout-ready strong {
@@ -112,3 +112,16 @@
     filter: none !important;
   }
 }
+
+
+.mines-premium__tile--fresh-gem::after {
+  content: ""; position: absolute; inset: 10%; pointer-events: none; border-radius: 45%;
+  background: radial-gradient(circle at 45% 35%, rgba(236,255,249,.82), rgba(116,255,207,.18) 25%, transparent 58%);
+  opacity: 0; animation: mines-gem-glint .2s ease-out both;
+}
+@keyframes mines-gem-glint {
+  0% { opacity: 0; transform: scale(.72); }
+  42% { opacity: .78; transform: scale(1.04); }
+  100% { opacity: 0; transform: scale(1.18); }
+}
+@media (prefers-reduced-motion: reduce) { .mines-premium__tile--fresh-gem::after { animation: none !important; display: none; } }

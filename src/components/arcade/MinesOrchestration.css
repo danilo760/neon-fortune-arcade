@@ -57,11 +57,11 @@
 
 .mines-premium__tile--pressing {
   z-index: 7;
-  animation: mines-plate-press .1s ease-out both;
+  animation: mines-plate-press .06s ease-out both;
 }
 
 .mines-premium__tile--unlocking .mines-premium__sealed {
-  animation: mines-lock-turn .18s ease-in both;
+  animation: mines-lock-turn .1s ease-in both;
 }
 
 .mines-premium__tile--unlocking::after {
@@ -73,11 +73,11 @@
     linear-gradient(38deg, transparent 46%, rgba(107,255,210,.9) 48%, transparent 51%),
     linear-gradient(142deg, transparent 42%, rgba(185,255,230,.72) 45%, transparent 48%);
   filter: drop-shadow(0 0 7px rgba(76,255,192,.85));
-  animation: mines-crack-open .22s ease-out both;
+  animation: mines-crack-open .12s ease-out both;
 }
 
 .mines-premium__tile--fresh-gem .mines-premium__gem {
-  animation: mines-gem-rise .28s cubic-bezier(.18,.85,.24,1.12) both;
+  animation: mines-gem-rise .2s cubic-bezier(.18,.85,.24,1.12) both;
 }
 
 .mines-premium__tile--danger-pending::before {
@@ -88,7 +88,7 @@
   border-radius: 50%;
   background: radial-gradient(circle, rgba(255,80,91,.82), rgba(255,25,48,.25) 45%, transparent 72%);
   filter: blur(1px) drop-shadow(0 0 8px rgba(255,53,70,.8));
-  animation: mines-red-underlight .16s ease-out both;
+  animation: mines-red-underlight .1s ease-out both;
 }
 
 .mines-premium__tile--exploding::after {
@@ -101,11 +101,11 @@
   border: 2px solid rgba(255,219,161,.9);
   background: radial-gradient(circle, rgba(255,250,210,.95) 0 8%, rgba(255,92,54,.78) 18%, rgba(255,30,62,.28) 42%, transparent 65%);
   box-shadow: 0 0 24px rgba(255,63,62,.76);
-  animation: mines-local-blast .36s ease-out both;
+  animation: mines-local-blast .22s ease-out both;
 }
 
 .mines-premium__cabinet--lost {
-  animation: mines-vault-dim .28s ease-out both;
+  animation: mines-vault-dim .2s ease-out both;
 }
 
 .mines-premium__cabinet--cashout::before,
@@ -123,17 +123,17 @@
 
 .mines-premium__cabinet--cashout::before {
   left: 12%;
-  animation: mines-cash-converge-left .52s ease-in both;
+  animation: mines-cash-converge-left .34s ease-in both;
 }
 
 .mines-premium__cabinet--cashout::after {
   right: 12%;
-  animation: mines-cash-converge-right .52s ease-in both;
+  animation: mines-cash-converge-right .34s ease-in both;
 }
 
 .mines-premium__action--settling {
   pointer-events: none;
-  animation: mines-cash-lock .46s ease-out both !important;
+  animation: mines-cash-lock .32s ease-out both !important;
 }
 
 .mines-premium__telemetry--counting strong,

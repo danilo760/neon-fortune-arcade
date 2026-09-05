@@ -230,9 +230,9 @@
   letter-spacing: .05em;
 }
 
-.mines-premium__telemetry strong[data-risk="HIGH"],
-.mines-premium__telemetry strong[data-risk="EXTREME"] { color: #ffd45b; }
-.mines-premium__telemetry strong[data-risk="EXTREME"] { text-shadow: 0 0 9px rgba(255,93,85,.55); color: #ff766d; }
+.mines-premium__telemetry strong[data-risk="high"],
+.mines-premium__telemetry strong[data-risk="extreme"] { color: #ffd45b; }
+.mines-premium__telemetry strong[data-risk="extreme"] { text-shadow: 0 0 9px rgba(255,93,85,.55); color: #ff766d; }
 
 @keyframes mines-premium-aurora {
   0%, 100% { transform: translateX(-54%) scale(.92); opacity: .58; }
@@ -508,7 +508,7 @@
 }
 
 .mines-premium__result--cashout {
-  animation: mines-cashout-confirm .4s cubic-bezier(.18,.9,.25,1.15) both;
+  animation: mines-cashout-confirm .3s cubic-bezier(.18,.9,.25,1.15) both;
   box-shadow: 0 0 24px rgba(80,255,194,.3), 0 8px 20px rgba(0,0,0,.24);
 }
 
@@ -619,3 +619,17 @@
   .mines-premium__progress span,
   .mines-premium__action { transition: none !important; }
 }
+
+
+.mines-premium__cabinet[data-risk-level="low"] .mines-premium__aurora::before { opacity: .58; }
+.mines-premium__cabinet[data-risk-level="high"] .mines-premium__aurora::before { opacity: .82; }
+.mines-premium__cabinet[data-risk-level="extreme"] .mines-premium__aurora::before { opacity: .92; }
+.mines-premium__cabinet[data-risk-level="extreme"] .mines-premium__grid-frame {
+  border-color: rgba(255,164,107,.5);
+  box-shadow: inset 0 0 0 3px rgba(62,38,0,.5), inset 0 0 28px rgba(0,0,0,.68), 0 14px 36px rgba(0,0,0,.4), 0 0 18px rgba(255,71,82,.1);
+}
+.mines-premium__selector > div button { display: grid; min-height: 2.45rem; place-items: center; gap: .02rem; padding-inline: .35rem; }
+.mines-premium__selector > div button strong { font-size: .72rem; line-height: 1; }
+.mines-premium__selector > div button span { font-size: .34rem; line-height: 1; letter-spacing: .05em; opacity: .62; }
+.mines-premium__selector > div button[aria-pressed="true"] span { opacity: .9; }
+@media (max-width: 390px) { .mines-premium__selector > div button span { font-size: .31rem; } }

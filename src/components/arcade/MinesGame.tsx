@@ -7,6 +7,13 @@ import { formatCoins, formatMultiplier } from "@/lib/arcade/format";
 import { createMineField, minesMultiplier, nextMinesMultiplier } from "@/lib/arcade/mines";
 import { createRng } from "@/lib/arcade/rng";
 import { BET_STEPS } from "@/lib/arcade/slot-configs";
+import {
+  MINES_PRESENTATION_TIMING,
+  minesPresentationDelay,
+  minesRiskLabel,
+  minesRiskLevel,
+} from "@/lib/arcade/minesPresentation";
+import { playMinesSound } from "@/lib/arcade/minesSound";
 import { playSound } from "@/lib/arcade/sound";
 import { arcadeActions, useArcade } from "@/lib/arcade/store";
 import { cn } from "@/lib/utils";
@@ -28,12 +35,6 @@ function reducedMotion() {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-function riskLabel(mineCount: number) {
-  if (mineCount <= 1) return "LOW";
-  if (mineCount <= 3) return "BALANCED";
-  if (mineCount <= 5) return "HIGH";
-  return "EXTREME";
-}
 
 export function MinesGame() {
   const balance = useArcade((state) => state.balance);
@@ -84,7 +85,7 @@ export function MinesGame() {
     setDisplayedPossibleWin(bet);
     setStatus("playing");
     settledRef.current = false;
-    playSound("minesMetal", soundEnabled);
+    playMinesSound("button", soundEnabled);
   }
 
   async function settleWin(safeCells: number) {
@@ -96,14 +97,15 @@ export function MinesGame() {
 
     const finalMultiplier = minesMultiplier(mineCount, safeCells);
     const payout = Math.round(bet * finalMultiplier);
-    playSound("minesCashout", soundEnabled);
+    const reduceMotion = reducedMotion();
+    playMinesSound("cashout", soundEnabled);
 
-    await wait(reducedMotion() ? 0 : 220);
-    const countDuration = reducedMotion() ? 0 : 420;
+    await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.cashoutPress, reduceMotion));
+    const countDuration = minesPresentationDelay(MINES_PRESENTATION_TIMING.cashoutCount, reduceMotion);
     setPossibleWinDuration(countDuration);
     setDisplayedPossibleWin(payout);
     await wait(countDuration);
-    await wait(reducedMotion() ? 0 : 120);
+    await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.cashoutSettle, reduceMotion));
 
     arcadeActions.credit(payout);
     arcadeActions.recordRound({
@@ -118,35 +120,37 @@ export function MinesGame() {
     setStatus("won");
     setRevealPhase("idle");
     revealBusyRef.current = false;
-    playSound(payout >= bet * 10 ? "bigWin" : "cash", soundEnabled);
+    playMinesSound("win", soundEnabled);
   }
 
   async function revealCell(index: number) {
     if (settledRef.current || !roundActiveRef.current || revealBusyRef.current) return;
     if (status !== "playing" || revealedRef.current.has(index)) return;
 
+    const reduceMotion = reducedMotion();
     revealBusyRef.current = true;
     setOpeningIndex(index);
     setLastSafeReveal(null);
     setRevealPhase("press");
-    playSound("minesMetal", soundEnabled);
-    await wait(reducedMotion() ? 0 : 90);
+    playMinesSound("tilePress", soundEnabled);
+    await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.press, reduceMotion));
 
     setRevealPhase("unlock");
-    playSound("minesUnlock", soundEnabled);
-    await wait(reducedMotion() ? 0 : 130);
+    playMinesSound("unlock", soundEnabled);
+    await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.unlock, reduceMotion));
 
     if (mineSet.has(index)) {
       setTriggeredMine(index);
       setRevealPhase("danger");
-      playSound("minesDanger", soundEnabled);
-      await wait(reducedMotion() ? 0 : 150);
+      playMinesSound("danger", soundEnabled);
+      await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.danger, reduceMotion));
 
       settledRef.current = true;
       roundActiveRef.current = false;
+      playMinesSound("mineArm", soundEnabled);
       setRevealPhase("explode");
-      playSound("minesExplosion", soundEnabled);
-      await wait(reducedMotion() ? 0 : 240);
+      playMinesSound("explosion", soundEnabled);
+      await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.explosion, reduceMotion));
       setStatus("lost");
       arcadeActions.recordRound({
         slug: "neon-mines",
@@ -156,7 +160,7 @@ export function MinesGame() {
         multiplier: 0,
         note: "Mina encontrada",
       });
-      await wait(reducedMotion() ? 0 : 100);
+      await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.lostSettle, reduceMotion));
       setRevealPhase("idle");
       setOpeningIndex(null);
       revealBusyRef.current = false;
@@ -169,15 +173,15 @@ export function MinesGame() {
     setRevealed(next);
     setLastSafeReveal(index);
     setRevealPhase("gem");
-    playSound("minesCrystal", soundEnabled);
+    playMinesSound("gemReveal", soundEnabled, next.size);
 
     const targetPossible = Math.round(bet * minesMultiplier(mineCount, next.size));
-    const countDuration = reducedMotion() ? 0 : 280;
+    const countDuration = minesPresentationDelay(MINES_PRESENTATION_TIMING.possibleWinCount, reduceMotion);
     setPossibleWinDuration(countDuration);
     setDisplayedPossibleWin(targetPossible);
-    await wait(countDuration);
-    await wait(reducedMotion() ? 0 : 90);
+    if (next.size > 1) playMinesSound("multiplierRise", soundEnabled, next.size);
 
+    await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.gemSettle, reduceMotion));
     setRevealPhase("idle");
     setOpeningIndex(null);
     revealBusyRef.current = false;
@@ -200,6 +204,9 @@ export function MinesGame() {
           status === "lost" && "mines-premium__cabinet--lost",
           revealPhase === "cashout" && "mines-premium__cabinet--cashout",
         )}
+        data-reveal-phase={revealPhase}
+        data-round-status={status}
+        data-risk-level={minesRiskLevel(mineCount)}
       >
         <img className="mines-premium__machine-art" src={neonMinesReference} alt="" aria-hidden />
         <div className="mines-premium__aurora" aria-hidden />
@@ -208,29 +215,29 @@ export function MinesGame() {
 
         <div className="mines-machine__masthead mines-premium__masthead">
           <div className="mines-status-card mines-premium__status">
-            <small>SAFE GEMS</small>
+            <small>GEMAS SEGURAS</small>
             <strong>{gemsLeft}</strong>
-            <span>remaining</span>
+            <span>restantes</span>
           </div>
 
           <div className="mines-title mines-premium__title">
             <div className="mines-premium__crest" aria-hidden><Gem /></div>
             <span>NEON</span>
             <strong>MINES</strong>
-            <small>CRYSTAL VAULT · PRIVATE ARCADE</small>
+            <small>CRYSTAL VAULT · ARCADE PRIVADO</small>
           </div>
 
           <div className="mines-status-card mines-premium__status">
-            <small>NEXT WIN</small>
+            <small>PRÓXIMO GANHO</small>
             <strong>{formatCoins(Math.round(bet * nextMultiplier))}</strong>
             <span>{formatMultiplier(nextMultiplier)}</span>
           </div>
         </div>
 
         <div className={cn("mines-premium__telemetry", revealPhase === "gem" && "mines-premium__telemetry--counting")} aria-label="Informações da rodada">
-          <div><small>RISK</small><strong data-risk={riskLabel(mineCount)}>{riskLabel(mineCount)}</strong></div>
-          <div><small>CURRENT</small><strong>{formatMultiplier(status === "playing" ? multiplier : 1)}</strong></div>
-          <div><small>FOUND</small><strong>{revealed.size}</strong></div>
+          <div><small>RISCO</small><strong data-risk={minesRiskLevel(mineCount)}>{minesRiskLabel(mineCount)}</strong></div>
+          <div><small>MULTIPLICADOR</small><strong>{formatMultiplier(status === "playing" ? multiplier : 1)}</strong></div>
+          <div><small>ENCONTRADAS</small><strong>{revealed.size}</strong></div>
         </div>
 
         <div className="mines-premium__grid-frame">
@@ -289,9 +296,9 @@ export function MinesGame() {
 
         <div className={cn("mines-possible mines-premium__possible", revealPhase === "gem" && "mines-premium__possible--counting")}>
           <div className="mines-premium__possible-copy">
-            <small>POSSIBLE WIN</small>
+            <small>GANHO POSSÍVEL</small>
             <strong><AnimatedWinCounter value={possibleWin} duration={possibleWinDuration} /></strong>
-            <span>{status === "playing" ? `${revealed.size} gem${revealed.size === 1 ? "" : "s"} secured` : "Open the crystal vault"}</span>
+            <span>{status === "playing" ? `${revealed.size} ${revealed.size === 1 ? "gema garantida" : "gemas garantidas"}` : "Abra o cofre de cristal"}</span>
           </div>
           <div className="mines-premium__progress" aria-hidden><span style={{ width: `${progress}%` }} /></div>
           <div className="mines-multipliers mines-premium__multipliers" aria-hidden>
@@ -304,24 +311,38 @@ export function MinesGame() {
         {status === "lost" && (
           <div className="mines-result mines-result--lost mines-premium__result" role="status">
             <Bomb className="size-5" />
-            <div><strong>Vault breached</strong><span>A mina explodiu. Somente a aposta fictícia desta rodada foi perdida.</span></div>
+            <div><strong>COFRE VIOLADO</strong><span>A mina explodiu. Somente a aposta fictícia desta rodada foi perdida.</span></div>
           </div>
         )}
         {status === "won" && (
           <div className="mines-result mines-result--won mines-premium__result mines-premium__result--cashout" role="status">
             <Trophy className="size-5" />
-            <div><strong>Crystal secured</strong><span>+ {formatCoins(lastPayout)} moedas fictícias</span></div>
+            <div><strong>CRISTAL GARANTIDO</strong><span>+ {formatCoins(lastPayout)} moedas fictícias</span></div>
           </div>
         )}
 
         <div className="mines-controls mines-premium__controls">
           <div className="mines-controls__bet mines-premium__bet"><BetControls value={bet} onChange={setBet} disabled={status === "playing"} /></div>
           <section className="mines-selector mines-premium__selector">
-            <small>MINES / RISK</small>
+            <small>MINAS / RISCO</small>
             <div>
-              {[1, 3, 5, 10].map((count) => (
-                <Button key={count} size="sm" variant={mineCount === count ? "gold" : "outline"} disabled={status === "playing"} onClick={() => setMineCount(count)} aria-label={`${count} minas`} aria-pressed={mineCount === count}>{count}</Button>
-              ))}
+              {[1, 3, 5, 10].map((count) => {
+                const label = minesRiskLabel(count);
+                return (
+                  <Button
+                    key={count}
+                    size="sm"
+                    variant={mineCount === count ? "gold" : "outline"}
+                    disabled={status === "playing"}
+                    onClick={() => setMineCount(count)}
+                    aria-label={`${count} minas, risco ${label.toLowerCase()}`}
+                    aria-pressed={mineCount === count}
+                  >
+                    <strong>{count}</strong>
+                    <span>{label}</span>
+                  </Button>
+                );
+              })}
             </div>
           </section>
 
@@ -336,17 +357,17 @@ export function MinesGame() {
               )}
               disabled={revealed.size === 0 || interactionLocked}
               onClick={() => void settleWin(revealed.size)}
-              aria-label={`Cash out por ${formatCoins(Math.round(bet * multiplier))}`}
+              aria-label={`Garantir ganho de ${formatCoins(Math.round(bet * multiplier))}`}
               aria-busy={revealPhase === "cashout"}
             >
               <ShieldCheck className="size-6" aria-hidden />
-              <span>{revealPhase === "cashout" ? "SECURING" : "CASH OUT"}</span>
+              <span>{revealPhase === "cashout" ? "GARANTINDO" : "GARANTIR"}</span>
               <strong>{formatCoins(Math.round(bet * multiplier))}</strong>
             </Button>
           ) : (
             <Button size="lg" variant="gold" className="mines-cash-button mines-premium__action" disabled={insufficient || interactionLocked} onClick={startRound} aria-label={`Abrir cofre apostando ${formatCoins(bet)}`}>
               <Play className="size-6" aria-hidden />
-              <span>OPEN VAULT</span>
+              <span>ABRIR COFRE</span>
               <strong>{formatCoins(bet)}</strong>
             </Button>
           )}
