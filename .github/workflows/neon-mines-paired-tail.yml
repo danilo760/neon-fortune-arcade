@@ -31,8 +31,6 @@ jobs:
           npm run typecheck
           npm run build
           git diff --check f9f32f307dfd6b88f363ccd99aaa274c8a786c66..d4c6c7127b90874e01f4a6063e3980ffe170a2fa
-      - name: Preserve profiler
-        run: cp scripts/profile-neon-mines-paired.mjs /tmp/profile-neon-mines-paired.mjs
       - name: Profile candidate
         run: |
           npx vite --host 127.0.0.1 --port 4173 >/tmp/candidate-vite.log 2>&1 &
@@ -40,7 +38,7 @@ jobs:
           trap 'kill $PID || true' EXIT
           for i in {1..60}; do curl -fsS http://127.0.0.1:4173/game/neon-mines >/dev/null && break; sleep 1; done
           echo -n 'CANDIDATE '
-          node /tmp/profile-neon-mines-paired.mjs
+          node scripts/profile-neon-mines-paired.mjs
           kill $PID || true
           wait $PID 2>/dev/null || true
           trap - EXIT
@@ -54,7 +52,7 @@ jobs:
           trap 'kill $PID || true' EXIT
           for i in {1..60}; do curl -fsS http://127.0.0.1:4173/game/neon-mines >/dev/null && break; sleep 1; done
           echo -n 'CURRENT '
-          node /tmp/profile-neon-mines-paired.mjs
+          node scripts/profile-neon-mines-paired.mjs
           kill $PID || true
           wait $PID 2>/dev/null || true
           trap - EXIT
