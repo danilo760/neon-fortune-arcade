@@ -234,6 +234,19 @@
   box-shadow: inset 0 0 14px rgba(85,184,255,.08), 0 3px 18px rgba(0,0,0,.28);
 }
 
+.os-storm-hud-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  text-align: center;
+}
+.os-storm-hud-row span + span { border-left: 1px solid rgba(179,230,255,.18); }
+.os-storm-hud-row small,
+.os-storm-hud-row strong { display: block; }
+.os-storm-hud-row small { font-size: 6px; line-height: 1; font-weight: 900; color: rgba(191,239,255,.72); }
+.os-storm-hud-row strong { margin-top: 2px; font-size: 10px; line-height: 1; color: #f4fcff; }
+.os-storm-hud-multiplier { margin-top: 3px; text-align: center; font-size: 6px; line-height: 1; font-weight: 900; color: rgba(255,233,157,.82); }
+
 .os-storm-energy-fill {
   background: linear-gradient(90deg,#1d68db,#72dcff,#fff1a3,#73d8ff);
   background-size: 160% 100%;
@@ -387,7 +400,7 @@
 @media (max-width: 370px) {
   .os-feature-buy-button { font-size: 8px; letter-spacing: .03em; }
   .os-storm-level-hud { left: 6% !important; width: 88% !important; }
-  .os-feature-panel { max-height: 72%; padding: 12px; }
+  .os-feature-panel { max-height: 70%; padding: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

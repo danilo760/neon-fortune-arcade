@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { Volume2, VolumeX } from "lucide-react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 
 import { olympusStormReferenceBase64 } from "@/assets/olympus-storm/referenceData";
@@ -36,6 +37,7 @@ type PresentationPhase =
   | "clusterWin"
   | "stormCharge"
   | "stormHit"
+  | "stormImpact"
   | "collapse"
   | "bonusTrigger"
   | "featureCinematic"
@@ -149,7 +151,7 @@ const OlympusGrid = memo(function OlympusGrid({
         phase === "landing" && "os-ref-grid--landing",
         phase === "anticipation" && "os-ref-grid--anticipation",
         phase === "collapse" && "os-ref-grid--collapse",
-        phase === "stormHit" && "os-ref-grid--storm-hit",
+        phase === "stormImpact" && "os-ref-grid--storm-hit",
         phase === "bonusPlaying" && "os-ref-grid--bonus",
       )}
     >
@@ -291,8 +293,11 @@ export function OlympusStormReference() {
         setPhase("stormHit");
         setFlashKey((value) => value + 1);
         playSound("olympusHit", soundEnabled);
-        await wait(turbo ? 90 : 220);
+        await wait(turbo ? 55 : 140);
+
+        setPhase("stormImpact");
         playSound("olympusMultiplier", soundEnabled);
+        await wait(turbo ? 35 : 80);
       }
 
       const targetTotal = displayedTotal + cascade.payout;
@@ -532,7 +537,7 @@ export function OlympusStormReference() {
   const featureCost = olympusFeatureBuyCost(bet);
   const insufficient = bet > balance;
   const featureInsufficient = featureCost > balance;
-  const stormActive = phase === "stormCharge" || phase === "stormHit" || phase === "levelUp";
+  const stormActive = phase === "stormCharge" || phase === "stormHit" || phase === "stormImpact" || phase === "levelUp";
   const anticipationActive = phase === "anticipation";
   const bonusVisualActive = bonusActive || phase === "bonusIntro" || phase === "featureCinematic" || phase === "bonusOutro";
   const cascadeEnergy = Math.min(4, cascadeNumber);
@@ -541,7 +546,9 @@ export function OlympusStormReference() {
   const levelMultiplier = OLYMPUS_STORM_LEVEL_MULTIPLIERS[stormLevel - 1] ?? 1;
   const zeusState = phase === "stormHit"
     ? "strike"
-    : phase === "stormCharge" || anticipationActive
+    : phase === "stormImpact"
+      ? "afterglow"
+      : phase === "stormCharge" || anticipationActive
       ? "charge"
       : phase === "levelUp"
         ? "ascend"
@@ -563,6 +570,9 @@ export function OlympusStormReference() {
           `os-ref-storm-level-${stormLevel}`,
         )}
         data-bonus-active={bonusActive ? "true" : "false"}
+        data-phase={phase}
+        data-zeus-state={zeusState}
+        data-storm-multiplier={stormMultiplier}
       >
         {src ? (
           <img
@@ -595,6 +605,20 @@ export function OlympusStormReference() {
           className="absolute right-[1.8%] top-[1.2%] z-50 size-[9%] rounded-full bg-transparent"
         />
 
+        <button
+          type="button"
+          data-testid="olympus-sound-toggle"
+          onClick={() => {
+            arcadeActions.toggleSound();
+            playSound("click", !soundEnabled);
+          }}
+          aria-label={soundEnabled ? "Desativar som" : "Ativar som"}
+          aria-pressed={soundEnabled}
+          className="os-ref-control os-ref-sound-toggle absolute left-[2.2%] top-[1.45%] z-50 grid w-[9%] aspect-square place-items-center rounded-full"
+        >
+          {soundEnabled ? <Volume2 aria-hidden /> : <VolumeX aria-hidden />}
+        </button>
+
         {src && (
           <OlympusGrid
             grid={grid}
@@ -605,11 +629,11 @@ export function OlympusStormReference() {
           />
         )}
 
-        {flashKey > 0 && (
-          <div key={flashKey} className="os-ref-lightning-flash pointer-events-none absolute inset-0 z-40" />
+        {flashKey > 0 && phase === "stormHit" && (
+          <div key={flashKey} className="os-ref-lightning-flash pointer-events-none absolute z-40" aria-hidden />
         )}
 
-        {stormActive && stormMultiplier > 1 && (
+        {(phase === "stormCharge" || phase === "stormImpact") && stormMultiplier > 1 && (
           <div className="os-ref-storm-message absolute left-1/2 top-[43%] z-[65] -translate-x-1/2 rounded-2xl border-2 border-cyan-100 bg-[#001d4d]/92 px-5 py-3 text-center font-serif text-3xl font-black text-white shadow-[0_0_38px_rgba(50,185,255,.95)]">
             {phase === "stormCharge" ? "STORM CHARGE" : `×${stormMultiplier}`}
           </div>
@@ -617,14 +641,15 @@ export function OlympusStormReference() {
 
         {bonusActive && (
           <div className="os-storm-level-hud absolute left-[8%] top-[18.2%] z-[57] w-[84%]" key={`level-${stormLevel}-${levelPulseKey}`}>
-            <div className="flex items-center justify-between text-[8px] font-black tracking-[.12em] text-blue-50">
-              <span>STORM LEVEL {stormLevel}</span>
-              <span>ASCENSION ×{levelMultiplier.toFixed(levelMultiplier % 1 === 0 ? 0 : 2)}</span>
-              <span>{freeSpinsLeft} FS</span>
+            <div className="os-storm-hud-row">
+              <span><small>FREE SPINS</small><strong>{freeSpinsLeft}</strong></span>
+              <span><small>STORM LEVEL</small><strong>{stormLevel}</strong></span>
+              <span><small>ENERGIA</small><strong>{Math.round(energyPercent)}%</strong></span>
             </div>
             <div className="mt-1 h-1.5 overflow-hidden rounded-full border border-cyan-100/45 bg-[#00122d]/85">
               <div className="os-storm-energy-fill h-full rounded-full" style={{ width: `${energyPercent}%` }} />
             </div>
+            <p className="os-storm-hud-multiplier">ASCENSION ×{levelMultiplier.toFixed(levelMultiplier % 1 === 0 ? 0 : 2)}</p>
           </div>
         )}
 
@@ -685,7 +710,7 @@ export function OlympusStormReference() {
             <p className="font-serif text-[clamp(1.1rem,7vw,2rem)] font-black leading-none text-[#ffd95b] tabular-nums drop-shadow-[0_2px_0_#5b3100]">
               <AnimatedWinCounter value={win} duration={winDuration} />
             </p>
-            {stormMultiplier > 1 && stormActive && (
+            {stormMultiplier > 1 && phase === "stormImpact" && (
               <p className="mt-0.5 text-[8px] font-black text-cyan-200">STORM ×{stormMultiplier}</p>
             )}
           </div>
@@ -697,7 +722,7 @@ export function OlympusStormReference() {
           onClick={openFeatureModal}
           disabled={roundBusy || autoLeft > 0 || bonusActive || featurePending || featureModalOpen || !src}
           aria-label="Abrir Storm Ascension"
-          className="os-feature-buy-button absolute left-[3.1%] top-[78.25%] z-50 h-[5.25%] w-[20.5%] rounded-xl disabled:cursor-not-allowed disabled:opacity-40"
+          className="os-ref-control os-feature-buy-button absolute left-[3.1%] top-[78.25%] z-50 h-[5.25%] w-[20.5%] rounded-xl disabled:cursor-not-allowed disabled:opacity-40"
         >
           <span className="os-feature-buy-icon" aria-hidden>ϟ</span>
           <span>BÔNUS</span>
@@ -715,14 +740,14 @@ export function OlympusStormReference() {
           onClick={() => changeBet(-1)}
           disabled={roundBusy || autoLeft > 0 || bonusActive || featureModalOpen}
           aria-label="Diminuir aposta"
-          className="absolute right-[27.8%] top-[84.3%] z-50 size-[7%] rounded-full disabled:opacity-40"
+          className="os-ref-control absolute right-[27.8%] top-[84.3%] z-50 w-[7%] aspect-square rounded-full disabled:opacity-40"
         />
         <button
           type="button"
           onClick={() => changeBet(1)}
           disabled={roundBusy || autoLeft > 0 || bonusActive || featureModalOpen}
           aria-label="Aumentar aposta"
-          className="absolute right-[1.2%] top-[84.3%] z-50 size-[7%] rounded-full disabled:opacity-40"
+          className="os-ref-control absolute right-[1.2%] top-[84.3%] z-50 w-[7%] aspect-square rounded-full disabled:opacity-40"
         />
 
         <button
@@ -732,7 +757,7 @@ export function OlympusStormReference() {
           aria-pressed={turbo}
           disabled={roundBusy || bonusActive || featureModalOpen}
           className={cn(
-            "absolute right-[1.3%] top-[78.1%] z-50 size-[8.8%] rounded-full disabled:opacity-50",
+            "os-ref-control absolute right-[1.3%] top-[78.1%] z-50 w-[8.8%] aspect-square rounded-full disabled:opacity-50",
             turbo && "ring-2 ring-cyan-100 shadow-[0_0_25px_#45c8ff]",
           )}
         />
@@ -742,7 +767,7 @@ export function OlympusStormReference() {
             type="button"
             onClick={() => { autoStopRef.current = true; }}
             aria-label="Parar auto play"
-            className="absolute left-[4.5%] top-[92.6%] z-50 h-[5.7%] w-[25%] rounded-xl"
+            className="os-ref-control absolute left-[4.5%] top-[92.6%] z-50 h-[5.7%] w-[25%] rounded-xl"
           >
             <span className="absolute right-0 top-0 rounded-full bg-cyan-500 px-1.5 text-[9px] font-black text-white">{autoLeft}</span>
           </button>
@@ -752,7 +777,7 @@ export function OlympusStormReference() {
             onClick={() => void startAuto()}
             disabled={roundBusy || insufficient || !src || bonusActive || featureModalOpen || featurePending}
             aria-label="Auto play"
-            className="absolute left-[4.5%] top-[92.6%] z-50 h-[5.7%] w-[25%] rounded-xl disabled:opacity-40"
+            className="os-ref-control absolute left-[4.5%] top-[92.6%] z-50 h-[5.7%] w-[25%] rounded-xl disabled:opacity-40"
           />
         )}
 
@@ -761,7 +786,7 @@ export function OlympusStormReference() {
           onClick={setMaxBet}
           disabled={roundBusy || autoLeft > 0 || bonusActive || featureModalOpen}
           aria-label="Aposta máxima"
-          className="absolute right-[4.4%] top-[92.6%] z-50 h-[5.7%] w-[25.5%] rounded-xl disabled:opacity-40"
+          className="os-ref-control absolute right-[4.4%] top-[92.6%] z-50 h-[5.7%] w-[25.5%] rounded-xl disabled:opacity-40"
         />
 
         <button
@@ -771,10 +796,12 @@ export function OlympusStormReference() {
           aria-label="Girar Olympus Storm"
           aria-busy={roundBusy}
           className={cn(
-            "os-ref-spin-button absolute left-[35.5%] top-[85.1%] z-50 size-[29%] rounded-full disabled:cursor-not-allowed disabled:opacity-45",
+            "os-ref-spin-button absolute left-[35.5%] top-[81.2%] z-50 w-[29%] aspect-square overflow-hidden rounded-full disabled:cursor-not-allowed disabled:opacity-45",
             roundBusy && "scale-95",
           )}
-        />
+        >
+          <span className="os-ref-spin-glow" aria-hidden />
+        </button>
 
         {featureModalOpen && (
           <div className="os-feature-modal absolute inset-0 z-[95] grid place-items-center" data-testid="olympus-feature-modal">
@@ -784,17 +811,17 @@ export function OlympusStormReference() {
               aria-label="Fechar Storm Ascension"
               onClick={() => setFeatureModalOpen(false)}
             />
-            <section className="os-feature-panel relative z-10 w-[88%] max-h-[76%] overflow-y-auto rounded-[22px] border border-[#ffe28a]/65 bg-[linear-gradient(155deg,#051a42_0%,#07143a_56%,#24184a_100%)] p-4 text-center text-white shadow-[0_22px_80px_rgba(0,0,0,.72),0_0_45px_rgba(71,190,255,.25)]">
+            <section className="os-feature-panel relative z-10 w-[88%] max-h-[72%] overflow-y-auto rounded-[22px] border border-[#ffe28a]/65 bg-[linear-gradient(155deg,#051a42_0%,#07143a_56%,#24184a_100%)] p-3 text-center text-white shadow-[0_22px_80px_rgba(0,0,0,.72),0_0_45px_rgba(71,190,255,.25)]">
               <div className="mx-auto mb-2 grid size-12 place-items-center rounded-full border border-[#ffe49d]/70 bg-[#0b2a62] text-3xl text-[#fff1a5] shadow-[0_0_28px_rgba(79,197,255,.45)]">ϟ</div>
               <p className="text-[9px] font-black tracking-[.28em] text-cyan-100">OLYMPUS STORM</p>
               <h2 className="mt-1 font-serif text-2xl font-black text-[#fff0a7]">STORM ASCENSION</h2>
               <p className="mt-1 font-black text-cyan-50">8 FREE SPINS</p>
-              <div className="mx-auto mt-3 max-w-[18rem] space-y-1.5 text-left text-[10px] leading-relaxed text-blue-50/90">
+              <div className="mx-auto mt-2 max-w-[18rem] space-y-1 text-left text-[10px] leading-relaxed text-blue-50/90">
                 <p>• Storm Level persiste durante o bônus.</p>
                 <p>• Cascatas carregam a tempestade.</p>
                 <p>• Storm Hits aceleram a ascensão.</p>
               </div>
-              <div className="mt-3 grid grid-cols-2 gap-2 text-left">
+              <div className="mt-2 grid grid-cols-2 gap-2 text-left">
                 <div className="rounded-xl border border-cyan-100/20 bg-black/25 p-2">
                   <span className="block text-[8px] font-black tracking-wider text-blue-200">APOSTA</span>
                   <strong className="text-sm text-white">{formatCoins(bet)}</strong>
@@ -804,15 +831,15 @@ export function OlympusStormReference() {
                   <strong className="text-sm text-[#fff3bd]">{formatCoins(featureCost)}</strong>
                 </div>
               </div>
-              <p className="mt-3 text-[8px] font-black tracking-[.16em] text-blue-100/70">MOEDAS FICTÍCIAS · SEM VALOR REAL</p>
+              <p className="mt-2 text-[8px] font-black tracking-[.16em] text-blue-100/70">MOEDAS FICTÍCIAS · SEM VALOR REAL</p>
               {featureInsufficient && (
                 <p className="mt-2 rounded-lg border border-rose-200/35 bg-rose-950/35 px-2 py-1.5 text-[9px] font-bold text-rose-100">Saldo fictício insuficiente.</p>
               )}
-              <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="mt-3 grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setFeatureModalOpen(false)}
-                  className="rounded-xl border border-white/20 bg-white/5 px-3 py-2.5 text-[10px] font-black tracking-wider text-blue-50 active:scale-[.98]"
+                  className="os-ref-control min-h-11 rounded-xl border border-white/20 bg-white/5 px-3 py-2.5 text-[10px] font-black tracking-wider text-blue-50"
                 >
                   CANCELAR
                 </button>
@@ -821,7 +848,7 @@ export function OlympusStormReference() {
                   data-testid="olympus-feature-activate"
                   onClick={() => void activateFeatureBuy()}
                   disabled={featureInsufficient || featurePending}
-                  className="rounded-xl border border-[#fff0ac]/65 bg-[linear-gradient(180deg,#ffe682,#b97a15)] px-3 py-2.5 text-[10px] font-black tracking-wider text-[#1d1606] shadow-[0_0_24px_rgba(255,209,86,.25)] active:scale-[.98] disabled:opacity-40"
+                  className="os-ref-control min-h-11 rounded-xl border border-[#fff0ac]/65 bg-[linear-gradient(180deg,#ffe682,#b97a15)] px-3 py-2.5 text-[10px] font-black tracking-wider text-[#1d1606] shadow-[0_0_24px_rgba(255,209,86,.25)] disabled:opacity-40"
                 >
                   ATIVAR
                 </button>

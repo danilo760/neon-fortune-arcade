@@ -75,6 +75,7 @@
 .os-ref-energy-3::after { opacity: .24; }
 .os-ref-energy-4::after { opacity: .3; animation: os-energy-surge .72s ease-in-out infinite; }
 .os-ref-machine--storm::after { opacity: .42; }
+.os-ref-machine--anticipation::after { opacity: .18; }
 
 .os-ref-grid {
   transform-origin: center;
@@ -139,6 +140,11 @@
   filter: drop-shadow(0 0 12px rgba(102, 218, 255, .72));
 }
 
+.os-ref-zeus-stage.is-idle .os-ref-zeus-aura {
+  opacity: .11;
+  transform: translate(-50%, -50%) scale(.94);
+}
+
 .os-ref-zeus-bolt {
   position: absolute;
   left: 62%;
@@ -173,6 +179,11 @@
 .os-ref-zeus-stage.is-striking .os-ref-zeus-bolt,
 .os-ref-zeus-stage.is-strike .os-ref-zeus-bolt {
   animation: os-zeus-strike .34s cubic-bezier(.16, .76, .3, 1) both;
+}
+
+.os-ref-zeus-stage.is-afterglow .os-ref-zeus-aura {
+  opacity: .25;
+  transform: translate(-50%, -50%) scale(1.02);
 }
 
 .os-ref-storm-message {
