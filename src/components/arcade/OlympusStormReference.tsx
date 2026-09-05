@@ -244,7 +244,7 @@ export function OlympusStormReference() {
       setLandingColumn(OLYMPUS_COLUMNS);
       setPhase("landing");
       playSound(plan.scatterCount > 0 ? "olympusScatter" : "tick", soundEnabled);
-      await wait(90);
+      await wait(210);
       setLandingColumn(-1);
       return;
     }
@@ -273,7 +273,7 @@ export function OlympusStormReference() {
         playSound("olympusAnticipation", soundEnabled);
         await wait(360);
       } else {
-        await wait(72);
+        await wait(250);
       }
       previousScatterCount = scatterCount;
     }
@@ -453,8 +453,6 @@ export function OlympusStormReference() {
     setStormLevel(1);
     setStormEnergy(0);
 
-    // Resultado base é fechado antes da animação. Se houver trigger, o plano completo
-    // da feature é fechado antes da intro do bônus; a apresentação nunca decide payout.
     const plan = planOlympusRound(bet);
     let displayedTotal = await presentRound(plan, 0, false);
     let feature: OlympusFeaturePlan | undefined;
