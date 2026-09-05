@@ -907,7 +907,7 @@ export function GoldenTigerReference() {
             type="button"
             onClick={() => setAutoOpen(true)}
             disabled={spinning || bonusActive || insufficient || !src || featureBuyOpen || featureBuyRunning}
-            aria-label={`Configurar auto play: ${autoRounds} rodadas`
+            aria-label={`Configurar auto play: ${autoRounds} rodadas`}
             className="absolute left-[22.4%] top-[86.1%] z-50 h-[8.3%] w-[17.8%] rounded-[28px] disabled:opacity-40"
           />
         )}
