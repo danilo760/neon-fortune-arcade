@@ -12,6 +12,10 @@
   60% { opacity: 1; transform: scale(1.15) rotate(5deg); }
   100% { opacity: 1; transform: scale(1) rotate(0); }
 }
+@keyframes cc-bomb-pressure {
+  0%,100% { transform: scale(.96); filter: brightness(1) saturate(1); }
+  50% { transform: scale(1.07); filter: brightness(1.2) saturate(1.18); }
+}
 @keyframes cc-bomb-burst {
   0% { opacity: 1; transform: scale(1); filter: brightness(1); }
   38% { opacity: 1; transform: scale(1.42); filter: brightness(1.8); }
@@ -69,6 +73,7 @@
   font-size: clamp(.62rem,3vw,.9rem);
   text-shadow: 0 1px 3px #5b003c;
   box-shadow: 0 0 12px rgba(255,103,221,.9), inset 0 0 10px rgba(255,255,255,.34);
+  animation: cc-bomb-pressure .9s ease-in-out infinite;
 }
 .cc-grid-bomb__sugar {
   position: absolute;
@@ -82,6 +87,7 @@
   filter: drop-shadow(0 0 4px rgba(255,255,255,.85));
 }
 .cc-grid-bomb.is-bursting { animation: cc-bomb-burst .36s ease-out both; }
+.cc-grid-bomb.is-bursting .cc-grid-bomb__core { animation:none; }
 .cc-grid-bomb.is-bursting::after {
   content: "";
   position: absolute;
@@ -103,6 +109,7 @@
   .cc-grid.is-bomb-impact,
   .cc-grid-bomb,
   .cc-grid-bomb.is-bursting,
+  .cc-grid-bomb__core,
   .cc-machine--streak::after,
   .cc-party-candy__halo {
     animation: none !important;

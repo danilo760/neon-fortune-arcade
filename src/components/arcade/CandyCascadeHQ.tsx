@@ -503,7 +503,7 @@ export function CandyCascadeHQ() {
 
         <div className={cn("cc-grid absolute left-[4%] top-[28.3%] z-20 grid h-[45.8%] w-[93.3%] grid-cols-6 grid-rows-5 overflow-hidden", phase === "spinning" && "is-spinning", phase === "falling" && "is-falling", phase === "bombBurst" && "is-bomb-impact", phase === "anticipation" && "is-anticipating")}>
           {grid.map((symbol, index) => (
-            <div key={index} className={cn("cc-cell relative overflow-hidden border border-[#f7bd45]/55 bg-[#480529]", winning.has(index) && "cc-ref-win", symbol === "partyCandy" && "cc-cell--scatter")}>
+            <div key={index} className={cn("cc-cell relative overflow-hidden border border-[#f7bd45]/55 bg-[#480529]", winning.has(index) && "cc-ref-win", winning.size > 0 && !winning.has(index) && "cc-cell--dim", ["lollipop", "jelly", "cupcake", "diamond"].includes(symbol) && "cc-cell--premium", symbol === "partyCandy" && "cc-cell--scatter")}>
               <CandySymbol id={symbol} />
             </div>
           ))}
