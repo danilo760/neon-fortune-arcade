@@ -36,7 +36,11 @@ type ActiveBall = {
 type BoardPoint = { left: number; top: number };
 type MotionEntry = { at: number; point: BoardPoint };
 
-const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+function reducedMotion() {
+  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, reducedMotion() ? 0 : ms));
 
 function ballPosition(path: readonly number[], step: number, rows: number, bucket?: number, bucketCount?: number): BoardPoint {
   if (step >= rows && bucket !== undefined && bucketCount) {
@@ -249,6 +253,7 @@ export function PlinkoReference() {
   }
 
   function startAudioScheduler(balls: ActiveBall[], stagger: number) {
+    if (reducedMotion()) return;
     const events: number[] = [];
     balls.forEach((_ball, ballIndex) => {
       let at = ballIndex * stagger + 72;
@@ -298,6 +303,14 @@ export function PlinkoReference() {
     element.style.transform = pointTransform(initial, rect.width, rect.height);
     element.style.willChange = "transform";
     playSound("plinkoLaunch", soundEnabled);
+
+    if (reducedMotion()) {
+      element.style.transform = pointTransform(final, rect.width, rect.height, 1.2);
+      element.style.willChange = "auto";
+      element.className = `plinko-ref-ball plinko-ref-ball--landed plinko-ref-ball--tone-${tone}`;
+      settleBallOutcome(ball);
+      return ball;
+    }
 
     const trailNodes = trailRefs.current.get(ball.id) ?? [];
     trailNodes.forEach((node, index) => {
@@ -436,6 +449,11 @@ export function PlinkoReference() {
     }
 
     resetImperativeMotion();
+    for (const ball of prepared) {
+      ballRefs.current.delete(ball.id);
+      trailRefs.current.delete(ball.id);
+      impactRefs.current.delete(ball.id);
+    }
     setActiveBalls([]);
     setLandedBuckets(new Set());
     setLaunched(0);
@@ -464,6 +482,7 @@ export function PlinkoReference() {
           type="button"
           className="plinko-ref-icon plinko-ref-icon--sound"
           aria-label={soundEnabled ? "Desativar som" : "Ativar som"}
+          aria-pressed={soundEnabled}
           onClick={() => { arcadeActions.toggleSound(); playSound("click", !soundEnabled); }}
         >
           {soundEnabled ? <Volume2 /> : <VolumeX />}
@@ -487,7 +506,8 @@ export function PlinkoReference() {
                     ref={(node) => {
                       const pool = trailRefs.current.get(ball.id) ?? Array.from({ length: TRAIL_ECHO_COUNT }, () => null);
                       pool[index] = node;
-                      trailRefs.current.set(ball.id, pool);
+                      if (node || pool.some(Boolean)) trailRefs.current.set(ball.id, pool);
+                      else trailRefs.current.delete(ball.id);
                     }}
                     className={cn("plinko-ref-trail", "plinko-ref-trail--echo", `plinko-ref-trail--tone-${tone}`)}
                   />
@@ -565,7 +585,7 @@ export function PlinkoReference() {
         >
           {busy ? <CircleDot /> : <Play />}
           <strong>{busy ? "MULTI DROP" : `DROP ×${ballsPerRun}`}</strong>
-          <small>{busy ? `${inFlight} in flight` : formatCoins(runCost)}</small>
+          <small>{busy ? `${inFlight} em queda` : formatCoins(runCost)}</small>
         </button>
 
         <div className="plinko-ref-hud" aria-label="Resumo do jogo">
