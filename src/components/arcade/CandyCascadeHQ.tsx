@@ -332,10 +332,10 @@ export function CandyCascadeHQ() {
     const plan = planCandyRound(bet, Math.random, "base");
     const naturalFeature = plan.scatterAward > 0 ? planCandyFeature(bet, plan.scatterAward) : null;
 
-    for (let step = 0; step < (turbo ? 4 : 8); step += 1) {
-      setGrid(makeCandyGrid(Math.random, "base"));
-      await wait(turbo ? 38 : 62);
-    }
+    // The result is already precomputed. Keep the existing grid mounted and let
+    // .cc-grid.is-spinning animate it on the compositor instead of rebuilding
+    // 30 React cells several times just to fake reel motion.
+    await wait(turbo ? 190 : 470);
     setGrid(plan.initialGrid);
     await wait(turbo ? 55 : 140);
 
