@@ -439,7 +439,6 @@ export function GoldenTigerReference() {
       setStoppedColumns(5);
       stoppedRef.current = 5;
       setAnticipation(0);
-      setSpinning(false);
       setWinning(result.winning);
       setScatters(result.scatterIndexes);
       setPhase("evaluating");
@@ -486,6 +485,7 @@ export function GoldenTigerReference() {
         setPhase(free ? "bonusPlaying" : "idle");
       }
 
+      setSpinning(false);
       busyRef.current = false;
       return result;
     },
