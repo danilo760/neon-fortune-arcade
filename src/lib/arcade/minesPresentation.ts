@@ -3,14 +3,14 @@ export type MinesRiskLevel = "low" | "medium" | "high" | "extreme";
 export const MINES_PRESENTATION_TIMING = Object.freeze({
   press: 60,
   unlock: 82,
-  gemSettle: 205,
-  possibleWinCount: 260,
+  gemSettle: 145,
+  possibleWinCount: 220,
   danger: 92,
   explosion: 190,
   lostSettle: 55,
   cashoutPress: 90,
-  cashoutCount: 300,
-  cashoutSettle: 80,
+  cashoutCount: 280,
+  cashoutSettle: 70,
 });
 
 export const MINES_SAFE_REVEAL_BUDGET =
