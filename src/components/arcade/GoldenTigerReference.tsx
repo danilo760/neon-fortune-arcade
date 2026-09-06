@@ -26,7 +26,6 @@ import {
   goldenTigerFeatureBuyCost,
   goldenTigerWinTier,
   makeGoldenTigerGrid,
-  pickGoldenTigerSymbol,
   type GoldenTigerMode,
   type GoldenTigerSpinResult,
   type GoldenTigerSymbolId,
@@ -90,6 +89,21 @@ const CROPS: Record<GoldenTigerSymbolId, Crop> = {
   lantern: { x: 543, y: 894, w: CELL_W, h: CELL_H },
 };
 
+const REEL_STRIP_SYMBOLS: GoldenTigerSymbolId[] = [
+  "ingot",
+  "jade",
+  "orange",
+  "fortuneBag",
+  "firecracker",
+  "wild",
+  "lantern",
+  "lion",
+  "scatter",
+  "orange",
+  "jade",
+  "fortuneBag",
+];
+
 const BET_STEPS = [10, 50, 100, 200, 500, 1_000, 5_000, 10_000] as const;
 
 const INITIAL_GRID: GoldenTigerSymbolId[] = [
@@ -116,16 +130,6 @@ function reducedMotionNow() {
 
 function wait(ms: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, reducedMotionNow() ? 0 : ms));
-}
-
-function createPresentationRng() {
-  let state = (Date.now() ^ 0x9e3779b9) >>> 0;
-  return () => {
-    state ^= state << 13;
-    state ^= state >>> 17;
-    state ^= state << 5;
-    return (state >>> 0) / 4_294_967_296;
-  };
 }
 
 function useReducedMotionPreference() {
@@ -181,6 +185,43 @@ const ReferenceSymbol = memo(function ReferenceSymbol({ id, src }: { id: GoldenT
           top: `${-(crop.y / crop.h) * 100}%`,
         }}
       />
+    </div>
+  );
+});
+
+const GoldenReelStrip = memo(function GoldenReelStrip({
+  column,
+  src,
+  turbo,
+}: {
+  column: number;
+  src: string;
+  turbo: boolean;
+}) {
+  const rotated = useMemo(() => {
+    const offset = (column * 2) % REEL_STRIP_SYMBOLS.length;
+    const sequence = [
+      ...REEL_STRIP_SYMBOLS.slice(offset),
+      ...REEL_STRIP_SYMBOLS.slice(0, offset),
+    ];
+    return [...sequence, ...sequence];
+  }, [column]);
+  const style = {
+    left: `${column * 20}%`,
+    "--gt-strip-duration": `${turbo ? 320 + column * 12 : 680 + column * 28}ms`,
+    "--gt-strip-delay": `${-column * 73}ms`,
+  } as CSSProperties;
+
+  return (
+    <div className="gt-ref-live-reel" style={style} aria-hidden>
+      <div className="gt-ref-live-reel__track">
+        {rotated.map((symbol, index) => (
+          <div className="gt-ref-live-reel__cell" key={`${column}-${index}-${symbol}`}>
+            <ReferenceSymbol id={symbol} src={src} />
+          </div>
+        ))}
+      </div>
+      <span className="gt-ref-live-reel__motion" />
     </div>
   );
 });
@@ -299,21 +340,11 @@ export function GoldenTigerReference() {
   const [featureBuyError, setFeatureBuyError] = useState<string | null>(null);
 
   const busyRef = useRef(false);
-  const stoppedRef = useRef(5);
   const autoStopRef = useRef(false);
   const bonusRef = useRef(false);
-  const rollingRef = useRef<number | null>(null);
-  const presentationRngRef = useRef<() => number>(createPresentationRng());
   const featureBuyLockRef = useRef(createGoldenFortunePurchaseLock());
 
   useEffect(() => hydrateFromStorage(), []);
-
-  useEffect(
-    () => () => {
-      if (rollingRef.current !== null) window.clearInterval(rollingRef.current);
-    },
-    [],
-  );
 
   const spinRound = useCallback(
     async (free: boolean): Promise<GoldenTigerSpinResult | null> => {
@@ -330,7 +361,6 @@ export function GoldenTigerReference() {
       setTigerReaction(free ? "bonus" : "idle");
       setFlyingCardColumn(null);
       setStoppedColumns(0);
-      stoppedRef.current = 0;
       setLandingColumn(-1);
       setWinning(new Set());
       setScatters(new Set());
@@ -343,18 +373,7 @@ export function GoldenTigerReference() {
       const finalGrid = makeGoldenTigerGrid(mode);
       const result = evaluateGoldenTiger(finalGrid, bet, mode);
 
-      if (rollingRef.current !== null) window.clearInterval(rollingRef.current);
-      rollingRef.current = window.setInterval(() => {
-        setGrid((current) =>
-          current.map((symbol, index) =>
-            index % 5 < stoppedRef.current
-              ? symbol
-              : pickGoldenTigerSymbol(mode, presentationRngRef.current),
-          ),
-        );
-      }, turbo ? 48 : 72);
-
-      await wait(turbo ? 160 : 440);
+      await wait(turbo ? 170 : 520);
       let revealedScatters = 0;
       let previousScatters = 0;
       let hadTwoScatters = false;
@@ -367,7 +386,6 @@ export function GoldenTigerReference() {
             index % 5 === column ? (finalGrid[index] ?? symbol) : symbol,
           ),
         );
-        stoppedRef.current = column + 1;
         setStoppedColumns(column + 1);
         setLandingColumn(column);
         playSound("tick", soundEnabled);
@@ -387,7 +405,7 @@ export function GoldenTigerReference() {
         if (crossedFirst) {
           setTigerReaction("notice");
           playSound("tigerScatter", soundEnabled);
-          await wait(turbo ? 70 : 150);
+          await wait(turbo ? 75 : 175);
         }
 
         if (crossedThird) {
@@ -395,7 +413,7 @@ export function GoldenTigerReference() {
           setAnticipation(0);
           setPhase("bonusTrigger");
           setTigerReaction("celebrate");
-          await wait(turbo ? 80 : 150);
+          await wait(turbo ? 85 : 170);
           playSound(free ? "tigerScatter" : "tigerBonus", soundEnabled);
           await wait(turbo ? 240 : 480);
           if (columnsRemain) {
@@ -421,23 +439,18 @@ export function GoldenTigerReference() {
         } else if (columnsRemain && revealedScatters === 1) {
           setAnticipation(1);
           setPhase("anticipation");
-          await wait(turbo ? 120 : 260);
+          await wait(turbo ? 125 : 280);
         } else if (!crossedThird) {
           setAnticipation(0);
-          await wait(turbo ? 70 : 160);
+          await wait(turbo ? 75 : 210);
         }
 
         previousScatters = revealedScatters;
       }
 
-      if (rollingRef.current !== null) {
-        window.clearInterval(rollingRef.current);
-        rollingRef.current = null;
-      }
       setGrid(finalGrid);
       setLandingColumn(-1);
       setStoppedColumns(5);
-      stoppedRef.current = 5;
       setAnticipation(0);
       setWinning(result.winning);
       setScatters(result.scatterIndexes);
@@ -810,7 +823,6 @@ export function GoldenTigerReference() {
           <div className="gt-ref-grid absolute left-[6.7%] top-[32.53%] z-20 grid h-[31.4%] w-[85.1%] grid-cols-5 grid-rows-3 overflow-hidden">
             {grid.map((symbol, index) => {
               const column = index % 5;
-              const isRolling = spinning && column >= stoppedColumns;
               const isLanding = spinning && landingColumn === column;
               const isAnticipating = spinning && anticipation > 0 && column >= stoppedColumns;
               const scatterOrder = scatterOrderByIndex.get(index) ?? -1;
@@ -824,7 +836,6 @@ export function GoldenTigerReference() {
                   style={tileStyle}
                   className={cn(
                     "gt-ref-reel-cell relative overflow-hidden border-[1px] border-[#f8bd35]/45 bg-[#4b0710]",
-                    isRolling && "gt-ref-spinning",
                     isLanding && "gt-ref-land",
                     isAnticipating && "gt-ref-anticipate",
                     scatters.has(index) && "gt-ref-scatter",
@@ -837,6 +848,11 @@ export function GoldenTigerReference() {
                 </div>
               );
             })}
+            {spinning && !reducedMotion && Array.from({ length: 5 }, (_, column) =>
+              column >= stoppedColumns ? (
+                <GoldenReelStrip key={`live-reel-${column}`} column={column} src={src} turbo={turbo} />
+              ) : null,
+            )}
           </div>
         )}
 
