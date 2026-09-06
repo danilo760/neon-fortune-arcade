@@ -39,6 +39,7 @@ type PresentationPhase =
   | "stormHit"
   | "stormImpact"
   | "collapse"
+  | "refill"
   | "bonusTrigger"
   | "featureCinematic"
   | "bonusIntro"
@@ -52,6 +53,7 @@ type BonusSource = "natural" | "featureBuy" | null;
 
 const FULL_W = 941;
 const FULL_H = 1672;
+const OLYMPUS_ROWS = 5;
 
 const CROPS: Record<Exclude<OlympusSymbolId, "scatter">, Crop> = {
   bolt: { x: 75, y: 414, w: 258, h: 235 },
@@ -78,6 +80,36 @@ function reducedMotion() {
 
 function wait(ms: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, reducedMotion() ? 0 : ms));
+}
+
+function removedInColumn(winning: ReadonlySet<number>, column: number) {
+  let count = 0;
+  for (const index of winning) {
+    if (index % OLYMPUS_COLUMNS === column) count += 1;
+  }
+  return count;
+}
+
+function collapseDistance(winning: ReadonlySet<number>, index: number) {
+  const column = index % OLYMPUS_COLUMNS;
+  const row = Math.floor(index / OLYMPUS_COLUMNS);
+  let rows = 0;
+  for (const winningIndex of winning) {
+    if (
+      winningIndex % OLYMPUS_COLUMNS === column &&
+      Math.floor(winningIndex / OLYMPUS_COLUMNS) > row
+    ) {
+      rows += 1;
+    }
+  }
+  return rows;
+}
+
+function refillDistance(winning: ReadonlySet<number>, index: number) {
+  const column = index % OLYMPUS_COLUMNS;
+  const row = Math.floor(index / OLYMPUS_COLUMNS);
+  const removed = removedInColumn(winning, column);
+  return row < removed ? removed - row : 0;
 }
 
 function useReferenceBlob() {
@@ -150,6 +182,7 @@ const OlympusGrid = memo(function OlympusGrid({
   landingColumn: number;
 }) {
   const reelPresentation = phase === "spinning" || phase === "landing" || phase === "anticipation";
+  const cascadeTransition = phase === "collapse" || phase === "refill";
 
   return (
     <div
@@ -159,6 +192,7 @@ const OlympusGrid = memo(function OlympusGrid({
         phase === "landing" && "os-ref-grid--landing",
         phase === "anticipation" && "os-ref-grid--anticipation",
         phase === "collapse" && "os-ref-grid--collapse",
+        phase === "refill" && "os-ref-grid--refill",
         phase === "stormHit" && "os-ref-grid--storm-hit",
         phase === "bonusPlaying" && "os-ref-grid--bonus",
       )}
@@ -170,6 +204,9 @@ const OlympusGrid = memo(function OlympusGrid({
         const isLanding =
           (phase === "landing" || phase === "anticipation") &&
           (landingColumn === OLYMPUS_COLUMNS || column === landingColumn);
+        const fallRows = phase === "collapse" && !winning.has(index) ? collapseDistance(winning, index) : 0;
+        const refillRows = phase === "refill" ? refillDistance(winning, index) : 0;
+        const showWinState = !cascadeTransition;
 
         return (
           <div
@@ -178,8 +215,11 @@ const OlympusGrid = memo(function OlympusGrid({
               "os-ref-cell relative overflow-hidden border border-[#9fdcff]/20 bg-[#031735]",
               isRolling && "os-ref-cell--rolling",
               isLanding && "os-ref-cell--landing",
-              winning.has(index) && "os-ref-win",
-              winning.size > 0 && !winning.has(index) && "os-ref-cell--dim",
+              phase === "collapse" && winning.has(index) && "os-ref-cell--clearing",
+              fallRows > 0 && `os-ref-cell--fall-${Math.min(OLYMPUS_ROWS, fallRows)}`,
+              refillRows > 0 && `os-ref-cell--refill-${Math.min(OLYMPUS_ROWS, refillRows)}`,
+              showWinState && winning.has(index) && "os-ref-win",
+              showWinState && winning.size > 0 && !winning.has(index) && "os-ref-cell--dim",
               symbol === "scatter" && "os-ref-cell--scatter",
               premiumSymbol && "os-ref-cell--premium",
             )}
@@ -350,12 +390,13 @@ export function OlympusStormReference() {
         setStormLevel(cascade.stormLevelAfter);
       }
 
-      setWinning(new Set());
       setPhase("collapse");
       playSound("olympusFall", soundEnabled);
-      await wait(turbo ? 80 : 190);
+      await wait(turbo ? 90 : 210);
       setGrid(cascade.nextGrid);
-      await wait(turbo ? 65 : 150);
+      setPhase("refill");
+      await wait(turbo ? 105 : 245);
+      setWinning(new Set());
     }
 
     setGrid(plan.finalGrid);
