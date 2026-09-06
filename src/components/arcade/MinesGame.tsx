@@ -44,6 +44,8 @@ export function MinesGame() {
   const [revealed, setRevealed] = useState<Set<number>>(() => new Set());
   const [status, setStatus] = useState<RoundStatus>("idle");
   const [lastPayout, setLastPayout] = useState(0);
+  const [lastRoundSafeCells, setLastRoundSafeCells] = useState(0);
+  const [lastRoundMultiplier, setLastRoundMultiplier] = useState(1);
   const [lastSafeReveal, setLastSafeReveal] = useState<number | null>(null);
   const [triggeredMine, setTriggeredMine] = useState<number | null>(null);
   const [openingIndex, setOpeningIndex] = useState<number | null>(null);
@@ -76,6 +78,8 @@ export function MinesGame() {
     revealedRef.current = new Set();
     setRevealed(revealedRef.current);
     setLastPayout(0);
+    setLastRoundSafeCells(0);
+    setLastRoundMultiplier(1);
     setLastSafeReveal(null);
     setTriggeredMine(null);
     setOpeningIndex(null);
@@ -116,6 +120,8 @@ export function MinesGame() {
       note: `${safeCells} casas seguras`,
     });
     setLastPayout(payout);
+    setLastRoundSafeCells(safeCells);
+    setLastRoundMultiplier(finalMultiplier);
     setStatus("won");
     setRevealPhase("idle");
     revealBusyRef.current = false;
@@ -139,6 +145,8 @@ export function MinesGame() {
     await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.unlock, reduceMotion));
 
     if (mineSet.has(index)) {
+      const safeCells = revealedRef.current.size;
+      const reachedMultiplier = minesMultiplier(mineCount, safeCells);
       setTriggeredMine(index);
       setRevealPhase("danger");
       playMinesSound("danger", soundEnabled);
@@ -150,6 +158,8 @@ export function MinesGame() {
       setRevealPhase("explode");
       playMinesSound("explosion", soundEnabled);
       await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.explosion, reduceMotion));
+      setLastRoundSafeCells(safeCells);
+      setLastRoundMultiplier(reachedMultiplier);
       setStatus("lost");
       arcadeActions.recordRound({
         slug: "neon-mines",
@@ -157,7 +167,7 @@ export function MinesGame() {
         bet,
         payout: 0,
         multiplier: 0,
-        note: "Mina encontrada",
+        note: `Mina encontrada após ${safeCells} casa(s) segura(s)`,
       });
       await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.lostSettle, reduceMotion));
       setRevealPhase("idle");
@@ -193,6 +203,12 @@ export function MinesGame() {
   const gemsLeft = Math.max(0, 25 - mineCount - revealed.size);
   const interactionLocked = revealPhase !== "idle";
   const configurationLocked = status === "playing" || interactionLocked;
+  const telemetryMultiplier = status === "playing"
+    ? multiplier
+    : status === "lost" || status === "won"
+      ? lastRoundMultiplier
+      : 1;
+  const telemetryOpened = status === "playing" ? revealed.size : 0;
   const possibleWin = status === "playing"
     ? displayedPossibleWin
     : status === "won"
@@ -203,9 +219,9 @@ export function MinesGame() {
   const possibleWinCaption = status === "playing"
     ? `${revealed.size} ${revealed.size === 1 ? "gema garantida" : "gemas garantidas"}`
     : status === "won"
-      ? "Ganho garantido"
+      ? `${lastRoundSafeCells} gemas · ${formatMultiplier(lastRoundMultiplier)}`
       : status === "lost"
-        ? "Rodada encerrada"
+        ? `Mina após ${lastRoundSafeCells} gemas · ${formatMultiplier(lastRoundMultiplier)}`
         : "Abra o cofre de cristal";
   const progress = Math.min(100, (revealed.size / Math.max(1, 25 - mineCount)) * 100);
 
@@ -249,8 +265,8 @@ export function MinesGame() {
 
         <div className={cn("mines-premium__telemetry", revealPhase === "gem" && "mines-premium__telemetry--counting")} aria-label="Informações da rodada">
           <div><small>RISCO</small><strong data-risk={minesRiskLevel(mineCount)}>{minesRiskLabel(mineCount)}</strong></div>
-          <div><small>MULTIPLICADOR</small><strong>{formatMultiplier(status === "playing" ? multiplier : 1)}</strong></div>
-          <div><small>GEMAS ABERTAS</small><strong>{revealed.size}</strong></div>
+          <div><small>MULTIPLICADOR</small><strong>{formatMultiplier(telemetryMultiplier)}</strong></div>
+          <div><small>GEMAS ABERTAS</small><strong>{telemetryOpened}</strong></div>
         </div>
 
         <div className="mines-premium__grid-frame">
@@ -322,15 +338,18 @@ export function MinesGame() {
         </div>
 
         {status === "lost" && (
-          <div className="mines-result mines-result--lost mines-premium__result" role="status">
+          <div className="mines-result mines-result--lost mines-premium__result" role="status" aria-live="assertive">
             <Bomb className="size-5" />
-            <div><strong>COFRE VIOLADO</strong><span>A mina explodiu. Somente a aposta fictícia desta rodada foi perdida.</span></div>
+            <div>
+              <strong>MINA ENCONTRADA</strong>
+              <span>{lastRoundSafeCells} gemas abertas · você chegou a {formatMultiplier(lastRoundMultiplier)} antes da explosão.</span>
+            </div>
           </div>
         )}
         {status === "won" && (
           <div className="mines-result mines-result--won mines-premium__result mines-premium__result--cashout" role="status">
             <Trophy className="size-5" />
-            <div><strong>CRISTAL GARANTIDO</strong><span>+ {formatCoins(lastPayout)} moedas fictícias</span></div>
+            <div><strong>CRISTAL GARANTIDO</strong><span>+ {formatCoins(lastPayout)} moedas fictícias · {formatMultiplier(lastRoundMultiplier)}</span></div>
           </div>
         )}
 
