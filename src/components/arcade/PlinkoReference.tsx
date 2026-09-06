@@ -56,13 +56,22 @@ function ballPosition(path: readonly number[], step: number, rows: number, bucke
 }
 
 function stepDuration(step: number, rows: number) {
-  return 58 + Math.round((step / Math.max(1, rows - 1)) * 24);
+  const progress = step / Math.max(1, rows - 1);
+  return 82 - Math.round(progress * 24);
 }
 
 function pointTransform(point: BoardPoint, width: number, height: number, scale = 1) {
   const x = ((point.left - 50) / 100) * width;
   const y = ((point.top - 4.5) / 100) * height;
   return `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) translate(-50%, -50%) scale(${scale})`;
+}
+
+function gravityMidpoint(from: BoardPoint, to: BoardPoint, timeProgress: number): BoardPoint {
+  const verticalProgress = timeProgress * timeProgress;
+  return {
+    left: from.left + (to.left - from.left) * timeProgress,
+    top: from.top + (to.top - from.top) * verticalProgress,
+  };
 }
 
 function buildBallMotion(ball: ActiveBall, rows: number, bucketCount: number, width: number, height: number) {
@@ -77,12 +86,44 @@ function buildBallMotion(ball: ActiveBall, rows: number, bucketCount: number, wi
 
   entries.push({ at, point: ballPosition(ball.path, rows, rows, ball.bucket, bucketCount) });
   const duration = Math.max(1, at);
-  const keyframes: Keyframe[] = entries.map((entry) => ({
-    transform: pointTransform(entry.point, width, height),
-    offset: entry.at / duration,
-  }));
+  const keyframes: Keyframe[] = [
+    { transform: pointTransform(entries[0]!.point, width, height), offset: 0 },
+  ];
+
+  for (let index = 1; index < entries.length; index += 1) {
+    const previous = entries[index - 1]!;
+    const current = entries[index]!;
+    const span = Math.max(1, current.at - previous.at);
+    const gravityPoint = gravityMidpoint(previous.point, current.point, .58);
+    const midAt = previous.at + span * .58;
+
+    if (midAt > previous.at) {
+      keyframes.push({
+        transform: pointTransform(gravityPoint, width, height, 1.015),
+        offset: Math.min(1, midAt / duration),
+      });
+    }
+
+    const isLast = index === entries.length - 1;
+    keyframes.push({
+      transform: pointTransform(current.point, width, height, isLast ? 1.18 : .92),
+      offset: Math.min(1, current.at / duration),
+    });
+
+    if (!isLast) {
+      const nextAt = entries[index + 1]!.at;
+      const releaseAt = Math.min(current.at + Math.min(14, (nextAt - current.at) * .2), nextAt - 1);
+      if (releaseAt > current.at) {
+        keyframes.push({
+          transform: pointTransform(current.point, width, height, 1.035),
+          offset: Math.min(1, releaseAt / duration),
+        });
+      }
+    }
+  }
+
   keyframes[keyframes.length - 1] = {
-    transform: pointTransform(entries[entries.length - 1]!.point, width, height),
+    transform: pointTransform(entries[entries.length - 1]!.point, width, height, 1.18),
     offset: 1,
   };
   return { entries, keyframes, duration };
@@ -241,12 +282,11 @@ export function PlinkoReference() {
     setSettled((value) => value + 1);
     setRunWin((value) => value + ball.payout);
     setLastWin({ payout: ball.payout, multiplier: ball.multiplier });
-    playSound("plinkoBucket", soundEnabled);
 
     if (ball.multiplier >= 10) {
       playSound("plinkoHigh", soundEnabled);
-      playSound("bigWin", soundEnabled);
     } else {
+      playSound("plinkoBucket", soundEnabled);
       playSound(ball.payout >= ball.bet ? "win" : "lose", soundEnabled);
     }
     return true;
@@ -433,8 +473,10 @@ export function PlinkoReference() {
 
     const best = completed.reduce<ActiveBall | null>((current, ball) => (!current || ball.multiplier > current.multiplier ? ball : current), null);
     if (best && best.multiplier >= 10) {
+      await wait(90);
+      playSound("bigWin", soundEnabled);
       setBigWin({ payout: best.payout, multiplier: best.multiplier });
-      await wait(940);
+      await wait(850);
       if (!mountedRef.current) {
         busyRef.current = false;
         return;
