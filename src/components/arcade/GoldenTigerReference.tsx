@@ -820,7 +820,10 @@ export function GoldenTigerReference() {
         </button>
 
         {src && (
-          <div className="gt-ref-grid absolute left-[6.7%] top-[32.53%] z-20 grid h-[31.4%] w-[85.1%] grid-cols-5 grid-rows-3 overflow-hidden">
+          <div
+            className="gt-ref-grid absolute left-[6.7%] top-[32.53%] z-20 grid h-[31.4%] w-[85.1%] grid-cols-5 grid-rows-3 overflow-hidden"
+            data-spinning={spinning || undefined}
+          >
             {grid.map((symbol, index) => {
               const column = index % 5;
               const isLanding = spinning && landingColumn === column;
