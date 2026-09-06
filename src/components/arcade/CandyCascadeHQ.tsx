@@ -33,11 +33,13 @@ type Crop = { x: number; y: number; w: number; h: number };
 type Phase =
   | "idle"
   | "spinning"
+  | "landing"
   | "anticipation"
   | "cluster"
   | "bombBirth"
   | "bombBurst"
-  | "falling"
+  | "collapse"
+  | "refill"
   | "bonusTrigger"
   | "featureCinematic"
   | "bonusIntro"
@@ -86,6 +88,31 @@ function reducedMotion() {
 
 function wait(ms: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, reducedMotion() ? 0 : ms));
+}
+
+function removedInColumn(winning: ReadonlySet<number>, column: number) {
+  let count = 0;
+  for (const index of winning) {
+    if (index % COLS === column) count += 1;
+  }
+  return count;
+}
+
+function collapseDistance(winning: ReadonlySet<number>, index: number) {
+  const column = index % COLS;
+  const row = Math.floor(index / COLS);
+  let rows = 0;
+  for (const winningIndex of winning) {
+    if (winningIndex % COLS === column && Math.floor(winningIndex / COLS) > row) rows += 1;
+  }
+  return rows;
+}
+
+function refillDistance(winning: ReadonlySet<number>, index: number) {
+  const column = index % COLS;
+  const row = Math.floor(index / COLS);
+  const removed = removedInColumn(winning, column);
+  return row < removed ? removed - row : 0;
 }
 
 const CandySymbol = memo(function CandySymbol({ id }: { id: CandySymbolId }) {
@@ -190,6 +217,9 @@ export function CandyCascadeHQ() {
       setSugarMultiplier(1);
       setWinDuration(0);
       setWin(0);
+      setPhase("landing");
+      playSound("candyBounce", soundEnabled);
+      await wait(turbo ? 90 : 230);
 
       if (plan.scatterCount === 1) {
         playCandyFeatureSound("scatter", soundEnabled);
@@ -238,7 +268,6 @@ export function CandyCascadeHQ() {
           }
         }
 
-        // The number appears only after the precomputed Bomb -> Meter -> Level sequence.
         const target = displayed + cascade.payout;
         const duration = turbo ? 90 : 280;
         setWinDuration(duration);
@@ -246,12 +275,14 @@ export function CandyCascadeHQ() {
         await wait(duration);
         displayed = target;
 
-        setWinning(new Set());
         setActiveBomb(null);
-        setPhase("falling");
-        setGrid(cascade.nextGrid);
+        setPhase("collapse");
         playSound(index >= 2 ? "candyStreak" : "candyBounce", soundEnabled);
-        await wait(turbo ? 105 : 270);
+        await wait(turbo ? 90 : 205);
+        setGrid(cascade.nextGrid);
+        setPhase("refill");
+        await wait(turbo ? 105 : 245);
+        setWinning(new Set());
       }
 
       setGrid(plan.finalGrid);
@@ -332,16 +363,10 @@ export function CandyCascadeHQ() {
     setWin(0);
     playSound("spin", soundEnabled);
 
-    // Both the paid round and any naturally triggered feature are closed before presentation.
     const plan = planCandyRound(bet, Math.random, "base");
     const naturalFeature = plan.scatterAward > 0 ? planCandyFeature(bet, plan.scatterAward) : null;
 
-    // The result is already precomputed. Keep the existing grid mounted and let
-    // .cc-grid.is-spinning animate it on the compositor instead of rebuilding
-    // 30 React cells several times just to fake reel motion.
     await wait(turbo ? 190 : 470);
-    setGrid(plan.initialGrid);
-    await wait(turbo ? 55 : 140);
 
     const basePayout = await presentRound(plan, false);
     let featurePayout = 0;
@@ -419,7 +444,6 @@ export function CandyCascadeHQ() {
     busyRef.current = true;
     setSpinning(true);
 
-    // Purchase outcome is fully planned before the single debit and cinematic.
     const feature = planCandyFeature(bet, CANDY_FEATURE_BUY_INITIAL_SPINS);
     const debited = arcadeActions.debitCoins(availability.cost);
     if (!debited) {
@@ -484,6 +508,7 @@ export function CandyCascadeHQ() {
     () => candyFeatureBuyAvailability({ balance, bet, spinning, bonusActive, autoLeft, pending: featurePending }),
     [autoLeft, balance, bet, bonusActive, featurePending, spinning],
   );
+  const cascadeTransition = phase === "collapse" || phase === "refill";
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-black sm:px-3 sm:py-2">
@@ -512,12 +537,36 @@ export function CandyCascadeHQ() {
           </section>
         )}
 
-        <div className={cn("cc-grid absolute left-[4%] top-[28.3%] z-20 grid h-[45.8%] w-[93.3%] grid-cols-6 grid-rows-5 overflow-hidden", phase === "spinning" && "is-spinning", phase === "falling" && "is-falling", phase === "bombBurst" && "is-bomb-impact", phase === "anticipation" && "is-anticipating")}>
-          {grid.map((symbol, index) => (
-            <div key={index} className={cn("cc-cell relative overflow-hidden border border-[#f7bd45]/55 bg-[#480529]", winning.has(index) && "cc-ref-win", winning.size > 0 && !winning.has(index) && "cc-cell--dim", ["lollipop", "jelly", "cupcake", "diamond"].includes(symbol) && "cc-cell--premium", symbol === "partyCandy" && "cc-cell--scatter")}>
-              <CandySymbol id={symbol} />
-            </div>
-          ))}
+        <div className={cn(
+          "cc-grid absolute left-[4%] top-[28.3%] z-20 grid h-[45.8%] w-[93.3%] grid-cols-6 grid-rows-5 overflow-hidden",
+          phase === "spinning" && "is-spinning",
+          phase === "landing" && "is-landing",
+          phase === "collapse" && "is-collapsing",
+          phase === "refill" && "is-refilling",
+          phase === "bombBurst" && "is-bomb-impact",
+          phase === "anticipation" && "is-anticipating",
+        )}>
+          {grid.map((symbol, index) => {
+            const fallRows = phase === "collapse" && !winning.has(index) ? collapseDistance(winning, index) : 0;
+            const refillRows = phase === "refill" ? refillDistance(winning, index) : 0;
+            return (
+              <div
+                key={index}
+                className={cn(
+                  "cc-cell relative overflow-hidden border border-[#f7bd45]/55 bg-[#480529]",
+                  phase === "collapse" && winning.has(index) && "cc-cell--clearing",
+                  fallRows > 0 && `cc-cell--fall-${Math.min(ROWS, fallRows)}`,
+                  refillRows > 0 && `cc-cell--refill-${Math.min(ROWS, refillRows)}`,
+                  !cascadeTransition && winning.has(index) && "cc-ref-win",
+                  !cascadeTransition && winning.size > 0 && !winning.has(index) && "cc-cell--dim",
+                  ["lollipop", "jelly", "cupcake", "diamond"].includes(symbol) && "cc-cell--premium",
+                  symbol === "partyCandy" && "cc-cell--scatter",
+                )}
+              >
+                <CandySymbol id={symbol} />
+              </div>
+            );
+          })}
           {activeBomb && <BombOnGrid bomb={activeBomb} phase={phase} />}
         </div>
 
