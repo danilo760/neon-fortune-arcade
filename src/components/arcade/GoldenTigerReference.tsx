@@ -23,9 +23,11 @@ import {
   GOLDEN_TIGER_FEATURE_BUY_INITIAL_SPINS,
   GOLDEN_TIGER_MAX_RETRIGGERS,
   evaluateGoldenTiger,
+  createGoldenTigerRespin,
   goldenTigerFeatureBuyCost,
   goldenTigerWinTier,
   makeGoldenTigerGrid,
+  respinGoldenTigerGrid,
   type GoldenTigerMode,
   type GoldenTigerSpinResult,
   type GoldenTigerSymbolId,
@@ -119,9 +121,6 @@ const INITIAL_GRID: GoldenTigerSymbolId[] = [
   "lion",
   "jade",
   "fortuneBag",
-  "scatter",
-  "lantern",
-  "orange",
 ];
 
 function reducedMotionNow() {
@@ -207,7 +206,7 @@ const GoldenReelStrip = memo(function GoldenReelStrip({
     return [...sequence, ...sequence];
   }, [column]);
   const style = {
-    left: `${column * 20}%`,
+    left: `${column * (100 / 3)}%`,
     "--gt-strip-duration": `${turbo ? 320 + column * 12 : 680 + column * 28}ms`,
     "--gt-strip-delay": `${-column * 73}ms`,
   } as CSSProperties;
@@ -227,7 +226,7 @@ const GoldenReelStrip = memo(function GoldenReelStrip({
 });
 
 const TigerStage = memo(function TigerStage({ flyingCardColumn }: { flyingCardColumn: number | null }) {
-  const targetX = flyingCardColumn === null ? 50 : 6.7 + (flyingCardColumn + 0.5) * (85.1 / 5);
+  const targetX = flyingCardColumn === null ? 50 : 6.7 + (flyingCardColumn + 0.5) * (85.1 / 3);
   const tigerStyle = { "--gt-target-x": `${targetX}%` } as CSSProperties;
 
   return (
@@ -317,7 +316,7 @@ export function GoldenTigerReference() {
   const [win, setWin] = useState(0);
   const [winDuration, setWinDuration] = useState(0);
   const [spinning, setSpinning] = useState(false);
-  const [stoppedColumns, setStoppedColumns] = useState(5);
+  const [stoppedColumns, setStoppedColumns] = useState(3);
   const [landingColumn, setLandingColumn] = useState(-1);
   const [winning, setWinning] = useState<Set<number>>(() => new Set());
   const [scatters, setScatters] = useState<Set<number>>(() => new Set());
@@ -338,6 +337,8 @@ export function GoldenTigerReference() {
   const [featureBuyRunning, setFeatureBuyRunning] = useState(false);
   const [featureBuyStage, setFeatureBuyStage] = useState(0);
   const [featureBuyError, setFeatureBuyError] = useState<string | null>(null);
+  const [respinLeft, setRespinLeft] = useState(0);
+  const [lockedSymbols, setLockedSymbols] = useState<Set<number>>(() => new Set());
 
   const busyRef = useRef(false);
   const autoStopRef = useRef(false);
@@ -368,10 +369,12 @@ export function GoldenTigerReference() {
       setWinTier("none");
       setWinDuration(0);
       setWin(0);
+      setRespinLeft(0);
+      setLockedSymbols(new Set());
       playSound("spin", soundEnabled);
 
-      const finalGrid = makeGoldenTigerGrid(mode);
-      const result = evaluateGoldenTiger(finalGrid, bet, mode);
+      let finalGrid = makeGoldenTigerGrid(mode);
+      let result = evaluateGoldenTiger(finalGrid, bet, mode);
 
       await wait(turbo ? 170 : 520);
       let revealedScatters = 0;
@@ -379,11 +382,11 @@ export function GoldenTigerReference() {
       let hadTwoScatters = false;
       let triggerCelebrated = false;
 
-      for (let column = 0; column < 5; column += 1) {
+      for (let column = 0; column < 3; column += 1) {
         setPhase("landing");
         setGrid((current) =>
           current.map((symbol, index) =>
-            index % 5 === column ? (finalGrid[index] ?? symbol) : symbol,
+            index % 3 === column ? (finalGrid[index] ?? symbol) : symbol,
           ),
         );
         setStoppedColumns(column + 1);
@@ -392,12 +395,12 @@ export function GoldenTigerReference() {
 
         const revealedIndexes = new Set<number>();
         for (let index = 0; index < finalGrid.length; index += 1) {
-          if (index % 5 <= column && finalGrid[index] === "scatter") revealedIndexes.add(index);
+          if (index % 3 <= column && finalGrid[index] === "scatter") revealedIndexes.add(index);
         }
         setScatters(revealedIndexes);
         revealedScatters = revealedIndexes.size;
 
-        const columnsRemain = column < 4;
+        const columnsRemain = column < 2;
         const crossedFirst = previousScatters < 1 && revealedScatters >= 1;
         const crossedSecond = previousScatters < 2 && revealedScatters >= 2;
         const crossedThird = previousScatters < 3 && revealedScatters >= 3;
@@ -450,8 +453,34 @@ export function GoldenTigerReference() {
 
       setGrid(finalGrid);
       setLandingColumn(-1);
-      setStoppedColumns(5);
+      setStoppedColumns(3);
       setAnticipation(0);
+      const respin = free ? null : createGoldenTigerRespin(finalGrid);
+      if (respin) {
+        let state = respin;
+        setPhase("bonusTrigger");
+        setTigerReaction("excited");
+        setLockedSymbols(new Set(state.locked));
+        setRespinLeft(state.spinsLeft);
+        playSound("anticipation", soundEnabled);
+        await wait(turbo ? 260 : 620);
+        while (state.spinsLeft > 0 && state.locked.size < 9) {
+          setPhase("spinning");
+          setStoppedColumns(0);
+          await wait(turbo ? 120 : 320);
+          const next = respinGoldenTigerGrid(finalGrid, state);
+          finalGrid = next.grid;
+          state = next.state;
+          setGrid(finalGrid);
+          setStoppedColumns(3);
+          setLockedSymbols(new Set(state.locked));
+          setRespinLeft(state.spinsLeft);
+          playSound("tick", soundEnabled);
+          await wait(turbo ? 180 : 420);
+        }
+        result = evaluateGoldenTiger(finalGrid, bet, mode);
+        setRespinLeft(0);
+      }
       setWinning(result.winning);
       setScatters(result.scatterIndexes);
       setPhase("evaluating");
@@ -748,6 +777,8 @@ export function GoldenTigerReference() {
       ? "2 CARTINHAS... FALTA SÓ 1!"
       : anticipation === 1
         ? "1 CARTINHA... OLHOS NA GRADE"
+        : respinLeft > 0
+          ? `TIGRE DA SORTE · ${respinLeft} RESPIN${respinLeft === 1 ? "" : "S"}`
         : bonusActive
           ? `FREE SPINS · ${bonusSpins} RESTANTES`
           : featureBuyRunning
@@ -821,11 +852,11 @@ export function GoldenTigerReference() {
 
         {src && (
           <div
-            className="gt-ref-grid absolute left-[6.7%] top-[32.53%] z-20 grid h-[31.4%] w-[85.1%] grid-cols-5 grid-rows-3 overflow-hidden"
+            className="gt-ref-grid absolute left-[6.7%] top-[32.53%] z-20 grid h-[31.4%] w-[85.1%] grid-cols-3 grid-rows-3 overflow-hidden"
             data-spinning={spinning || undefined}
           >
             {grid.map((symbol, index) => {
-              const column = index % 5;
+              const column = index % 3;
               const isLanding = spinning && landingColumn === column;
               const isAnticipating = spinning && anticipation > 0 && column >= stoppedColumns;
               const scatterOrder = scatterOrderByIndex.get(index) ?? -1;
@@ -843,6 +874,7 @@ export function GoldenTigerReference() {
                     isAnticipating && "gt-ref-anticipate",
                     scatters.has(index) && "gt-ref-scatter",
                     winning.has(index) && "gt-ref-win",
+                    lockedSymbols.has(index) && "gt-ref-cell--locked",
                     hasWinningSymbols && !winning.has(index) && "gt-ref-cell--dim",
                     ["ingot", "jade", "fortuneBag", "wild"].includes(symbol) && "gt-ref-cell--premium-symbol",
                   )}
@@ -851,7 +883,7 @@ export function GoldenTigerReference() {
                 </div>
               );
             })}
-            {spinning && !reducedMotion && Array.from({ length: 5 }, (_, column) =>
+            {spinning && !reducedMotion && Array.from({ length: 3 }, (_, column) =>
               column >= stoppedColumns ? (
                 <GoldenReelStrip key={`live-reel-${column}`} column={column} src={src} turbo={turbo} />
               ) : null,
