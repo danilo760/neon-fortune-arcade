@@ -22,7 +22,7 @@
   transform: none !important;
 }
 .gt-ref-spinning > div {
-  animation: gt-native-reel-flow .09s linear infinite;
+  animation: gt-native-reel-flow .14s linear infinite;
   will-change: transform, opacity, filter;
 }
 .gt-ref-land {
@@ -90,16 +90,16 @@
   filter: none !important;
 }
 .os-ref-cell--rolling > div {
-  animation: os-native-symbol-flow .1s linear infinite;
+  animation: os-native-symbol-flow .145s linear infinite;
   will-change: transform, opacity, filter;
 }
-.os-ref-cell--rolling:nth-child(6n + 2) > div { animation-delay: -.018s; }
-.os-ref-cell--rolling:nth-child(6n + 3) > div { animation-delay: -.036s; }
-.os-ref-cell--rolling:nth-child(6n + 4) > div { animation-delay: -.054s; }
-.os-ref-cell--rolling:nth-child(6n + 5) > div { animation-delay: -.072s; }
-.os-ref-cell--rolling:nth-child(6n + 6) > div { animation-delay: -.09s; }
+.os-ref-cell--rolling:nth-child(6n + 2) > div { animation-delay: -.026s; }
+.os-ref-cell--rolling:nth-child(6n + 3) > div { animation-delay: -.052s; }
+.os-ref-cell--rolling:nth-child(6n + 4) > div { animation-delay: -.078s; }
+.os-ref-cell--rolling:nth-child(6n + 5) > div { animation-delay: -.104s; }
+.os-ref-cell--rolling:nth-child(6n + 6) > div { animation-delay: -.13s; }
 .os-ref-cell--landing > div {
-  animation: os-native-symbol-land .18s cubic-bezier(.14,.78,.2,1.04) both !important;
+  animation: os-native-symbol-land .2s cubic-bezier(.14,.78,.2,1.04) both !important;
   will-change: transform, opacity, filter;
 }
 .os-ref-cell--landing:nth-child(n + 7):nth-child(-n + 12) > div { animation-delay: .012s; }
@@ -190,22 +190,22 @@
   filter: none !important;
 }
 .cc-grid.is-spinning .cc-cell > div {
-  animation: cc-native-symbol-flow .095s linear infinite;
+  animation: cc-native-symbol-flow .145s linear infinite;
   will-change: transform, opacity, filter;
 }
-.cc-grid.is-spinning .cc-cell:nth-child(6n + 2) > div { animation-delay: -.018s; }
-.cc-grid.is-spinning .cc-cell:nth-child(6n + 3) > div { animation-delay: -.036s; }
-.cc-grid.is-spinning .cc-cell:nth-child(6n + 4) > div { animation-delay: -.054s; }
-.cc-grid.is-spinning .cc-cell:nth-child(6n + 5) > div { animation-delay: -.072s; }
-.cc-grid.is-spinning .cc-cell:nth-child(6n + 6) > div { animation-delay: -.09s; }
+.cc-grid.is-spinning .cc-cell:nth-child(6n + 2) > div { animation-delay: -.026s; }
+.cc-grid.is-spinning .cc-cell:nth-child(6n + 3) > div { animation-delay: -.052s; }
+.cc-grid.is-spinning .cc-cell:nth-child(6n + 4) > div { animation-delay: -.078s; }
+.cc-grid.is-spinning .cc-cell:nth-child(6n + 5) > div { animation-delay: -.104s; }
+.cc-grid.is-spinning .cc-cell:nth-child(6n + 6) > div { animation-delay: -.13s; }
 .cc-grid.is-landing .cc-cell > div {
   animation: cc-native-cascade-drop .22s cubic-bezier(.14,.8,.2,1.04) both !important;
   will-change: transform, opacity, filter;
 }
-.cc-grid.is-landing .cc-cell:nth-child(n + 7):nth-child(-n + 12) > div { animation-delay: .012s; }
-.cc-grid.is-landing .cc-cell:nth-child(n + 13):nth-child(-n + 18) > div { animation-delay: .024s; }
-.cc-grid.is-landing .cc-cell:nth-child(n + 19):nth-child(-n + 24) > div { animation-delay: .036s; }
-.cc-grid.is-landing .cc-cell:nth-child(n + 25):nth-child(-n + 30) > div { animation-delay: .048s; }
+.cc-grid.is-landing .cc-cell:nth-child(n + 7):nth-child(-n + 12) > div { animation-delay: .006s; }
+.cc-grid.is-landing .cc-cell:nth-child(n + 13):nth-child(-n + 18) > div { animation-delay: .012s; }
+.cc-grid.is-landing .cc-cell:nth-child(n + 19):nth-child(-n + 24) > div { animation-delay: .018s; }
+.cc-grid.is-landing .cc-cell:nth-child(n + 25):nth-child(-n + 30) > div { animation-delay: .024s; }
 .cc-grid.is-falling .cc-cell > div {
   animation: cc-native-cascade-drop .21s cubic-bezier(.14,.8,.2,1.04) both !important;
   will-change: transform, opacity, filter;
