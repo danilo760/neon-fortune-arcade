@@ -35,9 +35,10 @@
   z-index: 12;
   overflow: hidden;
   pointer-events: none;
-  border-inline: 1px solid rgba(248,189,53,.22);
+  border-inline: 1px solid rgba(255,220,117,.38);
   background: #4b0710;
   contain: paint;
+  box-shadow: inset 7px 0 12px rgba(41,0,6,.25), inset -7px 0 12px rgba(41,0,6,.25);
 }
 .gt-ref-live-reel__track {
   position: absolute;
@@ -46,24 +47,39 @@
   animation: gt-live-reel-scroll var(--gt-strip-duration) linear infinite;
   animation-delay: var(--gt-strip-delay);
   will-change: transform;
-  filter: blur(.7px) saturate(.95) brightness(.95);
+  filter: blur(.82px) saturate(.96) brightness(.92);
 }
 .gt-ref-live-reel__cell {
   position: relative;
   height: 4.1666667%;
   overflow: hidden;
-  border-bottom: 1px solid rgba(248,189,53,.16);
+  border-bottom: 1px solid rgba(255,218,109,.23);
   background: #4b0710;
 }
 .gt-ref-live-reel__motion {
   position: absolute;
   inset: -8% 0;
   z-index: 3;
-  background: linear-gradient(180deg,rgba(255,238,164,.16),transparent 22%,transparent 70%,rgba(69,0,5,.32));
+  background: linear-gradient(180deg,rgba(255,244,182,.28),rgba(255,214,102,.06) 18%,transparent 33%,transparent 67%,rgba(42,0,5,.42) 88%,rgba(17,0,3,.66));
   mix-blend-mode: screen;
   animation: gt-live-reel-motion .24s ease-in-out infinite;
   pointer-events: none;
 }
+
+/* The live strip is presentation only: a visible aperture makes each reel
+   read as a physical drum, while the settled grid beneath remains authoritative. */
+.gt-ref-grid[data-spinning]::before {
+  content: "";
+  position: absolute;
+  z-index: 13;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(26,0,4,.32), transparent 15%, transparent 83%, rgba(26,0,4,.46)),
+    linear-gradient(90deg, rgba(255,238,154,.14), transparent 5%, transparent 95%, rgba(255,238,154,.12));
+  box-shadow: inset 0 1px 0 rgba(255,245,187,.42), inset 0 -1px 0 rgba(75,4,4,.6);
+}
+.gt-ref-grid[data-spinning]::after { opacity: .32; }
 
 .gt-ref-spinning {
   animation: none !important;
