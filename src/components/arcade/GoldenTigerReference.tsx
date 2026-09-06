@@ -729,7 +729,7 @@ export function GoldenTigerReference() {
     return new Map(ordered.map((index, order) => [index, order]));
   }, [scatters]);
   const currentTierLabel = tierLabel(winTier);
-  const hasWinningSymbols = !spinning && winning.size > 0;
+  const hasWinningSymbols = winning.size > 0;
   const statusText =
     anticipation === 2
       ? "2 CARTINHAS... FALTA SÓ 1!"
@@ -828,7 +828,7 @@ export function GoldenTigerReference() {
                     isLanding && "gt-ref-land",
                     isAnticipating && "gt-ref-anticipate",
                     scatters.has(index) && "gt-ref-scatter",
-                    !spinning && winning.has(index) && "gt-ref-win",
+                    winning.has(index) && "gt-ref-win",
                     hasWinningSymbols && !winning.has(index) && "gt-ref-cell--dim",
                     ["ingot", "jade", "fortuneBag", "wild"].includes(symbol) && "gt-ref-cell--premium-symbol",
                   )}
