@@ -38,6 +38,8 @@
 }
 .gt-ref-machine--has-win .gt-ref-cell--dim { opacity: .48; filter: brightness(.58) saturate(.62); }
 .gt-ref-machine--has-win .gt-ref-win { z-index: 4; box-shadow: inset 0 0 0 2px rgba(255,246,166,.94), inset 0 0 22px rgba(255,223,93,.34), 0 0 17px rgba(255,194,39,.82); }
+.gt-ref-cell--locked { z-index: 6; box-shadow: inset 0 0 0 2px rgba(255,242,139,.95), inset 0 0 22px rgba(255,210,58,.56), 0 0 14px rgba(255,171,24,.7); }
+.gt-ref-cell--locked::after { content:""; position:absolute; inset:7%; border:1px solid rgba(255,242,170,.72); border-radius:.35rem; pointer-events:none; }
 @keyframes gt-ref-reel-fall {
   0% { transform: translateY(-7%) scaleY(1.018); opacity: .94; }
   100% { transform: translateY(7%) scaleY(.985); opacity: 1; }
