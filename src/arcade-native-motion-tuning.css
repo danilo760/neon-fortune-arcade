@@ -5,16 +5,53 @@
  */
 
 @keyframes gt-native-reel-flow {
-  0% { transform: translate3d(0,-42%,0) scaleY(1.055); opacity: .68; filter: blur(.55px); }
-  48% { opacity: .96; filter: blur(.15px); }
-  100% { transform: translate3d(0,42%,0) scaleY(.965); opacity: .72; filter: blur(.5px); }
+  0% {
+    transform: translate3d(0,-118%,0) scaleY(1.085);
+    opacity: .58;
+    filter: blur(1.25px) brightness(.92);
+  }
+  18% {
+    opacity: .72;
+    filter: blur(.95px) brightness(.98);
+  }
+  50% {
+    transform: translate3d(0,0,0) scaleY(1.015);
+    opacity: .82;
+    filter: blur(.75px) brightness(1.02);
+  }
+  82% {
+    opacity: .68;
+    filter: blur(1.05px) brightness(.96);
+  }
+  100% {
+    transform: translate3d(0,118%,0) scaleY(.94);
+    opacity: .54;
+    filter: blur(1.35px) brightness(.9);
+  }
 }
 
 @keyframes gt-native-reel-land {
-  0% { transform: translate3d(0,-112%,0) scaleY(1.07); opacity: .7; filter: blur(.45px) brightness(1.08); }
-  66% { transform: translate3d(0,7%,0) scaleY(.975); opacity: 1; filter: blur(0) brightness(1.12); }
-  84% { transform: translate3d(0,-2.2%,0) scaleY(1.012); }
-  100% { transform: translate3d(0,0,0) scaleY(1); opacity: 1; filter: brightness(1); }
+  0% {
+    transform: translate3d(0,-126%,0) scaleY(1.08);
+    opacity: .62;
+    filter: blur(.9px) brightness(1.04);
+  }
+  54% {
+    transform: translate3d(0,5.8%,0) scaleY(.982);
+    opacity: 1;
+    filter: blur(0) brightness(1.1);
+  }
+  74% {
+    transform: translate3d(0,-1.8%,0) scaleY(1.01);
+  }
+  90% {
+    transform: translate3d(0,.7%,0) scaleY(.996);
+  }
+  100% {
+    transform: translate3d(0,0,0) scaleY(1);
+    opacity: 1;
+    filter: brightness(1);
+  }
 }
 
 .gt-ref-spinning {
@@ -22,19 +59,24 @@
   transform: none !important;
 }
 .gt-ref-spinning > div {
-  animation: gt-native-reel-flow .14s linear infinite;
+  animation: gt-native-reel-flow .26s linear infinite;
   will-change: transform, opacity, filter;
+  transform-origin: 50% 50%;
 }
+.gt-ref-spinning:nth-child(5n + 2) > div { animation-delay: -.052s; }
+.gt-ref-spinning:nth-child(5n + 3) > div { animation-delay: -.104s; }
+.gt-ref-spinning:nth-child(5n + 4) > div { animation-delay: -.156s; }
+.gt-ref-spinning:nth-child(5n + 5) > div { animation-delay: -.208s; }
 .gt-ref-land {
   animation: none !important;
   transform: none !important;
 }
 .gt-ref-land > div {
-  animation: gt-native-reel-land .15s cubic-bezier(.16,.78,.22,1.04) both;
+  animation: gt-native-reel-land .28s cubic-bezier(.12,.74,.18,1.02) both;
   will-change: transform, opacity, filter;
 }
-.gt-ref-land:nth-child(n + 6):nth-child(-n + 10) > div { animation-delay: .012s; }
-.gt-ref-land:nth-child(n + 11):nth-child(-n + 15) > div { animation-delay: .024s; }
+.gt-ref-land:nth-child(n + 6):nth-child(-n + 10) > div { animation-delay: .018s; }
+.gt-ref-land:nth-child(n + 11):nth-child(-n + 15) > div { animation-delay: .036s; }
 .gt-ref-spin-button {
   animation: none !important;
   transition: transform .11s ease-out, filter .11s ease-out;
