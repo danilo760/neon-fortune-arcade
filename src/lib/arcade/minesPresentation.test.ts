@@ -11,10 +11,10 @@ import {
   minesRiskLevel,
 } from "./minesPresentation";
 
-test("safe reveal pacing stays inside the requested 320-420 ms budget", () => {
-  assert.equal(MINES_SAFE_REVEAL_BUDGET, 347);
-  assert.ok(MINES_SAFE_REVEAL_BUDGET >= 320);
-  assert.ok(MINES_SAFE_REVEAL_BUDGET <= 420);
+test("safe reveal pacing stays inside the tuned 260-330 ms budget", () => {
+  assert.equal(MINES_SAFE_REVEAL_BUDGET, 287);
+  assert.ok(MINES_SAFE_REVEAL_BUDGET >= 260);
+  assert.ok(MINES_SAFE_REVEAL_BUDGET <= 330);
 });
 
 test("mine reveal stays fast while preserving danger and explosion phases", () => {
@@ -25,10 +25,10 @@ test("mine reveal stays fast while preserving danger and explosion phases", () =
   assert.ok(MINES_MINE_REVEAL_BUDGET <= 550);
 });
 
-test("cashout pacing stays inside the requested reward window", () => {
-  assert.equal(MINES_CASHOUT_BUDGET, 470);
-  assert.ok(MINES_CASHOUT_BUDGET >= 450);
-  assert.ok(MINES_CASHOUT_BUDGET <= 650);
+test("cashout pacing stays inside the tuned reward window", () => {
+  assert.equal(MINES_CASHOUT_BUDGET, 440);
+  assert.ok(MINES_CASHOUT_BUDGET >= 400);
+  assert.ok(MINES_CASHOUT_BUDGET <= 550);
 });
 
 test("reduced motion removes presentation waits without changing timing constants", () => {
