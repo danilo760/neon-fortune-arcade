@@ -275,7 +275,7 @@ export function OlympusStormReference() {
 
   useEffect(() => hydrateFromStorage(), []);
 
-  const revealInitialGrid = useCallback(async (plan: OlympusRoundPlan) => {
+  const revealInitialGrid = useCallback(async (plan: OlympusRoundPlan, compact = false) => {
     setWinning(new Set());
 
     if (turbo) {
@@ -303,7 +303,7 @@ export function OlympusStormReference() {
       const scatterCount = visibleScatterCount(plan.initialGrid, column + 1);
       if (scatterCount > previousScatterCount) {
         playSound("olympusScatter", soundEnabled);
-      } else {
+      } else if (!compact || column % 2 === 1 || column === OLYMPUS_COLUMNS - 1) {
         playSound("tick", soundEnabled);
       }
 
@@ -311,9 +311,9 @@ export function OlympusStormReference() {
       if (hasAnticipation) {
         setPhase("anticipation");
         playSound("olympusAnticipation", soundEnabled);
-        await wait(360);
+        await wait(compact ? 230 : 360);
       } else {
-        await wait(250);
+        await wait(compact ? 150 : 250);
       }
       previousScatterCount = scatterCount;
     }
@@ -336,9 +336,9 @@ export function OlympusStormReference() {
     setClusterCount(0);
     setWinDuration(0);
     playSound(isBonusRound ? "olympusBonusSpin" : "olympusSpin", soundEnabled);
-    await wait(turbo ? 150 : 420);
+    await wait(turbo ? 150 : isBonusRound ? 260 : 420);
 
-    await revealInitialGrid(plan);
+    await revealInitialGrid(plan, isBonusRound);
     let displayedTotal = displayedTotalStart;
 
     for (let index = 0; index < plan.cascades.length; index += 1) {
@@ -354,26 +354,36 @@ export function OlympusStormReference() {
       setStormEnergy(cascade.stormEnergyBefore);
       setPhase("clusterWin");
       playSound("olympusCluster", soundEnabled);
-      await wait(turbo ? 130 : Math.min(300 + index * 55, 520));
+      await wait(
+        turbo
+          ? 130
+          : isBonusRound
+            ? Math.min(210 + index * 30, 330)
+            : Math.min(300 + index * 55, 520),
+      );
 
       if (cascade.multiplier > 1) {
         setStormMultiplier(cascade.multiplier);
         setPhase("stormCharge");
         playSound("olympusCharge", soundEnabled);
-        await wait(turbo ? 170 : 470);
+        await wait(turbo ? 170 : isBonusRound ? 300 : 470);
 
         setPhase("stormHit");
         setFlashKey((value) => value + 1);
         playSound("olympusHit", soundEnabled);
-        await wait(turbo ? 55 : 140);
+        await wait(turbo ? 55 : isBonusRound ? 105 : 140);
 
         setPhase("stormImpact");
         playSound("olympusMultiplier", soundEnabled);
-        await wait(turbo ? 35 : 80);
+        await wait(turbo ? 35 : isBonusRound ? 55 : 80);
       }
 
       const targetTotal = displayedTotal + cascade.payout;
-      const countDuration = turbo ? 120 : cascade.multiplier > 1 ? 500 : 300;
+      const countDuration = turbo
+        ? 120
+        : isBonusRound
+          ? cascade.multiplier > 1 ? 320 : 210
+          : cascade.multiplier > 1 ? 500 : 300;
       setWinDuration(countDuration);
       setWin(targetTotal);
       await wait(countDuration);
@@ -385,17 +395,17 @@ export function OlympusStormReference() {
         setLevelPulseKey((value) => value + 1);
         setPhase("levelUp");
         playOlympusLevelUp(cascade.stormLevelAfter, soundEnabled);
-        await wait(turbo ? 150 : cascade.stormLevelAfter >= 4 ? 420 : 270);
+        await wait(turbo ? 150 : cascade.stormLevelAfter >= 4 ? 280 : 210);
       } else {
         setStormLevel(cascade.stormLevelAfter);
       }
 
       setPhase("collapse");
       playSound("olympusFall", soundEnabled);
-      await wait(turbo ? 90 : 210);
+      await wait(turbo ? 90 : isBonusRound ? 150 : 210);
       setGrid(cascade.nextGrid);
       setPhase("refill");
-      await wait(turbo ? 105 : 245);
+      await wait(turbo ? 105 : isBonusRound ? 175 : 245);
       setWinning(new Set());
     }
 
@@ -425,12 +435,12 @@ export function OlympusStormReference() {
 
     setPhase(source === "featureBuy" ? "featureCinematic" : "bonusTrigger");
     playSound(source === "featureBuy" ? "olympusFeatureOpen" : "olympusBonusIntro", soundEnabled);
-    await wait(turbo ? 260 : source === "featureBuy" ? 850 : 620);
+    await wait(turbo ? 260 : source === "featureBuy" ? 650 : 500);
 
     setPhase("bonusIntro");
     setFlashKey((value) => value + 1);
     playSound("olympusBonusIntro", soundEnabled);
-    await wait(turbo ? 260 : 760);
+    await wait(turbo ? 260 : 550);
 
     let displayedTotal = displayedTotalStart;
     setPhase("bonusPlaying");
@@ -446,7 +456,7 @@ export function OlympusStormReference() {
         setRetriggerAward(spin.retriggerAward);
         setPhase("retrigger");
         playSound("olympusRetrigger", soundEnabled);
-        await wait(turbo ? 210 : 620);
+        await wait(turbo ? 210 : 480);
         setRetriggerAward(0);
         setPhase("bonusPlaying");
       }
@@ -455,7 +465,7 @@ export function OlympusStormReference() {
     setBonusTotal(feature.payout);
     setPhase("bonusOutro");
     playSound(feature.payout >= feature.initialSpins * bet * 2 ? "olympusBigWin" : "olympusBonusEnd", soundEnabled);
-    await wait(turbo ? 320 : 900);
+    await wait(turbo ? 320 : 720);
 
     setBonusActive(false);
     setBonusSource(null);
