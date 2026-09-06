@@ -5,53 +5,64 @@
  */
 
 @keyframes gt-native-reel-flow {
-  0% {
-    transform: translate3d(0,-118%,0) scaleY(1.085);
-    opacity: .58;
-    filter: blur(1.25px) brightness(.92);
-  }
-  18% {
-    opacity: .72;
-    filter: blur(.95px) brightness(.98);
-  }
-  50% {
-    transform: translate3d(0,0,0) scaleY(1.015);
-    opacity: .82;
-    filter: blur(.75px) brightness(1.02);
-  }
-  82% {
-    opacity: .68;
-    filter: blur(1.05px) brightness(.96);
-  }
-  100% {
-    transform: translate3d(0,118%,0) scaleY(.94);
-    opacity: .54;
-    filter: blur(1.35px) brightness(.9);
-  }
+  0% { transform: translate3d(0,-42%,0) scaleY(1.055); opacity: .68; filter: blur(.55px); }
+  48% { opacity: .96; filter: blur(.15px); }
+  100% { transform: translate3d(0,42%,0) scaleY(.965); opacity: .72; filter: blur(.5px); }
 }
 
 @keyframes gt-native-reel-land {
-  0% {
-    transform: translate3d(0,-126%,0) scaleY(1.08);
-    opacity: .62;
-    filter: blur(.9px) brightness(1.04);
-  }
-  54% {
-    transform: translate3d(0,5.8%,0) scaleY(.982);
-    opacity: 1;
-    filter: blur(0) brightness(1.1);
-  }
-  74% {
-    transform: translate3d(0,-1.8%,0) scaleY(1.01);
-  }
-  90% {
-    transform: translate3d(0,.7%,0) scaleY(.996);
-  }
-  100% {
-    transform: translate3d(0,0,0) scaleY(1);
-    opacity: 1;
-    filter: brightness(1);
-  }
+  0% { transform: translate3d(0,-112%,0) scaleY(1.07); opacity: .7; filter: blur(.45px) brightness(1.08); }
+  66% { transform: translate3d(0,7%,0) scaleY(.975); opacity: 1; filter: blur(0) brightness(1.12); }
+  84% { transform: translate3d(0,-2.2%,0) scaleY(1.012); }
+  100% { transform: translate3d(0,0,0) scaleY(1); opacity: 1; filter: brightness(1); }
+}
+
+@keyframes gt-live-reel-scroll {
+  from { transform: translate3d(0,-50%,0); }
+  to { transform: translate3d(0,0,0); }
+}
+
+@keyframes gt-live-reel-motion {
+  0%, 100% { opacity: .18; }
+  50% { opacity: .4; }
+}
+
+.gt-ref-live-reel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 20%;
+  z-index: 12;
+  overflow: hidden;
+  pointer-events: none;
+  border-inline: 1px solid rgba(248,189,53,.22);
+  background: #4b0710;
+  contain: paint;
+}
+.gt-ref-live-reel__track {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 800%;
+  animation: gt-live-reel-scroll var(--gt-strip-duration) linear infinite;
+  animation-delay: var(--gt-strip-delay);
+  will-change: transform;
+  filter: blur(.7px) saturate(.95) brightness(.95);
+}
+.gt-ref-live-reel__cell {
+  position: relative;
+  height: 4.1666667%;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(248,189,53,.16);
+  background: #4b0710;
+}
+.gt-ref-live-reel__motion {
+  position: absolute;
+  inset: -8% 0;
+  z-index: 3;
+  background: linear-gradient(180deg,rgba(255,238,164,.16),transparent 22%,transparent 70%,rgba(69,0,5,.32));
+  mix-blend-mode: screen;
+  animation: gt-live-reel-motion .24s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .gt-ref-spinning {
@@ -59,24 +70,19 @@
   transform: none !important;
 }
 .gt-ref-spinning > div {
-  animation: gt-native-reel-flow .26s linear infinite;
+  animation: gt-native-reel-flow .14s linear infinite;
   will-change: transform, opacity, filter;
-  transform-origin: 50% 50%;
 }
-.gt-ref-spinning:nth-child(5n + 2) > div { animation-delay: -.052s; }
-.gt-ref-spinning:nth-child(5n + 3) > div { animation-delay: -.104s; }
-.gt-ref-spinning:nth-child(5n + 4) > div { animation-delay: -.156s; }
-.gt-ref-spinning:nth-child(5n + 5) > div { animation-delay: -.208s; }
 .gt-ref-land {
   animation: none !important;
   transform: none !important;
 }
 .gt-ref-land > div {
-  animation: gt-native-reel-land .28s cubic-bezier(.12,.74,.18,1.02) both;
+  animation: gt-native-reel-land .19s cubic-bezier(.16,.78,.22,1.04) both;
   will-change: transform, opacity, filter;
 }
-.gt-ref-land:nth-child(n + 6):nth-child(-n + 10) > div { animation-delay: .018s; }
-.gt-ref-land:nth-child(n + 11):nth-child(-n + 15) > div { animation-delay: .036s; }
+.gt-ref-land:nth-child(n + 6):nth-child(-n + 10) > div { animation-delay: .01s; }
+.gt-ref-land:nth-child(n + 11):nth-child(-n + 15) > div { animation-delay: .02s; }
 .gt-ref-spin-button {
   animation: none !important;
   transition: transform .11s ease-out, filter .11s ease-out;
@@ -286,6 +292,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .gt-ref-live-reel,
   .gt-ref-spinning > div,
   .gt-ref-land > div,
   .os-ref-cell--rolling > div,
