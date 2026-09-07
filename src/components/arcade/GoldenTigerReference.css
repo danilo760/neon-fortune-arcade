@@ -215,3 +215,26 @@
   .gt-ref-flying-card { display:none; }
   .gt-ref-machine[data-tiger="notice"] .gt-ref-tiger-live-eyes,.gt-ref-machine[data-tiger="charge"] .gt-ref-tiger-live-eyes,.gt-ref-machine[data-tiger="throw"] .gt-ref-tiger-live-eyes,.gt-ref-machine[data-tiger="celebrate"] .gt-ref-tiger-live-eyes { opacity:.55; }
 }
+
+/* Locked cells stay above the moving drums throughout a respin. */
+.gt-ref-grid .gt-ref-cell--locked { z-index: 14; }
+.gt-ref-grid .gt-ref-cell--locked::after { z-index: 4; }
+.gt-ref-rules-ribbon {
+  position: absolute; left: 25%; top: 25.4%; width: 48%; height: 6.7%; z-index: 29;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  padding: 4px; border: 1px solid #f4c65d; border-radius: 12px;
+  background: linear-gradient(#791b0c, #310207); color: #ffe9a4;
+  box-shadow: inset 0 1px 5px #edb74b66, 0 3px 9px #170000;
+  text-align: center;
+}
+.gt-ref-rules-ribbon strong { font-size: clamp(10px, 3vw, 15px); }
+.gt-ref-rules-ribbon span { font-size: clamp(7px, 1.9vw, 9px); }
+.gt-ref-info-button {
+  position: absolute; left: 4.6%; top: 71.2%; z-index: 50; width: 32%; height: 5.8%;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  border: 1px solid #ffd47c; border-radius: 18px; color: #ffe8b0;
+  background: linear-gradient(#92330f, #420808); font-size: 10px; font-weight: 800;
+}
+.gt-ref-info-button:disabled { opacity: .5; }
+.gt-ref-machine button:focus-visible, .gt-ref-machine a:focus-visible { outline: 3px solid #fff0a8; outline-offset: -3px; }
+.gt-ref-machine .gt-ref-feature-modal__card { max-height: 88%; overflow-y: auto; }

@@ -213,6 +213,7 @@ function noise(duration: number, gain: number, delay = 0, cutoff = 1800) {
 
 export type SoundName =
   | "spin" | "tick" | "anticipation" | "win" | "bigWin" | "lose" | "click" | "cash" | "bonus"
+  | "tigerSpin" | "tigerReelStop" | "tigerRespin" | "tigerLock" | "tigerFullGrid"
   | "tigerScatter" | "tigerThrow" | "tigerImpact" | "tigerBonus" | "tigerRetrigger" | "tigerMiss"
   | "tigerFeatureOpen" | "tigerCardAppear" | "tigerFeatureStart"
   | "olympusCluster" | "olympusFall" | "olympusCharge" | "olympusHit" | "olympusMultiplier"
@@ -245,6 +246,16 @@ export function playSound(name: SoundName, enabled: boolean) {
       tone(980, 0.045, "square", 0.018, 0, 720); tone(1450, 0.035, "sine", 0.012, 0.008, 1050); break;
     case "anticipation":
       tone(132, 0.34, "sine", 0.038, 0, 168); tone(264, 0.2, "triangle", 0.024, 0.08, 352); tone(420, 0.16, "sine", 0.021, 0.18, 620); noise(0.22, 0.006, 0.08, 900); break;
+    case "tigerSpin":
+      noise(.24,.009,0,1250); tone(120,.24,"triangle",.025,0,265); tone(360,.16,"sine",.012,.06,520); break;
+    case "tigerReelStop":
+      noise(.045,.008,0,1900); tone(185,.09,"triangle",.026,0,92); tone(880,.07,"sine",.015,.01,660); break;
+    case "tigerRespin":
+      tone(130,.36,"sine",.03,0,196); [392,523,784].forEach((f,i)=>tone(f,.2,"triangle",.026,.04+i*.07)); break;
+    case "tigerLock":
+      noise(.055,.006,0,2200); tone(220,.12,"triangle",.025,0,146); tone(1046,.19,"sine",.025,.025,1318); break;
+    case "tigerFullGrid":
+      noise(.22,.011,0,2400); tone(98,.48,"sine",.039,0,65); [392,523,659,784,1046].forEach((f,i)=>tone(f,.3,"triangle",.034,.04+i*.055)); break;
     case "tigerScatter":
       tone(840, 0.14, "sine", 0.034, 0, 1260); tone(420, 0.18, "triangle", 0.022, 0.03, 650); noise(0.08, 0.0045, 0.02, 2500); break;
     case "tigerFeatureOpen":

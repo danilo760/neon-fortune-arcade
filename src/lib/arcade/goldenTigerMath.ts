@@ -35,7 +35,8 @@ export function evaluateGoldenTiger(grid: readonly GoldenTigerSymbolId[], bet: n
     if (matched.length !== 3 || target === "scatter") continue;
     payout += bet * (SYMBOL_BY_ID.get(target)?.pay ?? 0); lines += 1; matched.forEach((index) => winning.add(index));
   }
-  const isFullGrid = grid.length === 9 && grid.every((symbol) => symbol === grid[0] || symbol === "wild");
+  const fullGridTarget = grid.find((symbol) => symbol !== "wild") ?? "wild";
+  const isFullGrid = grid.length === 9 && fullGridTarget !== "scatter" && grid.every((symbol) => symbol === fullGridTarget || symbol === "wild");
   if (isFullGrid && payout > 0) payout *= 10;
   return { payout: Math.round(payout), winning, scatterIndexes, scatterCount: scatterIndexes.size, bonusAward: 0, lines, isFullGrid };
 }
