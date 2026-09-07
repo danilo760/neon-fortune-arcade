@@ -852,13 +852,19 @@ export function GoldenTigerReference() {
 
         {src && (
           <div
-            className="gt-ref-grid absolute left-[6.7%] top-[32.53%] z-20 grid h-[31.4%] w-[85.1%] grid-cols-3 grid-rows-3 overflow-hidden"
-            data-spinning={spinning || undefined}
+            className={cn(
+              "gt-ref-grid absolute left-[6.7%] top-[32.53%] z-20 grid h-[31.4%] w-[85.1%] grid-cols-3 grid-rows-3 overflow-hidden",
+              respinActive && "gt-ref-grid--respin",
+            )}
+            data-spinning={(spinning && !respinActive) || undefined}
+            data-respin={respinActive || undefined}
           >
             {grid.map((symbol, index) => {
               const column = index % 3;
-              const isLanding = spinning && landingColumn === column;
-              const isAnticipating = spinning && anticipation > 0 && column >= stoppedColumns;
+              const locked = lockedSymbols.has(index);
+              const isLanding = spinning && !respinActive && landingColumn === column;
+              const isAnticipating = spinning && !respinActive && anticipation > 0 && column >= stoppedColumns;
+              const cellRolling = respinRolling && !locked;
               const scatterOrder = scatterOrderByIndex.get(index) ?? -1;
               const tileStyle =
                 scatterOrder >= 0
@@ -874,22 +880,26 @@ export function GoldenTigerReference() {
                     isAnticipating && "gt-ref-anticipate",
                     scatters.has(index) && "gt-ref-scatter",
                     winning.has(index) && "gt-ref-win",
-                    lockedSymbols.has(index) && "gt-ref-cell--locked",
+                    locked && "gt-ref-cell--locked",
+                    respinActive && !locked && "gt-ref-cell--unlocked",
                     hasWinningSymbols && !winning.has(index) && "gt-ref-cell--dim",
                     ["ingot", "jade", "fortuneBag", "wild"].includes(symbol) && "gt-ref-cell--premium-symbol",
                   )}
                 >
                   <ReferenceSymbol id={symbol} src={src} />
+                  {cellRolling && !reducedMotion && <GoldenCellStrip index={index} src={src} turbo={turbo} />}
+                  {locked && <span className="gt-ref-lock-frame" aria-hidden />}
                 </div>
               );
             })}
-            {spinning && !reducedMotion && Array.from({ length: 3 }, (_, column) =>
+            {spinning && !respinActive && !reducedMotion && Array.from({ length: 3 }, (_, column) =>
               column >= stoppedColumns ? (
                 <GoldenReelStrip key={`live-reel-${column}`} column={column} src={src} turbo={turbo} />
               ) : null,
             )}
           </div>
         )}
+
 
         <div
           className="absolute left-[18%] top-[63.7%] z-35 flex h-[7.2%] w-[69%] items-center justify-center rounded-[28px] border-2 border-[#ffc52b] bg-[linear-gradient(180deg,rgba(122,0,7,.97),rgba(58,0,4,.98))] px-4 text-center shadow-[0_0_22px_rgba(255,67,0,.45)]"
