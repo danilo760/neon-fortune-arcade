@@ -91,7 +91,7 @@ export const GoldenTigerHUD = memo(function GoldenTigerHUD({
         <button
           type="button"
           onClick={onToggleTurbo}
-          disabled={isSpinning}
+          disabled={controlsLocked}
           className={`h-12 w-20 rounded-2xl border transition-all duration-200 flex flex-col items-center justify-center active:scale-95 disabled:opacity-40 ${
             isTurbo
               ? "border-yellow-300 bg-gradient-to-b from-yellow-400 to-amber-600 text-stone-950 font-black shadow-[0_0_15px_#f59e0b]"
