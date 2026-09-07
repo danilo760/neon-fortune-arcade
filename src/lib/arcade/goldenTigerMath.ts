@@ -35,10 +35,18 @@ export function evaluateGoldenTiger(grid: readonly GoldenTigerSymbolId[], bet: n
     if (matched.length !== 3 || target === "scatter") continue;
     payout += bet * (SYMBOL_BY_ID.get(target)?.pay ?? 0); lines += 1; matched.forEach((index) => winning.add(index));
   }
-  const isFullGrid = grid.length === 9 && grid.every((symbol) => symbol === grid[0] || symbol === "wild");
+  // Full-grid bonus: derive the paying target from the first non-Wild symbol so an
+  // all-Wild opening cell can never break the comparison.
+  const fullGridTarget = grid.find((symbol) => symbol !== "wild");
+  const isFullGrid =
+    grid.length === 9 &&
+    fullGridTarget !== "scatter" &&
+    grid.every((symbol) => symbol === "wild" || symbol === fullGridTarget) &&
+    grid.every((_, index) => winning.has(index));
   if (isFullGrid && payout > 0) payout *= 10;
   return { payout: Math.round(payout), winning, scatterIndexes, scatterCount: scatterIndexes.size, bonusAward: 0, lines, isFullGrid };
 }
+
 
 export function createGoldenTigerRespin(grid: readonly GoldenTigerSymbolId[], rng: () => number = Math.random): GoldenTigerRespinState | null {
   if (rng() >= 0.05) return null;
