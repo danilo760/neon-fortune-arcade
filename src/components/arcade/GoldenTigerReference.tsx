@@ -762,44 +762,32 @@ export function GoldenTigerReference() {
   };
 
   const insufficient = bet > balance;
-  const featureBuyCost = goldenTigerFeatureBuyCost(bet);
-  const featureBuyInsufficient = featureBuyCost > balance;
-  const featureBuyBlocked =
-    spinning || bonusActive || autoLeft > 0 || featureBuyRunning || busyRef.current || bonusRef.current;
+  const controlsLocked = spinning || autoLeft > 0;
   const scatterOrderByIndex = useMemo(() => {
     const ordered = [...scatters].sort((a, b) => a - b);
     return new Map(ordered.map((index, order) => [index, order]));
   }, [scatters]);
   const currentTierLabel = tierLabel(winTier);
   const hasWinningSymbols = winning.size > 0;
-  const statusText =
-    anticipation === 2
-      ? "2 CARTINHAS... FALTA SÓ 1!"
-      : anticipation === 1
-        ? "1 CARTINHA... OLHOS NA GRADE"
-        : respinLeft > 0
-          ? `TIGRE DA SORTE · ${respinLeft} RESPIN${respinLeft === 1 ? "" : "S"}`
-        : bonusActive
-          ? `FREE SPINS · ${bonusSpins} RESTANTES`
-          : featureBuyRunning
-            ? "GOLDEN FORTUNE"
-            : phase === "bonusTrigger"
-              ? "BÔNUS DOURADO!"
-              : currentTierLabel ?? "3 CARTINHAS ATIVAM FREE SPINS";
+  const statusText = respinActive
+    ? respinRolling
+      ? "TIGRE DA SORTE · RESPIN"
+      : `TIGRE DA SORTE · ${lockedSymbols.size}/9 TRAVADOS`
+    : (currentTierLabel ?? "3 LINHAS x 3 ROLOS · 5 LINHAS FIXAS");
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-black sm:px-3 sm:py-2">
         <div
           className={cn(
             "gt-ref-machine relative mx-auto aspect-[940/1672] w-full max-w-[430px] overflow-hidden bg-[#240003] shadow-[0_0_90px_rgba(0,0,0,.96)] sm:rounded-[22px]",
-            bonusActive && "gt-ref-bonus-mode",
-            featureBuyRunning && "gt-ref-feature-running",
+            respinActive && "gt-ref-bonus-mode",
             hasWinningSymbols && "gt-ref-machine--has-win",
         )}
         data-phase={phase}
         data-tiger={tigerReaction}
-        data-feature-stage={featureBuyStage}
+        data-respin={respinActive || undefined}
       >
+
         {src ? (
           <img
             src={src}
