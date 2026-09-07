@@ -61,8 +61,10 @@ export function createGoldenTigerRespin(grid: readonly GoldenTigerSymbolId[], rn
 export function respinGoldenTigerGrid(grid: readonly GoldenTigerSymbolId[], state: GoldenTigerRespinState, rng: () => number = Math.random) {
   const next = grid.map((symbol, index) => state.locked.has(index) ? symbol : pickGoldenTigerSymbol("respin", rng));
   const locked = new Set(state.locked); next.forEach((symbol, index) => { if (symbol === state.target || symbol === "wild") locked.add(index); });
-  return { grid: next, state: { ...state, locked, spinsLeft: locked.size > state.locked.size ? 3 : state.spinsLeft - 1 } };
+  const added = locked.size > state.locked.size;
+  return { grid: next, state: { ...state, locked, spinsLeft: added ? 3 : 0 }, added };
 }
+
 export function goldenTigerWinTier(payout: number, bet: number): GoldenTigerWinTier {
   if (bet <= 0 || payout < bet * 2) return "none"; if (payout < bet * 5) return "small"; if (payout < bet * 15) return "nice"; if (payout < bet * 30) return "big"; return "mega";
 }
