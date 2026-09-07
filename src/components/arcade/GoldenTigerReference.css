@@ -193,3 +193,180 @@
   .gt-ref-cell-strip { display:none; }
   .gt-ref-machine[data-tiger="notice"] .gt-ref-tiger-live-eyes,.gt-ref-machine[data-tiger="excited"] .gt-ref-tiger-live-eyes,.gt-ref-machine[data-tiger="celebrate"] .gt-ref-tiger-live-eyes,.gt-ref-machine[data-tiger="bigWin"] .gt-ref-tiger-live-eyes { opacity:.55; }
 }
+
+/* Final Golden Tiger polish: keep the settled symbol visually connected to the live reel. */
+@keyframes gt-ref-smooth-land {
+  0% {
+    transform: translate3d(0,-28%,0) scaleY(1.018);
+    opacity: .86;
+    filter: blur(.32px) brightness(1.05);
+  }
+  64% {
+    transform: translate3d(0,2.7%,0) scaleY(.993);
+    opacity: 1;
+    filter: blur(0) brightness(1.08);
+  }
+  84% { transform: translate3d(0,-.8%,0) scaleY(1.003); }
+  100% {
+    transform: translate3d(0,0,0) scaleY(1);
+    opacity: 1;
+    filter: none;
+  }
+}
+
+.gt-ref-machine .gt-ref-land > div {
+  animation: gt-ref-smooth-land .18s cubic-bezier(.16,.84,.24,1) both !important;
+  will-change: transform, opacity, filter;
+}
+
+.gt-ref-machine .gt-ref-live-reel__track {
+  filter: blur(.48px) saturate(.98) brightness(.95) !important;
+}
+
+/* Cover the obsolete raster Free Spins banner without touching the source artwork. */
+.gt-ref-machine::before {
+  content: "TIGRE DA SORTE · RESPINS COM TRAVA";
+  position: absolute;
+  z-index: 44;
+  left: 28.7%;
+  top: 25.25%;
+  width: 45%;
+  height: 5.2%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  border: 2px solid rgba(255,225,105,.94);
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse at 50% 0, rgba(255,216,93,.2), transparent 45%),
+    linear-gradient(180deg, rgba(151,18,8,.99), rgba(77,1,4,.99));
+  box-shadow:
+    inset 0 1px 0 rgba(255,246,181,.6),
+    inset 0 -7px 12px rgba(48,0,2,.34),
+    0 0 14px rgba(255,159,28,.42);
+  color: #fff0aa;
+  font-family: Georgia,"Times New Roman",serif;
+  font-size: clamp(.42rem,2.25vw,.67rem);
+  font-weight: 900;
+  letter-spacing: .035em;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 2px 0 #711000, 0 0 8px rgba(255,205,65,.38);
+}
+
+/* Replace obsolete inactive feature copy while preserving the dynamic active lock count. */
+.gt-ref-respin-badge:not(.gt-ref-respin-badge--active) strong,
+.gt-ref-respin-badge:not(.gt-ref-respin-badge--active) span {
+  font-size: 0;
+}
+.gt-ref-respin-badge:not(.gt-ref-respin-badge--active) strong::after {
+  content: "TIGRE DA SORTE";
+  font-size: clamp(.42rem,2.2vw,.64rem);
+  font-weight: 950;
+  line-height: 1;
+  letter-spacing: .05em;
+}
+.gt-ref-respin-badge:not(.gt-ref-respin-badge--active) span::after {
+  content: "PODE ATIVAR NO GIRO";
+  display: block;
+  margin-top: 2px;
+  font-size: clamp(.25rem,1.25vw,.36rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: .06em;
+  color: rgba(255,238,179,.8);
+}
+
+/* Replace the idle status copy without changing feature-state text in React. */
+.gt-ref-machine[data-phase="idle"] > div[class*="left-[18%]"][class*="top-[63.7%]"] p:first-child {
+  font-size: 0;
+}
+.gt-ref-machine[data-phase="idle"] > div[class*="left-[18%]"][class*="top-[63.7%]"] p:first-child::after {
+  content: "3×3 · 5 LINHAS · TIGRE DA SORTE";
+  display: block;
+  font-size: clamp(.68rem,3.8vw,1.1rem);
+}
+
+/* Any winning result briefly brings the real win meter to the impact point. */
+@keyframes gt-ref-win-meter-impact {
+  0% {
+    transform: translate3d(0,0,0) scale(1);
+    filter: brightness(1);
+  }
+  12% {
+    transform: translate3d(0,-620%,0) scale(1.12);
+    filter: brightness(1.25);
+  }
+  24%, 70% {
+    transform: translate3d(0,-620%,0) scale(1.43);
+    filter: brightness(1.12);
+  }
+  86% {
+    transform: translate3d(0,-620%,0) scale(1.08);
+    filter: brightness(1.04);
+  }
+  100% {
+    transform: translate3d(0,0,0) scale(1);
+    filter: brightness(1);
+  }
+}
+
+@keyframes gt-ref-win-label-impact {
+  0%, 7% { opacity: 0; transform: translate(-50%, 8px) scale(.88); }
+  18%, 70% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  88%, 100% { opacity: 0; transform: translate(-50%, -4px) scale(.96); }
+}
+
+.gt-ref-machine--has-win > div[class*="left-[34.4%]"][class*="top-[77.9%]"] {
+  z-index: 77 !important;
+  transform-origin: center;
+  animation: gt-ref-win-meter-impact 1.08s cubic-bezier(.18,.82,.24,1) both;
+  border: 2px solid rgba(255,232,128,.92);
+  background: linear-gradient(180deg, rgba(113,4,8,.98), rgba(49,0,4,.98));
+  box-shadow: inset 0 0 13px rgba(255,220,86,.3), 0 0 22px rgba(255,181,42,.55), 0 0 42px rgba(255,70,20,.18);
+}
+
+.gt-ref-machine--has-win > div[class*="left-[34.4%]"][class*="top-[77.9%]"]::before {
+  content: "VOCÊ GANHOU";
+  position: absolute;
+  left: 50%;
+  bottom: 112%;
+  width: 170%;
+  color: #fff1a6;
+  font-family: Georgia,"Times New Roman",serif;
+  font-size: clamp(.52rem,2.6vw,.78rem);
+  font-weight: 900;
+  letter-spacing: .09em;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 2px 0 #681000, 0 0 10px rgba(255,213,76,.6);
+  animation: gt-ref-win-label-impact 1.08s ease-out both;
+  pointer-events: none;
+}
+
+.gt-ref-machine[data-phase="smallWin"] > div[class*="left-[34.4%]"][class*="top-[77.9%]"]::before { content: "GANHO"; }
+.gt-ref-machine[data-phase="bigWin"] > div[class*="left-[34.4%]"][class*="top-[77.9%]"]::before { content: "GRANDE GANHO"; }
+.gt-ref-machine[data-phase="fullGrid"] > div[class*="left-[34.4%]"][class*="top-[77.9%]"]::before { content: "TELA CHEIA ×10"; }
+
+/* Avoid duplicate amount overlays: the animated real win meter is now the single source of truth. */
+.gt-ref-win-callout { display: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gt-ref-machine .gt-ref-land > div {
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+  }
+
+  .gt-ref-machine--has-win > div[class*="left-[34.4%]"][class*="top-[77.9%]"] {
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .gt-ref-machine--has-win > div[class*="left-[34.4%]"][class*="top-[77.9%]"]::before {
+    display: none;
+  }
+}
