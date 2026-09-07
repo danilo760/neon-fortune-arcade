@@ -12,7 +12,6 @@ import {
 import {
   CANDY_FEATURE_BUY_INITIAL_SPINS,
   CANDY_SUGAR_LEVEL_THRESHOLDS,
-  makeCandyGrid,
   planCandyFeature,
   planCandyRound,
   type CandyBombEvent,
@@ -60,6 +59,7 @@ const FULL_H = 1066;
 const COLS = 6;
 const ROWS = 5;
 const BET_STEPS = [10, 50, 100, 200, 500, 1_000, 5_000, 10_000] as const;
+const AUTO_OPTIONS = [10, 25, 50, 100] as const;
 
 // SSR and hydration must paint the same cabinet. This display-only grid never
 // participates in a result; the first paid spin still uses injected/random RNG.
@@ -187,6 +187,8 @@ export function CandyCascadeHQ() {
   const [activeBomb, setActiveBomb] = useState<CandyBombEvent | null>(null);
   const [turbo, setTurbo] = useState(false);
   const [autoLeft, setAutoLeft] = useState(0);
+  const [autoOpen, setAutoOpen] = useState(false);
+  const [autoRounds, setAutoRounds] = useState(10);
   const [showInfo, setShowInfo] = useState(false);
   const [bonusActive, setBonusActive] = useState(false);
   const [freeSpinsLeft, setFreeSpinsLeft] = useState(0);
@@ -272,6 +274,7 @@ export function CandyCascadeHQ() {
         const duration = turbo ? 90 : 280;
         setWinDuration(duration);
         setWin(target);
+        playSound("cash", soundEnabled);
         await wait(duration);
         displayed = target;
 
@@ -301,7 +304,12 @@ export function CandyCascadeHQ() {
       setSugarLevel(1);
       setFreeSpinsLeft(feature.initialSpins);
       setPhase("bonusIntro");
-      setFeatureOverlay({ title: "SUGAR PARTY", value: `${feature.initialSpins} FREE SPINS`, caption: "Sugar Meter ativado", tone: "trigger" });
+      setFeatureOverlay({
+        title: "SUGAR PARTY",
+        value: `${feature.initialSpins} FREE SPINS`,
+        caption: "Sugar Meter ativado",
+        tone: "trigger",
+      });
       playCandyFeatureSound("bonusIntro", soundEnabled);
       await wait(turbo ? 180 : 620);
       setFeatureOverlay(null);
@@ -317,7 +325,12 @@ export function CandyCascadeHQ() {
         if (spin.retriggerAward > 0) {
           setFreeSpinsLeft(spin.spinsRemainingAfter);
           setPhase("retrigger");
-          setFeatureOverlay({ title: "SUGAR PARTY · RETRIGGER", value: `+${spin.retriggerAward} FREE SPINS`, caption: "Party Candy adicionou Free Spins", tone: "retrigger" });
+          setFeatureOverlay({
+            title: "SUGAR PARTY · RETRIGGER",
+            value: `+${spin.retriggerAward} FREE SPINS`,
+            caption: "Party Candy adicionou Free Spins",
+            tone: "retrigger",
+          });
           playCandyFeatureSound("retrigger", soundEnabled);
           await wait(turbo ? 130 : 430);
           setFeatureOverlay(null);
@@ -330,7 +343,12 @@ export function CandyCascadeHQ() {
 
       setFreeSpinsLeft(0);
       setPhase("bonusOutro");
-      setFeatureOverlay({ title: "TOTAL DO BÔNUS", value: formatCoins(feature.payout), caption: `Sugar Level final · ${feature.finalSugarLevel}`, tone: "outro" });
+      setFeatureOverlay({
+        title: "TOTAL DO BÔNUS",
+        value: formatCoins(feature.payout),
+        caption: `Sugar Level final · ${feature.finalSugarLevel}`,
+        tone: "outro",
+      });
       playCandyFeatureSound("bonusEnd", soundEnabled);
       await wait(turbo ? 250 : 850);
       setFeatureOverlay(null);
@@ -346,13 +364,15 @@ export function CandyCascadeHQ() {
   );
 
   const spinRound = useCallback(async () => {
-    if (busyRef.current || bonusActive || featurePending || featureModalOpen) return false;
+    if (busyRef.current || bonusActive || featurePending || featureModalOpen || autoOpen) return false;
+
+    busyRef.current = true;
     if (!arcadeActions.placeBet(bet)) {
+      busyRef.current = false;
       playSound("lose", soundEnabled);
       return false;
     }
 
-    busyRef.current = true;
     setSpinning(true);
     setPhase("spinning");
     setWinning(new Set());
@@ -363,48 +383,64 @@ export function CandyCascadeHQ() {
     setWin(0);
     playSound("spin", soundEnabled);
 
-    const plan = planCandyRound(bet, Math.random, "base");
-    const naturalFeature = plan.scatterAward > 0 ? planCandyFeature(bet, plan.scatterAward) : null;
+    try {
+      const plan = planCandyRound(bet, Math.random, "base");
+      const naturalFeature = plan.scatterAward > 0 ? planCandyFeature(bet, plan.scatterAward) : null;
 
-    await wait(turbo ? 190 : 470);
+      await wait(turbo ? 190 : 470);
 
-    const basePayout = await presentRound(plan, false);
-    let featurePayout = 0;
+      const basePayout = await presentRound(plan, false);
+      let featurePayout = 0;
 
-    if (naturalFeature) {
-      setPhase("bonusTrigger");
-      setFeatureOverlay({ title: "SUGAR PARTY", value: `${plan.scatterAward} FREE SPINS`, caption: `${plan.scatterCount} Party Candies na grade`, tone: "trigger" });
-      playCandyFeatureSound("trigger", soundEnabled);
-      await wait(turbo ? 150 : 480);
-      setFeatureOverlay(null);
-      featurePayout = (await playFeature(naturalFeature, false)).payout;
+      if (naturalFeature) {
+        setPhase("bonusTrigger");
+        setFeatureOverlay({
+          title: "SUGAR PARTY",
+          value: `${plan.scatterAward} FREE SPINS`,
+          caption: `${plan.scatterCount} Party Candies na grade`,
+          tone: "trigger",
+        });
+        playCandyFeatureSound("trigger", soundEnabled);
+        await wait(turbo ? 150 : 480);
+        setFeatureOverlay(null);
+        featurePayout = (await playFeature(naturalFeature, false)).payout;
+      }
+
+      const payout = basePayout + featurePayout;
+      if (payout > 0) arcadeActions.credit(payout);
+      const finalSugar = plan.cascades.at(-1)?.sugarMultiplier ?? 1;
+      arcadeActions.recordRound({
+        slug: "candy-cascade",
+        gameName: "Candy Cascade",
+        bet,
+        payout,
+        multiplier: payout > 0 ? payout / bet : 0,
+        note: naturalFeature
+          ? `${plan.cascades.length} cascata(s) · Sugar Party natural · ${naturalFeature.finalSpins} FS · Sugar L${naturalFeature.finalSugarLevel}`
+          : `${plan.cascades.length} cascata(s) · ${plan.bombs} Sugar Bomb(s) · sugar ×${finalSugar}`,
+      });
+
+      const bigWin = payout >= bet * 10;
+      setPhase("settled");
+      setSpinning(false);
+      if (bigWin) playSound("bigWin", soundEnabled);
+      else if (payout <= 0) playSound("lose", soundEnabled);
+
+      await wait(turbo ? 90 : bigWin ? 1_050 : payout > 0 ? 480 : 180);
+      setPhase("idle");
+      return true;
+    } finally {
+      setSpinning(false);
+      busyRef.current = false;
     }
-
-    const payout = basePayout + featurePayout;
-    if (payout > 0) arcadeActions.credit(payout);
-    const finalSugar = plan.cascades.at(-1)?.sugarMultiplier ?? 1;
-    arcadeActions.recordRound({
-      slug: "candy-cascade",
-      gameName: "Candy Cascade",
-      bet,
-      payout,
-      multiplier: payout > 0 ? payout / bet : 0,
-      note: naturalFeature
-        ? `${plan.cascades.length} cascata(s) · Sugar Party natural · ${naturalFeature.finalSpins} FS · Sugar L${naturalFeature.finalSugarLevel}`
-        : `${plan.cascades.length} cascata(s) · ${plan.bombs} Sugar Bomb(s) · sugar ×${finalSugar}`,
-    });
-    playSound(payout >= bet * 10 ? "bigWin" : payout > 0 ? "win" : "lose", soundEnabled);
-    await wait(turbo ? 70 : 180);
-    setPhase("idle");
-    setSpinning(false);
-    busyRef.current = false;
-    return true;
-  }, [bet, bonusActive, featureModalOpen, featurePending, playFeature, presentRound, soundEnabled, turbo]);
+  }, [autoOpen, bet, bonusActive, featureModalOpen, featurePending, playFeature, presentRound, soundEnabled, turbo]);
 
   const startAuto = useCallback(async () => {
     if (busyRef.current || autoLeft > 0 || bonusActive || featureModalOpen || featurePending) return;
     autoStopRef.current = false;
-    for (let left = 10; left > 0; left -= 1) {
+    setAutoOpen(false);
+
+    for (let left = autoRounds; left > 0; left -= 1) {
       if (autoStopRef.current) break;
       setAutoLeft(left);
       const played = await spinRound();
@@ -412,14 +448,22 @@ export function CandyCascadeHQ() {
       await wait(turbo ? 90 : 230);
     }
     setAutoLeft(0);
-  }, [autoLeft, bonusActive, featureModalOpen, featurePending, spinRound, turbo]);
+  }, [autoLeft, autoRounds, bonusActive, featureModalOpen, featurePending, spinRound, turbo]);
+
+  const openAutoModal = useCallback(() => {
+    if (busyRef.current || spinning || bonusActive || autoLeft > 0 || featurePending || featureModalOpen) return;
+    setShowInfo(false);
+    setAutoOpen(true);
+    playSound("click", soundEnabled);
+  }, [autoLeft, bonusActive, featureModalOpen, featurePending, soundEnabled, spinning]);
 
   const openFeatureModal = useCallback(() => {
-    if (busyRef.current || spinning || bonusActive || autoLeft > 0 || featurePending) return;
+    if (busyRef.current || spinning || bonusActive || autoLeft > 0 || featurePending || autoOpen) return;
+    setShowInfo(false);
     setFeatureError(null);
     setFeatureModalOpen(true);
     playCandyFeatureSound("featureOpen", soundEnabled);
-  }, [autoLeft, bonusActive, featurePending, soundEnabled, spinning]);
+  }, [autoLeft, autoOpen, bonusActive, featurePending, soundEnabled, spinning]);
 
   const confirmFeatureBuy = useCallback(async () => {
     if (!featureLockRef.current.acquire()) return;
@@ -434,7 +478,11 @@ export function CandyCascadeHQ() {
     });
 
     if (!availability.allowed) {
-      setFeatureError(availability.reason === "insufficientBalance" ? "Saldo fictício insuficiente." : "A compra está temporariamente indisponível.");
+      setFeatureError(
+        availability.reason === "insufficientBalance"
+          ? "Saldo fictício insuficiente."
+          : "A compra está temporariamente indisponível.",
+      );
       featureLockRef.current.release();
       return;
     }
@@ -458,7 +506,12 @@ export function CandyCascadeHQ() {
     try {
       setFeatureModalOpen(false);
       setPhase("featureCinematic");
-      setFeatureOverlay({ title: "SUGAR PARTY", value: `${CANDY_FEATURE_BUY_INITIAL_SPINS} FREE SPINS`, caption: "Party Candy → Sugar Bomb → Sugar Meter", tone: "trigger" });
+      setFeatureOverlay({
+        title: "SUGAR PARTY",
+        value: `${CANDY_FEATURE_BUY_INITIAL_SPINS} FREE SPINS`,
+        caption: "Party Candy → Sugar Bomb → Sugar Meter",
+        tone: "trigger",
+      });
       playCandyFeatureSound("trigger", soundEnabled);
       await wait(turbo ? 190 : 650);
       setFeatureOverlay(null);
@@ -473,17 +526,24 @@ export function CandyCascadeHQ() {
         multiplier: availability.cost > 0 ? result.payout / availability.cost : 0,
         note: `Sugar Party · Custo ${formatCoins(availability.cost)} · Resultado ${formatCoins(result.payout)} · ${feature.finalSpins} FS · Sugar L${feature.finalSugarLevel}`,
       });
+
+      const bigWin = result.payout >= availability.cost * 2;
+      setPhase("settled");
+      setSpinning(false);
+      if (bigWin) playSound("bigWin", soundEnabled);
+      else if (result.payout <= 0) playSound("lose", soundEnabled);
+      await wait(turbo ? 90 : bigWin ? 1_050 : result.payout > 0 ? 480 : 180);
+      setPhase("idle");
     } finally {
       setFeaturePending(false);
       setSpinning(false);
-      setPhase("idle");
       busyRef.current = false;
       featureLockRef.current.release();
     }
   }, [autoLeft, bet, bonusActive, featurePending, playFeature, soundEnabled, spinning, turbo]);
 
   const changeBet = (direction: -1 | 1) => {
-    if (spinning || autoLeft > 0 || bonusActive || featureModalOpen || featurePending) return;
+    if (spinning || autoLeft > 0 || bonusActive || featureModalOpen || featurePending || autoOpen) return;
     const current = Math.max(0, BET_STEPS.findIndex((value) => value === bet));
     const next = Math.max(0, Math.min(BET_STEPS.length - 1, current + direction));
     const value = BET_STEPS[next];
@@ -494,7 +554,7 @@ export function CandyCascadeHQ() {
   };
 
   const setMaxBet = () => {
-    if (spinning || autoLeft > 0 || bonusActive || featureModalOpen || featurePending) return;
+    if (spinning || autoLeft > 0 || bonusActive || featureModalOpen || featurePending || autoOpen) return;
     const affordable = [...BET_STEPS].reverse().find((value) => value <= balance);
     if (affordable !== undefined) {
       setBet(affordable);
@@ -503,20 +563,24 @@ export function CandyCascadeHQ() {
   };
 
   const insufficient = bet > balance;
-  const featureButtonBlocked = spinning || autoLeft > 0 || bonusActive || featurePending || featureModalOpen;
+  const featureButtonBlocked = spinning || autoLeft > 0 || bonusActive || featurePending || featureModalOpen || autoOpen;
   const featureAvailability = useMemo(
     () => candyFeatureBuyAvailability({ balance, bet, spinning, bonusActive, autoLeft, pending: featurePending }),
     [autoLeft, balance, bet, bonusActive, featurePending, spinning],
   );
   const cascadeTransition = phase === "collapse" || phase === "refill";
+  const bigWinVisible = phase === "settled" && !bonusActive && win >= bet * 10;
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-black sm:px-3 sm:py-2">
-      <div className={cn(
-        "cc-machine relative mx-auto aspect-[600/1066] w-full max-w-[430px] overflow-hidden bg-[#31001d] shadow-[0_0_120px_rgba(255,54,187,.3)] sm:rounded-[22px]",
-        cascadeIndex >= 3 && spinning && "cc-machine--streak",
-        bonusActive && "cc-machine--bonus",
-      )}>
+      <div
+        className={cn(
+          "cc-machine relative mx-auto aspect-[600/1066] w-full max-w-[430px] overflow-hidden bg-[#31001d] shadow-[0_0_120px_rgba(255,54,187,.3)] sm:rounded-[22px]",
+          cascadeIndex >= 3 && spinning && "cc-machine--streak",
+          bonusActive && "cc-machine--bonus",
+        )}
+        data-phase={phase}
+      >
         <img src={candyReference} alt="Candy Cascade" draggable={false} className="absolute inset-0 size-full select-none object-fill" />
         <Link to="/" aria-label="Voltar ao lobby" className="absolute right-[1.1%] top-[.8%] z-50 size-[9.2%] rounded-full bg-transparent" />
         <button
@@ -572,13 +636,29 @@ export function CandyCascadeHQ() {
 
         {phase === "featureCinematic" && <FeatureCinematic />}
 
-        <div className={cn("absolute left-[25%] top-[76.4%] z-[35] flex h-[7.7%] w-[50%] items-center justify-center rounded-[20px] bg-[#4a075f]/96 text-center shadow-[inset_0_0_18px_rgba(255,85,238,.4)]", win > 0 && !spinning && "cc-ref-result-win")}>
+        <div className={cn(
+          "absolute left-[25%] top-[76.4%] z-[35] flex h-[7.7%] w-[50%] items-center justify-center rounded-[20px] bg-[#4a075f]/96 text-center shadow-[inset_0_0_18px_rgba(255,85,238,.4)]",
+          win > 0 && phase === "settled" && "cc-ref-result-win",
+        )}>
           <div>
             <p className="text-[8px] font-black uppercase tracking-[.16em] text-pink-100">{bonusActive ? `SUGAR L${sugarLevel}` : spinning && cascadeIndex > 0 ? `CASCATA ${cascadeIndex}` : "GANHO"}</p>
             <p className="font-serif text-[clamp(1.25rem,7vw,2.15rem)] font-black leading-none text-[#ffe35f] tabular-nums drop-shadow-[0_2px_0_#6b2b00]"><AnimatedWinCounter value={win} duration={winDuration} /></p>
             {(cascadeIndex > 0 || sugarMultiplier > 1) && <p className="mt-0.5 text-[8px] font-black text-pink-100">SUGAR ×{sugarMultiplier}{bonusActive ? ` · TOTAL ${formatCoins(bonusTotal)}` : ""}</p>}
           </div>
         </div>
+
+        {bigWinVisible && (
+          <div
+            className="cc-ref-result-win pointer-events-none absolute left-1/2 top-[48%] z-[72] min-w-[62%] -translate-x-1/2 overflow-hidden rounded-[24px] border-2 border-yellow-100/90 bg-[linear-gradient(155deg,rgba(106,12,122,.97),rgba(69,4,89,.97))] px-5 py-4 text-center shadow-[0_0_45px_rgba(255,83,218,.58),0_0_70px_rgba(255,218,77,.22)]"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="block font-serif text-[clamp(1.7rem,9vw,3rem)] font-black leading-none text-[#fff1a7] drop-shadow-[0_3px_0_#7f2d00]">BIG WIN</span>
+            <strong className="mt-2 block text-[clamp(1rem,5.5vw,1.55rem)] font-black leading-none text-white tabular-nums drop-shadow-[0_0_12px_rgba(255,217,90,.65)]">
+              <AnimatedWinCounter value={win} duration={turbo ? 140 : 620} />
+            </strong>
+          </div>
+        )}
 
         <button
           type="button"
@@ -592,13 +672,30 @@ export function CandyCascadeHQ() {
 
         <div className="absolute left-[3%] top-[85.1%] z-[35] flex h-[5.5%] w-[31%] items-center justify-center rounded-xl bg-[#2b071f]/96 px-1 text-[clamp(.65rem,3vw,.95rem)] font-black text-white tabular-nums">{formatCoins(balance)}</div>
         <div className="absolute right-[3%] top-[85.1%] z-[35] flex h-[5.5%] w-[28%] items-center justify-center rounded-xl bg-[#2b071f]/96 px-1 text-[clamp(.65rem,3vw,.95rem)] font-black text-white tabular-nums">{formatCoins(bet)}</div>
-        <button type="button" onClick={() => changeBet(-1)} disabled={spinning || autoLeft > 0 || bonusActive || featureModalOpen || featurePending} aria-label="Diminuir aposta" className="absolute right-[29.8%] top-[87%] z-50 size-[6.4%] rounded-full disabled:opacity-40" />
-        <button type="button" onClick={() => changeBet(1)} disabled={spinning || autoLeft > 0 || bonusActive || featureModalOpen || featurePending} aria-label="Aumentar aposta" className="absolute right-[1.7%] top-[87%] z-50 size-[6.4%] rounded-full disabled:opacity-40" />
-        <button type="button" onClick={() => void spinRound()} disabled={spinning || autoLeft > 0 || insufficient || bonusActive || featureModalOpen || featurePending} aria-label="Girar Candy Cascade" aria-busy={spinning} className={cn("absolute left-[34.5%] top-[84.1%] z-50 h-[15.1%] w-[31%] rounded-full disabled:cursor-not-allowed disabled:opacity-40", !spinning && !insufficient && "cc-ref-spin-ready")} />
-        <button type="button" onClick={() => { playSound("click", soundEnabled); if (autoLeft > 0) { autoStopRef.current = true; } else { void startAuto(); } }} disabled={(autoLeft === 0 && spinning) || bonusActive || featureModalOpen || featurePending} aria-label={autoLeft > 0 ? "Parar Auto Play" : "Iniciar Auto Play"} className="absolute left-[8%] top-[93.4%] z-50 h-[5.5%] w-[25%] rounded-xl disabled:opacity-40" />
-        <button type="button" onClick={setMaxBet} disabled={spinning || autoLeft > 0 || bonusActive || featureModalOpen || featurePending} aria-label="Aposta máxima" className="absolute right-[8%] top-[93.4%] z-50 h-[5.5%] w-[25%] rounded-xl disabled:opacity-40" />
-        <button type="button" onClick={() => { setTurbo((value) => !value); playSound("click", soundEnabled); }} disabled={spinning || autoLeft > 0 || bonusActive || featureModalOpen || featurePending} aria-label={turbo ? "Desativar turbo" : "Ativar turbo"} aria-pressed={turbo} className={cn("absolute right-[1.8%] top-[77.4%] z-50 size-[8.5%] rounded-full disabled:opacity-40", turbo && "ring-2 ring-yellow-300 ring-offset-1 ring-offset-transparent")} />
-        <button type="button" onClick={() => { setShowInfo((value) => !value); playSound("click", soundEnabled); }} disabled={bonusActive || featureModalOpen} aria-label="Informações do jogo" aria-pressed={showInfo} className="absolute left-[25%] top-[78.2%] z-50 size-[7.2%] rounded-full disabled:opacity-40" />
+        <button type="button" onClick={() => changeBet(-1)} disabled={spinning || autoLeft > 0 || bonusActive || featureModalOpen || featurePending || autoOpen} aria-label="Diminuir aposta" className="absolute right-[29.8%] top-[87%] z-50 size-[6.4%] rounded-full disabled:opacity-40" />
+        <button type="button" onClick={() => changeBet(1)} disabled={spinning || autoLeft > 0 || bonusActive || featureModalOpen || featurePending || autoOpen} aria-label="Aumentar aposta" className="absolute right-[1.7%] top-[87%] z-50 size-[6.4%] rounded-full disabled:opacity-40" />
+        <button type="button" onClick={() => void spinRound()} disabled={spinning || autoLeft > 0 || insufficient || bonusActive || featureModalOpen || featurePending || autoOpen} aria-label="Girar Candy Cascade" aria-busy={spinning} className={cn("absolute left-[34.5%] top-[84.1%] z-50 h-[15.1%] w-[31%] rounded-full disabled:cursor-not-allowed disabled:opacity-40", !spinning && !insufficient && !autoOpen && "cc-ref-spin-ready")} />
+
+        {autoLeft > 0 ? (
+          <button
+            type="button"
+            onClick={() => { playSound("click", soundEnabled); autoStopRef.current = true; }}
+            aria-label="Parar Auto Play"
+            className="absolute left-[8%] top-[93.4%] z-50 h-[5.5%] w-[25%] rounded-xl"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={openAutoModal}
+            disabled={spinning || bonusActive || featureModalOpen || featurePending || insufficient}
+            aria-label={`Configurar Auto Play: ${autoRounds} rodadas`}
+            className="absolute left-[8%] top-[93.4%] z-50 h-[5.5%] w-[25%] rounded-xl disabled:opacity-40"
+          />
+        )}
+
+        <button type="button" onClick={setMaxBet} disabled={spinning || autoLeft > 0 || bonusActive || featureModalOpen || featurePending || autoOpen} aria-label="Aposta máxima" className="absolute right-[8%] top-[93.4%] z-50 h-[5.5%] w-[25%] rounded-xl disabled:opacity-40" />
+        <button type="button" onClick={() => { setTurbo((value) => !value); playSound("click", soundEnabled); }} disabled={spinning || autoLeft > 0 || bonusActive || featureModalOpen || featurePending || autoOpen} aria-label={turbo ? "Desativar turbo" : "Ativar turbo"} aria-pressed={turbo} className={cn("absolute right-[1.8%] top-[77.4%] z-50 size-[8.5%] rounded-full disabled:opacity-40", turbo && "ring-2 ring-yellow-300 ring-offset-1 ring-offset-transparent")} />
+        <button type="button" onClick={() => { setShowInfo((value) => !value); playSound("click", soundEnabled); }} disabled={bonusActive || featureModalOpen || autoOpen} aria-label="Informações do jogo" aria-pressed={showInfo} className="absolute left-[25%] top-[78.2%] z-50 size-[7.2%] rounded-full disabled:opacity-40" />
 
         {featureOverlay && (
           <div className={cn("cc-feature-overlay", `cc-feature-overlay--${featureOverlay.tone}`)} role="status" aria-live="polite">
@@ -607,6 +704,37 @@ export function CandyCascadeHQ() {
               {phase === "bonusOutro" ? <strong><AnimatedWinCounter value={bonusTotal} duration={turbo ? 160 : 650} /></strong> : featureOverlay.value && <strong>{featureOverlay.value}</strong>}
               {featureOverlay.caption && <small>{featureOverlay.caption}</small>}
             </div>
+          </div>
+        )}
+
+        {autoOpen && (
+          <div className="absolute inset-0 z-[96] grid place-items-end bg-[#260020]/75 px-4 pb-[8%] backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label="Configurar Auto Play do Candy Cascade">
+            <section className="w-full rounded-[22px] border border-pink-100/55 bg-[linear-gradient(155deg,#4d075d,#851176_52%,#351052)] p-3 text-center text-white shadow-[0_20px_70px_rgba(0,0,0,.7),0_0_38px_rgba(255,82,213,.2)]">
+              <p className="text-[9px] font-black tracking-[.28em] text-pink-100">AUTO PLAY</p>
+              <p className="mt-1 text-[10px] font-bold text-pink-50/75">{formatCoins(bet)} MOEDAS por rodada</p>
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                {AUTO_OPTIONS.map((rounds) => (
+                  <button
+                    key={rounds}
+                    type="button"
+                    onClick={() => setAutoRounds(rounds)}
+                    className={cn(
+                      "min-h-11 rounded-xl border text-xs font-black transition-transform active:scale-95",
+                      autoRounds === rounds
+                        ? "border-yellow-100 bg-yellow-200 text-[#501040] shadow-[0_0_18px_rgba(255,221,98,.28)]"
+                        : "border-pink-100/25 bg-black/25 text-pink-50",
+                    )}
+                  >
+                    {rounds}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => setAutoOpen(false)} className="min-h-11 rounded-xl border border-white/20 bg-white/5 text-[10px] font-black tracking-wider text-pink-50">CANCELAR</button>
+                <button type="button" onClick={() => void startAuto()} className="min-h-11 rounded-xl border border-yellow-100/65 bg-[linear-gradient(180deg,#fff0a4,#e2a32f)] text-[10px] font-black tracking-wider text-[#4b1735] shadow-[0_0_22px_rgba(255,209,86,.25)]">INICIAR {autoRounds}</button>
+              </div>
+              <small className="mt-2 block text-[8px] font-black tracking-[.14em] text-pink-50/60">MOEDAS FICTÍCIAS · SEM VALOR REAL</small>
+            </section>
           </div>
         )}
 
@@ -643,7 +771,7 @@ export function CandyCascadeHQ() {
         )}
 
         {autoLeft > 0 && <div className="absolute left-[26%] top-[94.2%] z-[60] grid size-[6%] place-items-center rounded-full bg-emerald-500 text-[9px] font-black text-white shadow-lg">{autoLeft}</div>}
-        {insufficient && !bonusActive && !featureModalOpen && <div className="absolute inset-x-[9%] bottom-[9%] z-[80] rounded-full border border-yellow-300 bg-[#4d0732]/95 px-4 py-2 text-center text-[10px] font-black uppercase tracking-wider text-yellow-100">Saldo fictício insuficiente</div>}
+        {insufficient && !bonusActive && !featureModalOpen && !autoOpen && <div className="absolute inset-x-[9%] bottom-[9%] z-[80] rounded-full border border-yellow-300 bg-[#4d0732]/95 px-4 py-2 text-center text-[10px] font-black uppercase tracking-wider text-yellow-100">Saldo fictício insuficiente</div>}
       </div>
     </main>
   );
