@@ -6,14 +6,36 @@
     transform: translateY(2px) scale(.9, .96);
     filter: brightness(1.8) saturate(1.18);
   }
-  52% {
-    transform: translateY(-6px) scale(1.04, 1.16);
-    filter: brightness(1.22) saturate(1.08);
+  42% {
+    transform: translateY(-7px) scale(1.055, 1.18);
+    filter: brightness(1.3) saturate(1.12);
+  }
+  72% {
+    transform: translateY(-3px) scale(.99, 1.08);
+    filter: brightness(1.08) saturate(1.04);
   }
   100% {
     transform: translateY(-4px) scaleY(1.1);
     filter: brightness(1) saturate(1);
   }
+}
+
+@keyframes plinko-bucket-afterglow {
+  0% { opacity: .95; transform: translate(-50%, -50%) scale(.55); }
+  58% { opacity: .5; transform: translate(-50%, -50%) scale(1.18); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.48); }
+}
+
+@keyframes plinko-last-payout-impact {
+  0% { transform: scale(.9); filter: brightness(1.6); }
+  48% { transform: scale(1.055); filter: brightness(1.24); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+@keyframes plinko-bigwin-depth {
+  0% { filter: brightness(.92) saturate(.9); }
+  38% { filter: brightness(1.18) saturate(1.12); }
+  100% { filter: brightness(1) saturate(1); }
 }
 
 .plinko-ref-bucket.is-latest-winner {
@@ -26,7 +48,32 @@
     0 0 12px rgba(255, 246, 182, .92),
     0 0 25px rgba(255, 75, 228, .86),
     0 0 34px rgba(86, 228, 255, .24);
-  animation: plinko-latest-bucket-hit .32s cubic-bezier(.18, .86, .25, 1.1) both;
+  animation: plinko-latest-bucket-hit .4s cubic-bezier(.18, .86, .25, 1.1) both;
+}
+
+.plinko-ref-bucket.is-latest-winner::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 50%;
+  width: 170%;
+  aspect-ratio: 1;
+  pointer-events: none;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 244, 174, .72);
+  box-shadow: 0 0 17px rgba(255, 93, 226, .55), inset 0 0 12px rgba(92, 231, 255, .32);
+  animation: plinko-bucket-afterglow .42s ease-out both;
+}
+
+.plinko-ref-bucket.is-high.is-latest-winner {
+  color: #fff8bd;
+  background: linear-gradient(180deg, #ffe475, #d4871a 48%, #7a2906);
+  border-color: #fff7c2;
+  box-shadow:
+    0 0 15px rgba(255, 248, 188, .98),
+    0 0 31px rgba(255, 192, 51, .88),
+    0 0 44px rgba(255, 78, 221, .28);
 }
 
 .plinko-ref-drop:not(:disabled) {
@@ -65,6 +112,34 @@
   box-shadow: 0 0 0 1px rgba(255, 246, 184, .24), 0 0 12px rgba(255, 218, 69, .38);
 }
 
+.plinko-ref-last--win strong,
+.plinko-ref-last--win span {
+  animation: plinko-last-payout-impact .38s cubic-bezier(.18, .9, .25, 1.12) both;
+}
+
+.plinko-ref-bigwin {
+  isolation: isolate;
+  animation: plinko-ref-bigwin .3s cubic-bezier(.22,.85,.28,1.2) both, plinko-bigwin-depth .82s ease-out both;
+}
+
+.plinko-ref-bigwin::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -35% -55%;
+  pointer-events: none;
+  background: linear-gradient(108deg, transparent 42%, rgba(119, 239, 255, .34) 48%, rgba(255, 251, 201, .92) 52%, rgba(255, 91, 226, .3) 57%, transparent 64%);
+  transform: translateX(-62%) skewX(-14deg);
+  animation: plinko-bigwin-sheen .78s ease-out .08s both;
+  mix-blend-mode: screen;
+}
+
+@keyframes plinko-bigwin-sheen {
+  from { transform: translateX(-62%) skewX(-14deg); opacity: 0; }
+  24% { opacity: .9; }
+  to { transform: translateX(62%) skewX(-14deg); opacity: 0; }
+}
+
 /* High-frequency trajectory is compositor-driven; React only mounts/unmounts the run. */
 .plinko-ref-ball-layer .plinko-ref-ball {
   transition: none;
@@ -89,10 +164,22 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .plinko-ref-bucket.is-latest-winner {
+  .plinko-ref-bucket.is-latest-winner,
+  .plinko-ref-bucket.is-latest-winner::after,
+  .plinko-ref-last--win strong,
+  .plinko-ref-last--win span,
+  .plinko-ref-bigwin,
+  .plinko-ref-bigwin::after {
     animation: none !important;
-    transform: translateY(-4px) scaleY(1.1);
     filter: none !important;
+  }
+
+  .plinko-ref-bucket.is-latest-winner {
+    transform: translateY(-4px) scaleY(1.1);
+  }
+
+  .plinko-ref-bucket.is-latest-winner::after {
+    display: none;
   }
 
   .plinko-ref-drop:not(:disabled),
