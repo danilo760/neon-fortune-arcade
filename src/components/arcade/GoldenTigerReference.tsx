@@ -71,6 +71,13 @@ export function GoldenTigerReference() {
 
   useEffect(() => {
     hydrateFromStorage();
+
+    return () => {
+      // Never let Auto Play initiate another paid round after this game route
+      // has been left. An already-started round is allowed to finish its
+      // accounting so the wager can never disappear without a result.
+      autoStopRef.current = true;
+    };
   }, []);
 
   const runSpin = useCallback(async (): Promise<boolean> => {
@@ -235,6 +242,7 @@ export function GoldenTigerReference() {
   };
 
   const isInsufficient = bet > balance;
+  const showInsufficient = isInsufficient && !isSpinning && autoLeft === 0;
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-black flex flex-col justify-center items-center py-1 sm:py-3 px-2">
@@ -242,6 +250,9 @@ export function GoldenTigerReference() {
         <div className="flex items-center justify-between w-full px-2 z-40 mb-1">
           <Link
             to="/"
+            onClick={() => {
+              autoStopRef.current = true;
+            }}
             className="size-9 rounded-full bg-black/60 border border-yellow-500/40 flex items-center justify-center text-yellow-200 hover:bg-yellow-500/20 active:scale-95 transition-transform"
             aria-label="Voltar ao Lobby"
           >
@@ -350,7 +361,8 @@ export function GoldenTigerReference() {
                 <button
                   type="button"
                   onClick={() => void startAuto()}
-                  className="py-2.5 rounded-xl border border-yellow-300 bg-gradient-to-r from-yellow-400 to-amber-500 text-xs font-black text-stone-950 shadow-md active:scale-95"
+                  disabled={isInsufficient}
+                  className="py-2.5 rounded-xl border border-yellow-300 bg-gradient-to-r from-yellow-400 to-amber-500 text-xs font-black text-stone-950 shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100"
                 >
                   INICIAR {autoRounds}
                 </button>
@@ -369,7 +381,7 @@ export function GoldenTigerReference() {
           />
         )}
 
-        {isInsufficient && (
+        {showInsufficient && (
           <div className="absolute inset-x-4 bottom-3 z-40 py-2 px-3 rounded-xl border border-red-400 bg-red-950/95 text-center text-xs font-black text-red-200 shadow-lg">
             Saldo fictício insuficiente — recarregue moedas no lobby!
           </div>
