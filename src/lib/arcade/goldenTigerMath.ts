@@ -50,12 +50,14 @@ export function evaluateGoldenTiger(grid: readonly GoldenTigerSymbolId[], bet: n
 
 export function createGoldenTigerRespin(grid: readonly GoldenTigerSymbolId[], rng: () => number = Math.random): GoldenTigerRespinState | null {
   if (rng() >= 0.05) return null;
-  const candidates = [...new Set(grid.filter((symbol): symbol is Exclude<GoldenTigerSymbolId, "scatter"> => symbol !== "scatter"))];
+  // The chosen symbol is always a regular paying symbol: Wilds only join the lock.
+  const candidates = [...new Set(grid.filter((symbol): symbol is Exclude<GoldenTigerSymbolId, "scatter" | "wild"> => symbol !== "scatter" && symbol !== "wild"))];
   const target = candidates[Math.min(candidates.length - 1, Math.floor(rng() * candidates.length))];
   if (!target) return null;
   const locked = new Set<number>(); grid.forEach((symbol, index) => { if (symbol === target || symbol === "wild") locked.add(index); });
   return locked.size ? { target, locked, spinsLeft: 3 } : null;
 }
+
 export function respinGoldenTigerGrid(grid: readonly GoldenTigerSymbolId[], state: GoldenTigerRespinState, rng: () => number = Math.random) {
   const next = grid.map((symbol, index) => state.locked.has(index) ? symbol : pickGoldenTigerSymbol("respin", rng));
   const locked = new Set(state.locked); next.forEach((symbol, index) => { if (symbol === state.target || symbol === "wild") locked.add(index); });
