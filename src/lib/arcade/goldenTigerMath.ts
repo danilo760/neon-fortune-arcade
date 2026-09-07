@@ -4,7 +4,7 @@ export type GoldenTigerWinTier = "none" | "small" | "nice" | "big" | "mega";
 type SymbolDef = { id: GoldenTigerSymbolId; pay: number; weight: number };
 
 export type GoldenTigerSpinResult = { payout: number; winning: Set<number>; scatterIndexes: Set<number>; scatterCount: number; bonusAward: number; lines: number; isFullGrid: boolean };
-export type GoldenTigerRespinState = { target: Exclude<GoldenTigerSymbolId, "scatter">; locked: Set<number>; spinsLeft: number };
+export type GoldenTigerRespinState = { target: Exclude<GoldenTigerSymbolId, "scatter" | "wild">; locked: Set<number>; spinsLeft: number };
 
 export const GOLDEN_TIGER_PAYLINES = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 4, 8], [2, 4, 6]] as const;
 export const GOLDEN_TIGER_MAX_RETRIGGERS = 2;
@@ -35,8 +35,7 @@ export function evaluateGoldenTiger(grid: readonly GoldenTigerSymbolId[], bet: n
     if (matched.length !== 3 || target === "scatter") continue;
     payout += bet * (SYMBOL_BY_ID.get(target)?.pay ?? 0); lines += 1; matched.forEach((index) => winning.add(index));
   }
-  // Full-grid bonus: derive the paying target from the first non-Wild symbol so an
-  // all-Wild opening cell can never break the comparison.
+
   const fullGridTarget = grid.find((symbol) => symbol !== "wild");
   const isFullGrid =
     grid.length === 9 &&
@@ -47,22 +46,22 @@ export function evaluateGoldenTiger(grid: readonly GoldenTigerSymbolId[], bet: n
   return { payout: Math.round(payout), winning, scatterIndexes, scatterCount: scatterIndexes.size, bonusAward: 0, lines, isFullGrid };
 }
 
-
 export function createGoldenTigerRespin(grid: readonly GoldenTigerSymbolId[], rng: () => number = Math.random): GoldenTigerRespinState | null {
   if (rng() >= 0.05) return null;
-  // The chosen symbol is always a regular paying symbol: Wilds only join the lock.
   const candidates = [...new Set(grid.filter((symbol): symbol is Exclude<GoldenTigerSymbolId, "scatter" | "wild"> => symbol !== "scatter" && symbol !== "wild"))];
   const target = candidates[Math.min(candidates.length - 1, Math.floor(rng() * candidates.length))];
   if (!target) return null;
-  const locked = new Set<number>(); grid.forEach((symbol, index) => { if (symbol === target || symbol === "wild") locked.add(index); });
-  return locked.size ? { target, locked, spinsLeft: 3 } : null;
+  const locked = new Set<number>();
+  grid.forEach((symbol, index) => { if (symbol === target || symbol === "wild") locked.add(index); });
+  return locked.size ? { target, locked, spinsLeft: 1 } : null;
 }
 
 export function respinGoldenTigerGrid(grid: readonly GoldenTigerSymbolId[], state: GoldenTigerRespinState, rng: () => number = Math.random) {
   const next = grid.map((symbol, index) => state.locked.has(index) ? symbol : pickGoldenTigerSymbol("respin", rng));
-  const locked = new Set(state.locked); next.forEach((symbol, index) => { if (symbol === state.target || symbol === "wild") locked.add(index); });
+  const locked = new Set(state.locked);
+  next.forEach((symbol, index) => { if (symbol === state.target || symbol === "wild") locked.add(index); });
   const added = locked.size > state.locked.size;
-  return { grid: next, state: { ...state, locked, spinsLeft: added ? 3 : 0 }, added };
+  return { grid: next, state: { ...state, locked, spinsLeft: added ? 1 : 0 }, added };
 }
 
 export function goldenTigerWinTier(payout: number, bet: number): GoldenTigerWinTier {
