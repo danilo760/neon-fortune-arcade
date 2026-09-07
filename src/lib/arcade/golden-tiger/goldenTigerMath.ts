@@ -133,6 +133,7 @@ export function evaluateGrid(
 
   for (let i = 0; i < GOLDEN_TIGER_PAYLINES.length; i++) {
     const linePositions = GOLDEN_TIGER_PAYLINES[i];
+    if (!linePositions) continue;
     const win = evaluateLine(linePositions, grid, bet, i);
     if (win) {
       lines.push(win);
