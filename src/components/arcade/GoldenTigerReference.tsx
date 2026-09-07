@@ -1,7 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Sparkles, Volume2, VolumeX } from "lucide-react";
-
-import { AnimatedWinCounter } from "./AnimatedWinCounter";
+import { ArrowLeft, Volume2, VolumeX } from "lucide-react";
 import {
   memo,
   useCallback,
@@ -16,19 +14,11 @@ import {
 import { goldenTigerReferenceBase64 } from "@/assets/golden-tiger/referenceData";
 import { formatCoins } from "@/lib/arcade/format";
 import {
-  createGoldenFortunePurchaseLock,
-  goldenFortuneAvailability,
-} from "@/lib/arcade/goldenTigerFeatureBuy";
-import {
-  GOLDEN_TIGER_FEATURE_BUY_INITIAL_SPINS,
-  GOLDEN_TIGER_MAX_RETRIGGERS,
-  evaluateGoldenTiger,
   createGoldenTigerRespin,
-  goldenTigerFeatureBuyCost,
+  evaluateGoldenTiger,
   goldenTigerWinTier,
   makeGoldenTigerGrid,
   respinGoldenTigerGrid,
-  type GoldenTigerMode,
   type GoldenTigerSpinResult,
   type GoldenTigerSymbolId,
   type GoldenTigerWinTier,
@@ -37,42 +27,21 @@ import { playSound } from "@/lib/arcade/sound";
 import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store";
 import { cn } from "@/lib/utils";
 
+import { AnimatedWinCounter } from "./AnimatedWinCounter";
 import "./GoldenTigerReference.css";
 
 type Crop = { x: number; y: number; w: number; h: number };
 type PresentationPhase =
   | "idle"
   | "spinning"
-  | "anticipation"
   | "landing"
   | "evaluating"
   | "smallWin"
   | "bigWin"
-  | "featureBuy"
-  | "bonusTrigger"
-  | "bonusIntro"
-  | "bonusPlaying"
-  | "bonusRetrigger"
-  | "bonusOutro";
-type TigerReaction =
-  | "idle"
-  | "watch"
-  | "notice"
-  | "excited"
-  | "charge"
-  | "throw"
-  | "celebrate"
-  | "bigWin"
-  | "bonus"
-  | "retrigger"
-  | "miss";
-type BonusOverlay = {
-  title: string;
-  value?: string;
-  caption?: string;
-  tone: "bonus" | "retrigger" | "outro";
-} | null;
-type PurchasedBonusContext = { cost: number } | null;
+  | "respinTrigger"
+  | "respinPlaying"
+  | "fullGrid";
+type TigerReaction = "idle" | "watch" | "notice" | "excited" | "celebrate" | "bigWin" | "miss";
 
 const FULL_W = 940;
 const FULL_H = 1672;
@@ -110,17 +79,14 @@ const BET_STEPS = [10, 50, 100, 200, 500, 1_000, 5_000, 10_000] as const;
 
 const INITIAL_GRID: GoldenTigerSymbolId[] = [
   "ingot",
-  "scatter",
   "orange",
-  "fortuneBag",
-  "firecracker",
-  "firecracker",
-  "wild",
-  "ingot",
-  "scatter",
-  "lion",
   "jade",
   "fortuneBag",
+  "wild",
+  "firecracker",
+  "lantern",
+  "lion",
+  "orange",
 ];
 
 function reducedMotionNow() {
@@ -199,12 +165,10 @@ const GoldenReelStrip = memo(function GoldenReelStrip({
 }) {
   const rotated = useMemo(() => {
     const offset = (column * 2) % REEL_STRIP_SYMBOLS.length;
-    const sequence = [
-      ...REEL_STRIP_SYMBOLS.slice(offset),
-      ...REEL_STRIP_SYMBOLS.slice(0, offset),
-    ];
+    const sequence = [...REEL_STRIP_SYMBOLS.slice(offset), ...REEL_STRIP_SYMBOLS.slice(0, offset)];
     return [...sequence, ...sequence];
   }, [column]);
+
   const style = {
     left: `${column * (100 / 3)}%`,
     "--gt-strip-duration": `${turbo ? 320 + column * 12 : 680 + column * 28}ms`,
@@ -225,56 +189,66 @@ const GoldenReelStrip = memo(function GoldenReelStrip({
   );
 });
 
-const TigerStage = memo(function TigerStage({ flyingCardColumn }: { flyingCardColumn: number | null }) {
-  const targetX = flyingCardColumn === null ? 50 : 6.7 + (flyingCardColumn + 0.5) * (85.1 / 3);
-  const tigerStyle = { "--gt-target-x": `${targetX}%` } as CSSProperties;
+const GoldenCellStrip = memo(function GoldenCellStrip({
+  index,
+  src,
+  turbo,
+}: {
+  index: number;
+  src: string;
+  turbo: boolean;
+}) {
+  const sequence = useMemo(() => {
+    const offset = (index * 3) % REEL_STRIP_SYMBOLS.length;
+    const rotated = [...REEL_STRIP_SYMBOLS.slice(offset), ...REEL_STRIP_SYMBOLS.slice(0, offset)];
+    return [...rotated, ...rotated];
+  }, [index]);
+
+  const style = {
+    "--gt-cell-strip-duration": `${turbo ? 250 : 520}ms`,
+    "--gt-cell-strip-delay": `${-(index % 3) * 41}ms`,
+  } as CSSProperties;
 
   return (
-    <div className="gt-ref-tiger-stage" style={tigerStyle} aria-hidden>
+    <div className="gt-ref-cell-strip" style={style} aria-hidden>
+      <div className="gt-ref-cell-strip__track">
+        {sequence.map((symbol, stripIndex) => (
+          <div className="gt-ref-cell-strip__item" key={`${index}-${stripIndex}-${symbol}`}>
+            <ReferenceSymbol id={symbol} src={src} />
+          </div>
+        ))}
+      </div>
+      <span className="gt-ref-cell-strip__motion" />
+    </div>
+  );
+});
+
+const TigerStage = memo(function TigerStage() {
+  return (
+    <div className="gt-ref-tiger-stage" aria-hidden>
       <span className="gt-ref-tiger-rim" />
       <span className="gt-ref-tiger-live-eyes" />
       <span className="gt-ref-tiger-live-paw" />
       <span className="gt-ref-tiger-foreground" />
-      {flyingCardColumn !== null && (
-        <span className="gt-ref-flying-card">
-          <span />
-        </span>
+    </div>
+  );
+});
+
+function FeatureStatusBadge({ active, locked }: { active: boolean; locked: number }) {
+  return (
+    <div
+      className={cn(
+        "gt-ref-respin-badge absolute left-[4.6%] top-[71.2%] z-40 flex h-[5.8%] w-[28%] flex-col items-center justify-center rounded-[18px] text-center",
+        active && "gt-ref-respin-badge--active",
       )}
-    </div>
-  );
-});
-
-const GoldenFortuneButton = memo(function GoldenFortuneButton({
-  disabled,
-  onOpen,
-}: {
-  disabled: boolean;
-  onOpen: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      disabled={disabled}
-      aria-label="Abrir compra do bônus Golden Fortune"
-      className="gt-ref-feature-button absolute left-[4.6%] top-[71.2%] z-50 flex h-[5.8%] w-[28%] items-center justify-center gap-1.5 rounded-[18px] disabled:cursor-not-allowed disabled:opacity-45"
+      role="status"
+      aria-live="polite"
     >
-      <Sparkles className="size-3.5" aria-hidden />
-      <span>BÔNUS</span>
-    </button>
-  );
-});
-
-const GoldenFortuneTrigger = memo(function GoldenFortuneTrigger() {
-  return (
-    <div className="gt-ref-feature-trigger" aria-hidden>
-      <div className="gt-ref-feature-card gt-ref-feature-card--one" />
-      <div className="gt-ref-feature-card gt-ref-feature-card--two" />
-      <div className="gt-ref-feature-card gt-ref-feature-card--three" />
-      <div className="gt-ref-feature-bath" />
+      <strong>{active ? "TIGRE DA SORTE" : "RESPIN"}</strong>
+      <span>{active ? `${locked}/9 TRAVADOS` : "RECURSO ALEATÓRIO"}</span>
     </div>
   );
-});
+}
 
 function NumberPatch({ className, children }: { className: string; children: ReactNode }) {
   return (
@@ -319,428 +293,183 @@ export function GoldenTigerReference() {
   const [stoppedColumns, setStoppedColumns] = useState(3);
   const [landingColumn, setLandingColumn] = useState(-1);
   const [winning, setWinning] = useState<Set<number>>(() => new Set());
-  const [scatters, setScatters] = useState<Set<number>>(() => new Set());
-  const [anticipation, setAnticipation] = useState(0);
   const [turbo, setTurbo] = useState(false);
   const [autoLeft, setAutoLeft] = useState(0);
   const [autoOpen, setAutoOpen] = useState(false);
   const [autoRounds, setAutoRounds] = useState(10);
-  const [bonusActive, setBonusActive] = useState(false);
-  const [bonusSpins, setBonusSpins] = useState(0);
-  const [bonusWin, setBonusWin] = useState(0);
-  const [bonusOverlay, setBonusOverlay] = useState<BonusOverlay>(null);
   const [phase, setPhase] = useState<PresentationPhase>("idle");
   const [tigerReaction, setTigerReaction] = useState<TigerReaction>("idle");
-  const [flyingCardColumn, setFlyingCardColumn] = useState<number | null>(null);
   const [winTier, setWinTier] = useState<GoldenTigerWinTier>("none");
-  const [featureBuyOpen, setFeatureBuyOpen] = useState(false);
-  const [featureBuyRunning, setFeatureBuyRunning] = useState(false);
-  const [featureBuyStage, setFeatureBuyStage] = useState(0);
-  const [featureBuyError, setFeatureBuyError] = useState<string | null>(null);
-  const [respinLeft, setRespinLeft] = useState(0);
+  const [respinActive, setRespinActive] = useState(false);
+  const [respinRolling, setRespinRolling] = useState(false);
   const [lockedSymbols, setLockedSymbols] = useState<Set<number>>(() => new Set());
 
   const busyRef = useRef(false);
   const autoStopRef = useRef(false);
-  const bonusRef = useRef(false);
-  const featureBuyLockRef = useRef(createGoldenFortunePurchaseLock());
 
   useEffect(() => hydrateFromStorage(), []);
 
-  const spinRound = useCallback(
-    async (free: boolean): Promise<GoldenTigerSpinResult | null> => {
-      if (busyRef.current) return null;
-      if (!free && !arcadeActions.placeBet(bet)) {
-        playSound("lose", soundEnabled);
-        return null;
-      }
+  const spinRound = useCallback(async (): Promise<GoldenTigerSpinResult | null> => {
+    if (busyRef.current) return null;
+    busyRef.current = true;
 
-      const mode: GoldenTigerMode = free ? "freeSpins" : "base";
-      busyRef.current = true;
-      setSpinning(true);
-      setPhase("spinning");
-      setTigerReaction(free ? "bonus" : "idle");
-      setFlyingCardColumn(null);
-      setStoppedColumns(0);
-      setLandingColumn(-1);
-      setWinning(new Set());
-      setScatters(new Set());
-      setAnticipation(0);
-      setWinTier("none");
-      setWinDuration(0);
-      setWin(0);
-      setRespinLeft(0);
-      setLockedSymbols(new Set());
-      playSound("spin", soundEnabled);
+    if (!arcadeActions.placeBet(bet)) {
+      busyRef.current = false;
+      playSound("lose", soundEnabled);
+      return null;
+    }
 
-      let finalGrid = makeGoldenTigerGrid(mode);
-      let result = evaluateGoldenTiger(finalGrid, bet, mode);
+    setSpinning(true);
+    setPhase("spinning");
+    setTigerReaction("idle");
+    setStoppedColumns(0);
+    setLandingColumn(-1);
+    setWinning(new Set());
+    setWinTier("none");
+    setWinDuration(0);
+    setWin(0);
+    setRespinActive(false);
+    setRespinRolling(false);
+    setLockedSymbols(new Set());
+    playSound("spin", soundEnabled);
 
-      await wait(turbo ? 170 : 520);
-      let revealedScatters = 0;
-      let previousScatters = 0;
-      let hadTwoScatters = false;
-      let triggerCelebrated = false;
+    try {
+      let finalGrid = makeGoldenTigerGrid("base");
+      let result = evaluateGoldenTiger(finalGrid, bet, "base");
+      let respinTriggered = false;
+
+      await wait(turbo ? 150 : 450);
 
       for (let column = 0; column < 3; column += 1) {
         setPhase("landing");
         setGrid((current) =>
-          current.map((symbol, index) =>
-            index % 3 === column ? (finalGrid[index] ?? symbol) : symbol,
-          ),
+          current.map((symbol, index) => (index % 3 === column ? (finalGrid[index] ?? symbol) : symbol)),
         );
         setStoppedColumns(column + 1);
         setLandingColumn(column);
         playSound("tick", soundEnabled);
-
-        const revealedIndexes = new Set<number>();
-        for (let index = 0; index < finalGrid.length; index += 1) {
-          if (index % 3 <= column && finalGrid[index] === "scatter") revealedIndexes.add(index);
-        }
-        setScatters(revealedIndexes);
-        revealedScatters = revealedIndexes.size;
-
-        const columnsRemain = column < 2;
-        const crossedFirst = previousScatters < 1 && revealedScatters >= 1;
-        const crossedSecond = previousScatters < 2 && revealedScatters >= 2;
-        const crossedThird = previousScatters < 3 && revealedScatters >= 3;
-
-        if (crossedFirst) {
-          setTigerReaction("notice");
-          playSound("tigerScatter", soundEnabled);
-          await wait(turbo ? 75 : 175);
-        }
-
-        if (crossedThird) {
-          triggerCelebrated = true;
-          setAnticipation(0);
-          setPhase("bonusTrigger");
-          setTigerReaction("celebrate");
-          await wait(turbo ? 85 : 170);
-          playSound(free ? "tigerScatter" : "tigerBonus", soundEnabled);
-          await wait(turbo ? 240 : 480);
-          if (columnsRemain) {
-            setPhase("spinning");
-            setTigerReaction(free ? "bonus" : "idle");
-          }
-        } else if (crossedSecond && columnsRemain) {
-          hadTwoScatters = true;
-          setAnticipation(2);
-          setPhase("anticipation");
-          setTigerReaction("charge");
-          playSound("anticipation", soundEnabled);
-          await wait(turbo ? 100 : 210);
-          setTigerReaction("throw");
-          setFlyingCardColumn(column + 1);
-          playSound("tigerThrow", soundEnabled);
-          await wait(turbo ? 230 : 440);
-          playSound("tigerImpact", soundEnabled);
-          await wait(turbo ? 90 : 180);
-          setFlyingCardColumn(null);
-          setTigerReaction("charge");
-          await wait(turbo ? 160 : 360);
-        } else if (columnsRemain && revealedScatters === 1) {
-          setAnticipation(1);
-          setPhase("anticipation");
-          await wait(turbo ? 125 : 280);
-        } else if (!crossedThird) {
-          setAnticipation(0);
-          await wait(turbo ? 75 : 210);
-        }
-
-        previousScatters = revealedScatters;
+        await wait(turbo ? 70 : 190);
       }
 
       setGrid(finalGrid);
       setLandingColumn(-1);
       setStoppedColumns(3);
-      setAnticipation(0);
-      const respin = free ? null : createGoldenTigerRespin(finalGrid);
+
+      const respin = createGoldenTigerRespin(finalGrid);
       if (respin) {
+        respinTriggered = true;
         let state = respin;
-        setPhase("bonusTrigger");
-        setTigerReaction("excited");
+        setRespinActive(true);
         setLockedSymbols(new Set(state.locked));
-        setRespinLeft(state.spinsLeft);
-        playSound("anticipation", soundEnabled);
-        await wait(turbo ? 260 : 620);
+        setPhase("respinTrigger");
+        setTigerReaction("excited");
+        playSound("tigerLuckyFeature", soundEnabled);
+        await wait(turbo ? 220 : 560);
+
         while (state.spinsLeft > 0 && state.locked.size < 9) {
-          setPhase("spinning");
-          setStoppedColumns(0);
-          await wait(turbo ? 120 : 320);
+          setPhase("respinPlaying");
+          setRespinRolling(true);
+          setTigerReaction("watch");
+          playSound("tigerRespinRoll", soundEnabled);
+          await wait(turbo ? 150 : 380);
+
+          const previousLocked = state.locked.size;
           const next = respinGoldenTigerGrid(finalGrid, state);
           finalGrid = next.grid;
           state = next.state;
           setGrid(finalGrid);
-          setStoppedColumns(3);
           setLockedSymbols(new Set(state.locked));
-          setRespinLeft(state.spinsLeft);
-          playSound("tick", soundEnabled);
-          await wait(turbo ? 180 : 420);
+          setRespinRolling(false);
+
+          if (state.locked.size > previousLocked) {
+            setTigerReaction(state.locked.size === 9 ? "celebrate" : "notice");
+            playSound("tigerSymbolLock", soundEnabled);
+            await wait(turbo ? 150 : 340);
+          } else {
+            setTigerReaction("miss");
+            playSound("tigerMiss", soundEnabled);
+            await wait(turbo ? 100 : 230);
+          }
         }
-        result = evaluateGoldenTiger(finalGrid, bet, mode);
-        setRespinLeft(0);
+
+        result = evaluateGoldenTiger(finalGrid, bet, "respin");
+        setRespinRolling(false);
       }
+
+      setGrid(finalGrid);
       setWinning(result.winning);
-      setScatters(result.scatterIndexes);
-      setPhase("evaluating");
+      setPhase(result.isFullGrid ? "fullGrid" : "evaluating");
 
       if (result.payout > 0) arcadeActions.credit(result.payout);
+
       arcadeActions.recordRound({
         slug: "golden-tiger",
         gameName: "Golden Tiger",
-        bet: free ? 0 : bet,
+        bet,
         payout: result.payout,
         multiplier: result.payout > 0 ? result.payout / bet : 0,
-        note: `${free ? "FREE SPIN · " : ""}${result.lines} linha(s) · ${result.scatterCount} cartinha(s)`,
+        note: `3x3 · ${result.lines} linha(s) · ${respinTriggered ? "Tigre da Sorte" : "Giro base"}${result.isFullGrid ? " · TELA CHEIA x10" : ""}`,
       });
 
-      if (hadTwoScatters && result.scatterCount < 3) {
-        setTigerReaction("miss");
-        playSound("tigerMiss", soundEnabled);
-        await wait(turbo ? 90 : 210);
-        setTigerReaction(free ? "bonus" : "idle");
-      }
+      const tier = goldenTigerWinTier(result.payout, bet);
+      const duration = tier === "small" ? 320 : tier === "nice" ? 620 : tier === "big" ? 980 : 1_350;
+      const animatedDuration = result.payout > 0 && !reducedMotion && tier !== "none" ? duration : 0;
 
-      if (result.bonusAward > 0) {
-        setWinDuration(0);
-        setWin(result.payout);
-        setPhase("bonusTrigger");
-        setTigerReaction(free ? "retrigger" : "celebrate");
-        if (!triggerCelebrated) playSound(free ? "tigerScatter" : "tigerBonus", soundEnabled);
+      setWinTier(tier);
+      setPhase(result.isFullGrid ? "fullGrid" : tierPhase(tier));
+      setWinDuration(animatedDuration);
+      setWin(result.payout);
+
+      if (result.isFullGrid && result.payout > 0) {
+        setTigerReaction("bigWin");
+        playSound("tigerFullGrid", soundEnabled);
+      } else if (tier === "big" || tier === "mega") {
+        setTigerReaction("bigWin");
+        playSound("bigWin", soundEnabled);
+      } else if (result.payout > 0) {
+        setTigerReaction("celebrate");
+        playSound("win", soundEnabled);
       } else {
-        const tier = goldenTigerWinTier(result.payout, bet);
-        setWinTier(tier);
-        setPhase(tierPhase(tier));
-        if (tier === "big" || tier === "mega") setTigerReaction("bigWin");
-        const duration = tier === "small" ? 320 : tier === "nice" ? 620 : tier === "big" ? 980 : 1_350;
-        const animatedDuration = result.payout > 0 && !reducedMotion && tier !== "none" ? duration : 0;
-        setWinDuration(animatedDuration);
-        setWin(result.payout);
-        if (animatedDuration > 0) await wait(animatedDuration);
-        playSound(
-          tier === "big" || tier === "mega" ? "bigWin" : result.payout > 0 ? "win" : "lose",
-          soundEnabled,
-        );
-        if (tier === "big" || tier === "mega") await wait(turbo ? 220 : tier === "mega" ? 880 : 620);
-        setTigerReaction(free ? "bonus" : "idle");
-        setPhase(free ? "bonusPlaying" : "idle");
+        setTigerReaction("idle");
+        playSound("lose", soundEnabled);
       }
 
-      setSpinning(false);
-      busyRef.current = false;
-      return result;
-    },
-    [bet, reducedMotion, soundEnabled, turbo],
-  );
-
-  const runBonus = useCallback(
-    async (initial: number, purchased: PurchasedBonusContext = null) => {
-      if (initial <= 0 || bonusRef.current) return;
-      bonusRef.current = true;
-      setBonusActive(true);
-      setBonusWin(0);
-      setBonusSpins(initial);
-      setPhase("bonusIntro");
-      setTigerReaction("bonus");
-      setBonusOverlay({
-        title: purchased ? "GOLDEN FORTUNE" : "FREE SPINS",
-        value: String(initial),
-        caption: purchased ? "8 Free Spins ativados" : "A rodada bônus começou",
-        tone: "bonus",
-      });
-      playSound(purchased ? "tigerFeatureStart" : "tigerBonus", soundEnabled);
-      await wait(turbo ? 420 : 900);
-      setBonusOverlay(null);
-
-      let left = initial;
-      let total = 0;
-      let retriggers = 0;
-      while (left > 0) {
-        setPhase("bonusPlaying");
-        setTigerReaction("bonus");
-        setBonusSpins(left);
-        const result = await spinRound(true);
-        if (!result) break;
-        total += result.payout;
-        setBonusWin(total);
-        left -= 1;
-
-        if (result.bonusAward > 0 && retriggers < GOLDEN_TIGER_MAX_RETRIGGERS) {
-          retriggers += 1;
-          left += result.bonusAward;
-          setPhase("bonusRetrigger");
-          setTigerReaction("retrigger");
-          setBonusOverlay({
-            title: "RETRIGGER",
-            value: `+${result.bonusAward} FREE SPINS`,
-            caption: `Extensão ${retriggers}/${GOLDEN_TIGER_MAX_RETRIGGERS}`,
-            tone: "retrigger",
-          });
-          playSound("tigerRetrigger", soundEnabled);
-          await wait(turbo ? 360 : 760);
-          setBonusOverlay(null);
-          setTigerReaction("bonus");
-        }
-
-        setBonusSpins(left);
-        await wait(turbo ? 70 : 170);
+      if (animatedDuration > 0) await wait(animatedDuration);
+      if (tier === "big" || tier === "mega" || result.isFullGrid) {
+        await wait(turbo ? 180 : result.isFullGrid ? 760 : 480);
       }
 
-      if (purchased) {
-        arcadeActions.recordRound({
-          slug: "golden-tiger",
-          gameName: "Golden Tiger",
-          bet: purchased.cost,
-          payout: total,
-          multiplier: purchased.cost > 0 ? total / purchased.cost : 0,
-          note: `Compra de Bônus · Golden Fortune · Custo ${formatCoins(purchased.cost)} · Resultado ${formatCoins(total)}`,
-        });
-      }
-
-      setPhase("bonusOutro");
-      setTigerReaction(total >= bet * 15 ? "bigWin" : "excited");
-      setBonusOverlay({
-        title: "TOTAL DO BÔNUS",
-        value: formatCoins(total),
-        caption: purchased ? "Golden Fortune concluído" : "Ganho total nos Free Spins",
-        tone: "outro",
-      });
-      playSound("cash", soundEnabled);
-      await wait(turbo ? 480 : 980);
-      setBonusOverlay(null);
-      setBonusSpins(0);
-      setBonusActive(false);
       setTigerReaction("idle");
       setPhase("idle");
-      bonusRef.current = false;
-    },
-    [bet, soundEnabled, spinRound, turbo],
-  );
+      setRespinActive(false);
+      setLockedSymbols(new Set());
+      return result;
+    } finally {
+      setRespinRolling(false);
+      setSpinning(false);
+      busyRef.current = false;
+    }
+  }, [bet, reducedMotion, soundEnabled, turbo]);
 
-  const spin = useCallback(async () => {
-    if (busyRef.current || bonusRef.current || featureBuyOpen || featureBuyRunning) return false;
-    const result = await spinRound(false);
-    if (!result) return false;
-    if (result.bonusAward > 0) await runBonus(result.bonusAward);
-    return true;
-  }, [featureBuyOpen, featureBuyRunning, runBonus, spinRound]);
+  const spin = useCallback(async () => Boolean(await spinRound()), [spinRound]);
 
   const startAuto = useCallback(async () => {
-    if (busyRef.current || bonusRef.current || autoLeft > 0 || featureBuyOpen || featureBuyRunning) return;
+    if (busyRef.current || autoLeft > 0) return;
     autoStopRef.current = false;
     setAutoOpen(false);
+
     for (let left = autoRounds; left > 0; left -= 1) {
       if (autoStopRef.current) break;
       setAutoLeft(left);
       const played = await spin();
       if (!played) break;
-      await wait(turbo ? 110 : 280);
+      await wait(turbo ? 100 : 250);
     }
     setAutoLeft(0);
-  }, [autoLeft, autoRounds, featureBuyOpen, featureBuyRunning, spin, turbo]);
-
-  const openFeatureBuy = useCallback(() => {
-    const availability = goldenFortuneAvailability({
-      balance,
-      bet,
-      spinning: spinning || busyRef.current,
-      bonusActive: bonusActive || bonusRef.current,
-      autoLeft,
-      pending: featureBuyRunning || featureBuyLockRef.current.isLocked(),
-    });
-    if (!availability.allowed && availability.reason !== "insufficientBalance") return;
-    setFeatureBuyError(
-      availability.reason === "insufficientBalance"
-        ? "Saldo fictício insuficiente para ativar o bônus."
-        : null,
-    );
-    setFeatureBuyOpen(true);
-    setPhase("featureBuy");
-    setTigerReaction("watch");
-    playSound("tigerFeatureOpen", soundEnabled);
-  }, [autoLeft, balance, bet, bonusActive, featureBuyRunning, soundEnabled, spinning]);
-
-  const closeFeatureBuy = useCallback(() => {
-    if (featureBuyRunning) return;
-    setFeatureBuyOpen(false);
-    setFeatureBuyError(null);
-    setPhase("idle");
-    setTigerReaction("idle");
-  }, [featureBuyRunning]);
-
-  const confirmFeatureBuy = useCallback(async () => {
-    if (!featureBuyLockRef.current.acquire()) return;
-    const availability = goldenFortuneAvailability({
-      balance: arcadeActions.getBalance(),
-      bet,
-      spinning: spinning || busyRef.current,
-      bonusActive: bonusActive || bonusRef.current,
-      autoLeft,
-      pending: featureBuyRunning,
-    });
-    if (!availability.allowed || !arcadeActions.debitCoins(availability.cost)) {
-      setFeatureBuyError("Saldo fictício insuficiente ou bônus indisponível neste momento.");
-      featureBuyLockRef.current.release();
-      return;
-    }
-
-    setFeatureBuyError(null);
-    setFeatureBuyOpen(false);
-    setFeatureBuyRunning(true);
-    setFeatureBuyStage(1);
-    setPhase("featureBuy");
-    setTigerReaction("notice");
-    playSound("tigerCardAppear", soundEnabled);
-
-    await wait(reducedMotion ? 80 : turbo ? 120 : 260);
-    setFeatureBuyStage(2);
-    setTigerReaction("excited");
-    playSound("tigerCardAppear", soundEnabled);
-
-    await wait(reducedMotion ? 80 : turbo ? 120 : 260);
-    setFeatureBuyStage(3);
-    setTigerReaction("charge");
-    playSound("anticipation", soundEnabled);
-
-    await wait(reducedMotion ? 100 : turbo ? 180 : 420);
-    setFeatureBuyStage(4);
-    setTigerReaction("throw");
-    playSound("tigerThrow", soundEnabled);
-
-    await wait(reducedMotion ? 100 : turbo ? 240 : 560);
-    setFeatureBuyStage(5);
-    setTigerReaction("celebrate");
-    playSound("tigerImpact", soundEnabled);
-
-    await wait(reducedMotion ? 100 : turbo ? 220 : 460);
-    setFeatureBuyStage(6);
-    playSound("tigerFeatureStart", soundEnabled);
-    await wait(reducedMotion ? 80 : turbo ? 180 : 380);
-
-    try {
-      setFeatureBuyStage(0);
-      setFeatureBuyRunning(false);
-      await runBonus(GOLDEN_TIGER_FEATURE_BUY_INITIAL_SPINS, { cost: availability.cost });
-    } finally {
-      setFeatureBuyStage(0);
-      setFeatureBuyRunning(false);
-      featureBuyLockRef.current.release();
-    }
-  }, [
-    autoLeft,
-    bet,
-    bonusActive,
-    featureBuyRunning,
-    reducedMotion,
-    runBonus,
-    soundEnabled,
-    spinning,
-    turbo,
-  ]);
+  }, [autoLeft, autoRounds, spin, turbo]);
 
   const changeBet = (direction: -1 | 1) => {
-    if (spinning || bonusActive || autoLeft > 0 || featureBuyOpen || featureBuyRunning) return;
+    if (spinning || autoLeft > 0) return;
     const current = Math.max(0, BET_STEPS.findIndex((value) => value === bet));
     const next = Math.max(0, Math.min(BET_STEPS.length - 1, current + direction));
     const value = BET_STEPS[next];
@@ -749,45 +478,34 @@ export function GoldenTigerReference() {
 
   const setMaxBet = () => {
     const affordable = [...BET_STEPS].reverse().find((value) => value <= balance);
-    if (
-      affordable !== undefined &&
-      !spinning &&
-      !bonusActive &&
-      autoLeft === 0 &&
-      !featureBuyOpen &&
-      !featureBuyRunning
-    ) {
-      setBet(affordable);
-    }
+    if (affordable !== undefined && !spinning && autoLeft === 0) setBet(affordable);
   };
 
   const insufficient = bet > balance;
   const controlsLocked = spinning || autoLeft > 0;
-  const scatterOrderByIndex = useMemo(() => {
-    const ordered = [...scatters].sort((a, b) => a - b);
-    return new Map(ordered.map((index, order) => [index, order]));
-  }, [scatters]);
   const currentTierLabel = tierLabel(winTier);
   const hasWinningSymbols = winning.size > 0;
-  const statusText = respinActive
-    ? respinRolling
-      ? "TIGRE DA SORTE · RESPIN"
-      : `TIGRE DA SORTE · ${lockedSymbols.size}/9 TRAVADOS`
-    : (currentTierLabel ?? "3 LINHAS x 3 ROLOS · 5 LINHAS FIXAS");
+  const statusText =
+    phase === "fullGrid"
+      ? "TELA CHEIA · MULTIPLICADOR x10"
+      : respinActive
+        ? respinRolling
+          ? "TIGRE DA SORTE · RESPIN"
+          : `TIGRE DA SORTE · ${lockedSymbols.size}/9 TRAVADOS`
+        : currentTierLabel ?? "3×3 · 5 LINHAS FIXAS · RESPIN ALEATÓRIO";
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-black sm:px-3 sm:py-2">
-        <div
-          className={cn(
-            "gt-ref-machine relative mx-auto aspect-[940/1672] w-full max-w-[430px] overflow-hidden bg-[#240003] shadow-[0_0_90px_rgba(0,0,0,.96)] sm:rounded-[22px]",
-            respinActive && "gt-ref-bonus-mode",
-            hasWinningSymbols && "gt-ref-machine--has-win",
+      <div
+        className={cn(
+          "gt-ref-machine relative mx-auto aspect-[940/1672] w-full max-w-[430px] overflow-hidden bg-[#240003] shadow-[0_0_90px_rgba(0,0,0,.96)] sm:rounded-[22px]",
+          respinActive && "gt-ref-respin-mode",
+          hasWinningSymbols && "gt-ref-machine--has-win",
         )}
         data-phase={phase}
         data-tiger={tigerReaction}
         data-respin={respinActive || undefined}
       >
-
         {src ? (
           <img
             src={src}
@@ -800,19 +518,36 @@ export function GoldenTigerReference() {
             {failed ? "Falha ao carregar a arte do Golden Tiger." : "Carregando Golden Tiger…"}
           </div>
         )}
+
         <div className="gt-ref-machine__ambient" aria-hidden />
         <div className="gt-ref-branding" aria-label="Golden Tiger">
           <span>NEON FORTUNE</span>
-          <strong>GOLDEN<br />TIGER</strong>
+          <strong>
+            GOLDEN
+            <br />
+            TIGER
+          </strong>
         </div>
         <div className="gt-ref-jackpots" aria-label="Jackpots em moedas fictícias">
-          <p><span>GRAND</span><b>1.250.000</b></p>
-          <p><span>MAJOR</span><b>125.000</b></p>
-          <p><span>MINOR</span><b>25.000</b></p>
-          <p><span>MINI</span><b>5.000</b></p>
+          <p>
+            <span>GRAND</span>
+            <b>1.250.000</b>
+          </p>
+          <p>
+            <span>MAJOR</span>
+            <b>125.000</b>
+          </p>
+          <p>
+            <span>MINOR</span>
+            <b>25.000</b>
+          </p>
+          <p>
+            <span>MINI</span>
+            <b>5.000</b>
+          </p>
           <small>MOEDAS</small>
         </div>
-        <TigerStage flyingCardColumn={flyingCardColumn} />
+        <TigerStage />
 
         <Link
           to="/"
@@ -851,22 +586,14 @@ export function GoldenTigerReference() {
               const column = index % 3;
               const locked = lockedSymbols.has(index);
               const isLanding = spinning && !respinActive && landingColumn === column;
-              const isAnticipating = spinning && !respinActive && anticipation > 0 && column >= stoppedColumns;
               const cellRolling = respinRolling && !locked;
-              const scatterOrder = scatterOrderByIndex.get(index) ?? -1;
-              const tileStyle =
-                scatterOrder >= 0
-                  ? ({ "--gt-scatter-order": scatterOrder } as CSSProperties)
-                  : undefined;
+
               return (
                 <div
                   key={index}
-                  style={tileStyle}
                   className={cn(
                     "gt-ref-reel-cell relative overflow-hidden border-[1px] border-[#f8bd35]/45 bg-[#4b0710]",
                     isLanding && "gt-ref-land",
-                    isAnticipating && "gt-ref-anticipate",
-                    scatters.has(index) && "gt-ref-scatter",
                     winning.has(index) && "gt-ref-win",
                     locked && "gt-ref-cell--locked",
                     respinActive && !locked && "gt-ref-cell--unlocked",
@@ -880,21 +607,22 @@ export function GoldenTigerReference() {
                 </div>
               );
             })}
-            {spinning && !respinActive && !reducedMotion && Array.from({ length: 3 }, (_, column) =>
-              column >= stoppedColumns ? (
-                <GoldenReelStrip key={`live-reel-${column}`} column={column} src={src} turbo={turbo} />
-              ) : null,
-            )}
+
+            {spinning && !respinActive && !reducedMotion &&
+              Array.from({ length: 3 }, (_, column) =>
+                column >= stoppedColumns ? (
+                  <GoldenReelStrip key={`live-reel-${column}`} column={column} src={src} turbo={turbo} />
+                ) : null,
+              )}
           </div>
         )}
-
 
         <div
           className="absolute left-[18%] top-[63.7%] z-35 flex h-[7.2%] w-[69%] items-center justify-center rounded-[28px] border-2 border-[#ffc52b] bg-[linear-gradient(180deg,rgba(122,0,7,.97),rgba(58,0,4,.98))] px-4 text-center shadow-[0_0_22px_rgba(255,67,0,.45)]"
           aria-live="polite"
         >
           <div>
-            <p className="font-serif text-[clamp(.72rem,4vw,1.15rem)] font-black uppercase leading-tight text-[#ffe475] drop-shadow-[0_2px_0_#7b1500]">
+            <p className="font-serif text-[clamp(.68rem,3.8vw,1.1rem)] font-black uppercase leading-tight text-[#ffe475] drop-shadow-[0_2px_0_#7b1500]">
               {statusText}
             </p>
             {respinActive && (
@@ -905,7 +633,7 @@ export function GoldenTigerReference() {
           </div>
         </div>
 
-        <FeatureStatusBadge active={respinActive} respinLeft={respinLeft} />
+        <FeatureStatusBadge active={respinActive} locked={lockedSymbols.size} />
 
         <NumberPatch className="left-[5%] top-[79.1%] h-[3.4%] w-[25.5%] text-[clamp(.7rem,4vw,1.08rem)] tabular-nums">
           {formatCoins(balance)}
@@ -943,8 +671,16 @@ export function GoldenTigerReference() {
             turbo && "ring-2 ring-yellow-200 bg-amber-300/20 shadow-[0_0_25px_#ffb000]",
           )}
         >
-          <span className={cn("absolute inset-x-0 bottom-1 text-center text-[8px] font-black tracking-wide", turbo ? "text-yellow-100" : "text-yellow-100/70")}>{turbo ? "TURBO ATIVO" : "TURBO"}</span>
+          <span
+            className={cn(
+              "absolute inset-x-0 bottom-1 text-center text-[8px] font-black tracking-wide",
+              turbo ? "text-yellow-100" : "text-yellow-100/70",
+            )}
+          >
+            {turbo ? "TURBO ATIVO" : "TURBO"}
+          </span>
         </button>
+
         {autoLeft > 0 ? (
           <button
             type="button"
@@ -967,19 +703,57 @@ export function GoldenTigerReference() {
             className="absolute left-[22.4%] top-[86.1%] z-50 h-[8.3%] w-[17.8%] rounded-[28px] disabled:opacity-40"
           />
         )}
+
         {autoOpen && (
-          <div className="absolute inset-0 z-[80] grid place-items-end bg-black/60 px-5 pb-[18%]" role="dialog" aria-modal="true" aria-label="Configurar auto play">
+          <div
+            className="absolute inset-0 z-[80] grid place-items-end bg-black/60 px-5 pb-[18%]"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Configurar auto play"
+          >
             <div className="w-full rounded-2xl border border-yellow-300/70 bg-[#3a0508] p-4 text-center shadow-[0_12px_40px_rgba(0,0,0,.75)]">
               <p className="text-xs font-black tracking-[.18em] text-yellow-200">AUTO PLAY</p>
               <p className="mt-1 text-[11px] text-yellow-50/80">{formatCoins(bet)} MOEDAS por rodada</p>
               <div className="mt-3 grid grid-cols-4 gap-2">
-                {[10, 25, 50, 100].map((rounds) => <button key={rounds} type="button" onClick={() => setAutoRounds(rounds)} className={cn("min-h-11 rounded-lg border text-xs font-black", autoRounds === rounds ? "border-yellow-200 bg-yellow-400 text-[#4a0800]" : "border-yellow-200/35 bg-black/25 text-yellow-100")}>{rounds}</button>)}
+                {[10, 25, 50, 100].map((rounds) => (
+                  <button
+                    key={rounds}
+                    type="button"
+                    onClick={() => setAutoRounds(rounds)}
+                    className={cn(
+                      "min-h-11 rounded-lg border text-xs font-black",
+                      autoRounds === rounds
+                        ? "border-yellow-200 bg-yellow-400 text-[#4a0800]"
+                        : "border-yellow-200/35 bg-black/25 text-yellow-100",
+                    )}
+                  >
+                    {rounds}
+                  </button>
+                ))}
               </div>
-              <div className="mt-3 grid grid-cols-2 gap-2"><button type="button" onClick={() => setAutoOpen(false)} className="min-h-11 rounded-lg border border-yellow-200/35 text-xs font-black text-yellow-100">CANCELAR</button><button type="button" onClick={() => void startAuto()} className="min-h-11 rounded-lg bg-yellow-400 text-xs font-black text-[#4a0800]">INICIAR {autoRounds}</button></div>
-              <small className="mt-2 block text-[9px] font-bold text-yellow-50/65">MOEDAS FICTÍCIAS · SEM VALOR REAL</small>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAutoOpen(false)}
+                  className="min-h-11 rounded-lg border border-yellow-200/35 text-xs font-black text-yellow-100"
+                >
+                  CANCELAR
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void startAuto()}
+                  className="min-h-11 rounded-lg bg-yellow-400 text-xs font-black text-[#4a0800]"
+                >
+                  INICIAR {autoRounds}
+                </button>
+              </div>
+              <small className="mt-2 block text-[9px] font-bold text-yellow-50/65">
+                MOEDAS FICTÍCIAS · SEM VALOR REAL
+              </small>
             </div>
           </div>
         )}
+
         <button
           type="button"
           onClick={setMaxBet}
@@ -1000,30 +774,18 @@ export function GoldenTigerReference() {
           )}
         />
 
-
-        {(winTier === "big" || winTier === "mega") && win > 0 && phase === "bigWin" && (
+        {(winTier === "big" || winTier === "mega" || phase === "fullGrid") && win > 0 && (
           <div
-            className={cn("gt-ref-win-callout", `gt-ref-win-callout--${winTier}`)}
+            className={cn(
+              "gt-ref-win-callout",
+              phase === "fullGrid" ? "gt-ref-win-callout--mega" : `gt-ref-win-callout--${winTier}`,
+            )}
             aria-live="polite"
           >
-            <span>{tierLabel(winTier)}</span>
+            <span>{phase === "fullGrid" ? "FULL GRID x10" : tierLabel(winTier)}</span>
             <strong>
               <AnimatedWinCounter value={win} duration={winDuration} />
             </strong>
-          </div>
-        )}
-
-        {bonusOverlay && (
-          <div
-            className={cn("gt-ref-bonus-overlay", `gt-ref-bonus-overlay--${bonusOverlay.tone}`)}
-            role="status"
-            aria-live="polite"
-          >
-            <div className="gt-ref-bonus-card">
-              <p>{bonusOverlay.title}</p>
-              {bonusOverlay.value && <strong>{bonusOverlay.value}</strong>}
-              {bonusOverlay.caption && <span>{bonusOverlay.caption}</span>}
-            </div>
           </div>
         )}
 
