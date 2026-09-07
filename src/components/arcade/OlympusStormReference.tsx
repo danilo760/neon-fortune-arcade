@@ -54,6 +54,7 @@ type BonusSource = "natural" | "featureBuy" | null;
 const FULL_W = 941;
 const FULL_H = 1672;
 const OLYMPUS_ROWS = 5;
+const AUTO_OPTIONS = [10, 25, 50, 100] as const;
 
 const CROPS: Record<Exclude<OlympusSymbolId, "scatter">, Crop> = {
   bolt: { x: 75, y: 414, w: 258, h: 235 },
@@ -233,8 +234,10 @@ const OlympusGrid = memo(function OlympusGrid({
 });
 
 function visibleScatterCount(grid: readonly OlympusSymbolId[], columns: number) {
-  return grid.reduce((count, symbol, index) =>
-    count + (symbol === "scatter" && index % OLYMPUS_COLUMNS < columns ? 1 : 0), 0);
+  return grid.reduce(
+    (count, symbol, index) => count + (symbol === "scatter" && index % OLYMPUS_COLUMNS < columns ? 1 : 0),
+    0,
+  );
 }
 
 export function OlympusStormReference() {
@@ -257,6 +260,8 @@ export function OlympusStormReference() {
   const [flashKey, setFlashKey] = useState(0);
   const [turbo, setTurbo] = useState(false);
   const [autoLeft, setAutoLeft] = useState(0);
+  const [autoOpen, setAutoOpen] = useState(false);
+  const [autoRounds, setAutoRounds] = useState(10);
   const [bonusActive, setBonusActive] = useState(false);
   const [bonusSource, setBonusSource] = useState<BonusSource>(null);
   const [freeSpinsLeft, setFreeSpinsLeft] = useState(0);
@@ -386,6 +391,7 @@ export function OlympusStormReference() {
           : cascade.multiplier > 1 ? 500 : 300;
       setWinDuration(countDuration);
       setWin(targetTotal);
+      playSound("cash", soundEnabled);
       await wait(countDuration);
       displayedTotal = targetTotal;
 
@@ -492,46 +498,53 @@ export function OlympusStormReference() {
 
   const spinRound = useCallback(async (): Promise<boolean> => {
     if (busyRef.current || bonusActive || featureModalOpen || featurePending) return false;
+
+    busyRef.current = true;
     if (!arcadeActions.placeBet(bet)) {
+      busyRef.current = false;
       playSound("lose", soundEnabled);
       return false;
     }
 
-    busyRef.current = true;
     setRoundBusy(true);
     setWin(0);
     setWinDuration(0);
     setStormLevel(1);
     setStormEnergy(0);
 
-    const plan = planOlympusRound(bet);
-    let displayedTotal = await presentRound(plan, 0, false);
-    let feature: OlympusFeaturePlan | undefined;
+    try {
+      const plan = planOlympusRound(bet);
+      let displayedTotal = await presentRound(plan, 0, false);
+      let feature: OlympusFeaturePlan | undefined;
 
-    if (plan.freeSpinsAward > 0) {
-      feature = planOlympusFeature(bet, plan.freeSpinsAward);
-      displayedTotal = await presentFeature(feature, "natural", displayedTotal);
+      if (plan.freeSpinsAward > 0) {
+        feature = planOlympusFeature(bet, plan.freeSpinsAward);
+        displayedTotal = await presentFeature(feature, "natural", displayedTotal);
+      }
+
+      const totalPayout = plan.payout + (feature?.payout ?? 0);
+      setWin(displayedTotal);
+      settlePaidRound(plan, totalPayout, feature);
+
+      const bigWin = totalPayout >= bet * 15;
+      if (bigWin) playSound("olympusBigWin", soundEnabled);
+      else if (totalPayout <= 0) playSound("lose", soundEnabled);
+
+      await wait(turbo ? 90 : bigWin ? 1_100 : 220);
+      setPhase("idle");
+      return true;
+    } finally {
+      setRoundBusy(false);
+      busyRef.current = false;
     }
-
-    const totalPayout = plan.payout + (feature?.payout ?? 0);
-    setWin(displayedTotal);
-    settlePaidRound(plan, totalPayout, feature);
-    playSound(
-      totalPayout >= bet * 15 ? "olympusBigWin" : totalPayout > 0 ? "win" : "lose",
-      soundEnabled,
-    );
-
-    await wait(turbo ? 90 : 220);
-    setPhase("idle");
-    setRoundBusy(false);
-    busyRef.current = false;
-    return true;
   }, [bet, bonusActive, featureModalOpen, featurePending, presentFeature, presentRound, settlePaidRound, soundEnabled, turbo]);
 
   const startAuto = useCallback(async () => {
     if (busyRef.current || autoLeft > 0 || bonusActive || featureModalOpen || featurePending) return;
     autoStopRef.current = false;
-    for (let left = 10; left > 0; left -= 1) {
+    setAutoOpen(false);
+
+    for (let left = autoRounds; left > 0; left -= 1) {
       if (autoStopRef.current) break;
       setAutoLeft(left);
       const played = await spinRound();
@@ -539,11 +552,17 @@ export function OlympusStormReference() {
       await wait(turbo ? 100 : 260);
     }
     setAutoLeft(0);
-  }, [autoLeft, bonusActive, featureModalOpen, featurePending, spinRound, turbo]);
+  }, [autoLeft, autoRounds, bonusActive, featureModalOpen, featurePending, spinRound, turbo]);
 
   const openFeatureModal = () => {
-    if (roundBusy || autoLeft > 0 || bonusActive || featurePending || featureModalOpen) return;
+    if (roundBusy || autoLeft > 0 || bonusActive || featurePending || featureModalOpen || autoOpen) return;
     setFeatureModalOpen(true);
+    playSound("click", soundEnabled);
+  };
+
+  const openAutoModal = () => {
+    if (roundBusy || autoLeft > 0 || bonusActive || featurePending || featureModalOpen || autoOpen) return;
+    setAutoOpen(true);
     playSound("click", soundEnabled);
   };
 
@@ -592,8 +611,10 @@ export function OlympusStormReference() {
         multiplier: feature.payout > 0 ? feature.payout / availability.cost : 0,
         note: `Storm Ascension · Custo ${formatCoins(availability.cost)} · Aposta ${formatCoins(bet)} · ${feature.finalSpins} Free Spins · Storm L${feature.finalStormLevel}`,
       });
-      playSound(feature.payout >= availability.cost * 2 ? "olympusBigWin" : feature.payout > 0 ? "win" : "lose", soundEnabled);
-      await wait(turbo ? 90 : 220);
+
+      const bigWin = feature.payout >= availability.cost * 2;
+      if (bigWin) playSound("olympusBigWin", soundEnabled);
+      await wait(turbo ? 90 : bigWin ? 1_100 : 220);
       setPhase("idle");
     } finally {
       setFeaturePending(false);
@@ -604,7 +625,7 @@ export function OlympusStormReference() {
   }, [autoLeft, bet, bonusActive, featurePending, presentFeature, soundEnabled, turbo]);
 
   const changeBet = (direction: -1 | 1) => {
-    if (roundBusy || autoLeft > 0 || bonusActive || featureModalOpen || featurePending) return;
+    if (roundBusy || autoLeft > 0 || bonusActive || featureModalOpen || featurePending || autoOpen) return;
     const current = Math.max(0, BET_STEPS.findIndex((value) => value === bet));
     const next = Math.max(0, Math.min(BET_STEPS.length - 1, current + direction));
     const value = BET_STEPS[next];
@@ -612,7 +633,7 @@ export function OlympusStormReference() {
   };
 
   const setMaxBet = () => {
-    if (roundBusy || autoLeft > 0 || bonusActive || featureModalOpen || featurePending) return;
+    if (roundBusy || autoLeft > 0 || bonusActive || featureModalOpen || featurePending || autoOpen) return;
     const affordable = [...BET_STEPS].reverse().find((value) => value <= balance);
     if (affordable !== undefined) setBet(affordable);
   };
@@ -632,14 +653,14 @@ export function OlympusStormReference() {
     : phase === "stormImpact"
       ? "afterglow"
       : phase === "stormCharge" || anticipationActive
-      ? "charge"
-      : phase === "levelUp"
-        ? "ascend"
-        : bonusVisualActive || phase === "bonusPlaying" || phase === "retrigger"
-          ? "bonus"
-          : win >= bet * 15 && phase === "settled"
-            ? "bigwin"
-            : "idle";
+        ? "charge"
+        : phase === "levelUp"
+          ? "ascend"
+          : bonusVisualActive || phase === "bonusPlaying" || phase === "retrigger"
+            ? "bonus"
+            : win >= bet * 15 && phase === "settled"
+              ? "bigwin"
+              : "idle";
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-black sm:px-3 sm:py-2">
@@ -777,12 +798,15 @@ export function OlympusStormReference() {
         )}
 
         {win >= bet * 15 && phase === "settled" && !bonusActive && (
-          <div className="os-ref-big-win pointer-events-none absolute left-1/2 top-[43%] z-[64] -translate-x-1/2 rounded-2xl border-2 border-yellow-100 bg-[#071b58]/94 px-5 py-3 text-center font-serif text-3xl font-black text-yellow-100 shadow-[0_0_42px_rgba(95,205,255,.82)]">
-            BIG WIN
+          <div className="os-ref-big-win pointer-events-none absolute left-1/2 top-[43%] z-[64] min-w-[58%] -translate-x-1/2 overflow-hidden rounded-2xl border-2 border-yellow-100 bg-[#071b58]/94 px-5 py-3 text-center font-serif font-black text-yellow-100 shadow-[0_0_42px_rgba(95,205,255,.82)]">
+            <span className="block text-[clamp(1.6rem,9vw,3rem)] leading-none">BIG WIN</span>
+            <strong className="mt-1 block text-[clamp(.9rem,5vw,1.35rem)] leading-none text-white tabular-nums">
+              <AnimatedWinCounter value={win} duration={turbo ? 160 : 620} />
+            </strong>
           </div>
         )}
 
-        <div className="absolute left-[25.5%] top-[77.7%] z-35 flex h-[6.5%] w-[49%] items-center justify-center rounded-[18px] bg-[#002a62]/95 px-2 text-center shadow-[inset_0_0_12px_rgba(70,175,255,.45)]">
+        <div className="os-ref-win-meter absolute left-[25.5%] top-[77.7%] z-35 flex h-[6.5%] w-[49%] items-center justify-center rounded-[18px] bg-[#002a62]/95 px-2 text-center shadow-[inset_0_0_12px_rgba(70,175,255,.45)]">
           <div>
             <p className="text-[8px] font-black uppercase tracking-[.18em] text-blue-200">
               {bonusActive
@@ -804,7 +828,7 @@ export function OlympusStormReference() {
           type="button"
           data-testid="olympus-feature-buy"
           onClick={openFeatureModal}
-          disabled={roundBusy || autoLeft > 0 || bonusActive || featurePending || featureModalOpen || !src}
+          disabled={roundBusy || autoLeft > 0 || bonusActive || featurePending || featureModalOpen || autoOpen || !src}
           aria-label="Abrir Storm Ascension"
           className="os-ref-control os-feature-buy-button absolute left-[3.1%] top-[78.25%] z-50 h-[5.25%] w-[20.5%] rounded-xl disabled:cursor-not-allowed disabled:opacity-40"
         >
@@ -822,14 +846,14 @@ export function OlympusStormReference() {
         <button
           type="button"
           onClick={() => changeBet(-1)}
-          disabled={roundBusy || autoLeft > 0 || bonusActive || featureModalOpen || featurePending}
+          disabled={roundBusy || autoLeft > 0 || bonusActive || featureModalOpen || featurePending || autoOpen}
           aria-label="Diminuir aposta"
           className="os-ref-control absolute right-[27.8%] top-[84.3%] z-50 w-[7%] aspect-square rounded-full disabled:opacity-40"
         />
         <button
           type="button"
           onClick={() => changeBet(1)}
-          disabled={roundBusy || autoLeft > 0 || bonusActive || featureModalOpen || featurePending}
+          disabled={roundBusy || autoLeft > 0 || bonusActive || featureModalOpen || featurePending || autoOpen}
           aria-label="Aumentar aposta"
           className="os-ref-control absolute right-[1.2%] top-[84.3%] z-50 w-[7%] aspect-square rounded-full disabled:opacity-40"
         />
@@ -839,7 +863,7 @@ export function OlympusStormReference() {
           onClick={() => setTurbo((value) => !value)}
           aria-label="Alternar turbo"
           aria-pressed={turbo}
-          disabled={roundBusy || autoLeft > 0 || bonusActive || featureModalOpen || featurePending}
+          disabled={roundBusy || autoLeft > 0 || bonusActive || featureModalOpen || featurePending || autoOpen}
           className={cn(
             "os-ref-control absolute right-[1.3%] top-[78.1%] z-50 w-[8.8%] aspect-square rounded-full disabled:opacity-50",
             turbo && "ring-2 ring-cyan-100 shadow-[0_0_25px_#45c8ff]",
@@ -858,9 +882,9 @@ export function OlympusStormReference() {
         ) : (
           <button
             type="button"
-            onClick={() => void startAuto()}
+            onClick={openAutoModal}
             disabled={roundBusy || insufficient || !src || bonusActive || featureModalOpen || featurePending}
-            aria-label="Auto play"
+            aria-label={`Configurar auto play: ${autoRounds} rodadas`}
             className="os-ref-control absolute left-[4.5%] top-[92.6%] z-50 h-[5.7%] w-[25%] rounded-xl disabled:opacity-40"
           />
         )}
@@ -868,7 +892,7 @@ export function OlympusStormReference() {
         <button
           type="button"
           onClick={setMaxBet}
-          disabled={roundBusy || autoLeft > 0 || bonusActive || featureModalOpen || featurePending}
+          disabled={roundBusy || autoLeft > 0 || bonusActive || featureModalOpen || featurePending || autoOpen}
           aria-label="Aposta máxima"
           className="os-ref-control absolute right-[4.4%] top-[92.6%] z-50 h-[5.7%] w-[25.5%] rounded-xl disabled:opacity-40"
         />
@@ -876,7 +900,7 @@ export function OlympusStormReference() {
         <button
           type="button"
           onClick={() => void spinRound()}
-          disabled={roundBusy || autoLeft > 0 || insufficient || !src || bonusActive || featureModalOpen || featurePending}
+          disabled={roundBusy || autoLeft > 0 || insufficient || !src || bonusActive || featureModalOpen || featurePending || autoOpen}
           aria-label="Girar Olympus Storm"
           aria-busy={roundBusy}
           className={cn(
@@ -886,6 +910,54 @@ export function OlympusStormReference() {
         >
           <span className="os-ref-spin-glow" aria-hidden />
         </button>
+
+        {autoOpen && (
+          <div
+            className="absolute inset-0 z-[94] grid place-items-end bg-[#000b1d]/72 px-4 pb-[8%] backdrop-blur-[2px]"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Configurar auto play do Olympus Storm"
+          >
+            <section className="w-full rounded-[20px] border border-cyan-100/45 bg-[linear-gradient(155deg,#041a43,#071331_62%,#10184a)] p-3 text-center text-white shadow-[0_20px_70px_rgba(0,0,0,.72),0_0_36px_rgba(55,190,255,.2)]">
+              <p className="text-[9px] font-black tracking-[.28em] text-cyan-100">AUTO PLAY</p>
+              <p className="mt-1 text-[10px] font-bold text-blue-100/80">{formatCoins(bet)} MOEDAS por rodada</p>
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                {AUTO_OPTIONS.map((rounds) => (
+                  <button
+                    key={rounds}
+                    type="button"
+                    onClick={() => setAutoRounds(rounds)}
+                    className={cn(
+                      "os-ref-control min-h-11 rounded-xl border text-xs font-black",
+                      autoRounds === rounds
+                        ? "border-cyan-100 bg-cyan-200 text-[#03152f] shadow-[0_0_18px_rgba(93,213,255,.28)]"
+                        : "border-cyan-100/25 bg-black/25 text-cyan-50",
+                    )}
+                  >
+                    {rounds}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAutoOpen(false)}
+                  className="os-ref-control min-h-11 rounded-xl border border-white/20 bg-white/5 text-[10px] font-black tracking-wider text-blue-50"
+                >
+                  CANCELAR
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void startAuto()}
+                  className="os-ref-control min-h-11 rounded-xl border border-cyan-100/65 bg-[linear-gradient(180deg,#bdf4ff,#4bbfe9)] text-[10px] font-black tracking-wider text-[#02162e] shadow-[0_0_22px_rgba(77,198,240,.25)]"
+                >
+                  INICIAR {autoRounds}
+                </button>
+              </div>
+              <small className="mt-2 block text-[8px] font-black tracking-[.14em] text-blue-100/60">MOEDAS FICTÍCIAS · SEM VALOR REAL</small>
+            </section>
+          </div>
+        )}
 
         {featureModalOpen && (
           <div className="os-feature-modal absolute inset-0 z-[95] grid place-items-center" data-testid="olympus-feature-modal">
@@ -899,7 +971,7 @@ export function OlympusStormReference() {
               <div className="mx-auto mb-2 grid size-12 place-items-center rounded-full border border-[#ffe49d]/70 bg-[#0b2a62] text-3xl text-[#fff1a5] shadow-[0_0_28px_rgba(79,197,255,.45)]">ϟ</div>
               <p className="text-[9px] font-black tracking-[.28em] text-cyan-100">OLYMPUS STORM</p>
               <h2 className="mt-1 font-serif text-2xl font-black text-[#fff0a7]">STORM ASCENSION</h2>
-              <p className="mt-1 font-black text-cyan-50">8 FREE SPINS</p>
+              <p className="mt-1 font-black text-cyan-50">{OLYMPUS_FEATURE_BUY_INITIAL_SPINS} FREE SPINS</p>
               <div className="mx-auto mt-2 max-w-[18rem] space-y-1 text-left text-[10px] leading-relaxed text-blue-50/90">
                 <p>• Storm Level persiste durante o bônus.</p>
                 <p>• Cascatas carregam a tempestade.</p>
@@ -941,7 +1013,7 @@ export function OlympusStormReference() {
           </div>
         )}
 
-        {insufficient && !roundBusy && !featureModalOpen && (
+        {insufficient && !roundBusy && !featureModalOpen && !autoOpen && (
           <div className="absolute inset-x-[12%] bottom-[.6%] z-[70] rounded-xl border border-blue-200/70 bg-blue-950/95 px-3 py-2 text-center text-[10px] font-bold text-blue-50">
             Saldo fictício insuficiente — recarregue moedas grátis no lobby.
           </div>
