@@ -30,7 +30,9 @@ test("full grid starting with a Wild still pays x10", () => {
   ];
   const result = evaluateGoldenTiger(grid, 10, "base");
   assert.equal(result.isFullGrid, true);
-  assert.equal(result.payout, 4_000);
+  // Four lines resolve to ingot and the all-Wild diagonal resolves to the Wild pay.
+  // The aggregate 570 base payout is then multiplied by the full-grid x10 rule.
+  assert.equal(result.payout, 5_700);
   assert.equal(result.winning.size, 9);
 });
 
@@ -72,4 +74,13 @@ test("the respin feature never locks onto Wild as its chosen symbol", () => {
   const state = createGoldenTigerRespin(grid, () => 0);
   assert.ok(state);
   assert.notEqual(state.target, "wild");
+});
+
+test("a respin ends immediately when it adds no new locked symbol", () => {
+  const grid = ["ingot", "orange", "jade", "orange", "wild", "jade", "lantern", "orange", "firecracker"] as const;
+  const state = createGoldenTigerRespin(grid, () => 0);
+  assert.ok(state);
+  const result = respinGoldenTigerGrid(grid, state, () => 0.99);
+  assert.equal(result.added, false);
+  assert.equal(result.state.spinsLeft, 0);
 });
