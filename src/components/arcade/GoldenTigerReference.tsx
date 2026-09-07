@@ -891,8 +891,6 @@ export function GoldenTigerReference() {
           </div>
         )}
 
-        {featureBuyRunning && <GoldenFortuneTrigger />}
-
         <div
           className="absolute left-[18%] top-[63.7%] z-35 flex h-[7.2%] w-[69%] items-center justify-center rounded-[28px] border-2 border-[#ffc52b] bg-[linear-gradient(180deg,rgba(122,0,7,.97),rgba(58,0,4,.98))] px-4 text-center shadow-[0_0_22px_rgba(255,67,0,.45)]"
           aria-live="polite"
@@ -901,15 +899,15 @@ export function GoldenTigerReference() {
             <p className="font-serif text-[clamp(.72rem,4vw,1.15rem)] font-black uppercase leading-tight text-[#ffe475] drop-shadow-[0_2px_0_#7b1500]">
               {statusText}
             </p>
-            {bonusActive && (
-              <p className="mt-1 text-[9px] font-black text-emerald-200">
-                GANHO NO BÔNUS {formatCoins(bonusWin)}
+            {respinActive && (
+              <p className="mt-0.5 text-[9px] font-black tracking-[.12em] text-emerald-200">
+                SÍMBOLOS TRAVADOS {lockedSymbols.size}/9
               </p>
             )}
           </div>
         </div>
 
-        <GoldenFortuneButton disabled={featureBuyBlocked || !src} onOpen={openFeatureBuy} />
+        <FeatureStatusBadge active={respinActive} respinLeft={respinLeft} />
 
         <NumberPatch className="left-[5%] top-[79.1%] h-[3.4%] w-[25.5%] text-[clamp(.7rem,4vw,1.08rem)] tabular-nums">
           {formatCoins(balance)}
@@ -924,14 +922,14 @@ export function GoldenTigerReference() {
         <button
           type="button"
           onClick={() => changeBet(-1)}
-          disabled={spinning || bonusActive || autoLeft > 0 || featureBuyOpen || featureBuyRunning}
+          disabled={controlsLocked}
           aria-label="Diminuir aposta"
           className="absolute left-[69%] top-[78.45%] z-50 size-[6.3%] rounded-full disabled:cursor-not-allowed"
         />
         <button
           type="button"
           onClick={() => changeBet(1)}
-          disabled={spinning || bonusActive || autoLeft > 0 || featureBuyOpen || featureBuyRunning}
+          disabled={controlsLocked}
           aria-label="Aumentar aposta"
           className="absolute right-[2.3%] top-[78.45%] z-50 size-[6.3%] rounded-full disabled:cursor-not-allowed"
         />
@@ -939,7 +937,7 @@ export function GoldenTigerReference() {
         <button
           type="button"
           onClick={() => setTurbo((value) => !value)}
-          disabled={spinning || bonusActive || autoLeft > 0 || featureBuyOpen || featureBuyRunning}
+          disabled={controlsLocked}
           aria-pressed={turbo}
           aria-label="Alternar turbo"
           className={cn(
@@ -966,7 +964,7 @@ export function GoldenTigerReference() {
           <button
             type="button"
             onClick={() => setAutoOpen(true)}
-            disabled={spinning || bonusActive || insufficient || !src || featureBuyOpen || featureBuyRunning}
+            disabled={spinning || insufficient || !src}
             aria-label={`Configurar auto play: ${autoRounds} rodadas`}
             className="absolute left-[22.4%] top-[86.1%] z-50 h-[8.3%] w-[17.8%] rounded-[28px] disabled:opacity-40"
           />
@@ -987,7 +985,7 @@ export function GoldenTigerReference() {
         <button
           type="button"
           onClick={setMaxBet}
-          disabled={spinning || bonusActive || autoLeft > 0 || featureBuyOpen || featureBuyRunning}
+          disabled={controlsLocked}
           aria-label="Aposta máxima"
           className="absolute right-[4.3%] top-[86.1%] z-50 h-[8.3%] w-[25%] rounded-[28px] disabled:opacity-40"
         />
@@ -995,7 +993,7 @@ export function GoldenTigerReference() {
         <button
           type="button"
           onClick={() => void spin()}
-          disabled={spinning || bonusActive || autoLeft > 0 || insufficient || !src || featureBuyOpen || featureBuyRunning}
+          disabled={spinning || autoLeft > 0 || insufficient || !src}
           aria-label="Girar Golden Tiger"
           aria-busy={spinning}
           className={cn(
@@ -1003,6 +1001,7 @@ export function GoldenTigerReference() {
             spinning && "scale-95",
           )}
         />
+
 
         {(winTier === "big" || winTier === "mega") && win > 0 && phase === "bigWin" && (
           <div
