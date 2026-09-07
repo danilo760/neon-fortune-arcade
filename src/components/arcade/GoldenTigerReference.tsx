@@ -1030,54 +1030,12 @@ export function GoldenTigerReference() {
           </div>
         )}
 
-        {featureBuyOpen && (
-          <div
-            className="gt-ref-feature-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="golden-fortune-title"
-          >
-            <div className="gt-ref-feature-modal__card">
-              <span className="gt-ref-feature-modal__kicker">COMPRA DE BÔNUS · NEON FORTUNE</span>
-              <h2 id="golden-fortune-title">GOLDEN FORTUNE</h2>
-              <strong>{GOLDEN_TIGER_FEATURE_BUY_INITIAL_SPINS} FREE SPINS</strong>
-              <p>
-                Equivale à ativação normal de 3 cartinhas. Inclui retriggers e usa a mesma matemática dos
-                Free Spins naturais.
-              </p>
-              <div className="gt-ref-feature-modal__stats">
-                <div>
-                  <span>APOSTA ATUAL</span>
-                  <b>{formatCoins(bet)}</b>
-                </div>
-                <div>
-                  <span>CUSTO</span>
-                  <b>{formatCoins(featureBuyCost)} MOEDAS</b>
-                </div>
-              </div>
-              <small>MOEDAS FICTÍCIAS · SEM VALOR REAL</small>
-              {featureBuyError && <em role="alert">{featureBuyError}</em>}
-              <div className="gt-ref-feature-modal__actions">
-                <button type="button" onClick={closeFeatureBuy}>
-                  CANCELAR
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void confirmFeatureBuy()}
-                  disabled={featureBuyInsufficient || featureBuyRunning}
-                >
-                  ATIVAR
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {insufficient && !bonusActive && !featureBuyOpen && (
+        {insufficient && (
           <div className="absolute inset-x-[12%] bottom-[.8%] z-[70] rounded-xl border border-red-200/80 bg-red-950/95 px-3 py-2 text-center text-[10px] font-bold text-red-50">
             Saldo fictício insuficiente — recarregue moedas grátis no lobby.
           </div>
         )}
+
         <div className="absolute inset-x-0 bottom-[.15%] z-20 text-center text-[7px] font-black tracking-[.18em] text-yellow-100/75">
           MOEDAS FICTÍCIAS · SEM VALOR REAL
         </div>
