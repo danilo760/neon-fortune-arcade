@@ -215,6 +215,7 @@ export type SoundName =
   | "spin" | "tick" | "anticipation" | "win" | "bigWin" | "lose" | "click" | "cash" | "bonus"
   | "tigerScatter" | "tigerThrow" | "tigerImpact" | "tigerBonus" | "tigerRetrigger" | "tigerMiss"
   | "tigerFeatureOpen" | "tigerCardAppear" | "tigerFeatureStart"
+  | "tigerLuckyFeature" | "tigerRespinRoll" | "tigerSymbolLock" | "tigerFullGrid"
   | "olympusCluster" | "olympusFall" | "olympusCharge" | "olympusHit" | "olympusMultiplier"
   | "olympusSpin" | "olympusBonusSpin" | "olympusScatter" | "olympusAnticipation"
   | "olympusFeatureOpen" | "olympusBonusIntro" | "olympusRetrigger" | "olympusBonusEnd" | "olympusBigWin"
@@ -261,6 +262,14 @@ export function playSound(name: SoundName, enabled: boolean) {
       noise(0.32, 0.011, 0, 3000); tone(124, 0.5, "sine", 0.046, 0, 86); [392,523,659,880,1174].forEach((f,i)=>tone(f,0.26,i%2===0?"triangle":"sine",0.046,0.075+i*0.065,f*1.05)); break;
     case "tigerRetrigger":
       [740,988,1318].forEach((f,i)=>tone(f,0.19,"sine",0.041,i*0.055,f*1.06)); tone(294,0.28,"triangle",0.024,0.035,560); break;
+    case "tigerLuckyFeature":
+      noise(0.26,0.009,0,2600); tone(112,0.44,"sine",0.042,0,168); [330,494,659,880].forEach((f,i)=>tone(f,0.22,i%2===0?"triangle":"sine",0.034,0.05+i*0.055,f*1.06)); break;
+    case "tigerRespinRoll":
+      noise(0.14,0.0065,0,1500); tone(196,0.17,"triangle",0.022,0,286); tone(392,0.12,"sine",0.013,0.04,470); break;
+    case "tigerSymbolLock":
+      tone(880,0.085,"triangle",0.026,0,1240); tone(1320,0.07,"sine",0.014,0.022,1520); noise(0.05,0.0035,0.006,3200); break;
+    case "tigerFullGrid":
+      noise(0.34,0.014,0,3400); tone(96,0.56,"sine",0.05,0,64); [392,523,659,880,1174,1568].forEach((f,i)=>tone(f,0.3,i%2===0?"triangle":"sine",0.05,0.05+i*0.062,f*1.09)); break;
     case "tigerMiss":
       tone(390,0.14,"triangle",0.018,0,318); tone(265,0.18,"sine",0.014,0.07,205); break;
     case "olympusSpin":

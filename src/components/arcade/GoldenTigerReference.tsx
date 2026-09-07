@@ -762,44 +762,32 @@ export function GoldenTigerReference() {
   };
 
   const insufficient = bet > balance;
-  const featureBuyCost = goldenTigerFeatureBuyCost(bet);
-  const featureBuyInsufficient = featureBuyCost > balance;
-  const featureBuyBlocked =
-    spinning || bonusActive || autoLeft > 0 || featureBuyRunning || busyRef.current || bonusRef.current;
+  const controlsLocked = spinning || autoLeft > 0;
   const scatterOrderByIndex = useMemo(() => {
     const ordered = [...scatters].sort((a, b) => a - b);
     return new Map(ordered.map((index, order) => [index, order]));
   }, [scatters]);
   const currentTierLabel = tierLabel(winTier);
   const hasWinningSymbols = winning.size > 0;
-  const statusText =
-    anticipation === 2
-      ? "2 CARTINHAS... FALTA SÓ 1!"
-      : anticipation === 1
-        ? "1 CARTINHA... OLHOS NA GRADE"
-        : respinLeft > 0
-          ? `TIGRE DA SORTE · ${respinLeft} RESPIN${respinLeft === 1 ? "" : "S"}`
-        : bonusActive
-          ? `FREE SPINS · ${bonusSpins} RESTANTES`
-          : featureBuyRunning
-            ? "GOLDEN FORTUNE"
-            : phase === "bonusTrigger"
-              ? "BÔNUS DOURADO!"
-              : currentTierLabel ?? "3 CARTINHAS ATIVAM FREE SPINS";
+  const statusText = respinActive
+    ? respinRolling
+      ? "TIGRE DA SORTE · RESPIN"
+      : `TIGRE DA SORTE · ${lockedSymbols.size}/9 TRAVADOS`
+    : (currentTierLabel ?? "3 LINHAS x 3 ROLOS · 5 LINHAS FIXAS");
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-black sm:px-3 sm:py-2">
         <div
           className={cn(
             "gt-ref-machine relative mx-auto aspect-[940/1672] w-full max-w-[430px] overflow-hidden bg-[#240003] shadow-[0_0_90px_rgba(0,0,0,.96)] sm:rounded-[22px]",
-            bonusActive && "gt-ref-bonus-mode",
-            featureBuyRunning && "gt-ref-feature-running",
+            respinActive && "gt-ref-bonus-mode",
             hasWinningSymbols && "gt-ref-machine--has-win",
         )}
         data-phase={phase}
         data-tiger={tigerReaction}
-        data-feature-stage={featureBuyStage}
+        data-respin={respinActive || undefined}
       >
+
         {src ? (
           <img
             src={src}
@@ -852,13 +840,19 @@ export function GoldenTigerReference() {
 
         {src && (
           <div
-            className="gt-ref-grid absolute left-[6.7%] top-[32.53%] z-20 grid h-[31.4%] w-[85.1%] grid-cols-3 grid-rows-3 overflow-hidden"
-            data-spinning={spinning || undefined}
+            className={cn(
+              "gt-ref-grid absolute left-[6.7%] top-[32.53%] z-20 grid h-[31.4%] w-[85.1%] grid-cols-3 grid-rows-3 overflow-hidden",
+              respinActive && "gt-ref-grid--respin",
+            )}
+            data-spinning={(spinning && !respinActive) || undefined}
+            data-respin={respinActive || undefined}
           >
             {grid.map((symbol, index) => {
               const column = index % 3;
-              const isLanding = spinning && landingColumn === column;
-              const isAnticipating = spinning && anticipation > 0 && column >= stoppedColumns;
+              const locked = lockedSymbols.has(index);
+              const isLanding = spinning && !respinActive && landingColumn === column;
+              const isAnticipating = spinning && !respinActive && anticipation > 0 && column >= stoppedColumns;
+              const cellRolling = respinRolling && !locked;
               const scatterOrder = scatterOrderByIndex.get(index) ?? -1;
               const tileStyle =
                 scatterOrder >= 0
@@ -874,16 +868,19 @@ export function GoldenTigerReference() {
                     isAnticipating && "gt-ref-anticipate",
                     scatters.has(index) && "gt-ref-scatter",
                     winning.has(index) && "gt-ref-win",
-                    lockedSymbols.has(index) && "gt-ref-cell--locked",
+                    locked && "gt-ref-cell--locked",
+                    respinActive && !locked && "gt-ref-cell--unlocked",
                     hasWinningSymbols && !winning.has(index) && "gt-ref-cell--dim",
                     ["ingot", "jade", "fortuneBag", "wild"].includes(symbol) && "gt-ref-cell--premium-symbol",
                   )}
                 >
                   <ReferenceSymbol id={symbol} src={src} />
+                  {cellRolling && !reducedMotion && <GoldenCellStrip index={index} src={src} turbo={turbo} />}
+                  {locked && <span className="gt-ref-lock-frame" aria-hidden />}
                 </div>
               );
             })}
-            {spinning && !reducedMotion && Array.from({ length: 3 }, (_, column) =>
+            {spinning && !respinActive && !reducedMotion && Array.from({ length: 3 }, (_, column) =>
               column >= stoppedColumns ? (
                 <GoldenReelStrip key={`live-reel-${column}`} column={column} src={src} turbo={turbo} />
               ) : null,
@@ -891,7 +888,6 @@ export function GoldenTigerReference() {
           </div>
         )}
 
-        {featureBuyRunning && <GoldenFortuneTrigger />}
 
         <div
           className="absolute left-[18%] top-[63.7%] z-35 flex h-[7.2%] w-[69%] items-center justify-center rounded-[28px] border-2 border-[#ffc52b] bg-[linear-gradient(180deg,rgba(122,0,7,.97),rgba(58,0,4,.98))] px-4 text-center shadow-[0_0_22px_rgba(255,67,0,.45)]"
@@ -901,15 +897,15 @@ export function GoldenTigerReference() {
             <p className="font-serif text-[clamp(.72rem,4vw,1.15rem)] font-black uppercase leading-tight text-[#ffe475] drop-shadow-[0_2px_0_#7b1500]">
               {statusText}
             </p>
-            {bonusActive && (
-              <p className="mt-1 text-[9px] font-black text-emerald-200">
-                GANHO NO BÔNUS {formatCoins(bonusWin)}
+            {respinActive && (
+              <p className="mt-0.5 text-[9px] font-black tracking-[.12em] text-emerald-200">
+                SÍMBOLOS TRAVADOS {lockedSymbols.size}/9
               </p>
             )}
           </div>
         </div>
 
-        <GoldenFortuneButton disabled={featureBuyBlocked || !src} onOpen={openFeatureBuy} />
+        <FeatureStatusBadge active={respinActive} respinLeft={respinLeft} />
 
         <NumberPatch className="left-[5%] top-[79.1%] h-[3.4%] w-[25.5%] text-[clamp(.7rem,4vw,1.08rem)] tabular-nums">
           {formatCoins(balance)}
@@ -924,14 +920,14 @@ export function GoldenTigerReference() {
         <button
           type="button"
           onClick={() => changeBet(-1)}
-          disabled={spinning || bonusActive || autoLeft > 0 || featureBuyOpen || featureBuyRunning}
+          disabled={controlsLocked}
           aria-label="Diminuir aposta"
           className="absolute left-[69%] top-[78.45%] z-50 size-[6.3%] rounded-full disabled:cursor-not-allowed"
         />
         <button
           type="button"
           onClick={() => changeBet(1)}
-          disabled={spinning || bonusActive || autoLeft > 0 || featureBuyOpen || featureBuyRunning}
+          disabled={controlsLocked}
           aria-label="Aumentar aposta"
           className="absolute right-[2.3%] top-[78.45%] z-50 size-[6.3%] rounded-full disabled:cursor-not-allowed"
         />
@@ -939,7 +935,7 @@ export function GoldenTigerReference() {
         <button
           type="button"
           onClick={() => setTurbo((value) => !value)}
-          disabled={spinning || bonusActive || autoLeft > 0 || featureBuyOpen || featureBuyRunning}
+          disabled={controlsLocked}
           aria-pressed={turbo}
           aria-label="Alternar turbo"
           className={cn(
@@ -966,7 +962,7 @@ export function GoldenTigerReference() {
           <button
             type="button"
             onClick={() => setAutoOpen(true)}
-            disabled={spinning || bonusActive || insufficient || !src || featureBuyOpen || featureBuyRunning}
+            disabled={spinning || insufficient || !src}
             aria-label={`Configurar auto play: ${autoRounds} rodadas`}
             className="absolute left-[22.4%] top-[86.1%] z-50 h-[8.3%] w-[17.8%] rounded-[28px] disabled:opacity-40"
           />
@@ -987,7 +983,7 @@ export function GoldenTigerReference() {
         <button
           type="button"
           onClick={setMaxBet}
-          disabled={spinning || bonusActive || autoLeft > 0 || featureBuyOpen || featureBuyRunning}
+          disabled={controlsLocked}
           aria-label="Aposta máxima"
           className="absolute right-[4.3%] top-[86.1%] z-50 h-[8.3%] w-[25%] rounded-[28px] disabled:opacity-40"
         />
@@ -995,7 +991,7 @@ export function GoldenTigerReference() {
         <button
           type="button"
           onClick={() => void spin()}
-          disabled={spinning || bonusActive || autoLeft > 0 || insufficient || !src || featureBuyOpen || featureBuyRunning}
+          disabled={spinning || autoLeft > 0 || insufficient || !src}
           aria-label="Girar Golden Tiger"
           aria-busy={spinning}
           className={cn(
@@ -1003,6 +999,7 @@ export function GoldenTigerReference() {
             spinning && "scale-95",
           )}
         />
+
 
         {(winTier === "big" || winTier === "mega") && win > 0 && phase === "bigWin" && (
           <div
@@ -1030,54 +1027,12 @@ export function GoldenTigerReference() {
           </div>
         )}
 
-        {featureBuyOpen && (
-          <div
-            className="gt-ref-feature-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="golden-fortune-title"
-          >
-            <div className="gt-ref-feature-modal__card">
-              <span className="gt-ref-feature-modal__kicker">COMPRA DE BÔNUS · NEON FORTUNE</span>
-              <h2 id="golden-fortune-title">GOLDEN FORTUNE</h2>
-              <strong>{GOLDEN_TIGER_FEATURE_BUY_INITIAL_SPINS} FREE SPINS</strong>
-              <p>
-                Equivale à ativação normal de 3 cartinhas. Inclui retriggers e usa a mesma matemática dos
-                Free Spins naturais.
-              </p>
-              <div className="gt-ref-feature-modal__stats">
-                <div>
-                  <span>APOSTA ATUAL</span>
-                  <b>{formatCoins(bet)}</b>
-                </div>
-                <div>
-                  <span>CUSTO</span>
-                  <b>{formatCoins(featureBuyCost)} MOEDAS</b>
-                </div>
-              </div>
-              <small>MOEDAS FICTÍCIAS · SEM VALOR REAL</small>
-              {featureBuyError && <em role="alert">{featureBuyError}</em>}
-              <div className="gt-ref-feature-modal__actions">
-                <button type="button" onClick={closeFeatureBuy}>
-                  CANCELAR
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void confirmFeatureBuy()}
-                  disabled={featureBuyInsufficient || featureBuyRunning}
-                >
-                  ATIVAR
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {insufficient && !bonusActive && !featureBuyOpen && (
+        {insufficient && (
           <div className="absolute inset-x-[12%] bottom-[.8%] z-[70] rounded-xl border border-red-200/80 bg-red-950/95 px-3 py-2 text-center text-[10px] font-bold text-red-50">
             Saldo fictício insuficiente — recarregue moedas grátis no lobby.
           </div>
         )}
+
         <div className="absolute inset-x-0 bottom-[.15%] z-20 text-center text-[7px] font-black tracking-[.18em] text-yellow-100/75">
           MOEDAS FICTÍCIAS · SEM VALOR REAL
         </div>
