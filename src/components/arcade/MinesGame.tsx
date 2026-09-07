@@ -63,17 +63,15 @@ export function MinesGame() {
   const mineSet = useMemo(() => new Set(mineField), [mineField]);
 
   function startRound() {
-    if (
-      status === "playing" ||
-      roundActiveRef.current ||
-      revealBusyRef.current ||
-      !arcadeActions.placeBet(bet)
-    ) {
+    if (status === "playing" || roundActiveRef.current || revealBusyRef.current) return;
+
+    roundActiveRef.current = true;
+    if (!arcadeActions.placeBet(bet)) {
+      roundActiveRef.current = false;
       if (bet > balance) playSound("lose", soundEnabled);
       return;
     }
 
-    roundActiveRef.current = true;
     setMineField(createMineField(createRng(), mineCount));
     revealedRef.current = new Set();
     setRevealed(revealedRef.current);
@@ -103,29 +101,35 @@ export function MinesGame() {
     const reduceMotion = reducedMotion();
     playMinesSound("cashout", soundEnabled);
 
-    await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.cashoutPress, reduceMotion));
-    const countDuration = minesPresentationDelay(MINES_PRESENTATION_TIMING.cashoutCount, reduceMotion);
-    setPossibleWinDuration(countDuration);
-    setDisplayedPossibleWin(payout);
-    await wait(countDuration);
-    await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.cashoutSettle, reduceMotion));
+    try {
+      await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.cashoutPress, reduceMotion));
+      const countDuration = minesPresentationDelay(MINES_PRESENTATION_TIMING.cashoutCount, reduceMotion);
+      setPossibleWinDuration(countDuration);
+      setDisplayedPossibleWin(payout);
+      playSound("cash", soundEnabled);
+      await wait(countDuration);
+      await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.cashoutSettle, reduceMotion));
 
-    arcadeActions.credit(payout);
-    arcadeActions.recordRound({
-      slug: "neon-mines",
-      gameName: "Neon Mines",
-      bet,
-      payout,
-      multiplier: finalMultiplier,
-      note: `${safeCells} casas seguras`,
-    });
-    setLastPayout(payout);
-    setLastRoundSafeCells(safeCells);
-    setLastRoundMultiplier(finalMultiplier);
-    setStatus("won");
-    setRevealPhase("idle");
-    revealBusyRef.current = false;
-    playMinesSound("win", soundEnabled);
+      arcadeActions.credit(payout);
+      arcadeActions.recordRound({
+        slug: "neon-mines",
+        gameName: "Neon Mines",
+        bet,
+        payout,
+        multiplier: finalMultiplier,
+        note: `${safeCells} casas seguras`,
+      });
+      setLastPayout(payout);
+      setLastRoundSafeCells(safeCells);
+      setLastRoundMultiplier(finalMultiplier);
+      setStatus("won");
+      playMinesSound("win", soundEnabled);
+      await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.cashoutSettle, reduceMotion));
+    } finally {
+      setRevealPhase("idle");
+      setOpeningIndex(null);
+      revealBusyRef.current = false;
+    }
   }
 
   async function revealCell(index: number) {
@@ -138,64 +142,66 @@ export function MinesGame() {
     setLastSafeReveal(null);
     setRevealPhase("press");
     playMinesSound("tilePress", soundEnabled);
-    await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.press, reduceMotion));
 
-    setRevealPhase("unlock");
-    playMinesSound("unlock", soundEnabled);
-    await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.unlock, reduceMotion));
+    try {
+      await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.press, reduceMotion));
 
-    if (mineSet.has(index)) {
-      const safeCells = revealedRef.current.size;
-      const reachedMultiplier = minesMultiplier(mineCount, safeCells);
-      setTriggeredMine(index);
-      setRevealPhase("danger");
-      playMinesSound("danger", soundEnabled);
-      await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.danger, reduceMotion));
+      setRevealPhase("unlock");
+      playMinesSound("unlock", soundEnabled);
+      await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.unlock, reduceMotion));
 
-      settledRef.current = true;
-      roundActiveRef.current = false;
-      playMinesSound("mineArm", soundEnabled);
-      setRevealPhase("explode");
-      playMinesSound("explosion", soundEnabled);
-      await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.explosion, reduceMotion));
-      setLastRoundSafeCells(safeCells);
-      setLastRoundMultiplier(reachedMultiplier);
-      setStatus("lost");
-      arcadeActions.recordRound({
-        slug: "neon-mines",
-        gameName: "Neon Mines",
-        bet,
-        payout: 0,
-        multiplier: 0,
-        note: `Mina encontrada após ${safeCells} casa(s) segura(s)`,
-      });
-      await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.lostSettle, reduceMotion));
+      if (mineSet.has(index)) {
+        const safeCells = revealedRef.current.size;
+        const reachedMultiplier = minesMultiplier(mineCount, safeCells);
+        setTriggeredMine(index);
+        setRevealPhase("danger");
+        playMinesSound("danger", soundEnabled);
+        await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.danger, reduceMotion));
+
+        settledRef.current = true;
+        roundActiveRef.current = false;
+        playMinesSound("mineArm", soundEnabled);
+        setRevealPhase("explode");
+        playMinesSound("explosion", soundEnabled);
+        await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.explosion, reduceMotion));
+        setLastRoundSafeCells(safeCells);
+        setLastRoundMultiplier(reachedMultiplier);
+        setStatus("lost");
+        arcadeActions.recordRound({
+          slug: "neon-mines",
+          gameName: "Neon Mines",
+          bet,
+          payout: 0,
+          multiplier: 0,
+          note: `Mina encontrada após ${safeCells} casa(s) segura(s)`,
+        });
+        await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.lostSettle, reduceMotion));
+        return;
+      }
+
+      const next = new Set(revealedRef.current);
+      next.add(index);
+      revealedRef.current = next;
+      setRevealed(next);
+      setLastSafeReveal(index);
+      setRevealPhase("gem");
+      playMinesSound("gemReveal", soundEnabled, next.size);
+
+      const targetPossible = Math.round(bet * minesMultiplier(mineCount, next.size));
+      const countDuration = minesPresentationDelay(MINES_PRESENTATION_TIMING.possibleWinCount, reduceMotion);
+      setPossibleWinDuration(countDuration);
+      setDisplayedPossibleWin(targetPossible);
+      if (next.size > 1) playMinesSound("multiplierRise", soundEnabled, next.size);
+
+      await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.gemSettle, reduceMotion));
+    } finally {
       setRevealPhase("idle");
       setOpeningIndex(null);
       revealBusyRef.current = false;
-      return;
     }
 
-    const next = new Set(revealedRef.current);
-    next.add(index);
-    revealedRef.current = next;
-    setRevealed(next);
-    setLastSafeReveal(index);
-    setRevealPhase("gem");
-    playMinesSound("gemReveal", soundEnabled, next.size);
-
-    const targetPossible = Math.round(bet * minesMultiplier(mineCount, next.size));
-    const countDuration = minesPresentationDelay(MINES_PRESENTATION_TIMING.possibleWinCount, reduceMotion);
-    setPossibleWinDuration(countDuration);
-    setDisplayedPossibleWin(targetPossible);
-    if (next.size > 1) playMinesSound("multiplierRise", soundEnabled, next.size);
-
-    await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.gemSettle, reduceMotion));
-    setRevealPhase("idle");
-    setOpeningIndex(null);
-    revealBusyRef.current = false;
-
-    if (next.size === 25 - mineCount) await settleWin(next.size);
+    const nextSafeCount = revealedRef.current.size;
+    if (!settledRef.current && nextSafeCount === 25 - mineCount) await settleWin(nextSafeCount);
   }
 
   const showMines = status === "lost" || status === "won";
@@ -279,9 +285,10 @@ export function MinesGame() {
             {Array.from({ length: 25 }, (_, index) => {
               const isMine = mineSet.has(index);
               const isRevealed = revealed.has(index);
-              const visibleMine = showMines && isMine;
-              const isFreshGem = isRevealed && lastSafeReveal === index;
               const isTriggeredMine = triggeredMine === index;
+              const mineInImpact = isTriggeredMine && (revealPhase === "danger" || revealPhase === "explode");
+              const visibleMine = isMine && (showMines || mineInImpact);
+              const isFreshGem = isRevealed && lastSafeReveal === index;
               const isOpening = openingIndex === index;
 
               return (
@@ -298,7 +305,7 @@ export function MinesGame() {
                     isRevealed && "mines-tile--gem mines-premium__tile--gem",
                     isFreshGem && "mines-premium__tile--fresh-gem",
                     visibleMine && "mines-tile--mine mines-premium__tile--mine",
-                    isTriggeredMine && showMines && "mines-premium__tile--triggered",
+                    isTriggeredMine && (showMines || mineInImpact) && "mines-premium__tile--triggered",
                   )}
                   disabled={status !== "playing" || isRevealed || interactionLocked}
                   onClick={() => void revealCell(index)}
@@ -347,7 +354,7 @@ export function MinesGame() {
           </div>
         )}
         {status === "won" && (
-          <div className="mines-result mines-result--won mines-premium__result mines-premium__result--cashout" role="status">
+          <div className="mines-result mines-result--won mines-premium__result mines-premium__result--cashout" role="status" aria-live="polite">
             <Trophy className="size-5" />
             <div><strong>CRISTAL GARANTIDO</strong><span>+ {formatCoins(lastPayout)} moedas fictícias · {formatMultiplier(lastRoundMultiplier)}</span></div>
           </div>
