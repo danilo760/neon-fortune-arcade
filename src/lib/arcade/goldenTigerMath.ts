@@ -57,3 +57,26 @@ export function respinGoldenTigerGrid(grid: readonly GoldenTigerSymbolId[], stat
 export function goldenTigerWinTier(payout: number, bet: number): GoldenTigerWinTier {
   if (bet <= 0 || payout < bet * 2) return "none"; if (payout < bet * 5) return "small"; if (payout < bet * 15) return "nice"; if (payout < bet * 30) return "big"; return "mega";
 }
+
+export type GoldenTigerRoundPlan = {
+  initialGrid: GoldenTigerSymbolId[];
+  initialRespin: GoldenTigerRespinState | null;
+  respins: { grid: GoldenTigerSymbolId[]; state: GoldenTigerRespinState; addedLocks: number }[];
+  result: GoldenTigerSpinResult;
+};
+
+/** Choose a complete outcome before presentation or procedural audio consumes randomness. */
+export function planGoldenTigerRound(bet: number, rng: () => number = Math.random): GoldenTigerRoundPlan {
+  const initialGrid = makeGoldenTigerGrid("base", rng);
+  const initialRespin = createGoldenTigerRespin(initialGrid, rng);
+  const respins: GoldenTigerRoundPlan["respins"] = [];
+  let grid = initialGrid;
+  let state = initialRespin;
+  while (state && state.spinsLeft > 0 && state.locked.size < 9) {
+    const next = respinGoldenTigerGrid(grid, state, rng);
+    respins.push({ ...next, addedLocks: next.state.locked.size - state.locked.size });
+    grid = next.grid;
+    state = next.state;
+  }
+  return { initialGrid, initialRespin, respins, result: evaluateGoldenTiger(grid, bet, "base") };
+}

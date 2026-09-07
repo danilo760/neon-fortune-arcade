@@ -1,0 +1,21 @@
+name: Temporary tiger preview dependencies
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  package:
+    if: github.head_ref == 'codex/arcade-respin-polish'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: tar -czf tiger-preview-dependencies.tar.gz node_modules
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tiger-preview-dependencies
+          path: tiger-preview-dependencies.tar.gz
+          retention-days: 1

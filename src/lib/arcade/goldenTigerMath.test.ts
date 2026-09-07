@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createGoldenTigerRespin, evaluateGoldenTiger, makeGoldenTigerGrid, respinGoldenTigerGrid } from "./goldenTigerMath";
+import { planGoldenTigerRound, createGoldenTigerRespin, evaluateGoldenTiger, makeGoldenTigerGrid, respinGoldenTigerGrid } from "./goldenTigerMath";
 
 test("Golden Tiger produces a deterministic 3 by 3 grid", () => {
   const grid = makeGoldenTigerGrid("base", () => 0);
@@ -50,4 +50,33 @@ test("respins reset only on a new lock and otherwise expire", () => {
   const filled = respinGoldenTigerGrid(grid, {...state, spinsLeft: 1}, () => 0);
   assert.equal(filled.state.spinsLeft, 3);
   assert.equal(filled.state.locked.size, 9);
+});
+
+
+test("a complete round is planned before presentation without mutating its initial grid", () => {
+  const first = planGoldenTigerRound(10, () => 0);
+  assert.equal(first.initialGrid.length, 9);
+  assert.equal(first.result.payout, 12_500);
+  assert.equal(first.respins.length, 0);
+  assert.equal(first.initialRespin?.locked.size, 9);
+  const blank = planGoldenTigerRound(10, () => .99);
+  assert.equal(blank.initialRespin, null);
+  assert.equal(blank.respins.length, 0);
+  assert.equal(blank.result.payout, 600);
+});
+
+test("round plan retains each respin snapshot and settles only its final grid", () => {
+  let calls = 0;
+  const plan = planGoldenTigerRound(10, () => {
+    calls++;
+    if (calls === 1) return .15;
+    if (calls === 10 || calls === 11) return 0;
+    return .99;
+  });
+  assert.equal(plan.initialGrid[0], "ingot");
+  assert.equal(plan.initialRespin?.locked.size, 1);
+  assert.equal(plan.respins.length, 3);
+  assert.deepEqual(plan.respins.map(step => step.state.spinsLeft), [2, 1, 0]);
+  assert.ok(plan.respins.every(step => step.grid[0] === "ingot"));
+  assert.equal(plan.result.payout, evaluateGoldenTiger(plan.respins.at(-1)!.grid, 10, "base").payout);
 });
