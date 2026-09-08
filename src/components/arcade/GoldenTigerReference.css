@@ -114,3 +114,325 @@
     animation: none !important;
   }
 }
+
+
+/* === Golden Tiger presentation rebuild v4 ===
+   Original character rig + staged reel landing + win-tier hierarchy.
+   These rules intentionally override the earlier sensory-pass rules. */
+@keyframes gt-hw-body-breathe-v4 {
+  0%,100% { transform: scaleY(1) translateY(0); }
+  50% { transform: scaleY(1.018) translateY(-.8px); }
+}
+@keyframes gt-hw-head-idle-v4 {
+  0%,100% { transform: rotate(-.5deg) translateY(0); }
+  50% { transform: rotate(.5deg) translateY(-1px); }
+}
+@keyframes gt-hw-tail-v4 {
+  0%,100% { transform: rotate(-5deg); }
+  50% { transform: rotate(8deg); }
+}
+@keyframes gt-hw-watch-head-v4 {
+  0%,100% { transform: translateY(1px) scale(1.005); }
+  50% { transform: translateY(3px) scale(1.018); }
+}
+@keyframes gt-hw-reveal-v4 {
+  0% { transform: translateY(2px) scale(.985); }
+  42% { transform: translateY(-4px) scale(1.055); }
+  72% { transform: translateY(1px) scale(1.018); }
+  100% { transform: none; }
+}
+@keyframes gt-hw-arm-cheer-left-v4 {
+  0% { transform: rotate(0) translate(0,0); }
+  45% { transform: rotate(-28deg) translate(-3px,-8px); }
+  100% { transform: rotate(-18deg) translate(-2px,-5px); }
+}
+@keyframes gt-hw-arm-cheer-right-v4 {
+  0% { transform: rotate(0) translate(0,0); }
+  45% { transform: rotate(28deg) translate(3px,-8px); }
+  100% { transform: rotate(18deg) translate(2px,-5px); }
+}
+@keyframes gt-hw-coin-prop-v4 {
+  0% { opacity: 0; transform: translateY(18px) scale(.42) rotate(-28deg); }
+  38% { opacity: 1; transform: translateY(-8px) scale(1.12) rotate(8deg); }
+  72% { opacity: 1; transform: translateY(-2px) scale(.98) rotate(-3deg); }
+  100% { opacity: 0; transform: translateY(9px) scale(.8) rotate(5deg); }
+}
+@keyframes gt-hw-medallion-v4 {
+  0%,100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.13); filter: brightness(1.45) drop-shadow(0 0 5px #ffe67f); }
+}
+@keyframes gt-hw-spotlight-v4 {
+  0%,100% { opacity: .22; transform: translateX(-50%) scaleX(.92); }
+  50% { opacity: .42; transform: translateX(-50%) scaleX(1.08); }
+}
+@keyframes gt-hw-reel-land-v4 {
+  0% { transform: translateY(-3px) scaleY(1.035); filter: brightness(1.08); }
+  36% { transform: translateY(3px) scaleY(.94); filter: brightness(1.18); }
+  72% { transform: translateY(-1px) scaleY(1.016); }
+  100% { transform: none; filter: none; }
+}
+@keyframes gt-hw-grid-reveal-v4 {
+  0% { box-shadow: 0 0 0 2px #5c0d07,0 8px 24px #000a,0 0 21px #ffb82b22,inset 0 0 18px #1b0000; }
+  45% { box-shadow: 0 0 0 2px #8c2b10,0 8px 24px #000a,0 0 32px #ffc84548,inset 0 0 24px #ffd05422; }
+  100% { box-shadow: 0 0 0 2px #5c0d07,0 8px 24px #000a,0 0 21px #ffb82b22,inset 0 0 18px #1b0000; }
+}
+@keyframes gt-hw-ribbon-in-v4 {
+  0% { opacity: 0; transform: translate(-50%,-42%) scale(.74); filter: blur(2px); }
+  48% { opacity: 1; transform: translate(-50%,-50%) scale(1.08); filter: blur(0); }
+  100% { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+}
+@keyframes gt-hw-ribbon-shine-v4 {
+  from { transform: translateX(-150%) skewX(-22deg); }
+  to { transform: translateX(260%) skewX(-22deg); }
+}
+@keyframes gt-hw-crown-pop-v4 {
+  0% { opacity: 0; transform: translateY(22px) scale(.2) rotate(-28deg); }
+  56% { opacity: 1; transform: translateY(-5px) scale(1.2) rotate(8deg); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes gt-hw-mega-pulse-v4 {
+  0%,100% { filter: saturate(1) brightness(1); }
+  50% { filter: saturate(1.12) brightness(1.1); }
+}
+
+.gt-hw-tiger-stage {
+  min-height: 100px;
+  perspective: 480px;
+}
+.gt-hw-tiger-spotlight {
+  position: absolute;
+  left: 50%;
+  bottom: -5%;
+  width: 84%;
+  height: 102%;
+  transform: translateX(-50%);
+  clip-path: polygon(42% 0,58% 0,100% 100%,0 100%);
+  background: linear-gradient(180deg,rgba(255,224,129,.12),rgba(255,178,42,.035) 58%,transparent);
+  mix-blend-mode: screen;
+  opacity: .24;
+  pointer-events: none;
+  animation: gt-hw-spotlight-v4 3.4s ease-in-out infinite;
+}
+.gt-hw-tiger-floor-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  width: 118px;
+  height: 15px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse,#000a 0,#0006 38%,transparent 74%);
+  filter: blur(2px);
+  opacity: .78;
+}
+.gt-hw-tiger-art {
+  width: 144px;
+  height: 112px;
+  overflow: visible;
+  transform-origin: 50% 86%;
+}
+.gt-hw-tiger-body,
+.gt-hw-tiger-head,
+.gt-hw-tiger-arm,
+.gt-hw-tiger-tail,
+.gt-hw-tiger-medallion,
+.gt-hw-tiger-coin-prop,
+.gt-hw-tiger-pupil {
+  transform-box: fill-box;
+}
+.gt-hw-tiger-body { transform-origin: 50% 88%; }
+.gt-hw-tiger-head { transform-origin: 50% 84%; }
+.gt-hw-tiger-arm--left { transform-origin: 78% 28%; }
+.gt-hw-tiger-arm--right { transform-origin: 22% 28%; }
+.gt-hw-tiger-tail { transform-origin: 12% 36%; }
+.gt-hw-tiger-medallion { transform-origin: center; }
+.gt-hw-tiger-coin-prop { transform-origin: center; opacity: 0; pointer-events: none; }
+
+.gt-hw-tiger-stage[data-reaction="idle"] .gt-hw-tiger-body {
+  animation: gt-hw-body-breathe-v4 2.6s ease-in-out infinite;
+}
+.gt-hw-tiger-stage[data-reaction="idle"] .gt-hw-tiger-head {
+  animation: gt-hw-head-idle-v4 3.1s ease-in-out infinite;
+}
+.gt-hw-tiger-stage .gt-hw-tiger-tail {
+  animation: gt-hw-tail-v4 2.25s ease-in-out infinite;
+}
+.gt-hw-tiger-stage[data-reaction="watch"] .gt-hw-tiger-head {
+  animation: gt-hw-watch-head-v4 .55s ease-in-out infinite;
+}
+.gt-hw-tiger-stage[data-reaction="watch"] .gt-hw-tiger-pupil {
+  transform: translateY(1.4px) scaleY(.92);
+}
+.gt-hw-tiger-stage[data-reaction="reveal"] .gt-hw-tiger-art {
+  animation: gt-hw-reveal-v4 .32s cubic-bezier(.18,.84,.2,1.16) both;
+}
+.gt-hw-tiger-stage[data-reaction="reveal"] .gt-hw-tiger-pupil {
+  transform: scale(1.12);
+}
+.gt-hw-tiger-stage[data-reaction="coin"] .gt-hw-tiger-arm--left,
+.gt-hw-tiger-stage[data-reaction="win"] .gt-hw-tiger-arm--left,
+.gt-hw-tiger-stage[data-reaction="full"] .gt-hw-tiger-arm--left {
+  animation: gt-hw-arm-cheer-left-v4 .46s cubic-bezier(.18,.82,.2,1.12) both;
+}
+.gt-hw-tiger-stage[data-reaction="coin"] .gt-hw-tiger-arm--right,
+.gt-hw-tiger-stage[data-reaction="win"] .gt-hw-tiger-arm--right,
+.gt-hw-tiger-stage[data-reaction="full"] .gt-hw-tiger-arm--right {
+  animation: gt-hw-arm-cheer-right-v4 .46s cubic-bezier(.18,.82,.2,1.12) both;
+}
+.gt-hw-tiger-stage[data-reaction="coin"] .gt-hw-tiger-coin-prop {
+  animation: gt-hw-coin-prop-v4 .66s cubic-bezier(.16,.78,.24,1) both;
+}
+.gt-hw-tiger-stage[data-reaction="tense"] .gt-hw-tiger-pupil {
+  transform: scale(1.18);
+}
+.gt-hw-tiger-stage[data-reaction="tense"] .gt-hw-tiger-tail {
+  animation-duration: .72s;
+}
+.gt-hw-tiger-stage[data-reaction="win"] .gt-hw-tiger-medallion,
+.gt-hw-tiger-stage[data-reaction="full"] .gt-hw-tiger-medallion {
+  animation: gt-hw-medallion-v4 .62s ease-in-out 2;
+}
+.gt-hw-tiger-stage[data-feature-active="true"] .gt-hw-tiger-spotlight {
+  opacity: .44;
+}
+.gt-hw-tiger-stage[data-feature-active="true"] .gt-hw-tiger-floor-shadow {
+  box-shadow: 0 0 24px rgba(255,185,49,.25);
+}
+.gt-hw-tiger-sparks i:nth-child(10){--x:-22px;--y:-58px}
+.gt-hw-tiger-sparks i:nth-child(11){--x:28px;--y:-61px}
+.gt-hw-tiger-sparks i:nth-child(12){--x:4px;--y:-73px}
+
+/* Reel stops now read as three discrete physical impacts, not one CSS swap. */
+.gt-hw-grid[data-landing-column="0"] .gt-hw-cell:nth-child(3n+1),
+.gt-hw-grid[data-landing-column="1"] .gt-hw-cell:nth-child(3n+2),
+.gt-hw-grid[data-landing-column="2"] .gt-hw-cell:nth-child(3n+3) {
+  animation: gt-hw-reel-land-v4 .22s cubic-bezier(.2,.8,.22,1.14) both;
+  transform-origin: 50% 80%;
+}
+.gt-hw-grid[data-reveal="true"] {
+  animation: gt-hw-grid-reveal-v4 .32s ease-out both;
+}
+.gt-hw-grid[data-reveal="true"] .gt-hw-cell.is-winning {
+  z-index: 8;
+  box-shadow: inset 0 0 0 3px #fff2a8,0 0 22px #ffd452,0 0 38px #ff9f1f55;
+}
+
+/* Small / nice wins stay local to the cabinet. Big / mega events own the screen. */
+.gt-hw-win-ribbon {
+  position: absolute;
+  z-index: 72;
+  left: 50%;
+  top: 54%;
+  width: min(84%,350px);
+  min-height: 78px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  overflow: hidden;
+  padding: 10px 18px 12px;
+  border: 2px solid #ffe793;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 50% 0,rgba(255,245,172,.24),transparent 42%),
+    linear-gradient(180deg,rgba(124,22,9,.96),rgba(49,4,3,.96));
+  box-shadow: 0 12px 32px #000c,0 0 26px #ffbe3a50,inset 0 0 18px #ffcf4628;
+  color: #fff1ae;
+  text-align: center;
+  pointer-events: none;
+  animation: gt-hw-ribbon-in-v4 .3s cubic-bezier(.18,.84,.2,1.14) both;
+}
+.gt-hw-win-ribbon::after {
+  content: "";
+  position: absolute;
+  inset: -20% auto -20% -24%;
+  width: 24%;
+  background: linear-gradient(90deg,transparent,#fff7c886,transparent);
+  animation: gt-hw-ribbon-shine-v4 .72s ease-out .08s both;
+}
+.gt-hw-win-ribbon > span:first-child {
+  font: 900 12px/1 Georgia,serif;
+  letter-spacing: .16em;
+  color: #ffd66e;
+  text-shadow: 0 2px 0 #781006;
+}
+.gt-hw-win-ribbon > span + span {
+  margin-top: 4px;
+  font-size: clamp(26px,8vw,38px);
+  font-weight: 950;
+  text-shadow: 0 2px 0 #6f0a05,0 0 14px #ffd25b;
+}
+.gt-hw-win-ribbon.is-nice {
+  min-height: 92px;
+  border-color: #fff0a7;
+  box-shadow: 0 12px 32px #000c,0 0 34px #ffd24f72,inset 0 0 22px #ffe3712c;
+}
+.gt-hw-win-crown {
+  position: relative;
+  z-index: 2;
+  margin-bottom: 8px;
+  font-size: clamp(30px,8vw,46px);
+  color: #fff0a6;
+  text-shadow: 0 0 16px #fff,0 0 30px #ffbf32;
+  animation: gt-hw-crown-pop-v4 .46s cubic-bezier(.18,.82,.2,1.18) both;
+}
+.gt-hw-win-overlay.is-mega {
+  background:
+    radial-gradient(circle at 50% 46%,#fff7bae8 0,#ffc83de8 17%,#a3180bea 43%,#250001f3 70%,#060000fb 100%);
+  animation: gt-hw-overlay-in .35s ease-out,gt-hw-mega-pulse-v4 1.05s ease-in-out .35s infinite;
+}
+.gt-hw-win-overlay.is-mega > span {
+  letter-spacing: .025em;
+}
+.gt-hw-win-overlay .gt-hw-win-rays {
+  opacity: .78;
+}
+
+/* Desktop keeps the vertical cabinet but gives special-event light somewhere to live. */
+@media (min-width: 760px) {
+  .gt-hw-page::before,
+  .gt-hw-page::after {
+    content: "";
+    position: fixed;
+    top: 8%;
+    bottom: 8%;
+    width: min(28vw,380px);
+    pointer-events: none;
+    filter: blur(10px);
+    opacity: .34;
+    background:
+      radial-gradient(circle at 50% 24%,rgba(255,190,58,.24),transparent 34%),
+      radial-gradient(circle at 50% 70%,rgba(166,26,13,.22),transparent 44%);
+  }
+  .gt-hw-page::before { left: 3vw; }
+  .gt-hw-page::after { right: 3vw; transform: scaleX(-1); }
+  .gt-hw-machine[data-phase="win"] {
+    box-shadow: 0 0 100px #000,0 0 48px #d98a2438;
+  }
+  .gt-hw-machine[data-phase="full-grid"] {
+    box-shadow: 0 0 110px #000,0 0 72px #ffd45a50;
+  }
+}
+
+@media (max-height: 760px) {
+  .gt-hw-tiger-art { width: 126px; height: 98px; }
+  .gt-hw-tiger-stage { min-height: 84px; }
+  .gt-hw-win-ribbon { top: 51%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gt-hw-tiger-body,
+  .gt-hw-tiger-head,
+  .gt-hw-tiger-tail,
+  .gt-hw-tiger-arm,
+  .gt-hw-tiger-medallion,
+  .gt-hw-tiger-coin-prop,
+  .gt-hw-tiger-spotlight,
+  .gt-hw-grid[data-landing-column] .gt-hw-cell,
+  .gt-hw-grid[data-reveal="true"],
+  .gt-hw-win-ribbon,
+  .gt-hw-win-ribbon::after,
+  .gt-hw-win-crown,
+  .gt-hw-win-overlay.is-mega {
+    animation: none !important;
+  }
+}

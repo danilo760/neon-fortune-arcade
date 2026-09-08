@@ -523,7 +523,7 @@ export type SoundName =
   | "spin" | "tick" | "anticipation" | "win" | "bigWin" | "lose" | "click" | "cash" | "bonus"
   | "tigerScatter" | "tigerThrow" | "tigerImpact" | "tigerBonus" | "tigerRetrigger" | "tigerMiss"
   | "tigerFeatureOpen" | "tigerCardAppear" | "tigerFeatureStart"
-  | "tigerLuckyFeature" | "tigerRespinRoll" | "tigerSymbolLock" | "tigerFullGrid"
+  | "tigerLuckyFeature" | "tigerRespinRoll" | "tigerReelLand" | "tigerReveal" | "tigerWinAccent" | "tigerSymbolLock" | "tigerFullGrid"
   | "olympusCluster" | "olympusFall" | "olympusCharge" | "olympusHit" | "olympusMultiplier"
   | "olympusSpin" | "olympusBonusSpin" | "olympusScatter" | "olympusAnticipation"
   | "olympusFeatureOpen" | "olympusBonusIntro" | "olympusRetrigger" | "olympusBonusEnd" | "olympusBigWin"
@@ -585,6 +585,7 @@ function busForSound(name: SoundName): AudioBus {
     name === "tigerBonus" ||
     name === "tigerRetrigger" ||
     name === "tigerFeatureStart" ||
+    name === "tigerWinAccent" ||
     name === "olympusMultiplier" ||
     name === "olympusBonusIntro" ||
     name === "olympusRetrigger" ||
@@ -649,6 +650,12 @@ export function playSound(name: SoundName, enabled: boolean, options: SoundOptio
       noise(0.26,0.009,0,2600); tone(112,0.44,"sine",0.042,0,168); [330,494,659,880].forEach((f,i)=>tone(f,0.22,i%2===0?"triangle":"sine",0.034,0.05+i*0.055,f*1.06)); break;
     case "tigerRespinRoll":
       noise(0.14,0.0065,0,1500); tone(196,0.17,"triangle",0.022,0,286); tone(392,0.12,"sine",0.013,0.04,470); break;
+    case "tigerReelLand":
+      noise(0.055,0.0075,0,1450); tone(118,0.09,"sine",0.025,0,82); tone(620,0.055,"triangle",0.014,0.012,470); break;
+    case "tigerReveal":
+      tone(523,0.13,"triangle",0.021,0,784); tone(784,0.16,"sine",0.018,0.045,1046); noise(0.07,0.0035,0.02,2800); break;
+    case "tigerWinAccent":
+      tone(330,0.18,"triangle",0.025,0,494); tone(494,0.2,"sine",0.024,0.05,659); tone(659,0.22,"sine",0.021,0.11,988); noise(0.09,0.004,0.035,3000); break;
     case "tigerSymbolLock":
       tone(880,0.085,"triangle",0.026,0,1240); tone(1320,0.07,"sine",0.014,0.022,1520); noise(0.05,0.0035,0.006,3200); break;
     case "tigerFullGrid":

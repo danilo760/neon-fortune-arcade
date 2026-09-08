@@ -11,6 +11,7 @@ import {
   goldenTigerWinTier,
   makeGoldenTigerGrid,
   type GoldenTigerSymbolId,
+  type GoldenTigerWinTier,
 } from "@/lib/arcade/goldenTigerMath";
 import {
   HOLD_WIN_FULL_GRID_BONUS,
@@ -33,7 +34,7 @@ const INITIAL_GRID: GoldenTigerSymbolId[] = ["fortuneBag", "ingot", "jade", "ora
 const REEL_STRIP: readonly GoldenTigerSymbolId[] = ["orange", "jade", "firecracker", "fortuneBag", "ingot", "lantern", "lion", "wild"];
 const CELL_INDEXES = Array.from({ length: 9 }, (_, index) => index);
 
-type Phase = "idle" | "base-spin" | "feature-intro" | "feature-spin" | "coin-lock" | "feature-miss" | "win" | "full-grid";
+type Phase = "idle" | "base-spin" | "reveal" | "feature-intro" | "feature-spin" | "coin-lock" | "feature-miss" | "return" | "win" | "full-grid";
 
 function reducedMotion() {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -91,10 +92,12 @@ export function GoldenTigerReference() {
   const [freshCoins, setFreshCoins] = useState<Set<number>>(() => new Set());
   const [rollingCells, setRollingCells] = useState<Set<number>>(() => new Set());
   const [stoppedColumns, setStoppedColumns] = useState(3);
+  const [landingColumn, setLandingColumn] = useState(-1);
   const [phase, setPhase] = useState<Phase>("idle");
   const [featureActive, setFeatureActive] = useState(false);
   const [respinsRemaining, setRespinsRemaining] = useState(HOLD_WIN_INITIAL_RESPINS);
   const [win, setWin] = useState(0);
+  const [winTier, setWinTier] = useState<GoldenTigerWinTier>("none");
   const [turbo, setTurbo] = useState(false);
   const [autoLeft, setAutoLeft] = useState(0);
   const [autoRounds, setAutoRounds] = useState(10);
@@ -116,16 +119,24 @@ export function GoldenTigerReference() {
   useEffect(() => {
     const energy =
       phase === "full-grid" ? 1.42 :
-      phase === "win" ? 1.2 :
+      phase === "win" ? (winTier === "mega" ? 1.38 : winTier === "big" ? 1.28 : 1.12) :
+      phase === "reveal" ? 0.98 :
+      phase === "return" ? 0.74 :
       featureActive ? (phase === "feature-spin" ? 1.12 : 1.25) :
       phase === "base-spin" ? 0.92 : 0.72;
     setAmbienceEnergy(energy);
-  }, [featureActive, phase]);
+  }, [featureActive, phase, winTier]);
 
   const activationCost = useMemo(() => holdWinActivationCost(bet), [bet]);
   const isBusy = phase !== "idle";
   const lockedCount = coins.size;
-  const tigerReaction: TigerReactionState = phase === "full-grid" ? "full" : phase === "coin-lock" ? "coin" : phase === "feature-spin" && respinsRemaining <= 1 ? "tense" : phase === "base-spin" || phase === "feature-spin" || phase === "feature-intro" ? "watch" : phase === "win" ? "win" : "idle";
+  const tigerReaction: TigerReactionState =
+    phase === "full-grid" ? "full" :
+    phase === "coin-lock" ? "coin" :
+    phase === "feature-spin" && respinsRemaining <= 1 ? "tense" :
+    phase === "reveal" ? "reveal" :
+    phase === "base-spin" || phase === "feature-spin" || phase === "feature-intro" ? "watch" :
+    phase === "win" ? "win" : "idle";
 
   const animateFeature = useCallback(async (plan: HoldWinResult, initialCoins: readonly HoldWinCoin[]) => {
     let visibleCoins = mapCoins(initialCoins);
@@ -177,15 +188,31 @@ export function GoldenTigerReference() {
     if (payout > 0) arcadeActions.credit(payout);
     arcadeActions.recordRound({ slug: "golden-tiger", gameName: "Golden Tiger", bet: stake, payout, multiplier: stake > 0 && payout > 0 ? payout / stake : 0, note });
     setWin(payout);
+
+    const rawTier = goldenTigerWinTier(payout, stake);
+    const resolvedTier: GoldenTigerWinTier = payout > stake && rawTier === "none" ? "small" : rawTier;
+    setWinTier(resolvedTier);
+
     if (fullGrid) {
       setPhase("full-grid");
       playSound("tigerFullGrid", soundEnabled, { intensity: 1.08 });
       await wait(turbo ? 650 : 1900);
-    } else if (payout > 0) {
+    } else if (payout > stake) {
       setPhase("win");
-      const tier = goldenTigerWinTier(payout, stake);
-      playSound(tier === "big" || tier === "mega" ? "bigWin" : "win", soundEnabled);
-      await wait(turbo ? 260 : tier === "big" || tier === "mega" ? 1200 : 650);
+      if (resolvedTier === "big" || resolvedTier === "mega") {
+        playSound("bigWin", soundEnabled, { intensity: resolvedTier === "mega" ? 1.12 : 1.02 });
+      } else {
+        playSound("tigerWinAccent", soundEnabled, { intensity: resolvedTier === "nice" ? 1.04 : 0.9, pitch: resolvedTier === "nice" ? 1.06 : 1 });
+      }
+      await wait(
+        turbo ? 260 :
+        resolvedTier === "mega" ? 1600 :
+        resolvedTier === "big" ? 1280 :
+        resolvedTier === "nice" ? 780 : 560,
+      );
+    } else if (payout > 0) {
+      setPhase("return");
+      await wait(turbo ? 90 : 260);
     } else {
       playSound("lose", soundEnabled);
       await wait(turbo ? 70 : 160);
@@ -202,7 +229,7 @@ export function GoldenTigerReference() {
     }
 
     try {
-      setWin(0); setWinning(new Set()); setFreshCoins(new Set()); setRollingCells(new Set()); setFeatureActive(false); setRespinsRemaining(3); setStoppedColumns(0); setPhase("base-spin");
+      setWin(0); setWinTier("none"); setWinning(new Set()); setFreshCoins(new Set()); setRollingCells(new Set()); setFeatureActive(false); setRespinsRemaining(3); setStoppedColumns(0); setLandingColumn(-1); setPhase("base-spin");
       const nextGrid = makeGoldenTigerGrid(Math.random);
       const initialCoins = rollBaseGoldCoinGrid(Math.random);
       const baseResult = evaluateGoldenTiger(nextGrid, bet, new Set(initialCoins.map((coin) => coin.index)));
@@ -215,13 +242,24 @@ export function GoldenTigerReference() {
       for (let column = 0; column < 3; column += 1) {
         const landingCoins = initialCoins.filter((coin) => coin.index % 3 === column);
         if (landingCoins.length) setFreshCoins(new Set(landingCoins.map((coin) => coin.index)));
+        setLandingColumn(column);
         setStoppedColumns(column + 1);
-        playSound("tick", soundEnabled);
+        playSound("tigerReelLand", soundEnabled, {
+          pan: column === 0 ? -0.42 : column === 2 ? 0.42 : 0,
+          intensity: landingCoins.length ? 1.03 : 0.84,
+          pitch: 0.98 + column * 0.035,
+        });
         if (landingCoins.length) playSound("tigerSymbolLock", soundEnabled, { intensity: 0.92 });
         await wait(turbo ? 80 : landingCoins.some((coin) => coin.value >= 20) ? 330 : 180);
       }
+      setLandingColumn(-1);
       setWinning(baseResult.winning);
       setFreshCoins(new Set());
+      setPhase("reveal");
+      if (baseResult.payout > bet) {
+        playSound("tigerReveal", soundEnabled, { intensity: baseResult.payout >= bet * 5 ? 1.04 : 0.86 });
+      }
+      await wait(turbo ? 55 : baseResult.winning.size > 0 ? 180 : 110);
 
       let featurePayout = 0;
       let fullGrid = false;
@@ -234,7 +272,7 @@ export function GoldenTigerReference() {
       await settle(total, bet, featurePlan ? `3×3 · ${baseResult.lines} linha(s) · Hold & Win ${featurePlan.totalCoins}/9${fullGrid ? ` · GRID CHEIO ×${HOLD_WIN_FULL_GRID_BONUS}` : ""}` : `3×3 · ${baseResult.lines} linha(s)`, fullGrid);
       return true;
     } finally {
-      setPhase("idle"); setFeatureActive(false); setRollingCells(new Set()); setFreshCoins(new Set()); setStoppedColumns(3); busyRef.current = false;
+      setPhase("idle"); setFeatureActive(false); setRollingCells(new Set()); setFreshCoins(new Set()); setStoppedColumns(3); setLandingColumn(-1); busyRef.current = false;
     }
   }, [animateFeature, bet, settle, soundEnabled, turbo]);
 
@@ -248,7 +286,7 @@ export function GoldenTigerReference() {
       return;
     }
     try {
-      setWin(0); setWinning(new Set()); setStoppedColumns(3);
+      setWin(0); setWinTier("none"); setWinning(new Set()); setStoppedColumns(3); setLandingColumn(-1);
       const entry: HoldWinCoin[] = [{ index: Math.floor(Math.random() * 9), value: rollGoldCoinValue(Math.random) }];
       const plan = runHoldWinFeature(bet, Math.random, entry);
       setGrid(makeGoldenTigerGrid(Math.random));
@@ -259,7 +297,7 @@ export function GoldenTigerReference() {
       const payout = await animateFeature(plan, entry);
       await settle(payout, activationCost, `Golden Fortune · Hold & Win ${plan.totalCoins}/9${plan.isFullGrid ? ` · GRID CHEIO ×${HOLD_WIN_FULL_GRID_BONUS}` : ""}`, plan.isFullGrid);
     } finally {
-      setPhase("idle"); setFeatureActive(false); setRollingCells(new Set()); setFreshCoins(new Set()); busyRef.current = false;
+      setPhase("idle"); setFeatureActive(false); setRollingCells(new Set()); setFreshCoins(new Set()); setLandingColumn(-1); busyRef.current = false;
     }
   }, [activationCost, animateFeature, autoLeft, bet, settle, soundEnabled, turbo]);
 
@@ -283,7 +321,16 @@ export function GoldenTigerReference() {
     playSound("click", soundEnabled);
   };
 
-  const status = phase === "feature-intro" ? "HOLD & WIN ATIVADO" : phase === "feature-spin" ? (respinsRemaining === 1 ? "ÚLTIMA CHANCE..." : "PROCURE NOVAS MOEDAS") : phase === "coin-lock" ? "MOEDA TRAVADA · RESPINS VOLTAM PARA 3" : phase === "feature-miss" ? `${respinsRemaining} RESPIN${respinsRemaining === 1 ? "" : "S"} RESTANTE${respinsRemaining === 1 ? "" : "S"}` : phase === "full-grid" ? `GRID CHEIO · ×${HOLD_WIN_FULL_GRID_BONUS}` : phase === "win" ? `GANHO ${formatCoins(win)}` : "MOEDA DOURADA ATIVA O HOLD & WIN";
+  const status =
+    phase === "feature-intro" ? "HOLD & WIN ATIVADO" :
+    phase === "feature-spin" ? (respinsRemaining === 1 ? "ÚLTIMA CHANCE..." : "PROCURE NOVAS MOEDAS") :
+    phase === "coin-lock" ? "MOEDA TRAVADA · RESPINS VOLTAM PARA 3" :
+    phase === "feature-miss" ? `${respinsRemaining} RESPIN${respinsRemaining === 1 ? "" : "S"} RESTANTE${respinsRemaining === 1 ? "" : "S"}` :
+    phase === "reveal" ? (winning.size > 0 ? "LINHA FORMADA" : "RESULTADO") :
+    phase === "return" ? `RETORNO ${formatCoins(win)}` :
+    phase === "full-grid" ? `GRID CHEIO · ×${HOLD_WIN_FULL_GRID_BONUS}` :
+    phase === "win" ? `GANHO ${formatCoins(win)}` :
+    "MOEDA DOURADA ATIVA O HOLD & WIN";
 
   return (
     <main className="gt-hw-page">
@@ -301,7 +348,7 @@ export function GoldenTigerReference() {
           <span>{featureActive ? "RESPINS" : "PRÊMIO MÁXIMO"}</span><strong>{featureActive ? respinsRemaining : `GRID ×${HOLD_WIN_FULL_GRID_BONUS}`}</strong><small>{featureActive ? `${lockedCount}/9 MOEDAS` : "CRÉDITOS FICTÍCIOS"}</small>
         </div>
 
-        <div className="gt-hw-grid" aria-label="Grade de símbolos 3 por 3">
+        <div className="gt-hw-grid" data-landing-column={landingColumn} data-reveal={phase === "reveal" ? "true" : "false"} aria-label="Grade de símbolos 3 por 3">
           {grid.map((symbol, index) => {
             const coin = coins.get(index);
             return <div className={cn("gt-hw-cell", winning.has(index) && coin === undefined && "is-winning", coin !== undefined && "is-locked", freshCoins.has(index) && "is-fresh")} key={index}>
@@ -331,7 +378,22 @@ export function GoldenTigerReference() {
         </div>
         <p className="gt-hw-fictional">ENTRETENIMENTO · CRÉDITOS 100% FICTÍCIOS · SEM VALOR MONETÁRIO</p>
 
-        {(phase === "win" || phase === "full-grid") && win > 0 && <div className={cn("gt-hw-win-overlay", phase === "full-grid" && "is-full")}><div className="gt-hw-win-rays" aria-hidden /><span>{phase === "full-grid" ? "GRID CHEIO" : "GRANDE GANHO"}</span><AnimatedWinCounter value={win} duration={reducedMotion() ? 0 : phase === "full-grid" ? 1500 : 800} />{phase === "full-grid" && <small>VALOR DAS MOEDAS × {HOLD_WIN_FULL_GRID_BONUS}</small>}</div>}
+        {phase === "win" && win > 0 && (winTier === "small" || winTier === "nice") && (
+          <div className={cn("gt-hw-win-ribbon", `is-${winTier}`)} aria-live="polite">
+            <span>{winTier === "nice" ? "BOM GANHO" : "GANHO"}</span>
+            <AnimatedWinCounter value={win} duration={reducedMotion() ? 0 : winTier === "nice" ? 620 : 420} />
+          </div>
+        )}
+
+        {((phase === "win" && (winTier === "big" || winTier === "mega")) || phase === "full-grid") && win > 0 && (
+          <div className={cn("gt-hw-win-overlay", phase === "full-grid" && "is-full", winTier === "mega" && "is-mega")}>
+            <div className="gt-hw-win-rays" aria-hidden />
+            <div className="gt-hw-win-crown" aria-hidden>✦</div>
+            <span>{phase === "full-grid" ? "GRID CHEIO" : winTier === "mega" ? "MEGA GANHO" : "GRANDE GANHO"}</span>
+            <AnimatedWinCounter value={win} duration={reducedMotion() ? 0 : phase === "full-grid" ? 1500 : winTier === "mega" ? 1300 : 950} />
+            {phase === "full-grid" && <small>VALOR DAS MOEDAS × {HOLD_WIN_FULL_GRID_BONUS}</small>}
+          </div>
+        )}
 
         {autoOpen && <div className="gt-hw-modal" role="dialog" aria-modal="true" aria-label="Configurar Auto Play"><div><span>AUTO PLAY</span><h2>ESCOLHA AS RODADAS</h2><p>{formatCoins(bet)} créditos fictícios por rodada</p><nav>{[10, 25, 50, 100].map((rounds) => <button key={rounds} type="button" className={autoRounds === rounds ? "is-active" : ""} onClick={() => setAutoRounds(rounds)}>{rounds}</button>)}</nav><footer><button type="button" onClick={() => setAutoOpen(false)}>CANCELAR</button><button type="button" onClick={() => void startAuto()}>INICIAR</button></footer></div></div>}
         {featureOpen && <div className="gt-hw-modal" role="dialog" aria-modal="true" aria-label="Ativar Golden Fortune"><div><span>GOLDEN FORTUNE</span><h2>ENTRADA DIRETA NO HOLD & WIN</h2><p>Custo: {formatCoins(activationCost)} créditos fictícios. Começa com 3 respins e os respins não geram novos débitos.</p><footer><button type="button" onClick={() => setFeatureOpen(false)}>CANCELAR</button><button type="button" onClick={() => void activateFeature()} disabled={balance < activationCost}>ATIVAR</button></footer></div></div>}
