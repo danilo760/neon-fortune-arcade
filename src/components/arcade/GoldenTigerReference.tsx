@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Sparkles, Volume2, VolumeX, Zap } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AnimatedWinCounter } from "./AnimatedWinCounter";
 import { GoldenTigerSymbol } from "./golden-tiger/GoldenTigerSymbols";
@@ -24,6 +24,13 @@ import {
   type HoldWinCoin,
   type HoldWinResult,
 } from "@/lib/arcade/goldenTigerHoldWin";
+import {
+  goldenTigerAnticipationMs,
+  goldenTigerBrakeEase,
+  goldenTigerReelBrakeMs,
+  goldenTigerReelLandPauseMs,
+  goldenTigerSpinLaunchMs,
+} from "@/lib/arcade/goldenTigerMotion";
 import { playSound, setAmbienceEnergy, setGameAmbience } from "@/lib/arcade/sound";
 import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store";
 import { cn } from "@/lib/utils";
@@ -65,12 +72,126 @@ function GoldCoin({ value, fresh }: { value: GoldCoinValue; fresh: boolean }) {
   );
 }
 
-function ReelOverlay({ column, turbo }: { column: number; turbo: boolean }) {
-  const symbols = [...REEL_STRIP, ...REEL_STRIP, ...REEL_STRIP];
+function reelFinalSymbols(grid: readonly GoldenTigerSymbolId[], column: number): [GoldenTigerSymbolId, GoldenTigerSymbolId, GoldenTigerSymbolId] {
+  return [
+    grid[column] ?? "orange",
+    grid[column + 3] ?? "jade",
+    grid[column + 6] ?? "ingot",
+  ];
+}
+
+function ReelOverlay({
+  column,
+  turbo,
+  braking,
+  finalSymbols,
+}: {
+  column: number;
+  turbo: boolean;
+  braking: boolean;
+  finalSymbols: readonly [GoldenTigerSymbolId, GoldenTigerSymbolId, GoldenTigerSymbolId];
+}) {
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const brakingRef = useRef(braking);
+  const symbols = [
+    ...REEL_STRIP,
+    ...REEL_STRIP,
+    ...REEL_STRIP,
+    ...REEL_STRIP,
+    ...REEL_STRIP,
+    ...finalSymbols,
+  ];
+
+  useEffect(() => {
+    brakingRef.current = braking;
+  }, [braking]);
+
+  useEffect(() => {
+    const overlay = overlayRef.current;
+    const track = trackRef.current;
+    if (!overlay || !track) return;
+
+    let frameId = 0;
+    let lastTime = performance.now();
+    let offset = 0;
+    let initialized = false;
+    let brakeStartedAt: number | null = null;
+    let brakeStartOffset = 0;
+
+    const draw = (time: number) => {
+      const itemHeight = overlay.clientHeight / 3;
+      if (itemHeight <= 0) {
+        frameId = requestAnimationFrame(draw);
+        return;
+      }
+
+      if (!initialized) {
+        offset = itemHeight * REEL_STRIP.length;
+        initialized = true;
+      }
+
+      const finalOffset = itemHeight * (symbols.length - 3);
+      const isBraking = brakingRef.current;
+
+      if (isBraking) {
+        if (reducedMotion()) {
+          track.style.transform = `translate3d(0, ${-finalOffset}px, 0)`;
+          return;
+        }
+        if (brakeStartedAt === null) {
+          brakeStartedAt = time;
+          brakeStartOffset = offset;
+        }
+        const duration = goldenTigerReelBrakeMs(column, turbo);
+        const progress = Math.min(1, (time - brakeStartedAt) / duration);
+        const eased = goldenTigerBrakeEase(progress);
+        offset = brakeStartOffset + (finalOffset - brakeStartOffset) * eased;
+        track.style.transform = `translate3d(0, ${-offset}px, 0)`;
+        track.style.filter = `blur(${Math.max(0.08, 0.7 * (1 - progress))}px) saturate(1.05)`;
+        if (progress >= 1) return;
+      } else {
+        const delta = Math.min(34, Math.max(0, time - lastTime));
+        const pxPerMs = itemHeight / (turbo ? 40 : 64);
+        offset += pxPerMs * delta;
+        const wrapAt = itemHeight * REEL_STRIP.length * 3;
+        if (offset >= wrapAt) offset -= itemHeight * REEL_STRIP.length;
+        track.style.transform = `translate3d(0, ${-offset}px, 0)`;
+      }
+
+      lastTime = time;
+      frameId = requestAnimationFrame(draw);
+    };
+
+    frameId = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(frameId);
+  }, [column, turbo, finalSymbols[0], finalSymbols[1], finalSymbols[2], symbols.length]);
+
   return (
-    <div className="gt-hw-reel-overlay" style={{ left: `${column * 33.333333}%`, "--gt-reel-speed": `${turbo ? 300 : 520 + column * 45}ms` } as CSSProperties} aria-hidden>
-      <div className="gt-hw-reel-track">
-        {symbols.map((symbol, index) => <div className="gt-hw-reel-item" key={`${column}-${index}`}><GoldenTigerSymbol id={symbol} /></div>)}
+    <div
+      ref={overlayRef}
+      className={cn("gt-hw-reel-overlay", braking && "is-braking")}
+      style={{ left: `${column * 33.333333}%` }}
+      aria-hidden
+    >
+      <div
+        ref={trackRef}
+        className="gt-hw-reel-track"
+        style={{
+          height: `${(symbols.length / 3) * 100}%`,
+          animation: "none",
+          transform: "translate3d(0, 0, 0)",
+        }}
+      >
+        {symbols.map((symbol, index) => (
+          <div
+            className="gt-hw-reel-item"
+            style={{ height: `${100 / symbols.length}%` }}
+            key={`${column}-${index}`}
+          >
+            <GoldenTigerSymbol id={symbol} />
+          </div>
+        ))}
       </div>
       <span className="gt-hw-reel-shade" />
     </div>
@@ -92,6 +213,7 @@ export function GoldenTigerReference() {
   const [freshCoins, setFreshCoins] = useState<Set<number>>(() => new Set());
   const [rollingCells, setRollingCells] = useState<Set<number>>(() => new Set());
   const [stoppedColumns, setStoppedColumns] = useState(3);
+  const [brakingColumn, setBrakingColumn] = useState(-1);
   const [landingColumn, setLandingColumn] = useState(-1);
   const [anticipating, setAnticipating] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle");
@@ -230,7 +352,19 @@ export function GoldenTigerReference() {
     }
 
     try {
-      setWin(0); setWinTier("none"); setWinning(new Set()); setFreshCoins(new Set()); setRollingCells(new Set()); setFeatureActive(false); setRespinsRemaining(3); setStoppedColumns(0); setLandingColumn(-1); setAnticipating(false); setPhase("base-spin");
+      setWin(0);
+      setWinTier("none");
+      setWinning(new Set());
+      setFreshCoins(new Set());
+      setRollingCells(new Set());
+      setFeatureActive(false);
+      setRespinsRemaining(3);
+      setStoppedColumns(0);
+      setBrakingColumn(-1);
+      setLandingColumn(-1);
+      setAnticipating(false);
+      setPhase("base-spin");
+
       const nextGrid = makeGoldenTigerGrid(Math.random);
       const initialCoins = rollBaseGoldCoinGrid(Math.random);
       const baseResult = evaluateGoldenTiger(nextGrid, bet, new Set(initialCoins.map((coin) => coin.index)));
@@ -238,27 +372,35 @@ export function GoldenTigerReference() {
       setGrid(nextGrid);
       setCoins(mapCoins(initialCoins));
       playSound("spin", soundEnabled);
-      await wait(turbo ? 160 : 430);
+      await wait(goldenTigerSpinLaunchMs(turbo));
 
       for (let column = 0; column < 3; column += 1) {
         if (column === 2 && (baseResult.winning.size > 0 || initialCoins.length > 0)) {
           setAnticipating(true);
           playSound("anticipation", soundEnabled, { intensity: 0.8, pitch: 1.02 });
-          await wait(turbo ? 35 : 120);
+          await wait(goldenTigerAnticipationMs(turbo));
         }
+
         const landingCoins = initialCoins.filter((coin) => coin.index % 3 === column);
         if (landingCoins.length) setFreshCoins(new Set(landingCoins.map((coin) => coin.index)));
+
         setLandingColumn(column);
+        setBrakingColumn(column);
+        await wait(goldenTigerReelBrakeMs(column, turbo));
         setStoppedColumns(column + 1);
+        setBrakingColumn(-1);
+
         playSound("tigerReelLand", soundEnabled, {
           pan: column === 0 ? -0.42 : column === 2 ? 0.42 : 0,
           intensity: landingCoins.length ? 1.03 : 0.84,
           pitch: 0.98 + column * 0.035,
         });
         if (landingCoins.length) playSound("tigerSymbolLock", soundEnabled, { intensity: 0.92 });
-        await wait(turbo ? 80 : landingCoins.some((coin) => coin.value >= 20) ? 330 : 180);
+        await wait(goldenTigerReelLandPauseMs(column, turbo));
       }
+
       setLandingColumn(-1);
+      setBrakingColumn(-1);
       setAnticipating(false);
       setWinning(baseResult.winning);
       setFreshCoins(new Set());
@@ -279,7 +421,15 @@ export function GoldenTigerReference() {
       await settle(total, bet, featurePlan ? `3×3 · ${baseResult.lines} linha(s) · Hold & Win ${featurePlan.totalCoins}/9${fullGrid ? ` · GRID CHEIO ×${HOLD_WIN_FULL_GRID_BONUS}` : ""}` : `3×3 · ${baseResult.lines} linha(s)`, fullGrid);
       return true;
     } finally {
-      setPhase("idle"); setFeatureActive(false); setRollingCells(new Set()); setFreshCoins(new Set()); setStoppedColumns(3); setLandingColumn(-1); setAnticipating(false); busyRef.current = false;
+      setPhase("idle");
+      setFeatureActive(false);
+      setRollingCells(new Set());
+      setFreshCoins(new Set());
+      setStoppedColumns(3);
+      setBrakingColumn(-1);
+      setLandingColumn(-1);
+      setAnticipating(false);
+      busyRef.current = false;
     }
   }, [animateFeature, bet, settle, soundEnabled, turbo]);
 
@@ -293,7 +443,12 @@ export function GoldenTigerReference() {
       return;
     }
     try {
-      setWin(0); setWinTier("none"); setWinning(new Set()); setStoppedColumns(3); setLandingColumn(-1);
+      setWin(0);
+      setWinTier("none");
+      setWinning(new Set());
+      setStoppedColumns(3);
+      setBrakingColumn(-1);
+      setLandingColumn(-1);
       const entry: HoldWinCoin[] = [{ index: Math.floor(Math.random() * 9), value: rollGoldCoinValue(Math.random) }];
       const plan = runHoldWinFeature(bet, Math.random, entry);
       setGrid(makeGoldenTigerGrid(Math.random));
@@ -304,7 +459,14 @@ export function GoldenTigerReference() {
       const payout = await animateFeature(plan, entry);
       await settle(payout, activationCost, `Golden Fortune · Hold & Win ${plan.totalCoins}/9${plan.isFullGrid ? ` · GRID CHEIO ×${HOLD_WIN_FULL_GRID_BONUS}` : ""}`, plan.isFullGrid);
     } finally {
-      setPhase("idle"); setFeatureActive(false); setRollingCells(new Set()); setFreshCoins(new Set()); setLandingColumn(-1); setAnticipating(false); busyRef.current = false;
+      setPhase("idle");
+      setFeatureActive(false);
+      setRollingCells(new Set());
+      setFreshCoins(new Set());
+      setBrakingColumn(-1);
+      setLandingColumn(-1);
+      setAnticipating(false);
+      busyRef.current = false;
     }
   }, [activationCost, animateFeature, autoLeft, bet, settle, soundEnabled, turbo]);
 
@@ -363,7 +525,15 @@ export function GoldenTigerReference() {
               {rollingCells.has(index) && <CellMotion index={index} />}
             </div>;
           })}
-          {phase === "base-spin" && [0, 1, 2].filter((column) => column >= stoppedColumns).map((column) => <ReelOverlay column={column} turbo={turbo} key={column} />)}
+          {phase === "base-spin" && [0, 1, 2].filter((column) => column >= stoppedColumns).map((column) => (
+            <ReelOverlay
+              column={column}
+              turbo={turbo}
+              braking={brakingColumn === column}
+              finalSymbols={reelFinalSymbols(grid, column)}
+              key={column}
+            />
+          ))}
           <span className="gt-hw-grid-glass" aria-hidden />
         </div>
 
