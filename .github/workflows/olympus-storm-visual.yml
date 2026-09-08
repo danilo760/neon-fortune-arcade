@@ -3,12 +3,17 @@ name: Olympus Storm Visual
 on:
   pull_request:
     paths:
+      - "src/components/arcade/OlympusStormReference.tsx"
+      - "src/components/arcade/OlympusStormReference.css"
       - "src/components/arcade/OlympusStormPremium.tsx"
       - "src/components/arcade/OlympusStormPremium.css"
       - "src/components/arcade/OlympusStormPremiumPolish.css"
+      - "src/assets/olympus-storm/**"
       - "src/lib/arcade/olympusStorm*.ts"
+      - "src/lib/arcade/olympusAuthorialArtwork.test.ts"
       - "src/routes/game/$slug.tsx"
       - "scripts/olympusStormVisualQa.mjs"
+      - "tsconfig.json"
       - ".github/workflows/olympus-storm-visual.yml"
   workflow_dispatch:
 
@@ -101,3 +106,4 @@ jobs:
         run: |
           [ ! -f /tmp/olympus-storm-chrome.pid ] || kill "$(cat /tmp/olympus-storm-chrome.pid)" 2>/dev/null || true
           [ ! -f /tmp/olympus-storm-server.pid ] || kill "$(cat /tmp/olympus-storm-server.pid)" 2>/dev/null || true
+
