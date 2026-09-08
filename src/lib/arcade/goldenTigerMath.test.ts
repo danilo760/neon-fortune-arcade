@@ -2,51 +2,45 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-  GOLDEN_TIGER_MAX_RETRIGGERS,
   evaluateGoldenTiger,
-  goldenTigerBonusForScatters,
-  goldenTigerScatterProbability,
-  goldenTigerTriggerProbability,
   goldenTigerWinTier,
   makeGoldenTigerGrid,
 } from "./goldenTigerMath";
 
-test("Golden Tiger base bonus frequency stays inside the requested rare-feature band", () => {
-  const trigger = goldenTigerTriggerProbability("base");
-  assert.ok(trigger >= 1 / 120, `expected at least 1/120, got ${trigger}`);
-  assert.ok(trigger <= 1 / 70, `expected at most 1/70, got ${trigger}`);
-});
-
-test("free-spins scatters are controlled separately and are rarer than base scatters", () => {
-  assert.ok(goldenTigerScatterProbability("freeSpins") < goldenTigerScatterProbability("base"));
-  assert.ok(goldenTigerTriggerProbability("freeSpins") < goldenTigerTriggerProbability("base"));
-});
-
-test("base and retrigger awards use distinct schedules", () => {
-  assert.equal(goldenTigerBonusForScatters(2, "base"), 0);
-  assert.equal(goldenTigerBonusForScatters(3, "base"), 8);
-  assert.equal(goldenTigerBonusForScatters(4, "base"), 12);
-  assert.equal(goldenTigerBonusForScatters(5, "base"), 20);
-
-  assert.equal(goldenTigerBonusForScatters(2, "freeSpins"), 0);
-  assert.equal(goldenTigerBonusForScatters(3, "freeSpins"), 5);
-  assert.equal(goldenTigerBonusForScatters(4, "freeSpins"), 8);
-  assert.equal(goldenTigerBonusForScatters(5, "freeSpins"), 12);
-  assert.equal(GOLDEN_TIGER_MAX_RETRIGGERS, 2);
-});
-
-test("result generation remains deterministic when an rng is supplied", () => {
-  const grid = makeGoldenTigerGrid("base", () => 0);
+test("Golden Tiger base grid remains a deterministic 3x3 when RNG is injected", () => {
+  const grid = makeGoldenTigerGrid(() => 0);
   assert.equal(grid.length, 9);
   assert.ok(grid.every((symbol) => symbol === "wild"));
-
-  const result = evaluateGoldenTiger(grid, 100, "base");
-  assert.equal(result.scatterCount, 0);
-  assert.equal(result.bonusAward, 0);
-  assert.ok(result.payout > 0);
 });
 
-test("win tiers scale presentation intensity without changing payout", () => {
+test("five fixed paylines still evaluate the existing 3x3 base game", () => {
+  const grid = Array.from({ length: 9 }, () => "orange" as const);
+  const result = evaluateGoldenTiger(grid, 100);
+  assert.equal(result.lines, 5);
+  assert.equal(result.winning.size, 9);
+  assert.equal(result.payout, 5 * 210);
+});
+
+test("wild substitutes for regular symbols without creating a new game symbol", () => {
+  const grid = [
+    "wild", "lion", "lion",
+    "orange", "jade", "lantern",
+    "ingot", "firecracker", "fortuneBag",
+  ] as const;
+  const result = evaluateGoldenTiger(grid, 100);
+  assert.equal(result.lines, 1);
+  assert.equal(result.payout, 800);
+});
+
+test("Gold Coin indexes block normal paylines", () => {
+  const grid = Array.from({ length: 9 }, () => "orange" as const);
+  const blocked = new Set([1, 4, 7]);
+  const result = evaluateGoldenTiger(grid, 100, blocked);
+  assert.equal(result.lines, 2);
+  assert.equal(result.payout, 420);
+});
+
+test("win tiers only change presentation intensity", () => {
   assert.equal(goldenTigerWinTier(199, 100), "none");
   assert.equal(goldenTigerWinTier(200, 100), "small");
   assert.equal(goldenTigerWinTier(500, 100), "nice");
