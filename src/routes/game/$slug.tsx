@@ -5,7 +5,7 @@ import goldenTigerPresentationCss from "../../components/arcade/GoldenTigerPrese
 import olympusStormPresentationCss from "../../components/arcade/OlympusStormPremiumPolish.css?url";
 import candyCascadePresentationCss from "../../components/arcade/CandyCascadePremium.css?url";
 import minesPresentationCss from "../../components/arcade/MinesPresentationSafe.css?url";
-import plinkoPresentationCss from "../../components/arcade/PlinkoPresentation.css?url";
+import plinkoPresentationCss from "../../components/arcade/PlinkoPresentationSafe.css?url";
 import { GameShell } from "@/components/arcade/GameShell";
 import { getGame } from "@/lib/arcade/catalog";
 
