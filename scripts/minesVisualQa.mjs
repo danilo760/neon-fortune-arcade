@@ -72,11 +72,13 @@ const auditExpression = `(() => {
   const open = [...document.querySelectorAll('button')].find((button) => button.getAttribute('aria-label')?.startsWith('Abrir cofre apostando'));
   const rect = (el) => el ? (() => { const r = el.getBoundingClientRect(); return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; })() : null;
   const br = open?.getBoundingClientRect();
-  const hit = br ? document.elementFromPoint(br.left + br.width / 2, br.top + br.height / 2) : null;
+  const centerInViewport = Boolean(br && br.top >= 0 && br.bottom <= innerHeight);
+  const hit = br && centerInViewport ? document.elementFromPoint(br.left + br.width / 2, br.top + br.height / 2) : null;
   return {
     width: innerWidth,
     height: innerHeight,
     scrollWidth: document.documentElement.scrollWidth,
+    scrollHeight: document.documentElement.scrollHeight,
     cabinet: rect(cabinet),
     grid: rect(grid),
     tileCount: tiles.length,
@@ -84,6 +86,7 @@ const auditExpression = `(() => {
     status: cabinet?.getAttribute('data-round-status') ?? null,
     openPresent: Boolean(open),
     openDisabled: Boolean(open?.disabled),
+    openInViewport: centerInViewport,
     openHit: Boolean(open && hit && (hit === open || open.contains(hit))),
     legacyArtPresent: Boolean(legacyArt),
     legacyArtDisplay: legacyArt ? getComputedStyle(legacyArt).display : null,
@@ -109,8 +112,18 @@ for (const viewport of viewports) {
     if (idle.scrollWidth > viewport.width + 1) errors.push(`overflow ${idle.scrollWidth}px`);
     if (!idle.cabinet || idle.cabinet.left < -1 || idle.cabinet.right > viewport.width + 1) errors.push("cabinet outside viewport");
     if (idle.tileCount !== 25) errors.push(`expected 25 tiles, got ${idle.tileCount}`);
-    if (!idle.openPresent || idle.openDisabled || !idle.openHit) errors.push("open vault action is not ready/hittable");
+    if (!idle.openPresent) errors.push("open vault action missing");
+    if (idle.openDisabled) errors.push("open vault action disabled on idle load");
     if (idle.legacyArtPresent && idle.legacyArtDisplay !== "none") errors.push(`legacy screenshot is visible (${idle.legacyArtDisplay})`);
+
+    await evaluate(client, `(() => {
+      const open = [...document.querySelectorAll('button')].find((button) => button.getAttribute('aria-label')?.startsWith('Abrir cofre apostando'));
+      open?.scrollIntoView({ block: 'center', inline: 'nearest' });
+      return true;
+    })()`);
+    await sleep(120);
+    const ready = await evaluate(client, auditExpression);
+    if (!ready.openInViewport || !ready.openHit) errors.push("open vault action is obscured after scroll");
 
     await evaluate(client, `(() => { [...document.querySelectorAll('button')].find((button) => button.getAttribute('aria-label')?.startsWith('Abrir cofre apostando'))?.click(); return true; })()`);
     await sleep(180);
@@ -122,7 +135,7 @@ for (const viewport of viewports) {
       failed = true;
       console.error(`❌ ${viewport.width}x${viewport.height}: ${errors.join('; ')}`);
     } else {
-      console.log(`✅ ${viewport.width}x${viewport.height}: vector cabinet + round start passed | legacy-display=${idle.legacyArtDisplay}`);
+      console.log(`✅ ${viewport.width}x${viewport.height}: vector cabinet + scroll-to-action + round start passed | legacy-display=${idle.legacyArtDisplay}`);
     }
   } finally {
     client.close();
