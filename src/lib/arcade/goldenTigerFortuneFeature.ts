@@ -1,6 +1,7 @@
 import {
   GOLDEN_TIGER_FULL_GRID_MULTIPLIER,
   GOLDEN_TIGER_PAYLINES,
+  GOLDEN_TIGER_PAYOUT_SCALE,
   goldenTigerSymbolPay,
   pickGoldenTigerSymbol,
   type GoldenTigerSymbolId,
@@ -82,9 +83,8 @@ export function evaluateFortuneFeatureGrid(
   }
 
   const isFullGrid = grid.every((symbol) => symbol !== null);
-  const payout = Math.round(
-    rawPayout * (isFullGrid ? FORTUNE_FEATURE_FULL_GRID_MULTIPLIER : 1),
-  );
+  const fullGridMultiplier = isFullGrid ? FORTUNE_FEATURE_FULL_GRID_MULTIPLIER : 1;
+  const payout = Math.round(rawPayout * fullGridMultiplier * GOLDEN_TIGER_PAYOUT_SCALE);
 
   return { payout, winning, lines, isFullGrid };
 }
