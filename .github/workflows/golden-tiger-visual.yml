@@ -91,6 +91,7 @@ jobs:
           name: golden-tiger-visual-qa
           path: |
             artifacts/golden-tiger/
+            src/assets/golden-tiger/tiger-pose-atlas.webp
             golden-tiger-server.log
             golden-tiger-chrome.log
           if-no-files-found: warn
