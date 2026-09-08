@@ -2,8 +2,8 @@ import { memo, useEffect, useState } from "react";
 
 import tigerPoseAtlas from "@/assets/golden-tiger/tiger-pose-atlas.webp";
 
-export type TigerReactionState = "idle" | "watch" | "reveal" | "feature" | "tense" | "win" | "full";
-type TigerPose = TigerReactionState | "blink";
+export type TigerReactionState = "idle" | "watch" | "reveal" | "feature" | "tense" | "win" | "full" | "coin";
+type TigerPose = Exclude<TigerReactionState, "coin"> | "blink";
 
 type Props = {
   reaction: TigerReactionState;
@@ -29,9 +29,12 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
   lockedCount,
 }: Props) {
   const [idleBlink, setIdleBlink] = useState(false);
+  // `coin` survives only as a temporary caller alias from the pre-migration
+  // feature-lock state; the rendered acting state is the real feature pose.
+  const actingReaction: Exclude<TigerReactionState, "coin"> = reaction === "coin" ? "feature" : reaction;
 
   useEffect(() => {
-    if (reaction !== "idle" || reducedMotion()) {
+    if (actingReaction !== "idle" || reducedMotion()) {
       setIdleBlink(false);
       return;
     }
@@ -59,15 +62,15 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
       window.clearTimeout(blinkTimer);
       window.clearTimeout(releaseTimer);
     };
-  }, [reaction]);
+  }, [actingReaction]);
 
-  const pose: TigerPose = reaction === "idle" && idleBlink ? "blink" : reaction;
-  const celebrationPose = reaction === "feature" || reaction === "win" || reaction === "full";
+  const pose: TigerPose = actingReaction === "idle" && idleBlink ? "blink" : actingReaction;
+  const celebrationPose = actingReaction === "feature" || actingReaction === "win" || actingReaction === "full";
 
   return (
     <div
       className="gt-hw-tiger-stage"
-      data-reaction={reaction}
+      data-reaction={actingReaction}
       data-feature={featureActive ? "on" : "off"}
       data-celebration={celebrationPose ? "true" : "false"}
     >
