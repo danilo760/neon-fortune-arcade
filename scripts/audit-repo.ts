@@ -101,7 +101,7 @@ for (const file of [...srcCode, ...scriptFiles, ...configCode]) {
 
 function reachableFrom(roots: string[]) {
   const seen = new Set<string>();
-  const stack = roots.map(resolve).filter(existsSync);
+  const stack = roots.map((root) => resolve(root)).filter(existsSync);
   while (stack.length) {
     const file = stack.pop()!;
     if (seen.has(file)) continue;
