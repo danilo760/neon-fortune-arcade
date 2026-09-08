@@ -20,7 +20,10 @@ export type GoldenTigerSpinResult = {
   payout: number;
   winning: Set<number>;
   lines: number;
+  isFullGrid: boolean;
 };
+
+export const GOLDEN_TIGER_FULL_GRID_MULTIPLIER = 10;
 
 export const GOLDEN_TIGER_PAYLINES = [
   [0, 1, 2],
@@ -72,8 +75,9 @@ export function makeGoldenTigerGrid(
 }
 
 /**
- * Some presentation features can temporarily block base cells from paylines.
- * Blocked indexes never expose the regular symbol rendered underneath them.
+ * Evaluates the five fixed 3×3 paylines. When all nine reel positions
+ * participate in at least one winning line, the verified full-screen rule
+ * multiplies the complete line-win total by ×10.
  */
 export function evaluateGoldenTiger(
   grid: readonly GoldenTigerSymbolId[],
@@ -81,7 +85,7 @@ export function evaluateGoldenTiger(
   blockedIndices: ReadonlySet<number> = new Set(),
 ): GoldenTigerSpinResult {
   if (grid.length !== 9 || !Number.isFinite(bet) || bet <= 0) {
-    return { payout: 0, winning: new Set(), lines: 0 };
+    return { payout: 0, winning: new Set(), lines: 0, isFullGrid: false };
   }
 
   let payout = 0;
@@ -114,7 +118,10 @@ export function evaluateGoldenTiger(
     line.forEach((position) => winning.add(position));
   }
 
-  return { payout: Math.round(payout), winning, lines };
+  const isFullGrid = lines > 0 && winning.size === 9;
+  if (isFullGrid) payout *= GOLDEN_TIGER_FULL_GRID_MULTIPLIER;
+
+  return { payout: Math.round(payout), winning, lines, isFullGrid };
 }
 
 export function goldenTigerWinTier(payout: number, bet: number): GoldenTigerWinTier {
