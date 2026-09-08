@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import premiumCss from "../premium.css?url";
 import mobilePolishCss from "../arcade-mobile-polish.css?url";
 import nativeMotionCss from "../arcade-native-motion-tuning.css?url";
+import premiumPassCss from "../arcade-premium-pass.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
