@@ -87,7 +87,7 @@ async function screenshot(client, path) {
   await writeFile(path, Buffer.from(result.data, "base64"));
 }
 
-const auditExpression = `(() => {
+const auditExpression = `(async () => {
   const machine = document.querySelector('.gt-hw-machine');
   const grid = document.querySelector('.gt-hw-grid');
   const spin = document.querySelector('.gt-hw-spin');
@@ -100,6 +100,44 @@ const auditExpression = `(() => {
   })() : null;
   const spinRect = spin?.getBoundingClientRect();
   const hit = spinRect ? document.elementFromPoint(spinRect.left + spinRect.width / 2, spinRect.top + spinRect.height / 2) : null;
+
+  const spriteBackground = sprite ? getComputedStyle(sprite).backgroundImage : 'none';
+  const match = spriteBackground.match(/^url\\(["']?(.*?)["']?\\)$/);
+  let spriteDecoded = false;
+  let spriteNaturalWidth = 0;
+  let spriteNaturalHeight = 0;
+  let spriteFirstCellVisiblePixels = 0;
+  let spriteDecodeError = null;
+
+  if (match?.[1]) {
+    try {
+      const image = new Image();
+      image.src = match[1];
+      await image.decode();
+      spriteDecoded = image.naturalWidth > 0 && image.naturalHeight > 0;
+      spriteNaturalWidth = image.naturalWidth;
+      spriteNaturalHeight = image.naturalHeight;
+
+      if (spriteDecoded) {
+        const cellWidth = Math.max(1, Math.floor(image.naturalWidth / 4));
+        const cellHeight = Math.max(1, Math.floor(image.naturalHeight / 2));
+        const canvas = document.createElement('canvas');
+        canvas.width = cellWidth;
+        canvas.height = cellHeight;
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        context?.drawImage(image, 0, 0, cellWidth, cellHeight, 0, 0, cellWidth, cellHeight);
+        const pixels = context?.getImageData(0, 0, cellWidth, cellHeight).data;
+        if (pixels) {
+          for (let index = 3; index < pixels.length; index += 4) {
+            if (pixels[index] > 20) spriteFirstCellVisiblePixels += 1;
+          }
+        }
+      }
+    } catch (error) {
+      spriteDecodeError = String(error?.message ?? error);
+    }
+  }
+
   return {
     ready: Boolean(machine && grid && spin && sprite),
     width: innerWidth,
@@ -114,7 +152,12 @@ const auditExpression = `(() => {
     cellCount: cells.length,
     symbolImageCount: images.length,
     brokenImages: images.filter((image) => image.complete && image.naturalWidth === 0).length,
-    spriteBackground: sprite ? getComputedStyle(sprite).backgroundImage : 'none',
+    spriteBackground,
+    spriteDecoded,
+    spriteNaturalWidth,
+    spriteNaturalHeight,
+    spriteFirstCellVisiblePixels,
+    spriteDecodeError,
     phase: machine?.getAttribute('data-phase') ?? null,
     reelOverlays: document.querySelectorAll('.gt-hw-reel-overlay').length,
     spinDisabled: Boolean(spin?.disabled),
@@ -131,6 +174,8 @@ function validateIdle(audit, viewport) {
   if (audit.symbolImageCount < 9) errors.push(`expected at least 9 symbol images, got ${audit.symbolImageCount}`);
   if (audit.brokenImages !== 0) errors.push(`${audit.brokenImages} broken symbol image(s)`);
   if (!audit.spriteBackground || audit.spriteBackground === "none") errors.push("tiger pose atlas is not applied");
+  if (!audit.spriteDecoded) errors.push(`tiger pose atlas failed to decode: ${audit.spriteDecodeError ?? "unknown"}`);
+  if (audit.spriteDecoded && audit.spriteFirstCellVisiblePixels < 1_000) errors.push(`tiger idle atlas cell appears empty: ${audit.spriteFirstCellVisiblePixels} visible pixels`);
   if (!audit.spinHit) errors.push("Spin center is obscured/not hittable");
   if (audit.spinDisabled) errors.push("Spin unexpectedly disabled on idle load");
   return errors;
@@ -141,6 +186,7 @@ function validateSpin(audit) {
   if (audit.phase !== "base-spin") errors.push(`expected base-spin after click, got ${audit.phase}`);
   if (audit.reelOverlays !== 3) errors.push(`expected 3 moving reel overlays, got ${audit.reelOverlays}`);
   if (!audit.spinDisabled) errors.push("Spin should be disabled while a round is active");
+  if (!audit.spriteDecoded) errors.push("tiger pose atlas stopped decoding during spin");
   return errors;
 }
 
