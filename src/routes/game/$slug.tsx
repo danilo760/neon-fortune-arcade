@@ -3,7 +3,7 @@ import { lazy, Suspense } from "react";
 
 import goldenTigerPresentationCss from "../../components/arcade/GoldenTigerPresentationSafe.css?url";
 import olympusStormPresentationCss from "../../components/arcade/OlympusStormPremiumPolish.css?url";
-import candyCascadePresentationCss from "../../components/arcade/CandyCascadePresentation.css?url";
+import candyCascadePresentationCss from "../../components/arcade/CandyCascadePremium.css?url";
 import minesPresentationCss from "../../components/arcade/MinesPresentation.css?url";
 import plinkoPresentationCss from "../../components/arcade/PlinkoPresentation.css?url";
 import { GameShell } from "@/components/arcade/GameShell";
@@ -27,9 +27,9 @@ const OlympusStormPremium = lazy(async () => {
   return { default: module.OlympusStormPremium };
 });
 
-const CandyCascadeReference = lazy(async () => {
-  const module = await import("@/components/arcade/CandyCascadeReference");
-  return { default: module.CandyCascadeReference };
+const CandyCascadePremium = lazy(async () => {
+  const module = await import("@/components/arcade/CandyCascadePremium");
+  return { default: module.CandyCascadePremium };
 });
 
 const MinesGame = lazy(async () => {
@@ -82,7 +82,7 @@ function GameRoute() {
   } else if (game.slug === "olympus-storm") {
     content = <OlympusStormPremium />;
   } else if (game.slug === "candy-cascade") {
-    content = <CandyCascadeReference />;
+    content = <CandyCascadePremium />;
   } else if (game.slug === "neon-plinko") {
     content = <PlinkoReference />;
   } else if (game.slug === "neon-mines") {
