@@ -358,7 +358,7 @@ export function OlympusStormReference() {
       setStormLevel(cascade.stormLevel);
       setStormEnergy(cascade.stormEnergyBefore);
       setPhase("clusterWin");
-      playSound("olympusCluster", soundEnabled);
+      playSound("olympusCluster", soundEnabled, { intensity: Math.min(1.08, 0.82 + index * 0.055) });
       await wait(
         turbo
           ? 130
@@ -370,16 +370,16 @@ export function OlympusStormReference() {
       if (cascade.multiplier > 1) {
         setStormMultiplier(cascade.multiplier);
         setPhase("stormCharge");
-        playSound("olympusCharge", soundEnabled);
+        playSound("olympusCharge", soundEnabled, { intensity: Math.min(1.1, 0.9 + cascade.multiplier / 180) });
         await wait(turbo ? 170 : isBonusRound ? 300 : 470);
 
         setPhase("stormHit");
         setFlashKey((value) => value + 1);
-        playSound("olympusHit", soundEnabled);
+        playSound("olympusHit", soundEnabled, { intensity: Math.min(1.12, 0.96 + cascade.multiplier / 140) });
         await wait(turbo ? 55 : isBonusRound ? 105 : 140);
 
         setPhase("stormImpact");
-        playSound("olympusMultiplier", soundEnabled);
+        playSound("olympusMultiplier", soundEnabled, { intensity: Math.min(1.08, 0.84 + cascade.multiplier / 220) });
         await wait(turbo ? 35 : isBonusRound ? 55 : 80);
       }
 

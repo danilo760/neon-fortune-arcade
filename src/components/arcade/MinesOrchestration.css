@@ -155,3 +155,61 @@
     animation: none !important;
   }
 }
+
+
+/* === 2026 vault feedback pass ===
+   Macro motion stays restrained: the chosen tile owns the reveal, while the
+   cabinet only reacts strongly to danger/explosion or a completed cashout. */
+@keyframes mines-vault-danger-v2 {
+  0% { box-shadow: inset 0 0 0 rgba(255,48,67,0); filter: brightness(1); }
+  55% { box-shadow: inset 0 0 42px rgba(255,48,67,.16); filter: brightness(.96) saturate(1.08); }
+  100% { box-shadow: inset 0 0 18px rgba(255,48,67,.08); filter: brightness(.99); }
+}
+@keyframes mines-vault-blast-v2 {
+  0% { transform: translate3d(0,0,0); filter: brightness(1); }
+  12% { transform: translate3d(-2px,1px,0) scale(.998); filter: brightness(1.16); }
+  26% { transform: translate3d(2px,-1px,0) scale(1.002); }
+  43% { transform: translate3d(-1.3px,.5px,0); }
+  62% { transform: translate3d(.8px,-.4px,0); }
+  82% { transform: translate3d(-.3px,.2px,0); }
+  100% { transform: translate3d(0,0,0); filter: brightness(1); }
+}
+@keyframes mines-safe-frame-v2 {
+  0% { filter: brightness(1); }
+  40% { filter: brightness(1.12) drop-shadow(0 0 7px rgba(84,255,196,.32)); }
+  100% { filter: brightness(1); }
+}
+@keyframes mines-cashout-frame-v2 {
+  0% { transform: scale(1); filter: brightness(1); }
+  38% { transform: scale(.995); filter: brightness(1.15); }
+  70% { transform: scale(1.004); filter: brightness(1.06); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+.mines-premium__cabinet[data-reveal-phase="danger"] .mines-premium__grid-frame {
+  animation: mines-vault-danger-v2 .18s ease-out both;
+}
+.mines-premium__cabinet[data-reveal-phase="explode"] .mines-premium__grid-frame {
+  animation: mines-vault-blast-v2 .22s linear both;
+}
+.mines-premium__cabinet[data-reveal-phase="gem"] .mines-premium__grid-frame {
+  animation: mines-safe-frame-v2 .2s ease-out both;
+}
+.mines-premium__cabinet[data-reveal-phase="cashout"] .mines-premium__grid-frame {
+  animation: mines-cashout-frame-v2 .34s cubic-bezier(.2,.78,.24,1) both;
+}
+.mines-premium__cabinet[data-reveal-phase="danger"] .mines-premium__aurora,
+.mines-premium__cabinet[data-reveal-phase="explode"] .mines-premium__aurora {
+  opacity: .18;
+  filter: hue-rotate(126deg) saturate(1.35);
+  transition: opacity .08s linear, filter .08s linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mines-premium__cabinet[data-reveal-phase="danger"] .mines-premium__grid-frame,
+  .mines-premium__cabinet[data-reveal-phase="explode"] .mines-premium__grid-frame,
+  .mines-premium__cabinet[data-reveal-phase="gem"] .mines-premium__grid-frame,
+  .mines-premium__cabinet[data-reveal-phase="cashout"] .mines-premium__grid-frame {
+    animation: none !important;
+  }
+}

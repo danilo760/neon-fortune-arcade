@@ -62,22 +62,24 @@ export function playMinesSound(event: MinesSoundEvent, enabled: boolean, sequenc
       playSound("minesUnlock", enabled);
       break;
     case "gemReveal":
-      playSound("minesCrystal", enabled);
+      playSound("minesCrystal", enabled, {
+        intensity: Math.min(1.08, 0.82 + Math.max(1, sequence) * 0.035),
+      });
       break;
     case "multiplierRise":
       if (sequence > 1) playSound("tick", enabled);
       break;
     case "danger":
-      playSound("minesDanger", enabled);
+      playSound("minesDanger", enabled, { intensity: 0.92 });
       break;
     case "mineArm":
       playSound("minesMetal", enabled);
       break;
     case "explosion":
-      playSound("minesExplosion", enabled);
+      playSound("minesExplosion", enabled, { intensity: 1.05 });
       break;
     case "cashout":
-      playSound("minesCashout", enabled);
+      playSound("minesCashout", enabled, { intensity: 1.03 });
       break;
     case "win":
       playSound("cash", enabled);

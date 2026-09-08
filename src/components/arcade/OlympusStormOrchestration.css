@@ -250,3 +250,79 @@
     transition: none !important;
   }
 }
+
+
+/* === 2026 cascade + lightning motion pass ===
+   The component already calculates fall/refill distance; these rules finally
+   turn those semantic classes into visible gravity, clear and rebound motion. */
+@keyframes os-cell-clear-v2 {
+  0% { opacity: 1; transform: scale(1) rotate(0deg); filter: brightness(1) saturate(1); }
+  32% { opacity: 1; transform: scale(1.075) rotate(-.8deg); filter: brightness(1.48) saturate(1.2); }
+  64% { opacity: .62; transform: scale(.78) rotate(1.2deg); filter: brightness(1.7) saturate(.9); }
+  100% { opacity: 0; transform: scale(.22) rotate(3deg); filter: brightness(2) saturate(.7); }
+}
+@keyframes os-cell-fall-v2 {
+  0% { transform: translate3d(0,0,0) scale(1); }
+  72% { transform: translate3d(0,var(--os-fall-overshoot),0) scale(1,.965); }
+  88% { transform: translate3d(0,var(--os-fall-rebound),0) scale(.99,1.018); }
+  100% { transform: translate3d(0,var(--os-fall-distance),0) scale(1); }
+}
+@keyframes os-cell-refill-v2 {
+  0% { opacity: .15; transform: translate3d(0,var(--os-refill-start),0) scale(.96,1.06); filter: brightness(1.18); }
+  68% { opacity: 1; transform: translate3d(0,4%,0) scale(1.015,.965); filter: brightness(1.08); }
+  84% { transform: translate3d(0,-1.5%,0) scale(.995,1.018); }
+  100% { opacity: 1; transform: translate3d(0,0,0) scale(1); filter: brightness(1); }
+}
+@keyframes os-storm-aftershock-v2 {
+  0% { transform: translate3d(0,0,0); }
+  18% { transform: translate3d(-1.4px,.6px,0); }
+  38% { transform: translate3d(1.15px,-.7px,0); }
+  58% { transform: translate3d(-.7px,.35px,0); }
+  78% { transform: translate3d(.35px,-.2px,0); }
+  100% { transform: translate3d(0,0,0); }
+}
+
+.os-ref-cell--clearing {
+  z-index: 6;
+  animation: os-cell-clear-v2 .205s cubic-bezier(.2,.72,.22,1) both;
+  will-change: transform, opacity, filter;
+}
+.os-ref-cell--fall-1 { --os-fall-distance: 100%; --os-fall-overshoot: 102%; --os-fall-rebound: 98%; }
+.os-ref-cell--fall-2 { --os-fall-distance: 200%; --os-fall-overshoot: 202%; --os-fall-rebound: 198%; }
+.os-ref-cell--fall-3 { --os-fall-distance: 300%; --os-fall-overshoot: 302%; --os-fall-rebound: 298%; }
+.os-ref-cell--fall-4 { --os-fall-distance: 400%; --os-fall-overshoot: 402%; --os-fall-rebound: 398%; }
+.os-ref-cell--fall-5 { --os-fall-distance: 500%; --os-fall-overshoot: 502%; --os-fall-rebound: 498%; }
+.os-ref-grid--collapse .os-ref-cell[class*="os-ref-cell--fall-"] {
+  z-index: 4;
+  animation: os-cell-fall-v2 .205s cubic-bezier(.18,.78,.24,1) both;
+  will-change: transform;
+}
+.os-ref-cell--refill-1 { --os-refill-start: -108%; }
+.os-ref-cell--refill-2 { --os-refill-start: -216%; }
+.os-ref-cell--refill-3 { --os-refill-start: -324%; }
+.os-ref-cell--refill-4 { --os-refill-start: -432%; }
+.os-ref-cell--refill-5 { --os-refill-start: -540%; }
+.os-ref-grid--refill .os-ref-cell[class*="os-ref-cell--refill-"] {
+  z-index: 5;
+  animation: os-cell-refill-v2 .235s cubic-bezier(.17,.82,.2,1.08) both;
+  will-change: transform, opacity;
+}
+.os-ref-machine[data-phase="stormHit"] .os-ref-grid {
+  animation:
+    os-grid-storm-impact .42s cubic-bezier(.18,.8,.3,1) both,
+    os-storm-aftershock-v2 .32s linear both;
+}
+.os-ref-zeus-stage.is-afterglow .os-ref-zeus-rim {
+  opacity: .58;
+  transform: translate(-50%,-50%) scale(1.08);
+  filter: drop-shadow(0 0 10px rgba(170,235,255,.95));
+  transition: opacity .22s ease, transform .28s cubic-bezier(.2,.8,.25,1), filter .28s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .os-ref-cell--clearing,
+  .os-ref-grid--collapse .os-ref-cell[class*="os-ref-cell--fall-"],
+  .os-ref-grid--refill .os-ref-cell[class*="os-ref-cell--refill-"],
+  .os-ref-machine[data-phase="stormHit"] .os-ref-grid {
+    animation: none !important;
+  }
+}

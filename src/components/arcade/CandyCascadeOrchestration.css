@@ -115,3 +115,76 @@
     animation: none !important;
   }
 }
+
+
+/* === 2026 elastic cascade motion pass ===
+   Same gravity model as Olympus, but with softer squash/stretch and pop timing
+   to make the material read as candy rather than stone/metal. */
+@keyframes cc-cell-pop-v2 {
+  0% { opacity: 1; transform: scale(1) rotate(0deg); filter: brightness(1) saturate(1); }
+  28% { opacity: 1; transform: scale(1.11,.96) rotate(-1.5deg); filter: brightness(1.34) saturate(1.18); }
+  50% { transform: scale(.94,1.08) rotate(1.2deg); filter: brightness(1.55) saturate(1.24); }
+  100% { opacity: 0; transform: scale(.18) rotate(8deg); filter: brightness(1.8) saturate(.9); }
+}
+@keyframes cc-cell-fall-v2 {
+  0% { transform: translate3d(0,0,0) scale(1); }
+  68% { transform: translate3d(0,var(--cc-fall-overshoot),0) scale(1.045,.93); }
+  84% { transform: translate3d(0,var(--cc-fall-rebound),0) scale(.97,1.045); }
+  100% { transform: translate3d(0,var(--cc-fall-distance),0) scale(1); }
+}
+@keyframes cc-cell-refill-v2 {
+  0% { opacity: .1; transform: translate3d(0,var(--cc-refill-start),0) scale(.94,1.08); filter: brightness(1.22); }
+  64% { opacity: 1; transform: translate3d(0,7%,0) scale(1.06,.9); filter: brightness(1.12); }
+  80% { transform: translate3d(0,-3%,0) scale(.97,1.06); }
+  91% { transform: translate3d(0,1.2%,0) scale(1.015,.98); }
+  100% { opacity: 1; transform: translate3d(0,0,0) scale(1); filter: brightness(1); }
+}
+@keyframes cc-land-wave-v2 {
+  0% { transform: translateY(-6%) scale(.98,1.04); }
+  66% { transform: translateY(3%) scale(1.035,.94); }
+  84% { transform: translateY(-1.2%) scale(.985,1.025); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.cc-cell--clearing {
+  z-index: 7;
+  animation: cc-cell-pop-v2 .2s cubic-bezier(.16,.75,.2,1) both;
+  will-change: transform, opacity, filter;
+}
+.cc-cell--fall-1 { --cc-fall-distance: 100%; --cc-fall-overshoot: 104%; --cc-fall-rebound: 97%; }
+.cc-cell--fall-2 { --cc-fall-distance: 200%; --cc-fall-overshoot: 204%; --cc-fall-rebound: 197%; }
+.cc-cell--fall-3 { --cc-fall-distance: 300%; --cc-fall-overshoot: 304%; --cc-fall-rebound: 297%; }
+.cc-cell--fall-4 { --cc-fall-distance: 400%; --cc-fall-overshoot: 404%; --cc-fall-rebound: 397%; }
+.cc-cell--fall-5 { --cc-fall-distance: 500%; --cc-fall-overshoot: 504%; --cc-fall-rebound: 497%; }
+.cc-grid.is-collapsing .cc-cell[class*="cc-cell--fall-"] {
+  z-index: 5;
+  animation: cc-cell-fall-v2 .2s cubic-bezier(.17,.82,.22,1.06) both;
+  will-change: transform;
+}
+.cc-cell--refill-1 { --cc-refill-start: -112%; }
+.cc-cell--refill-2 { --cc-refill-start: -224%; }
+.cc-cell--refill-3 { --cc-refill-start: -336%; }
+.cc-cell--refill-4 { --cc-refill-start: -448%; }
+.cc-cell--refill-5 { --cc-refill-start: -560%; }
+.cc-grid.is-refilling .cc-cell[class*="cc-cell--refill-"] {
+  z-index: 6;
+  animation: cc-cell-refill-v2 .235s cubic-bezier(.14,.82,.18,1.12) both;
+  will-change: transform, opacity;
+}
+.cc-grid.is-landing .cc-cell {
+  animation: cc-land-wave-v2 .17s cubic-bezier(.16,.82,.2,1.08) both;
+}
+.cc-grid.is-landing .cc-cell:nth-child(6n+2) { animation-delay: 8ms; }
+.cc-grid.is-landing .cc-cell:nth-child(6n+3) { animation-delay: 16ms; }
+.cc-grid.is-landing .cc-cell:nth-child(6n+4) { animation-delay: 24ms; }
+.cc-grid.is-landing .cc-cell:nth-child(6n+5) { animation-delay: 32ms; }
+.cc-grid.is-landing .cc-cell:nth-child(6n+6) { animation-delay: 40ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-cell--clearing,
+  .cc-grid.is-collapsing .cc-cell[class*="cc-cell--fall-"],
+  .cc-grid.is-refilling .cc-cell[class*="cc-cell--refill-"],
+  .cc-grid.is-landing .cc-cell {
+    animation: none !important;
+  }
+}

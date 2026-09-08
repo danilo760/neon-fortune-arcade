@@ -60,10 +60,16 @@ function stepDuration(step: number, rows: number) {
   return 82 - Math.round(progress * 24);
 }
 
-function pointTransform(point: BoardPoint, width: number, height: number, scale = 1) {
+function pointTransform(
+  point: BoardPoint,
+  width: number,
+  height: number,
+  scaleX = 1,
+  scaleY = scaleX,
+) {
   const x = ((point.left - 50) / 100) * width;
   const y = ((point.top - 4.5) / 100) * height;
-  return `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) translate(-50%, -50%) scale(${scale})`;
+  return `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) translate(-50%, -50%) scale(${scaleX}, ${scaleY})`;
 }
 
 function gravityMidpoint(from: BoardPoint, to: BoardPoint, timeProgress: number): BoardPoint {
@@ -85,7 +91,10 @@ function buildBallMotion(ball: ActiveBall, rows: number, bucketCount: number, wi
   }
 
   entries.push({ at, point: ballPosition(ball.path, rows, rows, ball.bucket, bucketCount) });
-  const duration = Math.max(1, at);
+  // Reserve a short tail after the bucket contact. The ball visibly compresses
+  // at impact, then returns to its round silhouette instead of freezing on the
+  // exact collision frame.
+  const duration = Math.max(1, at + 84);
   const keyframes: Keyframe[] = [
     { transform: pointTransform(entries[0]!.point, width, height), offset: 0 },
   ];
@@ -99,14 +108,20 @@ function buildBallMotion(ball: ActiveBall, rows: number, bucketCount: number, wi
 
     if (midAt > previous.at) {
       keyframes.push({
-        transform: pointTransform(gravityPoint, width, height, 1.015),
+        transform: pointTransform(gravityPoint, width, height, .975, 1.045),
         offset: Math.min(1, midAt / duration),
       });
     }
 
     const isLast = index === entries.length - 1;
     keyframes.push({
-      transform: pointTransform(current.point, width, height, isLast ? 1.18 : .92),
+      transform: pointTransform(
+        current.point,
+        width,
+        height,
+        isLast ? 1.16 : 1.08,
+        isLast ? .86 : .91,
+      ),
       offset: Math.min(1, current.at / duration),
     });
 
@@ -115,17 +130,17 @@ function buildBallMotion(ball: ActiveBall, rows: number, bucketCount: number, wi
       const releaseAt = Math.min(current.at + Math.min(14, (nextAt - current.at) * .2), nextAt - 1);
       if (releaseAt > current.at) {
         keyframes.push({
-          transform: pointTransform(current.point, width, height, 1.035),
+          transform: pointTransform(current.point, width, height, .965, 1.04),
           offset: Math.min(1, releaseAt / duration),
         });
       }
     }
   }
 
-  keyframes[keyframes.length - 1] = {
-    transform: pointTransform(entries[entries.length - 1]!.point, width, height, 1.18),
+  keyframes.push({
+    transform: pointTransform(entries[entries.length - 1]!.point, width, height, 1, 1),
     offset: 1,
-  };
+  });
   return { entries, keyframes, duration };
 }
 
@@ -283,34 +298,43 @@ export function PlinkoReference() {
     setRunWin((value) => value + ball.payout);
     setLastWin({ payout: ball.payout, multiplier: ball.multiplier });
 
+    const bucketPan = (((ball.bucket + 0.5) / Math.max(1, payouts.length)) * 2 - 1) * 0.62;
     if (ball.multiplier >= 10) {
-      playSound("plinkoHigh", soundEnabled);
+      playSound("plinkoHigh", soundEnabled, { pan: bucketPan });
     } else {
-      playSound("plinkoBucket", soundEnabled);
-      playSound(ball.payout >= ball.bet ? "win" : "lose", soundEnabled);
+      playSound("plinkoBucket", soundEnabled, { pan: bucketPan });
+      // The bucket cue closes every trajectory. Only a true net-positive result
+      // receives an additional celebratory layer; partial returns stay neutral.
+      if (ball.payout > ball.bet) playSound("win", soundEnabled, { pan: bucketPan, intensity: 0.72 });
     }
     return true;
   }
 
   function startAudioScheduler(balls: ActiveBall[], stagger: number) {
     if (reducedMotion()) return;
-    const events: number[] = [];
-    balls.forEach((_ball, ballIndex) => {
+    const events: Array<{ at: number; pan: number; intensity: number }> = [];
+    balls.forEach((ball, ballIndex) => {
       let at = ballIndex * stagger + 72;
       for (let step = 0; step < rows; step += 1) {
-        if (step % 2 === 0 || ballsPerRun <= 3) events.push(at);
+        if (step % 2 === 0 || ballsPerRun <= 3) {
+          const point = ballPosition(ball.path, step, rows, ball.bucket, payouts.length);
+          const pan = Math.max(-0.62, Math.min(0.62, ((point.left - 50) / 50) * 0.62));
+          const intensity = 0.78 + (step / Math.max(1, rows - 1)) * 0.18;
+          events.push({ at, pan, intensity });
+        }
         at += stepDuration(step, rows);
       }
     });
-    events.sort((a, b) => a - b);
+    events.sort((a, b) => a.at - b.at);
 
     const startedAt = performance.now();
     let cursor = 0;
     const frame = (now: number) => {
       const elapsed = now - startedAt;
-      while (cursor < events.length && events[cursor]! < elapsed - AUDIO_LAG_BUDGET_MS) cursor += 1;
-      if (cursor < events.length && events[cursor]! <= elapsed) {
-        playSound("plinkoPeg", soundEnabled);
+      while (cursor < events.length && events[cursor]!.at < elapsed - AUDIO_LAG_BUDGET_MS) cursor += 1;
+      const event = events[cursor];
+      if (event && event.at <= elapsed) {
+        playSound("plinkoPeg", soundEnabled, { pan: event.pan, intensity: event.intensity });
         cursor += 1;
       }
       if (cursor < events.length && mountedRef.current) collisionRafRef.current = requestAnimationFrame(frame);
@@ -345,7 +369,7 @@ export function PlinkoReference() {
     playSound("plinkoLaunch", soundEnabled);
 
     if (reducedMotion()) {
-      element.style.transform = pointTransform(final, rect.width, rect.height, 1.2);
+      element.style.transform = pointTransform(final, rect.width, rect.height, 1, 1);
       element.style.willChange = "auto";
       element.className = `plinko-ref-ball plinko-ref-ball--landed plinko-ref-ball--tone-${tone}`;
       settleBallOutcome(ball);
@@ -386,7 +410,7 @@ export function PlinkoReference() {
       settleBallOutcome(ball, false);
       return ball;
     }
-    element.style.transform = pointTransform(final, rect.width, rect.height, 1.2);
+    element.style.transform = pointTransform(final, rect.width, rect.height, 1, 1);
     element.style.willChange = "auto";
     element.className = `plinko-ref-ball plinko-ref-ball--landed plinko-ref-ball--tone-${tone}`;
 

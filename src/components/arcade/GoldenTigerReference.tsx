@@ -139,9 +139,9 @@ export function GoldenTigerReference() {
 
       if (step.addedIndices.length > 0) {
         setPhase("coin-lock");
-        playSound("tigerSymbolLock", soundEnabled);
+        playSound("tigerSymbolLock", soundEnabled, { intensity: 0.92 });
         const premium = step.addedIndices.some((index) => (nextCoins.get(index) ?? 0) >= 20);
-        if (premium) playSound("tigerImpact", soundEnabled);
+        if (premium) playSound("tigerImpact", soundEnabled, { intensity: 1.06 });
         await wait(turbo ? 170 : premium ? 620 : 360);
       } else {
         setPhase("feature-miss");
@@ -165,7 +165,7 @@ export function GoldenTigerReference() {
     setWin(payout);
     if (fullGrid) {
       setPhase("full-grid");
-      playSound("tigerFullGrid", soundEnabled);
+      playSound("tigerFullGrid", soundEnabled, { intensity: 1.08 });
       await wait(turbo ? 650 : 1900);
     } else if (payout > 0) {
       setPhase("win");
@@ -203,7 +203,7 @@ export function GoldenTigerReference() {
         if (landingCoins.length) setFreshCoins(new Set(landingCoins.map((coin) => coin.index)));
         setStoppedColumns(column + 1);
         playSound("tick", soundEnabled);
-        if (landingCoins.length) playSound("tigerSymbolLock", soundEnabled);
+        if (landingCoins.length) playSound("tigerSymbolLock", soundEnabled, { intensity: 0.92 });
         await wait(turbo ? 80 : landingCoins.some((coin) => coin.value >= 20) ? 330 : 180);
       }
       setWinning(baseResult.winning);

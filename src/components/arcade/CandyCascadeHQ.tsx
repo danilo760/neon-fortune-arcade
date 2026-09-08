@@ -241,9 +241,9 @@ export function CandyCascadeHQ() {
         setCascadeIndex(index + 1);
         setWinning(new Set(cascade.winning));
         setPhase("cluster");
-        playSound("candyPop", soundEnabled);
+        playSound("candyPop", soundEnabled, { intensity: Math.min(1.08, 0.78 + index * 0.055) });
         await wait(turbo ? 95 : Math.min(260 + index * 35, 410));
-        playSound("candyBreak", soundEnabled);
+        playSound("candyBreak", soundEnabled, { intensity: Math.min(1.08, 0.82 + index * 0.045) });
 
         if (cascade.bomb) {
           setActiveBomb(cascade.bomb);
@@ -260,7 +260,7 @@ export function CandyCascadeHQ() {
           }
 
           setPhase("bombBurst");
-          playSound("candyExplosion", soundEnabled);
+          playSound("candyExplosion", soundEnabled, { intensity: Math.min(1.12, 0.96 + cascade.bomb.multiplier / 180) });
           await wait(turbo ? 95 : 230);
         } else {
           setSugarMultiplier(cascade.sugarMultiplier);
@@ -280,7 +280,7 @@ export function CandyCascadeHQ() {
 
         setActiveBomb(null);
         setPhase("collapse");
-        playSound(index >= 2 ? "candyStreak" : "candyBounce", soundEnabled);
+        playSound(index >= 2 ? "candyStreak" : "candyBounce", soundEnabled, { intensity: Math.min(1.06, 0.82 + index * 0.05) });
         await wait(turbo ? 90 : 205);
         setGrid(cascade.nextGrid);
         setPhase("refill");

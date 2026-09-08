@@ -1,21 +1,57 @@
 import { AudioEventGate } from "./audioEventGate";
 
 /**
- * Lightweight procedural WebAudio engine.
- * No commercial audio assets, no downloads, and no autoplay before interaction.
+ * Procedural WebAudio engine for the arcade.
+ *
+ * Design goals:
+ * - one AudioContext only;
+ * - semantic buses so UI, gameplay, impacts and rewards do not fight for headroom;
+ * - a gentle master compressor to keep layered cues controlled on phone speakers;
+ * - short ducking on large impacts/rewards;
+ * - optional stereo position for spatial events such as Plinko pegs;
+ * - no autoplay and no third-party/commercial audio assets.
  */
+
+type AudioBus = "ui" | "game" | "impact" | "reward";
+export type SoundOptions = {
+  /** -1 = left, 0 = centre, 1 = right. Kept intentionally subtle in use. */
+  pan?: number;
+  /** Scales one cue without changing the global mixer. */
+  intensity?: number;
+};
 
 let ctx: AudioContext | null = null;
 let masterGain: GainNode | null = null;
-let toneFilter: BiquadFilterNode | null = null;
+let masterCompressor: DynamicsCompressorNode | null = null;
+let reverbConvolver: ConvolverNode | null = null;
+let reverbFilter: BiquadFilterNode | null = null;
+let reverbGain: GainNode | null = null;
+const busGains = new Map<AudioBus, GainNode>();
+const toneFilters = new Map<AudioBus, BiquadFilterNode>();
 let cachedNoiseBuffer: AudioBuffer | null = null;
 const cachedCueBuffers = new Map<string, AudioBuffer[]>();
-const noiseFilters = new Map<number, BiquadFilterNode>();
+const noiseFilters = new Map<string, BiquadFilterNode>();
 const repeatedAudioGate = new AudioEventGate();
+
+let activeBus: AudioBus = "game";
+let activePan = 0;
+let activeIntensity = 1;
+
+const BUS_LEVEL: Record<AudioBus, number> = {
+  ui: 0.7,
+  game: 0.88,
+  impact: 0.92,
+  reward: 0.86,
+};
 
 function resetGraphCaches() {
   masterGain = null;
-  toneFilter = null;
+  masterCompressor = null;
+  reverbConvolver = null;
+  reverbFilter = null;
+  reverbGain = null;
+  busGains.clear();
+  toneFilters.clear();
   cachedNoiseBuffer = null;
   cachedCueBuffers.clear();
   noiseFilters.clear();
@@ -41,33 +77,123 @@ function getContext(): AudioContext | null {
 function getMasterGain(audio: AudioContext) {
   if (!masterGain) {
     masterGain = audio.createGain();
-    masterGain.gain.value = 1;
-    masterGain.connect(audio.destination);
+    masterGain.gain.value = 0.92;
+
+    masterCompressor = audio.createDynamicsCompressor();
+    masterCompressor.threshold.value = -10;
+    masterCompressor.knee.value = 18;
+    masterCompressor.ratio.value = 3;
+    masterCompressor.attack.value = 0.004;
+    masterCompressor.release.value = 0.16;
+
+    masterGain.connect(masterCompressor).connect(audio.destination);
   }
   return masterGain;
 }
 
-function getToneFilter(audio: AudioContext) {
-  if (!toneFilter) {
-    toneFilter = audio.createBiquadFilter();
-    toneFilter.type = "lowpass";
-    toneFilter.frequency.value = 4200;
-    toneFilter.connect(getMasterGain(audio));
+function getReverbInput(audio: AudioContext) {
+  if (!reverbConvolver || !reverbFilter || !reverbGain) {
+    reverbConvolver = audio.createConvolver();
+    const duration = 0.48;
+    const length = Math.max(1, Math.floor(audio.sampleRate * duration));
+    const impulse = audio.createBuffer(2, length, audio.sampleRate);
+
+    for (let channel = 0; channel < impulse.numberOfChannels; channel += 1) {
+      const data = impulse.getChannelData(channel);
+      for (let index = 0; index < length; index += 1) {
+        const progress = index / length;
+        const earlyReflection =
+          index < audio.sampleRate * 0.055
+            ? Math.sin(index * (channel === 0 ? 0.071 : 0.076)) * 0.14
+            : 0;
+        const decay = (1 - progress) ** 3.2;
+        data[index] = (Math.random() * 2 - 1) * decay * 0.34 + earlyReflection * decay;
+      }
+    }
+    reverbConvolver.buffer = impulse;
+
+    reverbFilter = audio.createBiquadFilter();
+    reverbFilter.type = "lowpass";
+    reverbFilter.frequency.value = 4300;
+    reverbFilter.Q.value = 0.3;
+
+    reverbGain = audio.createGain();
+    reverbGain.gain.value = 0.12;
+
+    reverbConvolver.connect(reverbFilter).connect(reverbGain).connect(getMasterGain(audio));
   }
-  return toneFilter;
+  return reverbConvolver;
 }
 
-function getNoiseFilter(audio: AudioContext, cutoff: number) {
-  const key = Math.round(cutoff);
+function addAccentReverb(audio: AudioContext, source: AudioNode, bus: AudioBus) {
+  if (bus !== "reward" && bus !== "impact") return;
+  source.connect(getReverbInput(audio));
+}
+
+function getBusGain(audio: AudioContext, bus: AudioBus) {
+  let node = busGains.get(bus);
+  if (!node) {
+    node = audio.createGain();
+    node.gain.value = BUS_LEVEL[bus];
+    node.connect(getMasterGain(audio));
+    busGains.set(bus, node);
+  }
+  return node;
+}
+
+function getToneFilter(audio: AudioContext, bus = activeBus) {
+  let node = toneFilters.get(bus);
+  if (!node) {
+    node = audio.createBiquadFilter();
+    node.type = "lowpass";
+    node.frequency.value = bus === "impact" ? 5200 : bus === "ui" ? 4600 : 5000;
+    node.Q.value = 0.35;
+    node.connect(getBusGain(audio, bus));
+    toneFilters.set(bus, node);
+  }
+  return node;
+}
+
+function getNoiseFilter(audio: AudioContext, cutoff: number, bus = activeBus) {
+  const key = `${bus}:${Math.round(cutoff)}`;
   let filter = noiseFilters.get(key);
   if (!filter) {
     filter = audio.createBiquadFilter();
     filter.type = "lowpass";
-    filter.frequency.value = key;
-    filter.connect(getMasterGain(audio));
+    filter.frequency.value = Math.round(cutoff);
+    filter.Q.value = 0.25;
+    filter.connect(getBusGain(audio, bus));
     noiseFilters.set(key, filter);
   }
   return filter;
+}
+
+function connectWithPan(
+  audio: AudioContext,
+  source: AudioNode,
+  destination: AudioNode,
+  pan: number,
+): StereoPannerNode | null {
+  const clamped = Math.max(-0.78, Math.min(0.78, pan));
+  if (Math.abs(clamped) < 0.01 || typeof audio.createStereoPanner !== "function") {
+    source.connect(destination);
+    return null;
+  }
+  const panner = audio.createStereoPanner();
+  panner.pan.value = clamped;
+  source.connect(panner).connect(destination);
+  return panner;
+}
+
+function duckForAccent(audio: AudioContext, bus: AudioBus) {
+  if (bus !== "impact" && bus !== "reward") return;
+  const game = getBusGain(audio, "game");
+  const now = audio.currentTime;
+  const floor = bus === "impact" ? 0.58 : 0.7;
+  game.gain.cancelScheduledValues(now);
+  game.gain.setValueAtTime(Math.max(0.0001, game.gain.value), now);
+  game.gain.linearRampToValueAtTime(BUS_LEVEL.game * floor, now + 0.018);
+  game.gain.exponentialRampToValueAtTime(BUS_LEVEL.game, now + (bus === "impact" ? 0.22 : 0.17));
 }
 
 function getNoiseBuffer(audio: AudioContext) {
@@ -95,34 +221,34 @@ type CueSpec = { duration: number; tones: CueTone[] };
 function waveform(kind: CueTone["wave"], phase: number) {
   const sine = Math.sin(phase);
   if (kind === "triangle") return (2 / Math.PI) * Math.asin(sine);
-  if (kind === "saw") return 2 * (phase / (2 * Math.PI) - Math.floor(phase / (2 * Math.PI) + .5));
+  if (kind === "saw") return 2 * (phase / (2 * Math.PI) - Math.floor(phase / (2 * Math.PI) + 0.5));
   return sine;
 }
 
 function cueSpec(name: CachedCueName, ratio: number): CueSpec {
   if (name === "plinkoPeg") {
     return {
-      duration: .052,
+      duration: 0.058,
       tones: [
-        { start: 860 * ratio, end: 690 * ratio, gain: .012, wave: "triangle" },
-        { start: 1290 * ratio, end: 1030 * ratio, gain: .0065, delay: .005, wave: "sine" },
+        { start: 910 * ratio, end: 680 * ratio, gain: 0.011, wave: "triangle" },
+        { start: 1470 * ratio, end: 1010 * ratio, gain: 0.0055, delay: 0.004, wave: "sine" },
       ],
     };
   }
   if (name === "plinkoLaunch") {
     return {
-      duration: .16,
+      duration: 0.17,
       tones: [
-        { start: 205 * ratio, end: 670 * ratio, gain: .018, wave: "saw" },
-        { start: 700 * ratio, end: 1030 * ratio, gain: .016, delay: .03, wave: "sine" },
+        { start: 190 * ratio, end: 720 * ratio, gain: 0.017, wave: "saw" },
+        { start: 690 * ratio, end: 1180 * ratio, gain: 0.014, delay: 0.032, wave: "sine" },
       ],
     };
   }
   return {
-    duration: .13,
+    duration: 0.145,
     tones: [
-      { start: 330 * ratio, end: 500 * ratio, gain: .02, wave: "triangle" },
-      { start: 690 * ratio, end: 930 * ratio, gain: .016, delay: .022, wave: "sine" },
+      { start: 300 * ratio, end: 540 * ratio, gain: 0.019, wave: "triangle" },
+      { start: 670 * ratio, end: 980 * ratio, gain: 0.015, delay: 0.02, wave: "sine" },
     ],
   };
 }
@@ -138,14 +264,14 @@ function makeCueBuffer(audio: AudioContext, spec: CueSpec) {
     for (const toneSpec of spec.tones) {
       const local = t - (toneSpec.delay ?? 0);
       if (local < 0) continue;
-      const available = Math.max(.001, spec.duration - (toneSpec.delay ?? 0));
+      const available = Math.max(0.001, spec.duration - (toneSpec.delay ?? 0));
       const progress = Math.min(1, local / available);
       const frequency = toneSpec.start * (toneSpec.end / toneSpec.start) ** progress;
-      const attack = Math.min(1, local / .008);
-      const decay = (1 - progress) ** 2.25;
+      const attack = Math.min(1, local / 0.006);
+      const decay = (1 - progress) ** 2.35;
       sample += waveform(toneSpec.wave, 2 * Math.PI * frequency * local) * toneSpec.gain * attack * decay;
     }
-    channel[index] = Math.max(-.92, Math.min(.92, sample));
+    channel[index] = Math.max(-0.92, Math.min(0.92, sample));
   }
   return buffer;
 }
@@ -153,7 +279,7 @@ function makeCueBuffer(audio: AudioContext, spec: CueSpec) {
 function getCueBuffers(audio: AudioContext, name: CachedCueName) {
   const cached = cachedCueBuffers.get(name);
   if (cached?.[0]?.sampleRate === audio.sampleRate) return cached;
-  const ratios = name === "plinkoPeg" ? [.95, .98, 1, 1.03, 1.06] : [.98, 1, 1.025];
+  const ratios = name === "plinkoPeg" ? [0.94, 0.97, 1, 1.03, 1.06] : [0.98, 1, 1.025];
   const buffers = ratios.map((ratio) => makeCueBuffer(audio, cueSpec(name, ratio)));
   cachedCueBuffers.set(name, buffers);
   return buffers;
@@ -166,28 +292,47 @@ function bufferedCue(name: CachedCueName) {
   const buffer = buffers[Math.floor(Math.random() * buffers.length)] ?? buffers[0];
   if (!buffer) return;
   const source = audio.createBufferSource();
+  const amp = audio.createGain();
+  amp.gain.value = activeIntensity;
   source.buffer = buffer;
-  source.connect(getMasterGain(audio));
-  source.onended = () => source.disconnect();
+  const panner = connectWithPan(audio, amp, getBusGain(audio, activeBus), activePan);
+  source.connect(amp);
+  addAccentReverb(audio, amp, activeBus);
+  source.onended = () => {
+    source.disconnect();
+    amp.disconnect();
+    panner?.disconnect();
+  };
   source.start();
 }
 
-function tone(freq: number, duration: number, type: OscillatorType, gain: number, delay = 0, endFreq?: number) {
+function tone(
+  freq: number,
+  duration: number,
+  type: OscillatorType,
+  gain: number,
+  delay = 0,
+  endFreq?: number,
+) {
   const audio = getContext();
   if (!audio) return;
   const start = audio.currentTime + delay;
   const osc = audio.createOscillator();
   const amp = audio.createGain();
+  const filter = getToneFilter(audio, activeBus);
   osc.type = type;
   osc.frequency.setValueAtTime(freq, start);
   if (endFreq && endFreq > 0) osc.frequency.exponentialRampToValueAtTime(endFreq, start + duration);
   amp.gain.setValueAtTime(0.0001, start);
-  amp.gain.exponentialRampToValueAtTime(gain, start + 0.012);
+  amp.gain.exponentialRampToValueAtTime(Math.max(0.0001, gain * activeIntensity), start + 0.008);
   amp.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-  osc.connect(amp).connect(getToneFilter(audio));
+  const panner = connectWithPan(audio, amp, filter, activePan);
+  osc.connect(amp);
+  addAccentReverb(audio, amp, activeBus);
   osc.onended = () => {
     osc.disconnect();
     amp.disconnect();
+    panner?.disconnect();
   };
   osc.start(start);
   osc.stop(start + duration + 0.03);
@@ -199,13 +344,17 @@ function noise(duration: number, gain: number, delay = 0, cutoff = 1800) {
   const start = audio.currentTime + delay;
   const source = audio.createBufferSource();
   const amp = audio.createGain();
+  const filter = getNoiseFilter(audio, cutoff, activeBus);
   source.buffer = getNoiseBuffer(audio);
-  amp.gain.setValueAtTime(Math.max(0.0001, gain), start);
+  amp.gain.setValueAtTime(Math.max(0.0001, gain * activeIntensity), start);
   amp.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-  source.connect(amp).connect(getNoiseFilter(audio, cutoff));
+  const panner = connectWithPan(audio, amp, filter, activePan);
+  source.connect(amp);
+  addAccentReverb(audio, amp, activeBus);
   source.onended = () => {
     source.disconnect();
     amp.disconnect();
+    panner?.disconnect();
   };
   source.start(start);
   source.stop(start + duration + 0.02);
@@ -225,21 +374,85 @@ export type SoundName =
 
 export function playOlympusLevelUp(level: number, enabled: boolean) {
   if (!enabled) return;
-  const clamped = Math.max(2, Math.min(5, Math.round(level)));
-  const ratio = 1 + (clamped - 2) * .09;
-  tone(220 * ratio, .17, "triangle", .026, 0, 360 * ratio);
-  tone(440 * ratio, .19, "sine", .023, .04, 660 * ratio);
-  noise(.1, .0045, 0, 1400);
+  const previousBus = activeBus;
+  const previousPan = activePan;
+  const previousIntensity = activeIntensity;
+  activeBus = "reward";
+  activePan = 0;
+  activeIntensity = 1;
+
+  try {
+    const audio = getContext();
+    if (audio) duckForAccent(audio, activeBus);
+    const clamped = Math.max(2, Math.min(5, Math.round(level)));
+    const ratio = 1 + (clamped - 2) * .09;
+    tone(220 * ratio, .17, "triangle", .026, 0, 360 * ratio);
+    tone(440 * ratio, .19, "sine", .023, .04, 660 * ratio);
+    noise(.1, .0045, 0, 1400);
+  } finally {
+    activeBus = previousBus;
+    activePan = previousPan;
+    activeIntensity = previousIntensity;
+  }
 }
 
-export function playSound(name: SoundName, enabled: boolean) {
+
+function busForSound(name: SoundName): AudioBus {
+  if (name === "click") return "ui";
+
+  if (
+    name === "olympusHit" ||
+    name === "olympusBigWin" ||
+    name === "candyExplosion" ||
+    name === "minesExplosion" ||
+    name === "tigerImpact" ||
+    name === "tigerFullGrid" ||
+    name === "bigWin" ||
+    name === "bonus" ||
+    name === "plinkoHigh"
+  ) {
+    return "impact";
+  }
+
+  if (
+    name === "win" ||
+    name === "cash" ||
+    name === "tigerBonus" ||
+    name === "tigerRetrigger" ||
+    name === "tigerFeatureStart" ||
+    name === "olympusMultiplier" ||
+    name === "olympusBonusIntro" ||
+    name === "olympusRetrigger" ||
+    name === "olympusBonusEnd" ||
+    name === "candyStreak" ||
+    name === "minesCrystal" ||
+    name === "minesCashout"
+  ) {
+    return "reward";
+  }
+
+  return "game";
+}
+
+export function playSound(name: SoundName, enabled: boolean, options: SoundOptions = {}) {
   if (!enabled) return;
   if (name === "plinkoPeg") {
     const now = typeof performance === "undefined" ? Date.now() : performance.now();
     if (!repeatedAudioGate.allow("plinkoPeg", now)) return;
   }
 
-  switch (name) {
+  const previousBus = activeBus;
+  const previousPan = activePan;
+  const previousIntensity = activeIntensity;
+  activeBus = busForSound(name);
+  activePan = Math.max(-0.78, Math.min(0.78, options.pan ?? 0));
+  activeIntensity = Math.max(0.35, Math.min(1.2, options.intensity ?? 1));
+
+  const audio = getContext();
+  if (audio) duckForAccent(audio, activeBus);
+
+  try {
+    switch (name) {
     case "spin":
       noise(0.22, 0.02, 0, 1200); tone(150, 0.2, "sawtooth", 0.035, 0, 290); tone(330, 0.12, "triangle", 0.035, 0.055, 480); break;
     case "tick":
@@ -352,5 +565,10 @@ export function playSound(name: SoundName, enabled: boolean) {
       [659,880,1174].forEach((f,i)=>tone(f,0.18,"sine",0.045,i*0.055,f*1.04)); break;
     case "lose":
       noise(0.16,0.018,0,650); tone(260,0.2,"sawtooth",0.035,0,155); tone(180,0.28,"sine",0.035,0.075,110); break;
+    }
+  } finally {
+    activeBus = previousBus;
+    activePan = previousPan;
+    activeIntensity = previousIntensity;
   }
 }
