@@ -1,0 +1,143 @@
+@import "./CandyCascadeActivePolish.css";
+
+/* Media-tier motion for Candy Cascade. The active Sugar Sprite keeps its CSS
+ * silhouette, but now acts continuously and the candy materials respond even
+ * outside explicit win states. No feature math or timing is changed here. */
+
+.ccp-mascot-aura {
+  animation: ccp-media-aura 3.3s ease-in-out infinite;
+}
+
+.ccp-mascot-core {
+  transform-origin: 50% 74%;
+  animation: ccp-media-sprite 3.8s cubic-bezier(.45,0,.55,1) infinite;
+}
+
+.ccp-mascot-core::before,
+.ccp-mascot-core::after {
+  animation: ccp-media-face-life 4.6s ease-in-out infinite;
+}
+
+.ccp-mascot-ribbon {
+  transform-origin: 50% 50%;
+  animation: ccp-media-ribbon 2.9s ease-in-out infinite;
+}
+
+.ccp-machine.is-impact .ccp-mascot-core,
+.ccp-machine.is-bonus .ccp-mascot-core {
+  animation: ccp-media-sprite-celebrate .72s cubic-bezier(.15,.86,.18,1.14) infinite alternate;
+}
+
+.ccp-symbol-shine {
+  animation: ccp-media-shine 3.5s ease-in-out infinite;
+}
+
+.ccp-cell:nth-child(2n) .ccp-symbol-shine { animation-delay: -.7s; }
+.ccp-cell:nth-child(3n) .ccp-symbol-shine { animation-delay: -1.45s; }
+.ccp-cell:nth-child(5n) .ccp-symbol-shine { animation-delay: -2.15s; }
+
+.ccp-symbol-svg {
+  transform-origin: 50% 58%;
+  animation: ccp-media-symbol-idle 4.4s ease-in-out infinite;
+}
+
+.ccp-cell:nth-child(2n) .ccp-symbol-svg { animation-delay: -.62s; }
+.ccp-cell:nth-child(3n) .ccp-symbol-svg { animation-delay: -1.26s; }
+.ccp-cell:nth-child(4n) .ccp-symbol-svg { animation-delay: -1.9s; }
+.ccp-cell:nth-child(5n) .ccp-symbol-svg { animation-delay: -2.55s; }
+
+.ccp-cell.is-winning .ccp-symbol-svg {
+  animation: ccp-media-symbol-win .42s cubic-bezier(.14,.86,.18,1.16) both;
+}
+
+.ccp-symbol--party .ccp-party-orbit {
+  animation: ccp-media-party-orbit 3.2s linear infinite;
+}
+
+.ccp-symbol--party .ccp-party-spark {
+  animation: ccp-media-party-spark 1.7s ease-in-out infinite;
+}
+
+.ccp-bomb {
+  transform-origin: 50% 50%;
+}
+
+.ccp-bomb:not(.is-bursting) {
+  animation: ccp-media-bomb-ready .72s ease-in-out infinite alternate;
+}
+
+@keyframes ccp-media-aura {
+  0%, 100% { opacity: .68; scale: .95; rotate: -1deg; }
+  50% { opacity: 1; scale: 1.055; rotate: 1deg; }
+}
+
+@keyframes ccp-media-sprite {
+  0%, 100% { translate: 0 0; rotate: -8deg; scale: 1; }
+  35% { translate: -1px -1px; rotate: -6.8deg; scale: 1.01; }
+  68% { translate: 1px -2px; rotate: -8.8deg; scale: 1.018; }
+}
+
+@keyframes ccp-media-face-life {
+  0%, 72%, 100% { filter: brightness(1); }
+  80% { filter: brightness(1.12); }
+  88% { filter: brightness(1.035); }
+}
+
+@keyframes ccp-media-ribbon {
+  0%, 100% { translate: -2px 0; scale: .97 1; opacity: .58; }
+  50% { translate: 2px -1px; scale: 1.04 1.08; opacity: .88; }
+}
+
+@keyframes ccp-media-sprite-celebrate {
+  from { translate: -1px 0; rotate: -10deg; scale: 1.01; filter: brightness(1.04); }
+  to { translate: 1px -4px; rotate: -5deg; scale: 1.075; filter: brightness(1.16); }
+}
+
+@keyframes ccp-media-shine {
+  0%, 62%, 100% { opacity: .18; translate: -7px 3px; scale: .74; }
+  73% { opacity: .82; translate: 1px -2px; scale: 1.1; }
+  86% { opacity: .34; translate: 8px -4px; scale: .9; }
+}
+
+@keyframes ccp-media-symbol-idle {
+  0%, 100% { translate: 0 0; scale: 1; rotate: 0deg; }
+  50% { translate: 0 -.8px; scale: 1.014; rotate: .22deg; }
+}
+
+@keyframes ccp-media-symbol-win {
+  0% { translate: 0 3px; scale: .88; rotate: -1.2deg; filter: brightness(1.08); }
+  48% { translate: 0 -2px; scale: 1.12; rotate: 1.2deg; filter: brightness(1.26) drop-shadow(0 0 12px currentColor); }
+  78% { translate: 0 1px; scale: .98; rotate: -.3deg; }
+  100% { translate: 0 0; scale: 1; rotate: 0deg; }
+}
+
+@keyframes ccp-media-party-orbit {
+  from { rotate: 0deg; scale: .97; }
+  50% { scale: 1.045; }
+  to { rotate: 360deg; scale: .97; }
+}
+
+@keyframes ccp-media-party-spark {
+  0%, 100% { scale: .92; rotate: -4deg; filter: brightness(1); }
+  50% { scale: 1.12; rotate: 4deg; filter: brightness(1.22) drop-shadow(0 0 9px rgba(255,255,210,.78)); }
+}
+
+@keyframes ccp-media-bomb-ready {
+  from { scale: .96; filter: brightness(1); }
+  to { scale: 1.055; filter: brightness(1.14) drop-shadow(0 0 11px rgba(255,190,80,.6)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ccp-mascot-aura,
+  .ccp-mascot-core,
+  .ccp-mascot-core::before,
+  .ccp-mascot-core::after,
+  .ccp-mascot-ribbon,
+  .ccp-symbol-shine,
+  .ccp-symbol-svg,
+  .ccp-party-orbit,
+  .ccp-party-spark,
+  .ccp-bomb {
+    animation: none !important;
+  }
+}
