@@ -42,6 +42,14 @@
   transition: top 140ms cubic-bezier(.2,.75,.25,1);
 }
 
+/* Feature states keep the lower status strip legible while the reel cabinet
+   brightens. This is also the stable visual anchor used by special-state QA. */
+.gt-hw-page .gt-hw-machine[data-phase^="feature-"] .gt-hw-status {
+  border-color: rgba(244, 193, 79, .52);
+  background: linear-gradient(90deg, rgba(46, 4, 4, .96), rgba(100, 18, 9, .96), rgba(46, 4, 4, .96));
+  box-shadow: inset 0 0 12px rgba(255, 200, 70, .12), 0 0 12px rgba(255, 180, 38, .08);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .gt-hw-reel-overlay .gt-hw-reel-track {
     top: 0 !important;
