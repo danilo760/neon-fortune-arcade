@@ -111,7 +111,7 @@ function inferEnergy(theme: AdaptiveScoreTheme) {
   if (typeof document === "undefined") return 0.72;
 
   if (theme === "tiger") {
-    const phase = document.querySelector<HTMLElement>(".gt-hw-machine")?.dataset.phase ?? "idle";
+    const phase = document.querySelector<HTMLElement>(".gt-hw-machine")?.dataset["phase"] ?? "idle";
     if (phase.includes("full") || phase.includes("win")) return 1.4;
     if (phase.includes("feature-lock") || phase.includes("feature-intro")) return 1.32;
     if (phase.includes("feature") || phase.includes("anticip")) return 1.18;
@@ -121,7 +121,7 @@ function inferEnergy(theme: AdaptiveScoreTheme) {
 
   if (theme === "olympus") {
     const machine = document.querySelector<HTMLElement>(".osp-machine");
-    const phase = machine?.dataset.phase ?? "idle";
+    const phase = machine?.dataset["phase"] ?? "idle";
     if (phase === "storm-impact" || phase === "level-up") return 1.4;
     if (phase === "storm-charge" || phase.includes("bonus")) return 1.26;
     if (["cluster", "collapse", "refill"].includes(phase)) return 1.12;
@@ -131,7 +131,7 @@ function inferEnergy(theme: AdaptiveScoreTheme) {
 
   if (theme === "candy") {
     const machine = document.querySelector<HTMLElement>(".ccp-machine");
-    const phase = machine?.dataset.phase ?? "idle";
+    const phase = machine?.dataset["phase"] ?? "idle";
     if (phase === "bomb-burst" || phase === "retrigger") return 1.4;
     if (phase === "bomb-birth" || phase.includes("bonus")) return 1.25;
     if (["cluster", "collapse", "refill"].includes(phase)) return 1.13;
@@ -141,8 +141,8 @@ function inferEnergy(theme: AdaptiveScoreTheme) {
 
   if (theme === "mines") {
     const cabinet = document.querySelector<HTMLElement>(".mines-premium__cabinet");
-    const reveal = cabinet?.dataset.revealPhase ?? "idle";
-    const status = cabinet?.dataset.roundStatus ?? "idle";
+    const reveal = cabinet?.dataset["revealPhase"] ?? "idle";
+    const status = cabinet?.dataset["roundStatus"] ?? "idle";
     if (reveal === "explode") return 1.4;
     if (reveal === "danger") return 1.28;
     if (reveal === "cashout" || reveal === "gem") return 1.12;
