@@ -14,10 +14,9 @@ type Props = {
 /**
  * Presentation-only mascot stage.
  *
- * Two original pose renders are blended by state. Idle/watch/reveal use the
- * seated front pose; coin/win/full use the celebration pose. CSS drives the
- * acting beats (breathing, lean, recoil, celebration) while keeping gameplay
- * math completely separate from presentation.
+ * Two original pose renders are still blended by state. The next art pass will
+ * replace this compromise with dedicated acting poses; CSS remains limited to
+ * micro-motion while gameplay math stays separate from presentation.
  */
 export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
   reaction,
@@ -65,7 +64,7 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
 
       <div className="gt-hw-tiger-caption">
         <strong>{featureActive ? `${lockedCount}/9` : "3×3"}</strong>
-        <span>{featureActive ? "MOEDAS TRAVADAS" : "5 LINHAS FIXAS"}</span>
+        <span>{featureActive ? "SÍMBOLOS FIXOS" : "5 LINHAS FIXAS"}</span>
       </div>
     </div>
   );
