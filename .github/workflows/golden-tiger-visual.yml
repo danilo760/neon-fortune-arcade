@@ -6,9 +6,11 @@ on:
       - "src/components/arcade/GoldenTigerReference.tsx"
       - "src/components/arcade/GoldenTigerReference.css"
       - "src/components/arcade/GoldenTigerPresentation.css"
+      - "src/components/arcade/GoldenTigerPresentationSafe.css"
       - "src/components/arcade/golden-tiger/**"
       - "src/assets/golden-tiger/**"
       - "src/lib/arcade/goldenTiger*.ts"
+      - "src/routes/game/$slug.tsx"
       - "scripts/goldenTigerVisualQa.mjs"
       - ".github/workflows/golden-tiger-visual.yml"
   workflow_dispatch:
