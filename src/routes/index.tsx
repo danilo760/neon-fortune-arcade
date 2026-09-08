@@ -161,7 +161,7 @@ function Index() {
               <div className="featured-showcase__copy">
                 <span>HOT • SLOT 3×3</span>
                 <h3>Golden Tiger</h3>
-                <p>Tigre filhote, ouro, jade, giros grátis e multiplicadores em uma máquina feita para parecer um jogo completo.</p>
+                <p>Tigre filhote, ouro e jade com Fortune Feature, símbolos sticky e multiplicador ×10 em tela cheia.</p>
                 <Button asChild variant="gold" className="rounded-xl font-black"><Link to="/game/$slug" params={{ slug: goldenTiger.slug }}>Abrir jogo</Link></Button>
               </div>
             </div>
