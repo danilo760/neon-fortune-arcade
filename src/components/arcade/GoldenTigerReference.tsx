@@ -8,7 +8,6 @@ import { GoldenTigerTigerStage, type TigerReactionState } from "./golden-tiger/G
 import { formatCoins } from "@/lib/arcade/format";
 import {
   FORTUNE_FEATURE_FULL_GRID_MULTIPLIER,
-  FORTUNE_FEATURE_TRIGGER_CHANCE,
   rollFortuneFeatureTrigger,
   runFortuneFeature,
   type FortuneFeatureCell,
@@ -265,10 +264,10 @@ export function GoldenTigerReference() {
   const selectedLabel = selectedSymbol ? SYMBOL_LABEL[selectedSymbol] : "—";
   const tigerReaction: TigerReactionState =
     phase === "full-grid" ? "full" :
-    phase === "feature-lock" ? "coin" :
+    phase === "feature-intro" || phase === "feature-lock" ? "feature" :
     anticipating || (featureActive && lockedCount >= 6) ? "tense" :
     phase === "reveal" ? "reveal" :
-    phase === "base-spin" || phase === "feature-spin" || phase === "feature-intro" ? "watch" :
+    phase === "base-spin" || phase === "feature-spin" ? "watch" :
     phase === "win" ? "win" : "idle";
 
   const animateFeature = useCallback(async (plan: FortuneFeatureResult) => {
@@ -497,7 +496,7 @@ export function GoldenTigerReference() {
     phase === "return" ? `RETORNO ${formatCoins(win)}` :
     phase === "full-grid" ? `TELA CHEIA · ×${GOLDEN_TIGER_FULL_GRID_MULTIPLIER}` :
     phase === "win" ? `GANHO ${formatCoins(win)}` :
-    `FORTUNE FEATURE ALEATÓRIA · ${(FORTUNE_FEATURE_TRIGGER_CHANCE * 100).toFixed(2).replace(".", ",")}%`;
+    "FORTUNE FEATURE PODE SURGIR A QUALQUER GIRO";
 
   return (
     <main className="gt-hw-page">
@@ -611,11 +610,6 @@ export function GoldenTigerReference() {
         </div>
 
         <div className="gt-hw-controls">
-          <div className="gt-hw-feature" aria-label="Fortune Feature aleatória">
-            <span>FORTUNE FEATURE</span>
-            <strong>{(FORTUNE_FEATURE_TRIGGER_CHANCE * 100).toFixed(2).replace(".", ",")}%</strong>
-          </div>
-
           <div className="gt-hw-main-controls">
             <button type="button" onClick={() => changeBet(-1)} disabled={isBusy || autoLeft > 0} aria-label="Diminuir aposta">−</button>
             <button type="button" className="gt-hw-spin" onClick={() => void runSpin()} disabled={isBusy || autoLeft > 0 || balance < bet} aria-label="Girar"><span /></button>
@@ -631,9 +625,6 @@ export function GoldenTigerReference() {
               aria-pressed={turbo}
             >
               <Zap /><span>TURBO</span>
-            </button>
-            <button type="button" onClick={() => setBet(BETS[BETS.length - 1] ?? bet)} disabled={isBusy || autoLeft > 0}>
-              <strong>MAX</strong><span>APOSTA</span>
             </button>
             {autoLeft > 0 ? (
               <button type="button" className="is-active" onClick={() => { autoStopRef.current = true; }}>
