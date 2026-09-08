@@ -8,6 +8,7 @@ on:
       - "src/components/arcade/OlympusStormPremium.tsx"
       - "src/components/arcade/OlympusStormPremium.css"
       - "src/components/arcade/OlympusStormPremiumPolish.css"
+      - "src/components/arcade/OlympusStormActivePolish.css"
       - "src/assets/olympus-storm/**"
       - "src/lib/arcade/olympusStorm*.ts"
       - "src/lib/arcade/olympusAuthorialArtwork.test.ts"

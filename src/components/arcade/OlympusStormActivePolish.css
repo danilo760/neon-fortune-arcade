@@ -1,0 +1,599 @@
+@import "./OlympusStormPremiumPolish.css";
+
+/* Active routed presentation pass.
+ * This layer deliberately changes presentation only: no reel math, payouts,
+ * feature state or timings are defined here. */
+
+.osp-machine {
+  background:
+    radial-gradient(ellipse at 50% 10%, rgba(177, 237, 255, .2), transparent 19%),
+    radial-gradient(ellipse at 16% 29%, rgba(71, 144, 255, .18), transparent 26%),
+    radial-gradient(ellipse at 86% 34%, rgba(112, 79, 225, .16), transparent 27%),
+    radial-gradient(ellipse at 50% 70%, rgba(20, 104, 183, .12), transparent 43%),
+    linear-gradient(180deg, #030918 0%, #0a234d 26%, #071936 60%, #010715 100%);
+  box-shadow:
+    0 0 0 1px rgba(122, 209, 247, .12),
+    0 0 100px rgba(31, 123, 255, .2),
+    inset 0 0 90px rgba(0, 5, 18, .4);
+}
+
+.osp-machine::before {
+  background:
+    linear-gradient(90deg, rgba(227, 248, 255, .05), transparent 10% 90%, rgba(227, 248, 255, .05)),
+    radial-gradient(ellipse at 50% 61%, rgba(81, 191, 255, .12), transparent 50%),
+    linear-gradient(180deg, transparent 0 67%, rgba(0, 4, 15, .2) 82%, rgba(0, 3, 12, .5));
+}
+
+.osp-machine::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(111deg, transparent 0 17%, rgba(255,255,255,.035) 24%, transparent 31% 72%, rgba(117,216,255,.035) 78%, transparent 86%),
+    radial-gradient(circle at 50% 7%, rgba(237, 253, 255, .11), transparent 14%);
+  mix-blend-mode: screen;
+}
+
+.osp-sky {
+  background:
+    radial-gradient(circle at 50% 16%, rgba(102, 208, 255, .07), transparent 26%),
+    linear-gradient(180deg, rgba(7, 25, 61, .12), transparent 58%);
+}
+
+.osp-sky::before {
+  width: 92%;
+  height: 16%;
+  left: -31%;
+  top: 17%;
+  opacity: .42;
+  background: rgba(186, 232, 255, .24);
+  filter: blur(22px);
+}
+
+.osp-sky::after {
+  width: 96%;
+  height: 18%;
+  right: -36%;
+  top: 28%;
+  opacity: .4;
+  background: rgba(91, 135, 255, .2);
+  filter: blur(25px);
+}
+
+.osp-sky i:nth-child(1) {
+  opacity: .42;
+  background: rgba(219, 249, 255, .2);
+}
+
+.osp-sky i:nth-child(2),
+.osp-sky i:nth-child(3) {
+  opacity: .3;
+}
+
+.osp-temple::before {
+  left: 3.5%;
+  right: 3.5%;
+  top: 20.85%;
+  height: 2.25%;
+  border-color: rgba(221, 240, 247, .25);
+  background:
+    linear-gradient(180deg, rgba(226, 241, 247, .28), rgba(83, 112, 139, .24) 46%, rgba(22, 43, 69, .5));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.16),
+    0 5px 14px rgba(0,0,0,.36),
+    0 0 16px rgba(92, 203, 255, .08);
+}
+
+.osp-temple span {
+  border-color: rgba(213, 234, 242, .19);
+  background:
+    repeating-linear-gradient(90deg, rgba(227, 243, 247, .1) 0 9%, transparent 9% 24%),
+    linear-gradient(90deg, rgba(18, 39, 65, .95), rgba(139, 174, 192, .26) 45%, rgba(28, 54, 81, .94) 74%, rgba(9, 28, 54, .98));
+  box-shadow:
+    inset 1px 0 0 rgba(236, 251, 255, .08),
+    inset -4px 0 8px rgba(0, 8, 25, .34),
+    0 5px 15px rgba(0,0,0,.34);
+}
+
+.osp-temple span::before,
+.osp-temple span::after {
+  content: "";
+  position: absolute;
+  left: -18%;
+  width: 136%;
+  height: 8%;
+  border: 1px solid rgba(216, 239, 247, .16);
+  background: linear-gradient(90deg, #102d50, rgba(160, 193, 205, .26), #0c2748);
+}
+
+.osp-temple span::before { top: -4%; }
+.osp-temple span::after { bottom: -2%; }
+
+.osp-topbar {
+  z-index: 45;
+}
+
+.osp-brand strong {
+  color: #f5fbff;
+  text-shadow:
+    0 2px 0 #031327,
+    0 0 11px rgba(103, 211, 255, .32),
+    0 0 24px rgba(68, 138, 255, .12);
+}
+
+/* Mythic guardian: layered skin, hair, beard and armour. The silhouette stays
+ * original and uses only CSS primitives so no external/reference art is needed. */
+.osp-guardian {
+  top: 5.55%;
+  width: 55%;
+  height: 14.2%;
+  filter: drop-shadow(0 9px 12px rgba(0, 4, 18, .45));
+}
+
+.osp-guardian-aura {
+  width: 122%;
+  aspect-ratio: 1.55;
+  opacity: .86;
+  background:
+    radial-gradient(ellipse at 50% 49%, rgba(228, 251, 255, .29), rgba(94, 193, 255, .13) 29%, rgba(87, 102, 235, .07) 48%, transparent 69%),
+    conic-gradient(from 20deg at 50% 50%, transparent 0 17%, rgba(113, 223, 255, .12) 19%, transparent 22% 54%, rgba(255, 229, 143, .09) 56%, transparent 59% 100%);
+  filter: blur(1px) drop-shadow(0 0 18px rgba(88, 201, 255, .4));
+}
+
+.osp-guardian::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: 9%;
+  width: 146px;
+  height: 96px;
+  transform: translateX(-50%);
+  border-radius: 49% 49% 42% 42%;
+  background:
+    radial-gradient(ellipse at 50% 83%, rgba(232, 247, 250, .58), transparent 36%),
+    radial-gradient(ellipse at 50% 45%, rgba(105, 210, 255, .13), transparent 58%);
+  box-shadow:
+    -48px 11px 0 -39px rgba(222, 242, 247, .68),
+    48px 11px 0 -39px rgba(222, 242, 247, .68),
+    -57px 29px 0 -47px rgba(116, 188, 217, .42),
+    57px 29px 0 -47px rgba(116, 188, 217, .42);
+}
+
+.osp-guardian::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 0;
+  width: 156px;
+  height: 62px;
+  transform: translateX(-50%);
+  clip-path: polygon(0 100%, 9% 54%, 24% 31%, 39% 25%, 50% 41%, 61% 25%, 76% 31%, 91% 54%, 100% 100%);
+  background:
+    linear-gradient(90deg, transparent 0 8%, rgba(255, 223, 125, .52) 9% 12%, transparent 13% 44%, rgba(255, 235, 157, .54) 48% 52%, transparent 56% 87%, rgba(255, 223, 125, .52) 88% 91%, transparent 92%),
+    linear-gradient(180deg, #496f9f 0%, #1a416f 42%, #0a2449 70%, #04152f 100%);
+  border-bottom: 2px solid rgba(255, 222, 122, .35);
+  filter: drop-shadow(0 5px 7px rgba(0,0,0,.4));
+}
+
+.osp-guardian-crest {
+  top: -3px;
+  width: 116px;
+  height: 110px;
+  padding: 0;
+  font-size: 0;
+  color: transparent;
+  overflow: visible;
+  filter: none;
+}
+
+.osp-guardian-crest::before {
+  content: "";
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  top: 3px;
+  width: 64px;
+  height: 72px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 231, 207, .34);
+  border-radius: 44% 44% 48% 48% / 38% 38% 60% 60%;
+  background:
+    radial-gradient(circle at 35% 44%, #dffcff 0 2.3%, #69dcff 2.8% 4.2%, #263950 4.8% 6.2%, transparent 6.8%),
+    radial-gradient(circle at 65% 44%, #dffcff 0 2.3%, #69dcff 2.8% 4.2%, #263950 4.8% 6.2%, transparent 6.8%),
+    linear-gradient(168deg, transparent 0 24%, rgba(116, 70, 55, .28) 25% 27%, transparent 28% 42%, rgba(105, 59, 48, .31) 43% 46%, transparent 47%),
+    radial-gradient(ellipse at 50% 76%, rgba(255, 224, 198, .18), transparent 35%),
+    linear-gradient(155deg, #efc19d 0%, #d39a78 46%, #a96555 75%, #774037 100%);
+  box-shadow:
+    -18px -5px 0 -11px #e7f2f3,
+    18px -6px 0 -11px #d5e7eb,
+    -28px 4px 0 -19px rgba(205, 229, 236, .9),
+    28px 5px 0 -19px rgba(201, 226, 235, .88),
+    -33px 16px 0 -25px rgba(151, 199, 218, .62),
+    33px 16px 0 -25px rgba(151, 199, 218, .6),
+    inset 0 -13px 17px rgba(93, 49, 43, .18),
+    0 0 16px rgba(91, 205, 255, .2);
+}
+
+.osp-guardian-crest::after {
+  content: "";
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  top: 51px;
+  width: 58px;
+  height: 55px;
+  transform: translateX(-50%);
+  clip-path: polygon(8% 0, 25% 10%, 50% 2%, 75% 10%, 92% 0, 84% 47%, 70% 72%, 50% 100%, 30% 72%, 16% 47%);
+  background:
+    linear-gradient(90deg, rgba(110, 154, 174, .28), transparent 22% 78%, rgba(110, 154, 174, .28)),
+    linear-gradient(180deg, #f3fbfb 0%, #d5e9ed 37%, #9fc3d1 72%, #648ba3 100%);
+  box-shadow: 0 4px 10px rgba(0,0,0,.28);
+}
+
+.osp-machine.is-charged .osp-guardian-aura,
+.osp-machine.is-impact .osp-guardian-aura {
+  opacity: 1;
+  filter: brightness(1.35) saturate(1.2) drop-shadow(0 0 25px rgba(101, 221, 255, .7));
+}
+
+.osp-machine.is-charged .osp-guardian-crest::before,
+.osp-machine.is-impact .osp-guardian-crest::before {
+  filter: brightness(1.12) saturate(1.08);
+  box-shadow:
+    -18px -5px 0 -11px #f7ffff,
+    18px -6px 0 -11px #eefbff,
+    -28px 4px 0 -19px rgba(219, 244, 249, .95),
+    28px 5px 0 -19px rgba(219, 244, 249, .95),
+    0 0 25px rgba(105, 224, 255, .62);
+}
+
+.osp-stage-hud {
+  top: 19.15%;
+  height: 40px;
+  border-color: rgba(176, 228, 248, .31);
+  background:
+    linear-gradient(180deg, rgba(8, 46, 87, .9), rgba(3, 19, 47, .94));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.09),
+    inset 0 -8px 14px rgba(0,7,27,.18),
+    0 5px 16px rgba(0,0,0,.29),
+    0 0 14px rgba(60, 180, 255, .08);
+}
+
+.osp-stage-hud strong {
+  color: #f7fdff;
+  text-shadow: 0 0 7px rgba(110, 221, 255, .28);
+}
+
+.osp-energy {
+  height: 6px;
+  box-shadow:
+    inset 0 0 0 1px rgba(171,223,243,.26),
+    0 0 8px rgba(59, 174, 255, .08);
+}
+
+.osp-grid {
+  top: 24.15%;
+  border-color: rgba(241, 216, 137, .78);
+  background:
+    linear-gradient(145deg, #f1dea8 0 1.1%, #866c3e 2.4%, #294966 4%, #081b38 8% 92%, #80643a 97%, #f5e5af);
+  box-shadow:
+    0 0 0 3px rgba(0, 7, 23, .94),
+    0 14px 32px rgba(0,0,0,.5),
+    0 0 31px rgba(62, 184, 255, .24),
+    inset 0 1px 0 rgba(255,255,255,.42),
+    inset 0 -10px 18px rgba(0, 7, 22, .26);
+}
+
+.osp-grid::before,
+.osp-grid::after {
+  content: "";
+  position: absolute;
+  z-index: 8;
+  pointer-events: none;
+  inset: 0;
+  border-radius: 13px;
+}
+
+.osp-grid::before {
+  box-shadow:
+    inset 0 0 0 1px rgba(203, 239, 255, .13),
+    inset 0 14px 17px rgba(218, 247, 255, .035),
+    inset 0 -16px 20px rgba(0, 5, 18, .3);
+}
+
+.osp-grid::after {
+  background: linear-gradient(112deg, rgba(255,255,255,.08), transparent 14% 72%, rgba(102, 218, 255, .045) 82%, transparent 92%);
+  mix-blend-mode: screen;
+}
+
+.osp-cell {
+  border-color: rgba(137, 211, 242, .27);
+  background:
+    radial-gradient(circle at 50% 36%, rgba(96, 189, 240, .08), transparent 47%),
+    linear-gradient(145deg,#0b315d,#071b39 58%,#031126);
+  box-shadow:
+    inset 1px 1px 0 rgba(222, 246, 255, .08),
+    inset -2px -7px 11px rgba(0,0,0,.3),
+    0 1px 0 rgba(0, 6, 20, .55);
+}
+
+.osp-cell::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 5%;
+  pointer-events: none;
+  border-radius: 9px;
+  border: 1px solid rgba(207, 242, 255, .035);
+}
+
+.osp-symbol {
+  isolation: isolate;
+}
+
+.osp-symbol::before {
+  inset: 4%;
+  opacity: .25;
+  filter: blur(10px);
+}
+
+.osp-symbol::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 7%;
+  border-radius: 46%;
+  border: 1px solid rgba(255,255,255,.045);
+  background:
+    radial-gradient(circle at 32% 23%, rgba(255,255,255,.09), transparent 24%),
+    linear-gradient(160deg, rgba(255,255,255,.025), transparent 48%);
+  pointer-events: none;
+}
+
+.osp-symbol-svg {
+  z-index: 3;
+  width: 82%;
+  height: 82%;
+  stroke: color-mix(in srgb, currentColor 72%, #ffffff 28%);
+  stroke-width: 1.15;
+  paint-order: stroke fill;
+  filter:
+    drop-shadow(0 4px 1px rgba(0,0,0,.38))
+    drop-shadow(0 0 5px color-mix(in srgb, currentColor 62%, transparent))
+    drop-shadow(0 0 12px color-mix(in srgb, currentColor 25%, transparent));
+}
+
+.osp-symbol-svg * {
+  vector-effect: non-scaling-stroke;
+}
+
+.osp-symbol-shine {
+  z-index: 4;
+  left: 20%;
+  top: 13%;
+  width: 48%;
+  height: 22%;
+  opacity: .52;
+  background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,.06) 52%, transparent);
+  filter: blur(.3px);
+}
+
+.osp-symbol--cyan {
+  color: #a7f3ff;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(74, 211, 255, .27), transparent 31%),
+    linear-gradient(145deg,#144e7d,#09254b 63%,#04162d);
+}
+
+.osp-symbol--gold {
+  color: #ffe089;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(255, 215, 94, .26), transparent 34%),
+    linear-gradient(145deg,#74500f,#3a270d 61%,#1c1408);
+}
+
+.osp-symbol--violet {
+  color: #d9b1ff;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(196, 129, 255, .25), transparent 34%),
+    linear-gradient(145deg,#54347b,#2b193e 62%,#171020);
+}
+
+.osp-symbol--emerald {
+  color: #91f5c8;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(75, 235, 173, .23), transparent 34%),
+    linear-gradient(145deg,#155f4e,#0a352f 62%,#061d1f);
+}
+
+.osp-symbol--silver {
+  color: #e6f3f7;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(220, 244, 255, .2), transparent 31%),
+    linear-gradient(145deg,#516875,#293b47 62%,#17232d);
+}
+
+.osp-symbol--azure {
+  color: #8ed8ff;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(80, 180, 255, .26), transparent 34%),
+    linear-gradient(145deg,#18548f,#0b2c57 62%,#061936);
+}
+
+.osp-symbol--royal {
+  color: #fff1bd;
+  background:
+    radial-gradient(circle at 50% 39%, rgba(255, 231, 145, .18), transparent 31%),
+    linear-gradient(145deg,#40558d,#202d5e 60%,#11183b);
+}
+
+.osp-cell.is-winning .osp-symbol-svg {
+  filter:
+    brightness(1.22)
+    drop-shadow(0 4px 1px rgba(0,0,0,.3))
+    drop-shadow(0 0 8px #e9fbff)
+    drop-shadow(0 0 18px color-mix(in srgb, currentColor 55%, transparent));
+}
+
+.osp-cell.is-winning {
+  outline-color: rgba(238, 253, 255, .96);
+  box-shadow:
+    inset 0 0 0 1px rgba(238, 253, 255, .6),
+    inset 0 0 22px rgba(122, 224, 255, .32),
+    0 0 18px rgba(63, 198, 255, .7);
+}
+
+.osp-symbol--scatter {
+  border-radius: 8px;
+  box-shadow:
+    inset 0 0 22px rgba(94, 198, 255, .14),
+    0 0 13px rgba(255, 222, 126, .09);
+}
+
+.osp-scatter-ring {
+  filter: drop-shadow(0 0 7px rgba(113, 221, 255, .85));
+}
+
+.osp-scatter-rune {
+  text-shadow:
+    0 0 7px #fff,
+    0 0 15px #64dbff,
+    0 0 27px rgba(255, 221, 117, .55);
+}
+
+.osp-status {
+  border-color: rgba(144, 211, 239, .18);
+  background: linear-gradient(180deg, rgba(4, 25, 55, .76), rgba(2, 13, 35, .86));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 4px 14px rgba(0,0,0,.22);
+}
+
+.osp-status strong {
+  color: #fff3bd;
+  text-shadow: 0 0 9px rgba(255, 221, 118, .25);
+}
+
+.osp-economy > div,
+.osp-bonus-button {
+  border-color: rgba(154, 214, 240, .23);
+  background: linear-gradient(180deg, rgba(9, 42, 78, .9), rgba(3, 20, 48, .94));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 4px 11px rgba(0,0,0,.24);
+}
+
+.osp-bonus-button {
+  border-color: rgba(255, 223, 128, .52);
+  color: #fff0ac;
+  text-shadow: 0 0 8px rgba(255, 218, 104, .24);
+}
+
+.osp-control {
+  border-color: rgba(155, 219, 246, .29);
+  background: linear-gradient(180deg, rgba(13, 52, 91, .94), rgba(3, 20, 49, .97));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 4px 12px rgba(0,0,0,.28);
+}
+
+.osp-control.is-active {
+  border-color: rgba(255, 225, 133, .55);
+  color: #fff0a9;
+  box-shadow: inset 0 0 12px rgba(255, 220, 112, .08), 0 0 12px rgba(70, 190, 255, .13);
+}
+
+.osp-spin {
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,.18),
+    inset 0 -10px 18px rgba(0, 14, 47, .35),
+    0 7px 18px rgba(0,0,0,.4),
+    0 0 25px rgba(79, 199, 255, .25);
+}
+
+.osp-spin span {
+  text-shadow: 0 0 9px #fff, 0 0 21px #6cddff, 0 0 33px rgba(255, 227, 125, .4);
+}
+
+.osp-machine.is-charged .osp-grid,
+.osp-machine.is-impact .osp-grid {
+  box-shadow:
+    0 0 0 3px rgba(1, 9, 25, .94),
+    0 14px 32px rgba(0,0,0,.48),
+    0 0 36px rgba(78, 207, 255, .48),
+    inset 0 0 20px rgba(104, 218, 255, .08);
+}
+
+.osp-machine.is-charged::after,
+.osp-machine.is-impact::after {
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(222, 252, 255, .17), transparent 28%),
+    linear-gradient(108deg, transparent 41%, rgba(117, 224, 255, .12) 48%, transparent 54%);
+  mix-blend-mode: screen;
+}
+
+.osp-storm-callout {
+  border-color: rgba(210, 248, 255, .65);
+  background: linear-gradient(165deg, rgba(6, 58, 106, .95), rgba(6, 19, 56, .97));
+  box-shadow: 0 0 36px rgba(66, 203, 255, .62), inset 0 0 18px rgba(156, 234, 255, .14);
+}
+
+.osp-storm-callout strong {
+  color: #fff2a9;
+  text-shadow: 0 0 9px #fff, 0 0 21px rgba(95, 220, 255, .9);
+}
+
+.osp-cinematic > div,
+.osp-big-win {
+  border-color: rgba(255, 226, 134, .65);
+  background:
+    radial-gradient(circle at 50% 0, rgba(97, 212, 255, .16), transparent 42%),
+    linear-gradient(165deg, rgba(7, 48, 91, .97), rgba(7, 15, 49, .98) 66%, rgba(40, 20, 74, .96));
+  box-shadow:
+    0 0 42px rgba(71, 196, 255, .38),
+    inset 0 1px 0 rgba(255,255,255,.1),
+    inset 0 0 26px rgba(92, 198, 255, .1);
+}
+
+@media (max-height: 780px) {
+  .osp-guardian {
+    top: 5.25%;
+    height: 13.7%;
+  }
+
+  .osp-guardian-crest {
+    transform: scale(.82);
+    transform-origin: 50% 56%;
+  }
+
+  .osp-guardian::after {
+    transform: translateX(-50%) scale(.88);
+    transform-origin: 50% 100%;
+  }
+
+  .osp-stage-hud {
+    top: 18.7%;
+  }
+}
+
+@media (max-width: 370px) {
+  .osp-guardian-crest {
+    transform: scale(.86);
+  }
+
+  .osp-guardian::after {
+    transform: translateX(-50%) scale(.9);
+    transform-origin: 50% 100%;
+  }
+
+  .osp-symbol-svg {
+    width: 80%;
+    height: 80%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .osp-guardian-aura,
+  .osp-sky i {
+    animation: none !important;
+  }
+}

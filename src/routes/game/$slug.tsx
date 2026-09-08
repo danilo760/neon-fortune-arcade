@@ -2,7 +2,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 
 import goldenTigerPresentationCss from "../../components/arcade/GoldenTigerPresentationSafe.css?url";
-import olympusStormPresentationCss from "../../components/arcade/OlympusStormPremiumPolish.css?url";
+import olympusStormPresentationCss from "../../components/arcade/OlympusStormActivePolish.css?url";
 import candyCascadePresentationCss from "../../components/arcade/CandyCascadePremium.css?url";
 import minesPresentationCss from "../../components/arcade/MinesPresentationSafe.css?url";
 import plinkoPresentationCss from "../../components/arcade/PlinkoPresentationSafe.css?url";
