@@ -24,6 +24,7 @@
     "exactOptionalPropertyTypes": true,
     "noUncheckedSideEffectImports": true,
     "paths": {
+      "@/assets/olympus-storm/reference.webp": ["./src/assets/olympus-storm/authorial-cabinet.svg"],
       "@/*": ["./src/*"]
     }
   }
