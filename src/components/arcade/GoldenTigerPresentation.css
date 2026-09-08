@@ -1,0 +1,28 @@
+/* Golden Tiger presentation rules owned by the active gt-hw cabinet. */
+
+.gt-hw-machine button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.gt-hw-controls button {
+  transition:
+    transform 90ms cubic-bezier(.2,.8,.2,1),
+    filter 120ms ease-out,
+    box-shadow 140ms ease-out;
+}
+
+.gt-hw-controls button:not(:disabled):active {
+  transform: scale(.94);
+  filter: brightness(1.12);
+}
+
+.gt-hw-controls button:focus-visible,
+.gt-hw-icon-button:focus-visible {
+  outline: 2px solid rgba(255,236,160,.9);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gt-hw-controls button:not(:disabled):active { transform: none; }
+}
