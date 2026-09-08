@@ -33,5 +33,12 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
+      - name: Lint
+        continue-on-error: true
+        run: bun run lint
+
+      - name: Repository sweep
+        run: bun scripts/audit-repo.ts
+
       - name: Production build
         run: bun run build
