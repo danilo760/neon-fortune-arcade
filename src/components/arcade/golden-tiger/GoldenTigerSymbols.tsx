@@ -24,6 +24,9 @@ export const GoldenTigerSymbol = memo(function GoldenTigerSymbol({
       data-symbol={symbol}
       aria-label={symbol}
     >
+      <span className="gt-hw-symbol-plate" aria-hidden />
+      <span className="gt-hw-symbol-gloss" aria-hidden />
+      <span className="gt-hw-symbol-halo" aria-hidden />
       {symbol === "wild" && (
         <svg viewBox="0 0 100 100" aria-hidden>
           <path d="M50 5 86 23 80 73 50 95 20 73 14 23Z" fill="#4b0908" stroke="#ffd86a" strokeWidth="3" />

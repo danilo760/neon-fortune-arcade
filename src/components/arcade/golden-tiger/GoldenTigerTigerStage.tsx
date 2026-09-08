@@ -11,12 +11,12 @@ type Props = {
 };
 
 /**
- * Presentation-only tiger rig.
+ * Golden Tiger mascot stage.
  *
- * A single original transparent mascot is rendered as overlapping clipped
- * layers. That keeps the artwork coherent while allowing the head and body to
- * move independently for anticipation/follow-through without shipping a
- * commercial sprite or a large skeletal-animation dependency.
+ * Uses one original transparent mascot image, but splits it into layered
+ * presentation pieces so the head, eyes, coin prop, aura and body can move
+ * independently. This gives us a much stronger “alive” feel without bringing in
+ * a heavy animation runtime.
  */
 export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
   reaction,
@@ -24,37 +24,32 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
   lockedCount,
 }: Props) {
   return (
-    <div
-      className="gt-hw-tiger-stage"
-      data-reaction={reaction}
-      data-feature-active={featureActive ? "true" : "false"}
-      aria-hidden
-    >
-      <div className="gt-hw-tiger-spotlight" />
-      <div className="gt-hw-tiger-aura" />
-      <div className="gt-hw-tiger-floor-shadow" />
+    <div className="gt-hw-tiger-stage" data-reaction={reaction} data-feature={featureActive ? "on" : "off"}>
+      <span className="gt-hw-tiger-stage-halo" aria-hidden />
+      <span className="gt-hw-tiger-stage-shadow" aria-hidden />
+      <span className="gt-hw-tiger-stage-ray gt-hw-tiger-stage-ray--left" aria-hidden />
+      <span className="gt-hw-tiger-stage-ray gt-hw-tiger-stage-ray--right" aria-hidden />
 
-      <div className="gt-hw-tiger-rig">
-        <img
-          src={tigerMascot}
-          alt=""
-          className="gt-hw-tiger-layer gt-hw-tiger-layer--body"
-          draggable={false}
-        />
-        <img
-          src={tigerMascot}
-          alt=""
-          className="gt-hw-tiger-layer gt-hw-tiger-layer--head"
-          draggable={false}
-        />
-        <span className="gt-hw-tiger-eye-flash gt-hw-tiger-eye-flash--left" />
-        <span className="gt-hw-tiger-eye-flash gt-hw-tiger-eye-flash--right" />
-        <span className="gt-hw-tiger-crown-flare" />
+      <div className="gt-hw-tiger-rig" aria-hidden>
+        <div className="gt-hw-tiger-body-shell">
+          <img className="gt-hw-tiger-body" src={tigerMascot} alt="" />
+        </div>
+
+        <div className="gt-hw-tiger-head-shell">
+          <img className="gt-hw-tiger-head" src={tigerMascot} alt="" />
+          <span className="gt-hw-tiger-eye-glow gt-hw-tiger-eye-glow--left" />
+          <span className="gt-hw-tiger-eye-glow gt-hw-tiger-eye-glow--right" />
+          <span className="gt-hw-tiger-shine gt-hw-tiger-shine--left" />
+          <span className="gt-hw-tiger-shine gt-hw-tiger-shine--right" />
+        </div>
+
         <span className="gt-hw-tiger-coin-prop" />
+        <span className="gt-hw-tiger-crown-flare" />
+        <span className="gt-hw-tiger-medallion-flare" />
       </div>
 
-      <div className="gt-hw-tiger-sparks">
-        {Array.from({ length: 14 }, (_, index) => <i key={index} />)}
+      <div className="gt-hw-tiger-sparks" aria-hidden>
+        {Array.from({ length: 12 }, (_, index) => <i key={index} />)}
       </div>
 
       <div className="gt-hw-tiger-caption">
