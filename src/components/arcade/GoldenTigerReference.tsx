@@ -6,6 +6,7 @@ import { AnimatedWinCounter } from "./AnimatedWinCounter";
 import { GoldenTigerSymbol } from "./golden-tiger/GoldenTigerSymbols";
 import { GoldenTigerTigerStage, type TigerReactionState } from "./golden-tiger/GoldenTigerTigerStage";
 import { formatCoins } from "@/lib/arcade/format";
+import { playGoldenTigerAudio } from "@/lib/arcade/goldenTigerAudio";
 import {
   FORTUNE_FEATURE_FULL_GRID_MULTIPLIER,
   rollFortuneFeatureTrigger,
@@ -28,7 +29,7 @@ import {
   goldenTigerReelLandPauseMs,
   goldenTigerSpinLaunchMs,
 } from "@/lib/arcade/goldenTigerMotion";
-import { playSound, setAmbienceEnergy, setGameAmbience } from "@/lib/arcade/sound";
+import { setAmbienceEnergy, setGameAmbience } from "@/lib/arcade/sound";
 import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store";
 import { cn } from "@/lib/utils";
 import "./GoldenTigerReference.css";
@@ -279,14 +280,18 @@ export function GoldenTigerReference() {
     setWinning(new Set());
     setFeatureActive(true);
     setPhase("feature-intro");
-    playSound("tigerLuckyFeature", soundEnabled);
     await wait(turbo ? 180 : 520);
 
     for (const step of plan.steps) {
       setFeatureAttempt(step.respin);
+      const lockedBeforeSpin = visibleGrid.reduce((count, symbol) => count + (symbol === null ? 0 : 1), 0);
       setRollingCells(new Set(CELL_INDEXES.filter((index) => visibleGrid[index] === null)));
       setPhase("feature-spin");
-      playSound("tigerRespinRoll", soundEnabled);
+      playGoldenTigerAudio({
+        type: "feature-respin",
+        attempt: step.respin,
+        lockedCount: lockedBeforeSpin,
+      }, soundEnabled);
       await wait(turbo ? 170 : 440);
 
       visibleGrid = [...step.grid];
@@ -297,15 +302,18 @@ export function GoldenTigerReference() {
 
       if (step.addedIndices.length > 0) {
         setPhase("feature-lock");
-        playSound("tigerSymbolLock", soundEnabled, { intensity: 0.94 });
         const addedWild = step.addedIndices.some((index) => step.grid[index] === "wild");
-        if (addedWild || step.isFullGrid) {
-          playSound("tigerImpact", soundEnabled, { intensity: step.isFullGrid ? 1.08 : 1.02 });
-        }
+        const lockedAfterSpin = visibleGrid.reduce((count, symbol) => count + (symbol === null ? 0 : 1), 0);
+        playGoldenTigerAudio({
+          type: "feature-lock",
+          lockedCount: lockedAfterSpin,
+          addedWild,
+          fullGrid: step.isFullGrid,
+        }, soundEnabled);
         await wait(turbo ? 170 : step.isFullGrid ? 620 : addedWild ? 480 : 340);
       } else {
         setPhase("feature-miss");
-        playSound("tigerMiss", soundEnabled);
+        playGoldenTigerAudio({ type: "feature-miss" }, soundEnabled);
         await wait(turbo ? 110 : 320);
       }
 
@@ -337,18 +345,14 @@ export function GoldenTigerReference() {
 
     if (fullGrid) {
       setPhase("full-grid");
-      playSound("tigerFullGrid", soundEnabled, { intensity: 1.08 });
+      playGoldenTigerAudio({ type: "full-grid" }, soundEnabled);
       await wait(turbo ? 650 : 1900);
     } else if (payout > stake) {
       setPhase("win");
-      if (resolvedTier === "big" || resolvedTier === "mega") {
-        playSound("bigWin", soundEnabled, { intensity: resolvedTier === "mega" ? 1.12 : 1.02 });
-      } else {
-        playSound("tigerWinAccent", soundEnabled, {
-          intensity: resolvedTier === "nice" ? 1.04 : 0.9,
-          pitch: resolvedTier === "nice" ? 1.06 : 1,
-        });
-      }
+      playGoldenTigerAudio({
+        type: "win",
+        tier: resolvedTier === "none" ? "small" : resolvedTier,
+      }, soundEnabled);
       await wait(
         turbo ? 260 :
         resolvedTier === "mega" ? 1600 :
@@ -359,7 +363,7 @@ export function GoldenTigerReference() {
       setPhase("return");
       await wait(turbo ? 90 : 260);
     } else {
-      playSound("lose", soundEnabled);
+      playGoldenTigerAudio({ type: "lose" }, soundEnabled);
       await wait(turbo ? 70 : 160);
     }
   }, [soundEnabled, turbo]);
@@ -369,7 +373,7 @@ export function GoldenTigerReference() {
     busyRef.current = true;
     if (!arcadeActions.placeBet(bet)) {
       busyRef.current = false;
-      playSound("lose", soundEnabled);
+      playGoldenTigerAudio({ type: "lose" }, soundEnabled);
       return false;
     }
 
@@ -394,13 +398,13 @@ export function GoldenTigerReference() {
       const featureTriggered = rollFortuneFeatureTrigger(Math.random);
       const featurePlan = featureTriggered ? runFortuneFeature(bet, Math.random) : null;
       setGrid(nextGrid);
-      playSound("spin", soundEnabled);
+      playGoldenTigerAudio({ type: "spin" }, soundEnabled);
       await wait(goldenTigerSpinLaunchMs(turbo));
 
       for (let column = 0; column < 3; column += 1) {
         if (column === 2 && (baseResult.winning.size > 0 || featureTriggered)) {
           setAnticipating(true);
-          playSound("anticipation", soundEnabled, { intensity: 0.8, pitch: 1.02 });
+          playGoldenTigerAudio({ type: "anticipation" }, soundEnabled);
           await wait(goldenTigerAnticipationMs(turbo));
         }
 
@@ -410,11 +414,11 @@ export function GoldenTigerReference() {
         setStoppedColumns(column + 1);
         setBrakingColumn(-1);
 
-        playSound("tigerReelLand", soundEnabled, {
-          pan: column === 0 ? -0.42 : column === 2 ? 0.42 : 0,
-          intensity: column === 2 && featureTriggered ? 1.03 : 0.84,
-          pitch: 0.98 + column * 0.035,
-        });
+        playGoldenTigerAudio({
+          type: "reel-land",
+          column,
+          featureHint: featureTriggered,
+        }, soundEnabled);
         await wait(goldenTigerReelLandPauseMs(column, turbo));
       }
 
@@ -424,7 +428,7 @@ export function GoldenTigerReference() {
 
       if (featurePlan) {
         setWinning(new Set());
-        playSound("tigerFeatureOpen", soundEnabled, { intensity: 1.02 });
+        playGoldenTigerAudio({ type: "feature-open" }, soundEnabled);
         const featurePayout = await animateFeature(featurePlan);
         await settle(
           featurePayout,
@@ -438,9 +442,10 @@ export function GoldenTigerReference() {
       setWinning(baseResult.winning);
       setPhase("reveal");
       if (baseResult.payout > bet) {
-        playSound("tigerReveal", soundEnabled, {
-          intensity: baseResult.payout >= bet * 5 ? 1.04 : 0.86,
-        });
+        playGoldenTigerAudio({
+          type: "reveal",
+          winMultiple: baseResult.payout / bet,
+        }, soundEnabled);
       }
       await wait(turbo ? 55 : baseResult.winning.size > 0 ? 180 : 110);
 
@@ -484,7 +489,7 @@ export function GoldenTigerReference() {
     if (busyRef.current || autoLeft > 0) return;
     const current = Math.max(0, BETS.findIndex((value) => value === bet));
     setBet(BETS[Math.max(0, Math.min(BETS.length - 1, current + direction))] ?? bet);
-    playSound("click", soundEnabled);
+    playGoldenTigerAudio({ type: "click" }, soundEnabled);
   };
 
   const status =
