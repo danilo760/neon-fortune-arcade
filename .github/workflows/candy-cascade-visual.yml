@@ -3,10 +3,8 @@ name: Candy Cascade Visual
 on:
   pull_request:
     paths:
-      - "src/components/arcade/CandyCascadeHQ.tsx"
-      - "src/components/arcade/CandyCascadeReference.css"
-      - "src/components/arcade/CandyCascadePresentation.css"
-      - "src/components/arcade/CandyCascadeOrchestration.css"
+      - "src/components/arcade/CandyCascadePremium.tsx"
+      - "src/components/arcade/CandyCascadePremium.css"
       - "src/lib/arcade/candyCascade*.ts"
       - "src/lib/arcade/candySound.ts"
       - "src/routes/game/$slug.tsx"
@@ -60,7 +58,7 @@ jobs:
           done
           cat candy-cascade-chrome.log
           exit 1
-      - name: Audit mobile baseline
+      - name: Audit premium mobile presentation
         run: node scripts/candyCascadeVisualQa.mjs
       - name: Stop processes
         if: always()
