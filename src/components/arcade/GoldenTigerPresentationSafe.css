@@ -1,0 +1,11 @@
+@import "./GoldenTigerPresentation.css";
+
+/* Keep the mascot large, but bound it to the fixed-height character stage.
+   Viewport width alone is not a safe scale signal: on 390–430px phones the
+   previous 52vw rule pushed the atlas into the brand/title zone. */
+@media (min-height: 761px) {
+  .gt-hw-machine .gt-hw-tiger-rig,
+  .gt-hw-machine .gt-hw-tiger-sprite {
+    width: clamp(190px, 50vw, 198px);
+  }
+}
