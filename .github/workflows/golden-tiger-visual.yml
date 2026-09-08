@@ -1,0 +1,104 @@
+name: Golden Tiger Visual
+
+on:
+  pull_request:
+    paths:
+      - "src/components/arcade/GoldenTigerReference.tsx"
+      - "src/components/arcade/GoldenTigerReference.css"
+      - "src/components/arcade/GoldenTigerPresentation.css"
+      - "src/components/arcade/golden-tiger/**"
+      - "src/assets/golden-tiger/**"
+      - "src/lib/arcade/goldenTiger*.ts"
+      - "scripts/goldenTigerVisualQa.mjs"
+      - ".github/workflows/golden-tiger-visual.yml"
+  workflow_dispatch:
+
+jobs:
+  mobile-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Production build
+        run: bun run build
+
+      - name: Detect Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME" ]; then
+            echo "No Chrome/Chromium binary available on the runner" >&2
+            exit 1
+          fi
+          echo "CHROME=$CHROME" >> "$GITHUB_ENV"
+          "$CHROME" --version
+
+      - name: Start production server
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORT=3000 node .output/server/index.mjs > golden-tiger-server.log 2>&1 &
+          echo $! > /tmp/golden-tiger-server.pid
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/game/golden-tiger >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat golden-tiger-server.log
+          exit 1
+
+      - name: Start headless Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$CHROME" \
+            --headless=new \
+            --no-sandbox \
+            --disable-dev-shm-usage \
+            --disable-gpu \
+            --remote-debugging-address=127.0.0.1 \
+            --remote-debugging-port=9222 \
+            --user-data-dir=/tmp/golden-tiger-chrome \
+            about:blank > golden-tiger-chrome.log 2>&1 &
+          echo $! > /tmp/golden-tiger-chrome.pid
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:9222/json/version >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat golden-tiger-chrome.log
+          exit 1
+
+      - name: Audit mobile viewports
+        run: node scripts/goldenTigerVisualQa.mjs
+
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-tiger-visual-qa
+          path: |
+            artifacts/golden-tiger/
+            golden-tiger-server.log
+            golden-tiger-chrome.log
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Stop processes
+        if: always()
+        shell: bash
+        run: |
+          [ ! -f /tmp/golden-tiger-chrome.pid ] || kill "$(cat /tmp/golden-tiger-chrome.pid)" 2>/dev/null || true
+          [ ! -f /tmp/golden-tiger-server.pid ] || kill "$(cat /tmp/golden-tiger-server.pid)" 2>/dev/null || true
