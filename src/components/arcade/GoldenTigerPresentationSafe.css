@@ -12,9 +12,10 @@
 
 /* Tall phones were giving the 3×3 row all remaining height, leaving two dead
    bands around the reels. Keep the grid at its authored aspect ratio and let
-   the cabinet distribute spare height between sections instead. */
+   the cabinet distribute spare height between sections instead. The page
+   qualifier intentionally outranks the component CSS loaded later. */
 @media (min-height: 820px) {
-  .gt-hw-machine {
+  .gt-hw-page .gt-hw-machine {
     grid-template-rows: 50px 145px 38px auto 34px 43px auto 13px;
     align-content: space-between;
   }
