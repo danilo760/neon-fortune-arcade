@@ -153,6 +153,23 @@
   z-index: 2;
 }
 
+/* Big/Mega labels need to remain dramatic without clipping at 360–390px.
+   The value can stay larger; only the descriptive title gets a mobile-safe cap. */
+.gt-hw-page .gt-hw-win-overlay:not(.is-full) > span:first-of-type {
+  max-width: calc(100% - 28px);
+  font-size: clamp(27px, 8.2vw, 36px);
+  line-height: .96;
+  letter-spacing: -.035em;
+  white-space: nowrap;
+}
+
+@media (max-width: 370px) {
+  .gt-hw-page .gt-hw-win-overlay:not(.is-full) > span:first-of-type {
+    font-size: 27px;
+    letter-spacing: -.05em;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .gt-hw-reel-overlay .gt-hw-reel-track {
     top: 0 !important;
