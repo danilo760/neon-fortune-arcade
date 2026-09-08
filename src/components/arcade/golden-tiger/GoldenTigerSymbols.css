@@ -50,7 +50,7 @@
 }
 
 .gt-hw-grid .gt-hw-symbol.is-winning .gt-hw-symbol-art {
-  transform: scale(calc(var(--gt-symbol-scale, 1) * 1.055));
+  transform: scale(var(--gt-symbol-scale, 1));
   filter:
     saturate(1.14)
     contrast(1.06)
