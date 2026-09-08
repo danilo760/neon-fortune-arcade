@@ -159,7 +159,14 @@ async function openScenario(name, values, fallback = 0.9) {
   });
 
   await client.send("Page.navigate", { url: appUrl });
+  await waitFor(client, `document.readyState === 'complete'`, `${name} document load`);
   await waitFor(client, `Boolean(document.querySelector('.gt-hw-spin:not(:disabled)'))`, `${name} idle mount`);
+
+  // SSR can expose the enabled button before React attaches delegated event
+  // handlers. Give the client bundle one short, deterministic hydration window
+  // before dispatching the programmatic QA click.
+  await sleep(420);
+  await waitFor(client, `document.querySelector('.gt-hw-machine')?.getAttribute('data-phase') === 'idle'`, `${name} hydrated idle`);
 
   await evaluate(client, `(() => {
     window.__gtQaRandom.queue = ${JSON.stringify(values)}.slice();
@@ -169,6 +176,7 @@ async function openScenario(name, values, fallback = 0.9) {
     return true;
   })()`);
 
+  await waitFor(client, `document.querySelector('.gt-hw-machine')?.getAttribute('data-phase') !== 'idle'`, `${name} spin handler`);
   return { target, client };
 }
 
