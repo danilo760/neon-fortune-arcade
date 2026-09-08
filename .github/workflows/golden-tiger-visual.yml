@@ -12,6 +12,7 @@ on:
       - "src/lib/arcade/goldenTiger*.ts"
       - "src/routes/game/$slug.tsx"
       - "scripts/goldenTigerVisualQa.mjs"
+      - "scripts/goldenTigerSpecialStateQa.mjs"
       - "scripts/goldenTigerCompositionGuard.mjs"
       - ".github/workflows/golden-tiger-visual.yml"
   workflow_dispatch:
@@ -86,6 +87,9 @@ jobs:
 
       - name: Audit mobile viewports
         run: node scripts/goldenTigerVisualQa.mjs
+
+      - name: Audit special states
+        run: node scripts/goldenTigerSpecialStateQa.mjs
 
       - name: Guard mobile composition
         run: node scripts/goldenTigerCompositionGuard.mjs
