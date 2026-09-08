@@ -87,6 +87,18 @@ async function screenshot(client, path) {
   await writeFile(path, Buffer.from(result.data, "base64"));
 }
 
+async function applyViewport(client, viewport) {
+  await client.send("Emulation.setDeviceMetricsOverride", {
+    width: viewport.width,
+    height: viewport.height,
+    deviceScaleFactor: 1,
+    mobile: true,
+    screenWidth: viewport.width,
+    screenHeight: viewport.height,
+  });
+  await client.send("Emulation.setPageScaleFactor", { pageScaleFactor: 1 });
+}
+
 const auditExpression = `(async () => {
   const machine = document.querySelector('.gt-hw-machine');
   const grid = document.querySelector('.gt-hw-grid');
@@ -164,6 +176,28 @@ const auditExpression = `(async () => {
   };
 })()`;
 
+async function waitForStableLayout(client, viewport) {
+  let lastAudit = null;
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    // Chrome can apply the page's viewport metadata after the first emulation
+    // override, especially on a freshly started runner. Reassert the requested
+    // device metrics after navigation and wait until geometry is physically
+    // plausible before treating it as a product regression.
+    await applyViewport(client, viewport);
+    await sleep(attempt === 0 ? 160 : 80);
+    lastAudit = await evaluate(client, auditExpression);
+    const stable =
+      lastAudit?.ready &&
+      Math.abs(lastAudit.width - viewport.width) <= 1 &&
+      lastAudit.machine?.height > viewport.height * 0.8 &&
+      lastAudit.machine?.height <= viewport.height + 2 &&
+      lastAudit.spin?.height > 30 &&
+      lastAudit.scrollWidth <= viewport.width + 1;
+    if (stable) return lastAudit;
+  }
+  return lastAudit;
+}
+
 function validateIdle(audit, viewport) {
   const errors = [];
   if (!audit?.ready) errors.push("Golden Tiger cabinet did not mount");
@@ -201,18 +235,11 @@ for (const viewport of viewports) {
     await client.connect();
     await client.send("Page.enable");
     await client.send("Runtime.enable");
-    await client.send("Emulation.setDeviceMetricsOverride", {
-      width: viewport.width,
-      height: viewport.height,
-      deviceScaleFactor: 1,
-      mobile: true,
-      screenWidth: viewport.width,
-      screenHeight: viewport.height,
-    });
+    await applyViewport(client, viewport);
     await client.send("Page.navigate", { url: appUrl });
-    await sleep(1_400);
+    await sleep(1_250);
 
-    const idle = await evaluate(client, auditExpression);
+    const idle = await waitForStableLayout(client, viewport);
     const idleErrors = validateIdle(idle, viewport);
     await screenshot(client, `${outputDir}/golden-${viewport.width}x${viewport.height}-idle.png`);
 
