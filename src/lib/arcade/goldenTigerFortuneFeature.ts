@@ -6,6 +6,7 @@ import {
   pickGoldenTigerSymbol,
   type GoldenTigerSymbolId,
 } from "./goldenTigerMath";
+import { resolveGoldenTigerVisualQaRng } from "./goldenTigerVisualQaRng";
 
 export const FORTUNE_FEATURE_TRIGGER_CHANCE = 0.0099;
 export const FORTUNE_FEATURE_FULL_GRID_MULTIPLIER = GOLDEN_TIGER_FULL_GRID_MULTIPLIER;
@@ -47,12 +48,13 @@ function unitRoll(rng: () => number) {
 }
 
 export function rollFortuneFeatureTrigger(rng: () => number = Math.random) {
-  return unitRoll(rng) < FORTUNE_FEATURE_TRIGGER_CHANCE;
+  return unitRoll(resolveGoldenTigerVisualQaRng(rng)) < FORTUNE_FEATURE_TRIGGER_CHANCE;
 }
 
 export function pickFortuneFeatureSymbol(rng: () => number = Math.random): GoldenTigerSymbolId {
+  const resolvedRng = resolveGoldenTigerVisualQaRng(rng);
   for (let attempt = 0; attempt < 16; attempt += 1) {
-    const symbol = pickGoldenTigerSymbol(rng);
+    const symbol = pickGoldenTigerSymbol(resolvedRng);
     if (symbol !== "wild") return symbol;
   }
   return "orange";
@@ -92,9 +94,11 @@ export function evaluateFortuneFeatureGrid(
 export function runFortuneFeature(
   bet: number,
   rng: () => number = Math.random,
-  selectedSymbol = pickFortuneFeatureSymbol(rng),
+  selectedSymbol?: GoldenTigerSymbolId,
 ): FortuneFeatureResult {
-  const safeSelected = selectedSymbol === "wild" ? "orange" : selectedSymbol;
+  const resolvedRng = resolveGoldenTigerVisualQaRng(rng);
+  const requestedSelected = selectedSymbol ?? pickFortuneFeatureSymbol(resolvedRng);
+  const safeSelected = requestedSelected === "wild" ? "orange" : requestedSelected;
   const grid: FortuneFeatureCell[] = Array.from({ length: 9 }, () => null);
   const steps: FortuneFeatureStep[] = [];
   let respinsUsed = 0;
@@ -105,7 +109,7 @@ export function runFortuneFeature(
 
     for (let index = 0; index < grid.length; index += 1) {
       if (grid[index] !== null) continue;
-      const roll = unitRoll(rng);
+      const roll = unitRoll(resolvedRng);
       if (roll < NEON_FORTUNE_WILD_LAND_CHANCE) {
         grid[index] = "wild";
         addedIndices.push(index);
