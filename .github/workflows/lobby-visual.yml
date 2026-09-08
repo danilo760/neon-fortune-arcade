@@ -10,6 +10,7 @@ on:
       - "src/components/arcade/GameCard.tsx"
       - "src/styles/arcade-lobby-mobile.css"
       - "src/lib/arcade/catalog.ts"
+      - "src/lib/arcade/adaptiveScore.ts"
       - "scripts/lobbyVisualQa.mjs"
       - ".github/workflows/lobby-visual.yml"
   workflow_dispatch:
