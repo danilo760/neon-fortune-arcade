@@ -11,26 +11,29 @@
 }
 
 /* The three base reels share one deterministic symbol strip, but their live
-   presentation must not read as three synchronized copies. Apply a transient
-   visual phase offset while they are cruising; the offset is removed as each
-   reel enters its braking phase, so the precomputed final symbols still snap
-   to the exact target positions. */
-.gt-hw-reel-overlay:not(.is-braking)[style*="33.333333%"] .gt-hw-reel-track {
-  translate: 0 -42px;
+   presentation must not read as three synchronized copies. Offset reels 2/3
+   by whole visible cells while cruising, then return to zero as braking starts
+   so the precomputed result still lands on the exact final symbols. */
+.gt-hw-reel-track {
+  position: relative;
 }
 
-.gt-hw-reel-overlay:not(.is-braking)[style*="66.666666%"] .gt-hw-reel-track {
-  translate: 0 -84px;
+.gt-hw-reel-overlay:not(.is-braking)[style*="33.333"] .gt-hw-reel-track {
+  top: -33.333333%;
+}
+
+.gt-hw-reel-overlay:not(.is-braking)[style*="66.666"] .gt-hw-reel-track {
+  top: -66.666667%;
 }
 
 .gt-hw-reel-overlay.is-braking .gt-hw-reel-track {
-  translate: 0 0;
-  transition: translate 150ms cubic-bezier(.2,.75,.25,1);
+  top: 0;
+  transition: top 140ms cubic-bezier(.2,.75,.25,1);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .gt-hw-reel-overlay .gt-hw-reel-track {
-    translate: 0 0 !important;
+    top: 0 !important;
     transition: none !important;
   }
 }
