@@ -102,15 +102,6 @@ async function waitForPhase(client, phase, timeoutMs) {
   );
 }
 
-async function installRandomQueue(client, values, fallback = 0.9) {
-  await evaluate(client, `(() => {
-    const values = ${JSON.stringify(values)};
-    let index = 0;
-    Math.random = () => values[index++] ?? ${fallback};
-    return true;
-  })()`);
-}
-
 async function snapshotState(client) {
   return evaluate(client, `(() => {
     const machine = document.querySelector('.gt-hw-machine');
@@ -148,8 +139,18 @@ async function openScenario(name, values, fallback = 0.9) {
   });
   await client.send("Page.navigate", { url: appUrl });
   await waitFor(client, `Boolean(document.querySelector('.gt-hw-spin:not(:disabled)'))`, `${name} idle mount`);
-  await installRandomQueue(client, values, fallback);
-  await evaluate(client, `(() => { document.querySelector('.gt-hw-spin')?.click(); return true; })()`);
+
+  // Install the deterministic queue and dispatch the click in one synchronous
+  // browser task. This prevents idle/audio timers from consuming queued RNG
+  // values between the override and React's spin handler.
+  await evaluate(client, `(() => {
+    const values = ${JSON.stringify(values)};
+    let index = 0;
+    Math.random = () => values[index++] ?? ${fallback};
+    document.querySelector('.gt-hw-spin')?.click();
+    return { calls: index };
+  })()`);
+
   return { target, client };
 }
 
