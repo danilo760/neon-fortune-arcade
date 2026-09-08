@@ -1,5 +1,11 @@
 type Rng = () => number;
 
+type VisualQaRandomState = {
+  queue: number[];
+  fallback: number;
+  calls: number;
+};
+
 let cachedSequence = "";
 let cachedValues: number[] = [];
 let cachedIndex = 0;
@@ -15,6 +21,15 @@ let cachedFallback = 0.9;
 export function resolveGoldenTigerVisualQaRng(fallback: Rng): Rng {
   if (import.meta.env.VITE_GOLDEN_TIGER_VISUAL_QA !== "1" || typeof window === "undefined") {
     return fallback;
+  }
+
+  const injected = (window as typeof window & { __gtQaRandom?: VisualQaRandomState }).__gtQaRandom;
+  if (injected && Array.isArray(injected.queue)) {
+    return () => {
+      injected.calls += 1;
+      const value = injected.queue.shift();
+      return value ?? injected.fallback;
+    };
   }
 
   const params = new URLSearchParams(window.location.search);
