@@ -1,6 +1,9 @@
 # Golden Tiger character atlas
 
-`tiger-pose-atlas.avif` is original Neon Fortune character artwork assembled from the previously approved eight-pose sheet.
+`tiger-pose-atlas.webp` is original Neon Fortune character artwork stored as a
+browser-decodable RGBA WebP atlas.
+
+The asset is 2048×1024, so every pose occupies one 512×512 cell.
 
 Grid layout (4 columns × 2 rows):
 

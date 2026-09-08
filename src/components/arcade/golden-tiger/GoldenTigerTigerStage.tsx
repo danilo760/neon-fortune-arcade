@@ -1,6 +1,6 @@
 import { memo, useEffect, useState } from "react";
 
-import tigerPoseAtlas from "@/assets/golden-tiger/tiger-pose-atlas.avif";
+import tigerPoseAtlas from "@/assets/golden-tiger/tiger-pose-atlas.webp";
 
 export type TigerReactionState = "idle" | "watch" | "reveal" | "feature" | "tense" | "win" | "full";
 type TigerPose = TigerReactionState | "blink";
