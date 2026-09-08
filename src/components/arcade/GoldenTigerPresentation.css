@@ -141,6 +141,71 @@
   to { transform: translateX(-50%) translateY(-4px) scale(1.065); }
 }
 
+/* Match the reference interaction hierarchy: Turbo | − Spin + | Auto.
+   The feature rate remains in the status strip, not as a competing control. */
+.gt-hw-machine .gt-hw-controls {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 52px;
+  align-items: center;
+  gap: 6px;
+  padding-inline: 2px;
+}
+
+.gt-hw-machine .gt-hw-feature[aria-label="Fortune Feature aleatória"] {
+  display: none;
+}
+
+.gt-hw-machine .gt-hw-main-controls {
+  grid-column: 2;
+  grid-row: 1;
+  display: grid;
+  grid-template-columns: 42px minmax(74px, 82px) 42px;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+}
+
+.gt-hw-machine .gt-hw-main-controls > button:not(.gt-hw-spin) {
+  width: 40px;
+  height: 40px;
+  justify-self: center;
+}
+
+.gt-hw-machine .gt-hw-spin {
+  width: 78px;
+  max-width: none;
+  justify-self: center;
+}
+
+.gt-hw-machine .gt-hw-secondary-controls {
+  display: contents;
+}
+
+.gt-hw-machine .gt-hw-secondary-controls > button {
+  width: 50px;
+  min-height: 46px;
+  padding: 3px 2px;
+  justify-self: center;
+  border: 1px solid rgba(224,174,72,.5);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(101,17,10,.94), rgba(48,5,4,.94));
+  box-shadow: inset 0 0 10px rgba(255,185,52,.12), 0 3px 8px rgba(0,0,0,.34);
+}
+
+.gt-hw-machine .gt-hw-secondary-controls > button:nth-child(1) {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.gt-hw-machine .gt-hw-secondary-controls > button:nth-child(2) {
+  display: none;
+}
+
+.gt-hw-machine .gt-hw-secondary-controls > button:nth-child(3) {
+  grid-column: 3;
+  grid-row: 1;
+}
+
 /* Fortune Feature uses selected symbol + Wild + blank. Empty positions must
    read as intentionally empty, not as broken/missing artwork. */
 .gt-hw-cell.is-feature-blank {
@@ -160,17 +225,29 @@
   opacity: .72;
 }
 
-/* This tile now communicates the random feature rate; it is not a feature-buy button. */
-.gt-hw-feature[aria-label="Fortune Feature aleatória"] {
-  cursor: default;
-  user-select: none;
-}
-
 @media (max-height: 760px) {
   .gt-hw-tiger-sprite {
     width: 160px;
     bottom: -19px;
   }
+
+  .gt-hw-machine .gt-hw-controls {
+    grid-template-columns: 46px minmax(0, 1fr) 46px;
+    gap: 4px;
+  }
+
+  .gt-hw-machine .gt-hw-main-controls {
+    grid-template-columns: 38px minmax(66px, 72px) 38px;
+    gap: 5px;
+  }
+
+  .gt-hw-machine .gt-hw-main-controls > button:not(.gt-hw-spin) {
+    width: 36px;
+    height: 36px;
+  }
+
+  .gt-hw-machine .gt-hw-spin { width: 68px; }
+  .gt-hw-machine .gt-hw-secondary-controls > button { width: 44px; min-height: 40px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
