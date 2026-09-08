@@ -1,6 +1,6 @@
 # Fortune Tiger verification pass — 2026-09-08
 
-This pass re-checks the Golden Tiger reference dossier against current public material before implementation.
+This pass re-checks the Golden Tiger reference dossier against current public material before and during implementation.
 
 ## Official PG SOFT facts re-verified
 
@@ -25,7 +25,7 @@ Confirmed:
 - Previously appeared eligible symbols remain in position.
 - If at least one additional eligible symbol appears, all reels respin again.
 - If no additional eligible symbol appears, the feature ends and wins are paid.
-- The ×10 rule is general: when all symbols on the reels are involved in a win, that win is multiplied by ×10. It should not be documented as exclusive to a Hold & Win or coin feature.
+- The ×10 rule is general: when all symbols on the reels are involved in a win, that win is multiplied by ×10. It is not exclusive to the feature.
 
 Published symbol-payout hierarchy:
 - Wild: 250
@@ -46,6 +46,25 @@ Implementation policy:
 3. Do not invent hidden PG probabilities and label them as official.
 4. Any probability calibration not explicitly published by PG must be documented as Neon-original.
 
-## Implementation continuation authorized by this verification
+## Active implementation after verification
 
-First engineering step: replace the current CSS-only infinite reel overlay/disappear stop with a deterministic reel presentation that has sustained motion, per-reel braking, easing and a final snap matching the already precomputed symbols. This changes presentation only and does not change payout math.
+The cleanup/rebuild branch now implements the verified public feature model instead of the old coin Hold & Win:
+- random feature trigger reference of 0.99%;
+- one selected regular non-Wild symbol;
+- selected symbol / Wild / blank-only feature grid;
+- landed eligible symbols remain sticky;
+- respin continues only when at least one new eligible symbol lands;
+- first respin with no new eligible symbol ends the feature;
+- full-screen ×10 is shared by base game and feature.
+
+The internal feature landing chances remain explicitly Neon-original because PG does not publish those reel weights.
+
+The old Hold & Win engine/test have been removed from this branch.
+
+## Presentation progress
+
+The base reel overlay no longer relies on a linear infinite CSS strip that disappears at stop. It now has sustained motion, per-reel braking, easing and deterministic snap to the precomputed final symbols.
+
+## Remaining verification boundary
+
+Visual similarity has **not** yet been validated in a real browser for this branch. Required sizes remain 360×800, 390×844 and 430×932. Character acting remains limited by only two real pose assets and is the next major presentation gap.
