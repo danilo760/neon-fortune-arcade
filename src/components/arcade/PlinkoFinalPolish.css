@@ -1,0 +1,130 @@
+@import "./PlinkoPresentationSafe.css";
+
+/* Final authored pass for the active Neon Plinko renderer.
+ * Physics, bucket tables, timing and accounting remain untouched. */
+.plinko-ref-machine {
+  background:
+    radial-gradient(circle at 50% 12%, rgba(112,240,255,.24), transparent 18%),
+    radial-gradient(circle at 14% 42%, rgba(255,67,220,.13), transparent 27%),
+    radial-gradient(circle at 86% 45%, rgba(91,132,255,.13), transparent 26%),
+    linear-gradient(180deg,#07152d 0%,#081731 31%,#04081c 68%,#090212 100%);
+  box-shadow: inset 0 0 70px rgba(0,0,0,.25), 0 0 80px rgba(57,212,255,.09);
+}
+
+.plinko-ref-machine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.035), transparent 10% 90%, rgba(255,255,255,.035)),
+    repeating-linear-gradient(90deg, transparent 0 48px, rgba(83,226,255,.018) 49px, transparent 50px),
+    radial-gradient(ellipse at 50% 58%, rgba(69,203,255,.08), transparent 50%);
+  mix-blend-mode: screen;
+}
+
+.plinko-ref-machine::before {
+  border-color: rgba(255,224,104,.56);
+  background: linear-gradient(180deg, rgba(17,48,82,.95), rgba(5,12,30,.98));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.13), inset 0 -8px 15px rgba(0,0,0,.28), 0 0 28px rgba(70,218,255,.12);
+}
+
+.plinko-ref-board {
+  isolation: isolate;
+  border: 1px solid rgba(98,226,255,.24);
+  background:
+    radial-gradient(circle at 50% 15%, rgba(78,225,255,.1), transparent 24%),
+    linear-gradient(90deg, rgba(69,222,255,.055), transparent 11% 89%, rgba(255,86,223,.055)),
+    linear-gradient(180deg, rgba(6,28,59,.72), rgba(2,8,27,.9));
+  box-shadow:
+    inset 0 0 0 1px rgba(103,230,255,.08),
+    inset 0 0 42px rgba(46,202,255,.08),
+    0 16px 32px rgba(0,0,0,.3),
+    0 0 28px rgba(57,198,255,.08);
+}
+
+.plinko-ref-board::before {
+  content: "";
+  position: absolute;
+  inset: 1.6%;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 7%;
+  border: 1px solid rgba(255,232,137,.12);
+  box-shadow: inset 0 0 18px rgba(255,255,255,.02);
+}
+
+.plinko-ref-board::after {
+  opacity: 1;
+  filter: drop-shadow(0 0 4px rgba(102,235,255,.48));
+}
+
+.plinko-ref-board__portal {
+  filter: drop-shadow(0 0 12px rgba(92,227,255,.4)) drop-shadow(0 0 24px rgba(255,79,220,.13));
+}
+.plinko-ref-board__portal::before {
+  box-shadow: inset 0 0 20px rgba(255,255,255,.12), 0 0 24px rgba(76,226,255,.2) !important;
+}
+
+.plinko-ref-ball,
+.plinko-ref-ball--idle {
+  box-shadow: inset -4px -5px 9px rgba(0,0,0,.3), inset 3px 3px 5px rgba(255,255,255,.45), 0 0 12px rgba(107,235,255,.68) !important;
+}
+
+.plinko-ref-ball::after,
+.plinko-ref-ball--idle::after {
+  content: "";
+  position: absolute;
+  left: 24%;
+  top: 17%;
+  width: 28%;
+  height: 18%;
+  border-radius: 50%;
+  background: rgba(255,255,255,.62);
+  transform: rotate(-22deg);
+  filter: blur(.3px);
+  pointer-events: none;
+}
+
+.plinko-ref-impact {
+  box-shadow: 0 0 10px rgba(123,239,255,.45), 0 0 18px rgba(255,96,220,.18);
+}
+
+.plinko-ref-buckets {
+  filter: drop-shadow(0 8px 10px rgba(0,0,0,.34));
+}
+.plinko-ref-bucket {
+  border-color: rgba(255,255,255,.15) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.16), inset 0 -7px 11px rgba(0,0,0,.3), 0 2px 6px rgba(0,0,0,.24) !important;
+  text-shadow: 0 1px 0 rgba(0,0,0,.65), 0 0 6px rgba(255,255,255,.12);
+}
+.plinko-ref-bucket.is-landed,
+.plinko-ref-bucket.is-last {
+  filter: brightness(1.18) saturate(1.12);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 0 15px rgba(118,232,255,.24) !important;
+}
+
+.plinko-ref-machine.is-celebrating .plinko-ref-board {
+  box-shadow:
+    inset 0 0 0 1px rgba(255,236,146,.16),
+    inset 0 0 46px rgba(76,214,255,.11),
+    0 16px 34px rgba(0,0,0,.32),
+    0 0 34px rgba(255,219,93,.13);
+}
+
+.plinko-ref-machine.is-celebrating::after {
+  background:
+    radial-gradient(circle at 50% 31%, rgba(255,236,138,.09), transparent 27%),
+    linear-gradient(90deg, rgba(255,255,255,.035), transparent 10% 90%, rgba(255,255,255,.035));
+}
+
+@media (max-width: 370px) {
+  .plinko-ref-board { box-shadow: inset 0 0 0 1px rgba(103,230,255,.07), inset 0 0 30px rgba(46,202,255,.06), 0 12px 24px rgba(0,0,0,.27); }
+  .plinko-ref-ball,
+  .plinko-ref-ball--idle { box-shadow: inset -3px -4px 7px rgba(0,0,0,.28), inset 2px 2px 4px rgba(255,255,255,.4), 0 0 9px rgba(107,235,255,.58) !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plinko-ref-bucket { transition: none !important; }
+}

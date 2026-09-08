@@ -1,0 +1,71 @@
+name: Lobby Visual
+
+on:
+  pull_request:
+    paths:
+      - "src/routes/index.tsx"
+      - "src/components/arcade/GameArtwork.tsx"
+      - "src/components/arcade/GameArtworkPremium.css"
+      - "src/components/arcade/GameArtworkOriginal.css"
+      - "src/components/arcade/GameCard.tsx"
+      - "src/styles/arcade-lobby-mobile.css"
+      - "src/lib/arcade/catalog.ts"
+      - "src/lib/arcade/adaptiveScore.ts"
+      - "scripts/lobbyVisualQa.mjs"
+      - ".github/workflows/lobby-visual.yml"
+  workflow_dispatch:
+
+jobs:
+  mobile-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Production build
+        run: bun run build
+      - name: Detect Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          [ -n "$CHROME" ] || { echo "No Chrome/Chromium binary" >&2; exit 1; }
+          echo "CHROME=$CHROME" >> "$GITHUB_ENV"
+      - name: Start production server
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORT=3000 node .output/server/index.mjs > lobby-server.log 2>&1 &
+          echo $! > /tmp/lobby-server.pid
+          for attempt in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:3000/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat lobby-server.log
+          exit 1
+      - name: Start headless Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu \
+            --remote-debugging-address=127.0.0.1 --remote-debugging-port=9227 \
+            --user-data-dir=/tmp/lobby-chrome about:blank > lobby-chrome.log 2>&1 &
+          echo $! > /tmp/lobby-chrome.pid
+          for attempt in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:9227/json/version >/dev/null && exit 0
+            sleep 1
+          done
+          cat lobby-chrome.log
+          exit 1
+      - name: Audit mobile lobby
+        run: node scripts/lobbyVisualQa.mjs
+      - name: Stop processes
+        if: always()
+        shell: bash
+        run: |
+          [ ! -f /tmp/lobby-chrome.pid ] || kill "$(cat /tmp/lobby-chrome.pid)" 2>/dev/null || true
+          [ ! -f /tmp/lobby-server.pid ] || kill "$(cat /tmp/lobby-server.pid)" 2>/dev/null || true

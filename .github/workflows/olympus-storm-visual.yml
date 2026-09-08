@@ -1,0 +1,111 @@
+name: Olympus Storm Visual
+
+on:
+  pull_request:
+    paths:
+      - "src/components/arcade/OlympusStormReference.tsx"
+      - "src/components/arcade/OlympusStormReference.css"
+      - "src/components/arcade/OlympusStormPremium.tsx"
+      - "src/components/arcade/OlympusStormPremium.css"
+      - "src/components/arcade/OlympusStormPremiumPolish.css"
+      - "src/components/arcade/OlympusStormActivePolish.css"
+      - "src/components/arcade/OlympusStormMediaRig.css"
+      - "src/assets/olympus-storm/**"
+      - "src/lib/arcade/olympusStorm*.ts"
+      - "src/lib/arcade/olympusAuthorialArtwork.test.ts"
+      - "src/lib/arcade/adaptiveScore.ts"
+      - "src/routes/game/$slug.tsx"
+      - "scripts/olympusStormVisualQa.mjs"
+      - "tsconfig.json"
+      - ".github/workflows/olympus-storm-visual.yml"
+  workflow_dispatch:
+
+jobs:
+  mobile-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Production build
+        run: bun run build
+
+      - name: Detect Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME" ]; then
+            echo "No Chrome/Chromium binary available on the runner" >&2
+            exit 1
+          fi
+          echo "CHROME=$CHROME" >> "$GITHUB_ENV"
+          "$CHROME" --version
+
+      - name: Start production server
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORT=3000 node .output/server/index.mjs > olympus-storm-server.log 2>&1 &
+          echo $! > /tmp/olympus-storm-server.pid
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/game/olympus-storm >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat olympus-storm-server.log
+          exit 1
+
+      - name: Start headless Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$CHROME" \
+            --headless=new \
+            --no-sandbox \
+            --disable-dev-shm-usage \
+            --disable-gpu \
+            --remote-debugging-address=127.0.0.1 \
+            --remote-debugging-port=9223 \
+            --user-data-dir=/tmp/olympus-storm-chrome \
+            about:blank > olympus-storm-chrome.log 2>&1 &
+          echo $! > /tmp/olympus-storm-chrome.pid
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:9223/json/version >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat olympus-storm-chrome.log
+          exit 1
+
+      - name: Audit mobile viewports
+        run: node scripts/olympusStormVisualQa.mjs
+
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: olympus-storm-visual-qa
+          path: |
+            artifacts/olympus-storm/
+            olympus-storm-server.log
+            olympus-storm-chrome.log
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Stop processes
+        if: always()
+        shell: bash
+        run: |
+          [ ! -f /tmp/olympus-storm-chrome.pid ] || kill "$(cat /tmp/olympus-storm-chrome.pid)" 2>/dev/null || true
+          [ ! -f /tmp/olympus-storm-server.pid ] || kill "$(cat /tmp/olympus-storm-server.pid)" 2>/dev/null || true

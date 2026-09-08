@@ -1,0 +1,73 @@
+name: Neon Mines Visual
+
+on:
+  pull_request:
+    paths:
+      - "src/components/arcade/MinesGame.tsx"
+      - "src/components/arcade/MinesPremium.css"
+      - "src/components/arcade/MinesInteraction.css"
+      - "src/components/arcade/MinesOrchestration.css"
+      - "src/components/arcade/MinesPresentation.css"
+      - "src/components/arcade/MinesPresentationSafe.css"
+      - "src/components/arcade/MinesFinalPolish.css"
+      - "src/lib/arcade/mines*.ts"
+      - "src/lib/arcade/adaptiveScore.ts"
+      - "src/routes/game/$slug.tsx"
+      - "scripts/minesVisualQa.mjs"
+      - ".github/workflows/neon-mines-visual.yml"
+  workflow_dispatch:
+
+jobs:
+  mobile-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Production build
+        run: bun run build
+      - name: Detect Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          [ -n "$CHROME" ] || { echo "No Chrome/Chromium binary" >&2; exit 1; }
+          echo "CHROME=$CHROME" >> "$GITHUB_ENV"
+      - name: Start production server
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORT=3000 node .output/server/index.mjs > neon-mines-server.log 2>&1 &
+          echo $! > /tmp/neon-mines-server.pid
+          for attempt in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:3000/game/neon-mines >/dev/null && exit 0
+            sleep 1
+          done
+          cat neon-mines-server.log
+          exit 1
+      - name: Start headless Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu \
+            --remote-debugging-address=127.0.0.1 --remote-debugging-port=9225 \
+            --user-data-dir=/tmp/neon-mines-chrome about:blank > neon-mines-chrome.log 2>&1 &
+          echo $! > /tmp/neon-mines-chrome.pid
+          for attempt in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:9225/json/version >/dev/null && exit 0
+            sleep 1
+          done
+          cat neon-mines-chrome.log
+          exit 1
+      - name: Audit mobile presentation
+        run: node scripts/minesVisualQa.mjs
+      - name: Stop processes
+        if: always()
+        shell: bash
+        run: |
+          [ ! -f /tmp/neon-mines-chrome.pid ] || kill "$(cat /tmp/neon-mines-chrome.pid)" 2>/dev/null || true
+          [ ! -f /tmp/neon-mines-server.pid ] || kill "$(cat /tmp/neon-mines-server.pid)" 2>/dev/null || true

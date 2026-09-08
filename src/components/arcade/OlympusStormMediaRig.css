@@ -1,0 +1,140 @@
+@import "./OlympusStormActivePolish.css";
+
+/* Media-tier motion for the active Olympus renderer. It adds acting/material
+ * response only; cluster math, feature flow and reel timings stay untouched. */
+
+.osp-guardian-aura {
+  animation: osp-media-aura 3.7s ease-in-out infinite;
+}
+
+.osp-guardian-crest {
+  transform-origin: 50% 78%;
+  animation: osp-media-guardian 4.6s cubic-bezier(.45,0,.55,1) infinite;
+}
+
+.osp-guardian-crest::before {
+  transform-origin: 50% 78%;
+  animation: osp-media-head 5.2s ease-in-out infinite;
+}
+
+.osp-guardian-crest::after {
+  transform-origin: 50% 8%;
+  animation: osp-media-beard 3.9s ease-in-out infinite;
+}
+
+.osp-machine.is-charged .osp-guardian-crest,
+.osp-machine.is-impact .osp-guardian-crest {
+  animation: osp-media-guardian-charged .62s ease-in-out infinite alternate;
+}
+
+.osp-machine.is-impact .osp-guardian-crest::before {
+  animation: osp-media-head-impact .34s cubic-bezier(.18,.85,.2,1.14) both;
+}
+
+.osp-symbol-shine {
+  animation: osp-media-shine 3.8s ease-in-out infinite;
+}
+
+.osp-cell:nth-child(2n) .osp-symbol-shine { animation-delay: -.9s; }
+.osp-cell:nth-child(3n) .osp-symbol-shine { animation-delay: -1.7s; }
+.osp-cell:nth-child(5n) .osp-symbol-shine { animation-delay: -2.5s; }
+
+.osp-symbol-svg {
+  transform-origin: 50% 58%;
+  animation: osp-media-symbol-idle 4.9s ease-in-out infinite;
+}
+
+.osp-cell:nth-child(2n) .osp-symbol-svg { animation-delay: -.72s; }
+.osp-cell:nth-child(3n) .osp-symbol-svg { animation-delay: -1.41s; }
+.osp-cell:nth-child(4n) .osp-symbol-svg { animation-delay: -2.13s; }
+.osp-cell:nth-child(5n) .osp-symbol-svg { animation-delay: -2.84s; }
+
+.osp-cell.is-winning .osp-symbol-svg {
+  animation: osp-media-symbol-win .46s cubic-bezier(.14,.86,.18,1.16) both;
+}
+
+.osp-grid.is-storm-charge .osp-symbol-svg,
+.osp-grid.is-storm-impact .osp-symbol-svg {
+  filter:
+    drop-shadow(0 3px 0 rgba(0,0,0,.28))
+    drop-shadow(0 0 10px color-mix(in srgb, currentColor 82%, transparent));
+}
+
+.osp-symbol--scatter .osp-scatter-ring {
+  animation: osp-media-scatter-ring 2.3s linear infinite;
+}
+
+.osp-machine.is-charged .osp-symbol--scatter .osp-scatter-ring,
+.osp-machine.is-impact .osp-symbol--scatter .osp-scatter-ring {
+  animation-duration: .78s;
+}
+
+@keyframes osp-media-aura {
+  0%, 100% { opacity: .72; scale: .96; rotate: -1deg; }
+  50% { opacity: 1; scale: 1.045; rotate: 1deg; }
+}
+
+@keyframes osp-media-guardian {
+  0%, 100% { translate: 0 0; rotate: -.35deg; scale: 1; }
+  36% { translate: -1px -1px; rotate: .3deg; scale: 1.006; }
+  68% { translate: 1px -2px; rotate: -.12deg; scale: 1.012; }
+}
+
+/* Horizontal centering lives in the base ::before/::after transform. These
+ * keyframes add only local motion so the authored face cannot drift sideways. */
+@keyframes osp-media-head {
+  0%, 100% { translate: 0 0; rotate: -.45deg; }
+  48% { translate: 0 -1px; rotate: .45deg; }
+  76% { translate: 0 -.4px; rotate: -.12deg; }
+}
+
+@keyframes osp-media-beard {
+  0%, 100% { translate: 0 0; scale: 1 1; }
+  50% { translate: 0 1px; scale: 1.015 .985; }
+}
+
+@keyframes osp-media-guardian-charged {
+  from { translate: -1px 0; rotate: -.65deg; scale: 1.01; filter: brightness(1.06); }
+  to { translate: 1px -2px; rotate: .65deg; scale: 1.035; filter: brightness(1.16); }
+}
+
+@keyframes osp-media-head-impact {
+  0% { translate: 0 4px; scale: .94; filter: brightness(1.22); }
+  56% { translate: 0 -3px; scale: 1.055; filter: brightness(1.3); }
+  100% { translate: 0 0; scale: 1; filter: brightness(1.08); }
+}
+
+@keyframes osp-media-shine {
+  0%, 64%, 100% { opacity: .2; translate: -6px 2px; scale: .78; }
+  74% { opacity: .76; translate: 2px -2px; scale: 1.08; }
+  86% { opacity: .36; translate: 8px -4px; scale: .9; }
+}
+
+@keyframes osp-media-symbol-idle {
+  0%, 100% { translate: 0 0; scale: 1; rotate: 0deg; }
+  50% { translate: 0 -.7px; scale: 1.012; rotate: .18deg; }
+}
+
+@keyframes osp-media-symbol-win {
+  0% { translate: 0 3px; scale: .9; rotate: -1deg; filter: brightness(1.08); }
+  52% { translate: 0 -2px; scale: 1.11; rotate: 1deg; filter: brightness(1.28) drop-shadow(0 0 13px currentColor); }
+  100% { translate: 0 0; scale: 1; rotate: 0deg; }
+}
+
+@keyframes osp-media-scatter-ring {
+  from { rotate: 0deg; scale: .97; }
+  50% { scale: 1.045; }
+  to { rotate: 360deg; scale: .97; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .osp-guardian-aura,
+  .osp-guardian-crest,
+  .osp-guardian-crest::before,
+  .osp-guardian-crest::after,
+  .osp-symbol-shine,
+  .osp-symbol-svg,
+  .osp-scatter-ring {
+    animation: none !important;
+  }
+}

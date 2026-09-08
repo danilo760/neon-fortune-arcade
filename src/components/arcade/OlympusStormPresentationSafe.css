@@ -1,0 +1,132 @@
+@import "./OlympusStormPresentation.css";
+
+/* Olympus authorial shell.
+ * The old reference.webp remains temporarily available only to the nested
+ * regular-symbol crop renderer. It must no longer be visible as the cabinet
+ * background or provide baked labels/buttons/branding.
+ */
+.os-ref-machine {
+  background:
+    radial-gradient(ellipse at 50% 11%, rgba(196, 236, 255, .28) 0 7%, rgba(91, 168, 236, .12) 18%, transparent 34%),
+    radial-gradient(ellipse at 18% 27%, rgba(73, 140, 220, .20), transparent 28%),
+    radial-gradient(ellipse at 82% 31%, rgba(126, 92, 217, .18), transparent 30%),
+    linear-gradient(180deg, #07152f 0%, #0b2550 20%, #102d59 38%, #071b39 62%, #030b1f 100%);
+}
+
+.os-ref-machine > img[alt="Olympus Storm"] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Rebuild the upper stage with geometry instead of a screenshot. The existing
+ * atmosphere layers still animate over this architecture. */
+.os-ref-atmosphere::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg,
+      transparent 0 4%,
+      rgba(206, 220, 228, .11) 4% 7%,
+      rgba(31, 61, 99, .38) 7% 10%,
+      transparent 10% 90%,
+      rgba(31, 61, 99, .38) 90% 93%,
+      rgba(206, 220, 228, .11) 93% 96%,
+      transparent 96%),
+    linear-gradient(180deg,
+      transparent 0 16%,
+      rgba(235, 242, 237, .12) 16% 17.2%,
+      rgba(99, 125, 151, .10) 17.2% 20%,
+      transparent 20%),
+    radial-gradient(ellipse at 50% 21%, rgba(218, 241, 255, .13), transparent 32%);
+  opacity: .95;
+}
+
+/* A restrained title plaque replaces the title baked into the bitmap while
+ * keeping the actual reel grid visually dominant. */
+.os-ref-atmosphere::after {
+  content: "OLYMPUS STORM";
+  position: absolute;
+  left: 50%;
+  top: 3.1%;
+  z-index: 6;
+  width: min(68%, 290px);
+  transform: translateX(-50%);
+  padding: 6px 14px 7px;
+  border: 1px solid rgba(219, 228, 213, .42);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(14, 52, 92, .80), rgba(5, 22, 54, .90));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .15),
+    0 4px 16px rgba(0, 5, 19, .40),
+    0 0 17px rgba(77, 187, 255, .14);
+  color: #e7f6ff;
+  font: 900 clamp(12px, 3.4vw, 16px)/1 Georgia, "Times New Roman", serif;
+  letter-spacing: .18em;
+  text-align: center;
+  text-shadow: 0 2px 0 rgba(2, 19, 47, .95), 0 0 11px rgba(122, 217, 255, .34);
+}
+
+/* The old back target was intentionally transparent because the screenshot
+ * contained the icon. Give the real control its own visible authorial chrome. */
+.os-ref-machine > a[aria-label="Voltar ao lobby"] {
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(186, 224, 244, .48);
+  background: linear-gradient(145deg, rgba(18, 64, 111, .94), rgba(4, 24, 57, .96));
+  color: #e9f8ff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.13), 0 3px 10px rgba(0,0,0,.34), 0 0 12px rgba(70,180,255,.14);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.os-ref-machine > a[aria-label="Voltar ao lobby"]::before {
+  content: "‹";
+  transform: translateY(-1px);
+  font: 900 clamp(22px, 6.4vw, 29px)/1 Georgia, serif;
+  text-shadow: 0 0 8px rgba(151, 225, 255, .42);
+}
+
+.os-ref-machine > a[aria-label="Voltar ao lobby"]:focus-visible {
+  outline: 2px solid rgba(214, 244, 255, .92);
+  outline-offset: 2px;
+}
+
+/* The real HUD should read as part of the new cabinet, not as patches covering
+ * labels inside an image. */
+.os-ref-win-meter {
+  border-color: rgba(153, 217, 246, .46);
+  background: linear-gradient(180deg, rgba(8, 49, 91, .97), rgba(3, 23, 57, .99));
+}
+
+.os-ref-machine > div[class*="left-[3.2%]"][class*="top-[84.5%]"],
+.os-ref-machine > div[class*="right-[3.1%]"][class*="top-[84.5%]"] {
+  border-color: rgba(151, 211, 237, .38);
+  background: linear-gradient(180deg, rgba(7, 45, 82, .98), rgba(3, 21, 50, .99));
+}
+
+/* Add depth behind the 6×5 frame now that there is no painted cabinet image. */
+.os-ref-grid {
+  box-shadow:
+    0 0 0 3px rgba(3, 13, 32, .92),
+    0 12px 34px rgba(0, 2, 13, .58),
+    0 0 28px rgba(82, 191, 255, .22),
+    inset 0 2px 1px rgba(255,255,236,.72),
+    inset 0 -14px 18px rgba(0,0,0,.55);
+}
+
+@media (max-width: 370px) {
+  .os-ref-atmosphere::after {
+    width: 64%;
+    font-size: 11px;
+    letter-spacing: .13em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .os-ref-machine > a[aria-label="Voltar ao lobby"] {
+    transition: none;
+  }
+}

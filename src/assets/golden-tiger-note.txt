@@ -1,1 +1,0 @@
-Golden Tiger visuals are bundled through Vite imports so preview/build cannot lose public-path assets.

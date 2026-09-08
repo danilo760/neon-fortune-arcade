@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="941" height="1672" viewBox="0 0 941 1672" role="img" aria-labelledby="title desc">
+  <title id="title">Olympus Storm original storm-temple artwork</title>
+  <desc id="desc">Original mythic storm king, marble temple atmosphere and seven original slot symbols aligned to the Olympus Storm reel crop contract.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#020816"/><stop offset=".28" stop-color="#0b2c67"/><stop offset=".56" stop-color="#061d47"/><stop offset="1" stop-color="#010714"/></linearGradient>
+    <radialGradient id="skyAura" cx="50%" cy="22%" r="52%"><stop stop-color="#6ee7ff" stop-opacity=".42"/><stop offset=".28" stop-color="#3d70e4" stop-opacity=".2"/><stop offset="1" stop-color="#00102c" stop-opacity="0"/></radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff3b3"/><stop offset=".18" stop-color="#ffd765"/><stop offset=".45" stop-color="#b86d12"/><stop offset=".68" stop-color="#ffdf78"/><stop offset="1" stop-color="#6c3908"/></linearGradient>
+    <linearGradient id="goldDark" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#d89a2c"/><stop offset=".55" stop-color="#7c430b"/><stop offset="1" stop-color="#351b05"/></linearGradient>
+    <linearGradient id="marble" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f7fdff"/><stop offset=".28" stop-color="#acdff0"/><stop offset=".55" stop-color="#5c91c5"/><stop offset=".82" stop-color="#dff7ff"/><stop offset="1" stop-color="#6f9ec6"/></linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ebfcff"/><stop offset=".25" stop-color="#7bd9f1"/><stop offset=".52" stop-color="#285a9d"/><stop offset=".78" stop-color="#b8edfa"/><stop offset="1" stop-color="#294b80"/></linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#f6c49a"/><stop offset=".5" stop-color="#c88665"/><stop offset="1" stop-color="#7f4a3d"/></linearGradient>
+    <linearGradient id="royal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#244f9f"/><stop offset=".5" stop-color="#0b2455"/><stop offset="1" stop-color="#07152f"/></linearGradient>
+    <radialGradient id="cyanGem" cx="34%" cy="28%" r="72%"><stop stop-color="#f4ffff"/><stop offset=".14" stop-color="#8ff5ff"/><stop offset=".42" stop-color="#31bfea"/><stop offset=".72" stop-color="#1766be"/><stop offset="1" stop-color="#09295a"/></radialGradient>
+    <radialGradient id="emerald" cx="35%" cy="30%" r="72%"><stop stop-color="#eaffdd"/><stop offset=".15" stop-color="#8ff7c9"/><stop offset=".5" stop-color="#24b78c"/><stop offset="1" stop-color="#07534c"/></radialGradient>
+    <radialGradient id="violet" cx="34%" cy="26%" r="72%"><stop stop-color="#fff0ff"/><stop offset=".15" stop-color="#d69cff"/><stop offset=".5" stop-color="#8453d6"/><stop offset="1" stop-color="#361969"/></radialGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#12366b"/><stop offset=".45" stop-color="#071d43"/><stop offset="1" stop-color="#02091b"/></linearGradient>
+    <pattern id="stars" width="89" height="89" patternUnits="userSpaceOnUse"><circle cx="12" cy="21" r="1.1" fill="#d8f7ff" opacity=".46"/><circle cx="53" cy="10" r=".7" fill="#fff4bd" opacity=".5"/><circle cx="74" cy="61" r="1" fill="#78ddff" opacity=".31"/><circle cx="33" cy="73" r=".7" fill="#fff" opacity=".35"/></pattern>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="shadow" x="-35%" y="-35%" width="170%" height="180%"><feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000510" flood-opacity=".82"/></filter>
+    <filter id="inner"><feGaussianBlur stdDeviation="1.4" result="blur"/><feComposite in="blur" in2="SourceAlpha" operator="out" result="cut"/><feFlood flood-color="#e7fbff" flood-opacity=".38" result="light"/><feComposite in="light" in2="cut" operator="in" result="edge"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="edge"/></feMerge></filter>
+    <symbol id="frame" viewBox="0 0 258 235">
+      <rect width="258" height="235" rx="22" fill="#020b1e"/>
+      <rect x="4" y="4" width="250" height="227" rx="19" fill="url(#panel)" stroke="#7bdff8" stroke-opacity=".22" stroke-width="2.5"/>
+      <path d="M16 25c35-14 80-19 113-19s78 5 113 19" fill="none" stroke="#dffaff" stroke-opacity=".14" stroke-width="3"/>
+      <ellipse cx="129" cy="116" rx="99" ry="86" fill="#36a8e8" opacity=".055"/>
+      <path d="M20 207c49 15 169 15 218 0" fill="none" stroke="#001329" stroke-opacity=".65" stroke-width="7"/>
+    </symbol>
+    <symbol id="sym-bolt" viewBox="0 0 258 235">
+      <use href="#frame"/>
+      <g filter="url(#shadow)">
+        <path d="M151 20 72 126h46l-17 89 89-119h-47z" fill="#c9f9ff" stroke="#35cfff" stroke-width="12" stroke-linejoin="round" filter="url(#glow)"/>
+        <path d="M150 31 88 116h44l-14 70 56-81h-45z" fill="url(#gold)" stroke="#fff2a7" stroke-width="4.5" stroke-linejoin="round"/>
+        <path d="M135 56 104 111h28l-6 38 29-47h-27z" fill="#fffbe0" opacity=".78"/>
+      </g>
+      <path d="M55 68 70 76 58 82 68 92M199 146l13 7-11 5 9 10" fill="none" stroke="#71eaff" stroke-width="4" stroke-linecap="round" opacity=".75"/>
+    </symbol>
+    <symbol id="sym-crown" viewBox="0 0 258 235">
+      <use href="#frame"/>
+      <g filter="url(#shadow)">
+        <path d="M44 83 83 116l45-77 45 77 42-35-20 111H61z" fill="url(#gold)" stroke="#fff1a7" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M66 148h128l-7 34H73z" fill="url(#goldDark)" stroke="#ffd96c" stroke-width="4"/>
+        <path d="M79 131h99" stroke="#fff0a5" stroke-width="4" opacity=".65"/>
+        <path d="m128 91 16 22-16 23-16-23z" fill="url(#cyanGem)" stroke="#e8feff" stroke-width="3" filter="url(#softGlow)"/>
+        <circle cx="85" cy="128" r="9" fill="url(#violet)" stroke="#f0cfff" stroke-width="2"/>
+        <circle cx="171" cy="128" r="9" fill="url(#emerald)" stroke="#d9fff3" stroke-width="2"/>
+      </g>
+      <circle cx="128" cy="53" r="5" fill="#fff6be" filter="url(#softGlow)"/>
+    </symbol>
+    <symbol id="sym-chalice" viewBox="0 0 258 235">
+      <use href="#frame"/>
+      <g filter="url(#shadow)">
+        <path d="M69 48h120c-3 63-20 91-49 102v22h35v24H83v-24h35v-22C89 139 72 111 69 48Z" fill="url(#marble)" stroke="#e9fcff" stroke-width="5"/>
+        <path d="M82 63h94c-5 25-23 43-47 43S88 88 82 63Z" fill="url(#violet)" stroke="#d7b8ff" stroke-width="3"/>
+        <path d="M89 69c22 12 54 13 80 0" fill="none" stroke="#fbf5ff" stroke-width="4" stroke-linecap="round" opacity=".7"/>
+        <path d="M103 179h52" stroke="#85dff5" stroke-width="4"/>
+        <circle cx="129" cy="134" r="10" fill="url(#cyanGem)" stroke="#eaffff" stroke-width="2" filter="url(#softGlow)"/>
+      </g>
+      <path d="M68 85c-18 1-24 14-17 30 5 12 16 18 31 18M190 85c18 1 24 14 17 30-5 12-16 18-31 18" fill="none" stroke="#b5e9f8" stroke-width="5"/>
+    </symbol>
+    <symbol id="sym-coin" viewBox="0 0 258 235">
+      <use href="#frame"/>
+      <g filter="url(#shadow)">
+        <circle cx="129" cy="116" r="80" fill="url(#goldDark)" stroke="#ffe481" stroke-width="7"/>
+        <circle cx="129" cy="116" r="66" fill="url(#gold)" stroke="#8c4f0a" stroke-width="4"/>
+        <circle cx="129" cy="116" r="50" fill="#123f79" stroke="#ffe598" stroke-width="3"/>
+        <path d="M143 70 102 125h25l-9 45 46-62h-24z" fill="#e8fcff" stroke="#62e1ff" stroke-width="5" stroke-linejoin="round" filter="url(#softGlow)"/>
+        <circle cx="129" cy="116" r="57" fill="none" stroke="#fff5c7" stroke-dasharray="4 8" stroke-width="2" opacity=".65"/>
+      </g>
+    </symbol>
+    <symbol id="sym-hammer" viewBox="0 0 258 235">
+      <use href="#frame"/>
+      <g transform="rotate(-34 129 118)" filter="url(#shadow)">
+        <rect x="113" y="91" width="32" height="115" rx="12" fill="url(#gold)" stroke="#fff0aa" stroke-width="4"/>
+        <path d="M55 41h148l12 27-20 57H63L43 68Z" fill="url(#steel)" stroke="#e4fbff" stroke-width="6" stroke-linejoin="round"/>
+        <path d="M71 58h116l-13 40H84Z" fill="#15396f" stroke="#62dbf8" stroke-width="3.5"/>
+        <path d="m129 58 16 20-16 20-16-20z" fill="url(#cyanGem)" stroke="#efffff" stroke-width="3" filter="url(#softGlow)"/>
+        <path d="M74 109h108" stroke="#fff" stroke-opacity=".35" stroke-width="3"/>
+      </g>
+      <path d="M43 180c29 15 61 19 96 11M169 49c25 4 40 14 47 31" fill="none" stroke="#5be3ff" stroke-width="4" stroke-linecap="round" opacity=".58"/>
+    </symbol>
+    <symbol id="sym-orb" viewBox="0 0 258 235">
+      <use href="#frame"/>
+      <g filter="url(#shadow)">
+        <circle cx="129" cy="109" r="78" fill="url(#cyanGem)" stroke="#d9fbff" stroke-width="6" filter="url(#glow)"/>
+        <circle cx="129" cy="109" r="63" fill="none" stroke="#fff4b4" stroke-width="3" stroke-dasharray="7 10" opacity=".72"/>
+        <path d="M77 99c26-30 49 26 80-2 15-13 24-29 37-36M81 134c23-20 39 13 61 4 23-9 31-28 40-40" fill="none" stroke="#f7feff" stroke-width="5" stroke-linecap="round" opacity=".75"/>
+        <path d="M97 61c18-13 39-15 61-5" fill="none" stroke="#fff2a5" stroke-width="4" stroke-linecap="round"/>
+        <path d="M83 192h92l17 21H66z" fill="url(#gold)" stroke="#ffe69a" stroke-width="4"/>
+      </g>
+      <circle cx="107" cy="82" r="11" fill="#fff" opacity=".58"/>
+    </symbol>
+    <symbol id="sym-zeus" viewBox="0 0 258 235">
+      <use href="#frame"/>
+      <g filter="url(#shadow)">
+        <ellipse cx="129" cy="113" rx="92" ry="94" fill="url(#skyAura)"/>
+        <path d="M76 86c3-45 25-74 56-80 35-6 66 17 78 61-16-8-34-10-51-4-9-19-20-30-34-35-6 19-22 32-49 38z" fill="url(#marble)" stroke="#dcf8ff" stroke-width="4"/>
+        <path d="M91 83c7-27 23-39 39-39 26 0 45 22 47 55-3 30-18 54-47 69-29-14-45-43-39-85Z" fill="url(#skin)" stroke="#ffd7b2" stroke-width="3"/>
+        <path d="M91 119c10 48 30 79 40 79 12 0 36-35 45-83-15 14-30 21-44 21-15 0-29-6-41-17Z" fill="url(#marble)" stroke="#b8eaf6" stroke-width="4"/>
+        <path d="M99 95c7-4 14-4 22 0M141 95c7-4 14-4 21 0" fill="none" stroke="#3b2d2b" stroke-width="4" stroke-linecap="round"/>
+        <path d="M104 105h13M143 105h13" stroke="#173152" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="113" cy="105" r="3.5" fill="#78f2ff" filter="url(#softGlow)"/><circle cx="149" cy="105" r="3.5" fill="#78f2ff" filter="url(#softGlow)"/>
+        <path d="M131 107v15l-8 5h16" fill="none" stroke="#8c5a4b" stroke-width="3" stroke-linecap="round"/>
+        <path d="M112 142c12 7 25 7 37 0" fill="none" stroke="#754638" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M69 214c20-31 40-46 63-46 25 0 48 16 69 46" fill="url(#royal)" stroke="#6eddf6" stroke-width="4"/>
+        <path d="M91 190 72 215h40l17-30 18 30h40l-21-25" fill="url(#gold)" stroke="#ffe59b" stroke-width="3"/>
+      </g>
+      <path d="m49 59 33 17-25 7 23 22" fill="none" stroke="#fff3a6" stroke-width="5" stroke-linecap="round" filter="url(#softGlow)"/>
+    </symbol>
+  </defs>
+
+  <rect width="941" height="1672" fill="url(#bg)"/>
+  <rect width="941" height="1672" fill="url(#stars)" opacity=".75"/>
+  <ellipse cx="470" cy="305" rx="435" ry="360" fill="url(#skyAura)"/>
+
+  <g opacity=".22" fill="#dff7ff" stroke="#8dddf4" stroke-width="3">
+    <path d="M55 370V182h86v188H119V222H77v148Z"/><path d="M800 370V182h86v188h-22V222h-42v148Z"/>
+    <path d="M39 182h118l-18-25H57Z"/><path d="M784 182h118l-18-25h-82Z"/>
+  </g>
+  <path d="M36 338c75-97 151-128 230-93 55-87 124-132 206-132 80 0 153 42 220 126 78-32 151-4 218 83" fill="none" stroke="#92e4fa" stroke-opacity=".14" stroke-width="9"/>
+  <path d="M23 260c53-28 107-33 159-14M753 247c52-19 104-14 157 17" fill="none" stroke="#d8f8ff" stroke-opacity=".15" stroke-width="22" stroke-linecap="round"/>
+
+  <g transform="translate(264 116)" filter="url(#shadow)">
+    <ellipse cx="205" cy="145" rx="180" ry="128" fill="#1d73cf" opacity=".12"/>
+    <path d="M112 89c5-58 36-95 82-104 53-10 103 25 121 82-26-12-49-14-72-4-15-27-34-43-57-48-10 29-34 48-74 59z" fill="url(#marble)" stroke="#e2fbff" stroke-width="7"/>
+    <path d="M132 83c12-38 35-56 60-56 39 0 69 31 73 77-6 44-29 79-72 101-43-21-68-61-61-122Z" fill="url(#skin)" stroke="#ffddb9" stroke-width="5"/>
+    <path d="M130 137c16 74 48 115 65 115 19 0 57-47 71-119-21 21-44 31-67 31-25 0-48-9-69-27Z" fill="url(#marble)" stroke="#bdebf6" stroke-width="6"/>
+    <path d="M147 102c12-6 23-6 35 0M210 102c12-6 23-6 35 0" fill="none" stroke="#332526" stroke-width="6" stroke-linecap="round"/>
+    <path d="M154 117h18M218 117h18" stroke="#123051" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="166" cy="117" r="5" fill="#79f3ff" filter="url(#softGlow)"/><circle cx="230" cy="117" r="5" fill="#79f3ff" filter="url(#softGlow)"/>
+    <path d="M198 120v23l-12 8h24" fill="none" stroke="#8d5a4a" stroke-width="5" stroke-linecap="round"/>
+    <path d="M166 171c20 11 41 11 61 0" fill="none" stroke="#754637" stroke-width="5" stroke-linecap="round"/>
+    <path d="M73 319c34-59 75-88 123-88 49 0 95 30 137 88l-22 49H95Z" fill="url(#royal)" stroke="#6ee2fa" stroke-width="7"/>
+    <path d="m101 281-33 65h77l49-71 50 71h78l-37-66-39-29-52 51-51-51Z" fill="url(#gold)" stroke="#ffe7a2" stroke-width="6"/>
+    <path d="m17 155 65 30-48 15 42 38" fill="none" stroke="#fff2a0" stroke-width="10" stroke-linecap="round" filter="url(#glow)"/>
+    <path d="M319 110c20 3 38 14 52 32" fill="none" stroke="#6eeaff" stroke-width="6" stroke-linecap="round" opacity=".55"/>
+  </g>
+
+  <g opacity=".98">
+    <use href="#sym-bolt" x="75" y="414" width="258" height="235"/>
+    <use href="#sym-crown" x="333" y="414" width="257" height="235"/>
+    <use href="#sym-chalice" x="590" y="414" width="264" height="235"/>
+    <use href="#sym-coin" x="75" y="650" width="258" height="234"/>
+    <use href="#sym-hammer" x="333" y="650" width="257" height="234"/>
+    <use href="#sym-orb" x="590" y="650" width="264" height="234"/>
+    <use href="#sym-zeus" x="333" y="884" width="257" height="233"/>
+  </g>
+
+  <rect x="67" y="404" width="806" height="916" rx="30" fill="none" stroke="url(#gold)" stroke-width="11" opacity=".82" filter="url(#softGlow)"/>
+  <rect x="75" y="412" width="790" height="900" rx="24" fill="none" stroke="#8de9ff" stroke-opacity=".27" stroke-width="3"/>
+
+  <path d="M0 1288c101-30 179-32 257-5 101 35 184 25 267-17 110-56 219-45 417 28v378H0Z" fill="#020817"/>
+  <path d="M0 1304h941" stroke="#70dff7" stroke-opacity=".26" stroke-width="3"/>
+  <g opacity=".8"><path d="M25 1330h210v70H25zM706 1330h210v70H706z" fill="url(#panel)" stroke="#7edff5" stroke-opacity=".38" stroke-width="3"/><path d="M319 1370h303v205H319z" fill="#03142f" opacity=".6"/></g>
+  <g transform="translate(334 1350)" filter="url(#shadow)"><circle cx="136" cy="136" r="128" fill="#04142e" stroke="#f5cf66" stroke-width="9"/><circle cx="136" cy="136" r="108" fill="#0b4b94" stroke="#7ae9ff" stroke-width="7" filter="url(#softGlow)"/><circle cx="136" cy="136" r="82" fill="#07316b" stroke="#d8fbff" stroke-opacity=".55" stroke-width="4"/><path d="M93 141c12-44 46-70 92-66l-24-24 53 6-6 53-22-23c-31-4-57 11-66 41-9 29 3 55 28 70-37-2-68-22-78-52" fill="#dffcff" opacity=".93"/><path d="m187 183-53 6 6-53 22 23c31 4 57-11 66-41 9-29-3-55-28-70 37 2 68 22 78 52 13 44-12 85-56 98z" fill="#ffe277" opacity=".95"/></g>
+  <text x="470" y="1660" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="800" letter-spacing="3" fill="#7fc4d7" opacity=".65">NEON FORTUNE · ORIGINAL STORM ART</text>
+</svg>

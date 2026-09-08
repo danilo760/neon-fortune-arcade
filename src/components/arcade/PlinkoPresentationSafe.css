@@ -1,0 +1,118 @@
+@import "./PlinkoPresentation.css";
+
+/* Screenshot-free Plinko stage. Physics, buckets and ball motion remain in the
+ * active React implementation; this layer replaces only the legacy cabinet art. */
+.plinko-ref-machine__art {
+  display: none !important;
+}
+
+.plinko-ref-machine {
+  background:
+    radial-gradient(circle at 50% 13%, rgba(78, 229, 255, .18), transparent 18%),
+    radial-gradient(circle at 15% 42%, rgba(255, 64, 220, .1), transparent 28%),
+    radial-gradient(circle at 85% 46%, rgba(74, 135, 255, .1), transparent 27%),
+    linear-gradient(180deg, #06142a 0%, #07132c 30%, #04071a 68%, #090211 100%);
+}
+
+.plinko-ref-machine::before {
+  content: "SKYFALL TOWER";
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  top: 5.5%;
+  width: 58%;
+  transform: translateX(-50%);
+  padding: .42rem .65rem .36rem;
+  border: 1px solid rgba(255, 224, 104, .42);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(13, 39, 70, .9), rgba(4, 9, 26, .96));
+  color: #ffe780;
+  font: 900 clamp(.62rem, 3.1vw, .92rem)/1.1 Georgia, serif;
+  letter-spacing: .12em;
+  text-align: center;
+  text-shadow: 0 0 11px rgba(255, 222, 91, .35), 0 2px 0 #4b2d00;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 0 22px rgba(67, 219, 255, .1);
+  pointer-events: none;
+}
+
+.plinko-ref-machine__vignette {
+  background:
+    radial-gradient(circle at 50% 31%, transparent 0 27%, rgba(0, 7, 24, .08) 54%, rgba(0, 2, 10, .36) 100%),
+    linear-gradient(to bottom, rgba(25, 83, 135, .05) 0 18%, transparent 25% 63%, rgba(10, 1, 18, .24) 72% 100%),
+    linear-gradient(90deg, rgba(0,0,0,.24), transparent 7% 93%, rgba(0,0,0,.24));
+}
+
+.plinko-ref-board {
+  border-radius: 8% 8% 6% 6%;
+  background:
+    linear-gradient(90deg, rgba(65, 221, 255, .05), transparent 11% 89%, rgba(255, 91, 226, .05)),
+    linear-gradient(180deg, rgba(5, 23, 50, .58), rgba(2, 7, 24, .78));
+  box-shadow:
+    inset 0 0 0 1px rgba(85, 226, 255, .12),
+    inset 0 0 34px rgba(44, 205, 255, .06),
+    0 14px 30px rgba(0,0,0,.24);
+}
+
+/* Responsive generated peg field. The bucket count is rows + 1, so :has()
+ * lets the presentation follow 12 / 14 / 16 rows without touching game math. */
+.plinko-ref-board::after {
+  content: "";
+  position: absolute;
+  z-index: 5;
+  left: 7.5%;
+  right: 7.5%;
+  top: 9.5%;
+  bottom: 13.2%;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  background-image:
+    radial-gradient(circle, #fff7c4 0 1.6px, #6fe8ff 1.9px 2.7px, rgba(65, 207, 255, .26) 2.9px 3.5px, transparent 3.7px),
+    radial-gradient(circle, #fff7c4 0 1.4px, #ff76df 1.7px 2.5px, rgba(255, 69, 211, .2) 2.8px 3.3px, transparent 3.5px);
+  background-size: 7.15% 7.15%, 7.15% 7.15%;
+  background-position: 0 0, 50% 50%;
+  filter: drop-shadow(0 0 3px rgba(99, 230, 255, .35));
+  opacity: .92;
+  pointer-events: none;
+}
+
+.plinko-ref-board:has(.plinko-ref-buckets > :nth-child(13):last-child)::after {
+  background-size: 8.32% 8.32%, 8.32% 8.32%;
+}
+
+.plinko-ref-board:has(.plinko-ref-buckets > :nth-child(15):last-child)::after {
+  background-size: 7.15% 7.15%, 7.15% 7.15%;
+}
+
+.plinko-ref-board:has(.plinko-ref-buckets > :nth-child(17):last-child)::after {
+  background-size: 6.24% 6.24%, 6.24% 6.24%;
+}
+
+.plinko-ref-board__portal,
+.plinko-ref-ball-layer,
+.plinko-ref-ball--idle,
+.plinko-ref-board__payout-mask,
+.plinko-ref-buckets {
+  z-index: 10;
+}
+
+.plinko-ref-board__portal {
+  z-index: 14;
+}
+
+.plinko-ref-buckets {
+  z-index: 30;
+}
+
+.plinko-ref-machine.is-celebrating::before {
+  color: #fff4b0;
+  border-color: rgba(255, 239, 155, .74);
+  box-shadow: 0 0 28px rgba(255, 215, 83, .22), inset 0 1px 0 rgba(255,255,255,.15);
+}
+
+@media (max-width: 370px) {
+  .plinko-ref-machine::before {
+    top: 5.2%;
+    width: 55%;
+    font-size: .58rem;
+    letter-spacing: .09em;
+  }
+}

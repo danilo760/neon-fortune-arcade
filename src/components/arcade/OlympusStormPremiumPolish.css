@@ -1,0 +1,113 @@
+@import "./OlympusStormPremium.css";
+
+/* Second-pass art direction after real 360/390/430 captures.
+ * Replace the simple lightning medallion with an original storm guardian bust
+ * and remove the duplicated label that was touching the Storm Level HUD. */
+.osp-guardian {
+  top: 6.2%;
+  width: 50%;
+  height: 13.6%;
+}
+
+.osp-guardian-crest {
+  width: 104px;
+  height: 94px;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  padding-top: 58px;
+  background: transparent;
+  box-shadow: none;
+  color: #eafaff;
+  font-size: 22px;
+  text-shadow: 0 0 8px #fff, 0 0 17px #69d8ff;
+}
+
+/* Head + swept storm hair. The silhouette is intentionally graphic rather
+ * than a realistic Zeus likeness, keeping the character original. */
+.osp-guardian-crest::before {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  top: 1px;
+  width: 49px;
+  height: 57px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(227, 244, 250, .44);
+  border-radius: 46% 46% 52% 52% / 38% 38% 62% 62%;
+  background:
+    radial-gradient(circle at 36% 43%, #effcff 0 2.4%, #79d9ff 3% 4.6%, transparent 5.2%),
+    radial-gradient(circle at 64% 43%, #effcff 0 2.4%, #79d9ff 3% 4.6%, transparent 5.2%),
+    linear-gradient(156deg, transparent 0 15%, rgba(220, 239, 244, .88) 16% 24%, transparent 25% 31%, rgba(198, 224, 235, .76) 32% 39%, transparent 40%),
+    linear-gradient(180deg, #d4e5ea 0 22%, #91b4c6 23% 48%, #5f7e98 49% 63%, #d9e8eb 64% 100%);
+  box-shadow:
+    -15px -3px 0 -7px rgba(214, 234, 240, .72),
+    15px -4px 0 -8px rgba(214, 234, 240, .68),
+    -23px 5px 0 -13px rgba(168, 211, 232, .52),
+    23px 6px 0 -13px rgba(168, 211, 232, .48),
+    inset 0 -12px 16px rgba(20, 47, 73, .34),
+    0 0 18px rgba(94, 202, 255, .22);
+}
+
+/* Armoured shoulders become the visual bridge from character to reels. */
+.osp-guardian-crest::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 2px;
+  width: 104px;
+  height: 52px;
+  transform: translateX(-50%);
+  clip-path: polygon(4% 100%, 13% 56%, 29% 35%, 40% 30%, 50% 44%, 60% 30%, 71% 35%, 87% 56%, 96% 100%);
+  border-radius: 18px 18px 7px 7px;
+  background:
+    linear-gradient(90deg, transparent 0 12%, rgba(167, 215, 239, .32) 13% 22%, transparent 23% 77%, rgba(167, 215, 239, .32) 78% 87%, transparent 88%),
+    linear-gradient(180deg, #486e95, #173a67 52%, #091f43);
+  filter: drop-shadow(0 6px 8px rgba(0, 6, 21, .42));
+}
+
+.osp-guardian-label {
+  display: none;
+}
+
+.osp-machine.is-charged .osp-guardian-crest,
+.osp-machine.is-impact .osp-guardian-crest {
+  color: #fff3aa;
+  text-shadow: 0 0 8px #fff, 0 0 21px #75ddff, 0 0 32px rgba(255, 229, 132, .4);
+}
+
+.osp-machine.is-charged .osp-guardian-crest::before,
+.osp-machine.is-impact .osp-guardian-crest::before {
+  filter: brightness(1.16) saturate(1.12);
+  box-shadow:
+    -15px -3px 0 -7px rgba(226, 243, 247, .8),
+    15px -4px 0 -8px rgba(226, 243, 247, .76),
+    0 0 23px rgba(102, 218, 255, .48);
+}
+
+/* Keep the HUD as the single label source and give the guardian a few more
+ * pixels of breathing room on compact phones. */
+.osp-stage-hud {
+  top: 19.35%;
+}
+
+@media (max-height: 780px) {
+  .osp-guardian {
+    top: 5.9%;
+    height: 13.2%;
+  }
+  .osp-guardian-crest {
+    transform: scale(.88);
+  }
+  .osp-stage-hud {
+    top: 18.75%;
+  }
+}
+
+@media (max-width: 370px) {
+  .osp-guardian-crest {
+    transform: scale(.9);
+  }
+}

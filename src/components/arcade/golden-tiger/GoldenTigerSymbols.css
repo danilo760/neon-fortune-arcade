@@ -1,0 +1,71 @@
+/* Optical normalization for the active 3×3 Golden Tiger symbols.
+   Source art keeps transparent bounds; UI controls perceived size/value. */
+
+.gt-hw-grid .gt-hw-symbol .gt-hw-symbol-art {
+  display: block;
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
+  object-position: center;
+  transform: scale(var(--gt-symbol-scale, 1));
+  transform-origin: 50% 52%;
+  transition:
+    transform 180ms cubic-bezier(.2,.78,.2,1),
+    filter 180ms ease-out;
+  filter:
+    saturate(var(--gt-symbol-saturation, 1.03))
+    contrast(var(--gt-symbol-contrast, 1.02))
+    drop-shadow(0 3px 3px rgba(84,37,14,.2));
+}
+
+/* Value hierarchy follows the Neon pay ordering while keeping the same visual
+   principle as the reference: premium symbols dominate at a glance. */
+.gt-hw-grid .gt-hw-symbol[data-symbol="wild"] {
+  --gt-symbol-scale: 1.12;
+  --gt-symbol-saturation: 1.12;
+  --gt-symbol-contrast: 1.06;
+}
+
+.gt-hw-grid .gt-hw-symbol[data-symbol="lion"] {
+  --gt-symbol-scale: 1.07;
+  --gt-symbol-saturation: 1.08;
+}
+
+.gt-hw-grid .gt-hw-symbol[data-symbol="ingot"] {
+  --gt-symbol-scale: 1.04;
+  --gt-symbol-saturation: 1.1;
+}
+
+.gt-hw-grid .gt-hw-symbol[data-symbol="fortuneBag"] { --gt-symbol-scale: 1; }
+.gt-hw-grid .gt-hw-symbol[data-symbol="firecracker"] { --gt-symbol-scale: .96; }
+.gt-hw-grid .gt-hw-symbol[data-symbol="jade"] { --gt-symbol-scale: .94; }
+.gt-hw-grid .gt-hw-symbol[data-symbol="lantern"] { --gt-symbol-scale: .92; }
+.gt-hw-grid .gt-hw-symbol[data-symbol="orange"] { --gt-symbol-scale: .9; }
+
+.gt-hw-grid .gt-hw-symbol[data-symbol="wild"] .gt-hw-symbol-aura,
+.gt-hw-grid .gt-hw-symbol[data-symbol="lion"] .gt-hw-symbol-aura,
+.gt-hw-grid .gt-hw-symbol[data-symbol="ingot"] .gt-hw-symbol-aura {
+  opacity: .44;
+  filter: blur(5px);
+}
+
+.gt-hw-grid .gt-hw-symbol.is-winning .gt-hw-symbol-art {
+  transform: scale(var(--gt-symbol-scale, 1));
+  filter:
+    saturate(1.14)
+    contrast(1.06)
+    brightness(1.08)
+    drop-shadow(0 0 8px rgba(255,205,73,.72));
+}
+
+.gt-hw-grid .gt-hw-cell.is-locked .gt-hw-symbol-art {
+  filter:
+    saturate(1.09)
+    contrast(1.04)
+    brightness(1.03)
+    drop-shadow(0 0 7px rgba(255,200,61,.38));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gt-hw-grid .gt-hw-symbol .gt-hw-symbol-art { transition: none; }
+}

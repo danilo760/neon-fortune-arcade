@@ -1,3 +1,5 @@
+import { resolveGoldenTigerVisualQaRng } from "./goldenTigerVisualQaRng";
+
 export type GoldenTigerSymbolId =
   | "wild"
   | "lion"
@@ -20,7 +22,19 @@ export type GoldenTigerSpinResult = {
   payout: number;
   winning: Set<number>;
   lines: number;
+  isFullGrid: boolean;
 };
+
+export const GOLDEN_TIGER_FULL_GRID_MULTIPLIER = 10;
+
+/**
+ * Neon-original calibration factor. The public Fortune Tiger reference lists
+ * RTP 96.81%, but does not publish reel strips/weights. We keep our existing
+ * symbol weights and scale line awards uniformly so the combined paid-spin
+ * outcomes approach that public RTP target when Fortune Feature replaces the
+ * normal base resolution on triggered spins.
+ */
+export const GOLDEN_TIGER_PAYOUT_SCALE = 1.195;
 
 export const GOLDEN_TIGER_PAYLINES = [
   [0, 1, 2],
@@ -44,6 +58,14 @@ const SYMBOLS: readonly SymbolDef[] = [
 const SYMBOL_BY_ID = new Map(SYMBOLS.map((symbol) => [symbol.id, symbol]));
 const TOTAL_WEIGHT = SYMBOLS.reduce((sum, symbol) => sum + symbol.weight, 0);
 
+export const GOLDEN_TIGER_REGULAR_SYMBOLS: readonly GoldenTigerSymbolId[] = SYMBOLS
+  .map((symbol) => symbol.id)
+  .filter((symbol) => symbol !== "wild");
+
+export function goldenTigerSymbolPay(symbol: GoldenTigerSymbolId) {
+  return SYMBOL_BY_ID.get(symbol)?.pay ?? 0;
+}
+
 export function pickGoldenTigerSymbol(
   rng: () => number = Math.random,
 ): GoldenTigerSymbolId {
@@ -60,13 +82,14 @@ export function pickGoldenTigerSymbol(
 export function makeGoldenTigerGrid(
   rng: () => number = Math.random,
 ): GoldenTigerSymbolId[] {
-  return Array.from({ length: 9 }, () => pickGoldenTigerSymbol(rng));
+  const resolvedRng = resolveGoldenTigerVisualQaRng(rng);
+  return Array.from({ length: 9 }, () => pickGoldenTigerSymbol(resolvedRng));
 }
 
 /**
- * Gold Coins are visual/feature symbols and never participate in base paylines.
- * Their indexes are passed as blocked cells so a line containing a feature coin
- * cannot win using the hidden regular symbol underneath it.
+ * Evaluates the five fixed 3×3 paylines. When all nine reel positions
+ * participate in at least one winning line, the verified full-screen rule
+ * multiplies the complete line-win total by ×10.
  */
 export function evaluateGoldenTiger(
   grid: readonly GoldenTigerSymbolId[],
@@ -74,7 +97,7 @@ export function evaluateGoldenTiger(
   blockedIndices: ReadonlySet<number> = new Set(),
 ): GoldenTigerSpinResult {
   if (grid.length !== 9 || !Number.isFinite(bet) || bet <= 0) {
-    return { payout: 0, winning: new Set(), lines: 0 };
+    return { payout: 0, winning: new Set(), lines: 0, isFullGrid: false };
   }
 
   let payout = 0;
@@ -107,7 +130,11 @@ export function evaluateGoldenTiger(
     line.forEach((position) => winning.add(position));
   }
 
-  return { payout: Math.round(payout), winning, lines };
+  const isFullGrid = lines > 0 && winning.size === 9;
+  if (isFullGrid) payout *= GOLDEN_TIGER_FULL_GRID_MULTIPLIER;
+  payout *= GOLDEN_TIGER_PAYOUT_SCALE;
+
+  return { payout: Math.round(payout), winning, lines, isFullGrid };
 }
 
 export function goldenTigerWinTier(payout: number, bet: number): GoldenTigerWinTier {

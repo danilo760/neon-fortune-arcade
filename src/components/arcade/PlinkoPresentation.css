@@ -1,0 +1,91 @@
+/* Neon Plinko presentation consolidation. Scoped to the active .plinko-ref-* implementation. */
+
+@keyframes plinko-present-bucket-hit {
+  0% { transform: translateY(0) scale(1); filter: brightness(1); }
+  35% { transform: translateY(-4%) scale(1.06); filter: brightness(1.42) saturate(1.2); }
+  100% { transform: translateY(0) scale(1); filter: brightness(1); }
+}
+@keyframes plinko-present-impact-star {
+  0% { opacity: 0; transform: translate(-50%,-50%) scale(.3) rotate(0); }
+  30% { opacity: .88; transform: translate(-50%,-50%) scale(.92) rotate(22deg); }
+  100% { opacity: 0; transform: translate(-50%,-50%) scale(1.42) rotate(62deg); }
+}
+
+.plinko-ref-ball {
+  will-change: transform;
+  transition: transform .08s ease,filter .08s ease;
+}
+.plinko-ref-ball--falling {
+  filter: drop-shadow(0 0 6px rgba(255,224,103,.88)) drop-shadow(0 0 11px rgba(53,210,255,.36));
+}
+.plinko-ref-impact {
+  animation: plinko-present-impact-star .27s ease-out both;
+  filter: brightness(1.18);
+}
+.plinko-ref-bucket.is-winner {
+  animation: plinko-present-bucket-hit .4s cubic-bezier(.2,.85,.25,1.12) both;
+  z-index: 3;
+}
+.plinko-ref-bucket.is-high.is-winner {
+  filter: brightness(1.18) saturate(1.18);
+  box-shadow: 0 0 16px rgba(255,207,76,.62),inset 0 0 12px rgba(255,255,255,.18);
+}
+.plinko-ref-drop:not(:disabled) {
+  box-shadow: 0 0 25px rgba(45,255,160,.34),0 0 40px rgba(255,190,50,.12);
+  transition: transform .1s ease,filter .1s ease,box-shadow .1s ease;
+}
+.plinko-ref-drop:active:not(:disabled) {
+  transform: scale(.97);
+  filter: brightness(1.08);
+}
+.plinko-ref-board__portal { filter: drop-shadow(0 0 13px rgba(60,216,255,.42)); }
+.plinko-ref-machine.is-celebrating .plinko-ref-board { filter: saturate(1.08) brightness(1.04); }
+
+.plinko-ref-balance strong,
+.plinko-ref-last strong,
+.plinko-ref-control-value,
+.plinko-ref-drop strong {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+.plinko-ref-balance,
+.plinko-ref-last,
+.plinko-ref-control-card,
+.plinko-ref-drop { min-width: 0; }
+.plinko-ref-balance strong { font-size: clamp(.72rem,3.4vw,.98rem); letter-spacing: -.025em; }
+.plinko-ref-last strong { font-size: clamp(.64rem,3vw,.86rem); letter-spacing: -.02em; }
+.plinko-ref-control-value { font-size: clamp(.62rem,2.8vw,.82rem); }
+.plinko-ref-drop strong { font-size: clamp(.76rem,3.4vw,1rem); letter-spacing: -.02em; }
+.plinko-ref-drop small { font-size: clamp(.42rem,1.8vw,.54rem); letter-spacing: .08em; }
+
+.plinko-ref-machine button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform 90ms cubic-bezier(.2,.8,.2,1),filter 120ms ease-out,box-shadow 140ms ease-out;
+}
+.plinko-ref-machine button:not(:disabled):active { transform: scale(.94); filter: brightness(1.12); }
+.plinko-ref-machine button:focus-visible {
+  outline: 2px solid rgba(255,236,160,.9);
+  outline-offset: 2px;
+}
+
+@media (max-width: 360px) {
+  .plinko-ref-balance strong { font-size: .66rem; }
+  .plinko-ref-last strong { font-size: .59rem; }
+  .plinko-ref-control-value { font-size: .57rem; }
+  .plinko-ref-drop strong { font-size: .7rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plinko-ref-ball,
+  .plinko-ref-drop,
+  .plinko-ref-machine button { transition: none; }
+  .plinko-ref-impact,
+  .plinko-ref-bucket.is-winner { animation: none; }
+  .plinko-ref-machine button:not(:disabled):active,
+  .plinko-ref-drop:active:not(:disabled) { transform: none; }
+}

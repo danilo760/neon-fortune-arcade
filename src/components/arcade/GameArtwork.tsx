@@ -1,25 +1,26 @@
 import {
   Anchor,
+  Bomb,
+  CircleDot,
   Crown,
   Dices,
   Flame,
+  Gem,
   Leaf,
   Rocket,
   RotateCw,
   Sparkles,
   Spade,
   Star,
+  Zap,
 } from "lucide-react";
 
-import candyReference from "@/assets/candy-cascade/reference.webp";
 import goldenTigerHero from "@/assets/golden-tiger/golden-tiger-mascot.webp";
-import neonMinesReference from "@/assets/neon-mines-reference.webp";
-import neonPlinkoReference from "@/assets/neon-plinko-reference.webp";
-import olympusReference from "@/assets/olympus-storm/reference.webp";
 import type { GameEntry } from "@/lib/arcade/catalog";
 import { cn } from "@/lib/utils";
 
 import "./GameArtworkPremium.css";
+import "./GameArtworkOriginal.css";
 
 export function TigerCubMascot({ className }: { className?: string }) {
   return (
@@ -32,31 +33,52 @@ export function TigerCubMascot({ className }: { className?: string }) {
   );
 }
 
-function ReferenceCover({ src, className }: { src: string; className: string }) {
+function TigerCover() {
   return (
-    <div className={cn("game-cover-reference", className)}>
-      <img src={src} alt="" className="game-cover-reference__blur" aria-hidden />
-      <img src={src} alt="" className="game-cover-reference__main" aria-hidden />
+    <div className="game-cover-reference game-cover-reference--tiger">
+      <img src={goldenTigerHero} alt="" className="game-cover-reference__blur" aria-hidden />
+      <img src={goldenTigerHero} alt="" className="game-cover-reference__main" aria-hidden />
       <div className="game-cover-reference__shine" aria-hidden />
     </div>
   );
 }
 
-function PlayableCover({ game }: { game: GameEntry }) {
+function OriginalCover({ game }: { game: GameEntry }) {
+  let icon = <Sparkles />;
+  let className = "game-cover-original--candy";
+
   switch (game.slug) {
-    case "golden-tiger":
-      return <ReferenceCover src={goldenTigerHero} className="game-cover-reference--tiger" />;
     case "olympus-storm":
-      return <ReferenceCover src={olympusReference} className="game-cover-reference--olympus" />;
+      icon = <Zap />;
+      className = "game-cover-original--olympus";
+      break;
     case "candy-cascade":
-      return <ReferenceCover src={candyReference} className="game-cover-reference--candy" />;
+      icon = <Sparkles />;
+      className = "game-cover-original--candy";
+      break;
     case "neon-mines":
-      return <ReferenceCover src={neonMinesReference} className="game-cover-reference--mines" />;
+      icon = <Gem />;
+      className = "game-cover-original--mines";
+      break;
     case "neon-plinko":
-      return <ReferenceCover src={neonPlinkoReference} className="game-cover-reference--plinko" />;
+      icon = <CircleDot />;
+      className = "game-cover-original--plinko";
+      break;
     default:
-      return null;
+      break;
   }
+
+  return (
+    <div className={cn("game-cover-original", className)}>
+      <div className="game-cover-original__spark" aria-hidden />
+      <div className="game-cover-original__icon" aria-hidden>{icon}</div>
+    </div>
+  );
+}
+
+function PlayableCover({ game }: { game: GameEntry }) {
+  if (game.slug === "golden-tiger") return <TigerCover />;
+  return <OriginalCover game={game} />;
 }
 
 function ComingSoonIcon({ game }: { game: GameEntry }) {
@@ -79,6 +101,8 @@ function ComingSoonIcon({ game }: { game: GameEntry }) {
       return <Dices className="size-24 text-cyan-200" />;
     case "royal-blackjack":
       return <Spade className="size-24 text-violet-200" />;
+    case "danger-vault":
+      return <Bomb className="size-24 text-rose-200" />;
     default:
       return <Sparkles className="size-24 text-lime-200" />;
   }

@@ -1,9 +1,9 @@
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 
-import tigerIdle from "@/assets/golden-tiger/tiger-idle.webp";
-import tigerWin from "@/assets/golden-tiger/tiger-win.webp";
+import tigerPoseAtlas from "@/assets/golden-tiger/tiger-pose-atlas.webp";
 
-export type TigerReactionState = "idle" | "watch" | "reveal" | "coin" | "tense" | "win" | "full";
+export type TigerReactionState = "idle" | "watch" | "reveal" | "feature" | "tense" | "win" | "full";
+type TigerPose = TigerReactionState | "blink";
 
 type Props = {
   reaction: TigerReactionState;
@@ -11,20 +11,58 @@ type Props = {
   lockedCount: number;
 };
 
+function reducedMotion() {
+  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 /**
- * Presentation-only mascot stage.
+ * Presentation-only mascot stage using an original 4×2 pose atlas.
  *
- * Two original pose renders are blended by state. Idle/watch/reveal use the
- * seated front pose; coin/win/full use the celebration pose. CSS drives the
- * acting beats (breathing, lean, recoil, celebration) while keeping gameplay
- * math completely separate from presentation.
+ * Pose order: idle, blink, watch, tense / reveal, feature, win, full.
+ * CSS may add small breathing/lean/recoil beats, but the acting itself now
+ * comes from dedicated artwork instead of pretending seven states exist with
+ * two source images.
  */
 export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
   reaction,
   featureActive,
   lockedCount,
 }: Props) {
-  const celebrationPose = reaction === "coin" || reaction === "win" || reaction === "full";
+  const [idleBlink, setIdleBlink] = useState(false);
+
+  useEffect(() => {
+    if (reaction !== "idle" || reducedMotion()) {
+      setIdleBlink(false);
+      return;
+    }
+
+    let cancelled = false;
+    let blinkTimer = 0;
+    let releaseTimer = 0;
+
+    const scheduleBlink = () => {
+      const delay = 2_600 + Math.round(Math.random() * 1_800);
+      blinkTimer = window.setTimeout(() => {
+        if (cancelled) return;
+        setIdleBlink(true);
+        releaseTimer = window.setTimeout(() => {
+          if (cancelled) return;
+          setIdleBlink(false);
+          scheduleBlink();
+        }, 145);
+      }, delay);
+    };
+
+    scheduleBlink();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(blinkTimer);
+      window.clearTimeout(releaseTimer);
+    };
+  }, [reaction]);
+
+  const pose: TigerPose = reaction === "idle" && idleBlink ? "blink" : reaction;
+  const celebrationPose = reaction === "feature" || reaction === "win" || reaction === "full";
 
   return (
     <div
@@ -38,20 +76,10 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
       <span className="gt-hw-tiger-stage-ray gt-hw-tiger-stage-ray--left" aria-hidden />
       <span className="gt-hw-tiger-stage-ray gt-hw-tiger-stage-ray--right" aria-hidden />
 
-      <div className="gt-hw-tiger-rig" aria-hidden>
-        <img
-          src={tigerIdle}
-          alt=""
-          className="gt-hw-tiger-pose gt-hw-tiger-pose--idle"
-          draggable={false}
-          decoding="async"
-        />
-        <img
-          src={tigerWin}
-          alt=""
-          className="gt-hw-tiger-pose gt-hw-tiger-pose--win"
-          draggable={false}
-          decoding="async"
+      <div className="gt-hw-tiger-rig" data-pose={pose} aria-hidden>
+        <span
+          className="gt-hw-tiger-sprite"
+          style={{ backgroundImage: `url(${tigerPoseAtlas})` }}
         />
         <span className="gt-hw-tiger-eye-flare gt-hw-tiger-eye-flare--left" />
         <span className="gt-hw-tiger-eye-flare gt-hw-tiger-eye-flare--right" />
@@ -65,7 +93,7 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
 
       <div className="gt-hw-tiger-caption">
         <strong>{featureActive ? `${lockedCount}/9` : "3×3"}</strong>
-        <span>{featureActive ? "MOEDAS TRAVADAS" : "5 LINHAS FIXAS"}</span>
+        <span>{featureActive ? "SÍMBOLOS FIXOS" : "5 LINHAS FIXAS"}</span>
       </div>
     </div>
   );

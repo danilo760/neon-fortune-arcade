@@ -38,7 +38,7 @@ export const GAMES: readonly GameEntry[] = [
   {
     slug: "golden-tiger",
     name: "Golden Tiger",
-    tagline: "Slot 3x3 · Wild, Free Spins e multiplicadores",
+    tagline: "Slot 3x3 · 5 linhas e Fortune Feature com símbolos fixos",
     category: "slots",
     playable: true,
     featured: true,

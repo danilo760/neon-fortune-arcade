@@ -1,0 +1,136 @@
+@import "./MinesPresentationSafe.css";
+
+/* Final authored pass for the active Neon Mines renderer.
+ * Presentation only: no probability, payout or interaction changes. */
+.mines-premium__cabinet {
+  background:
+    radial-gradient(circle at 50% 6%, rgba(118,255,221,.24), transparent 18%),
+    radial-gradient(circle at 15% 35%, rgba(23,214,164,.12), transparent 26%),
+    radial-gradient(circle at 86% 38%, rgba(255,210,77,.08), transparent 24%),
+    linear-gradient(180deg,#071f1b 0%,#07140f 42%,#020705 100%);
+  box-shadow: inset 0 0 60px rgba(0,0,0,.28), 0 0 70px rgba(31,236,182,.09);
+}
+
+.mines-premium__cabinet::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.035), transparent 10% 90%, rgba(255,255,255,.035)),
+    repeating-linear-gradient(90deg, transparent 0 42px, rgba(92,255,205,.018) 43px, transparent 44px),
+    linear-gradient(180deg, rgba(146,255,224,.035), transparent 28% 70%, rgba(0,0,0,.18));
+  mix-blend-mode: screen;
+}
+
+.mines-premium__masthead {
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,.32));
+}
+
+.mines-premium__crest {
+  position: relative;
+  overflow: visible;
+  border-color: rgba(140,255,220,.55);
+  background: radial-gradient(circle at 38% 30%, rgba(255,255,255,.32), transparent 22%), linear-gradient(145deg,#184f43,#08251d 62%,#03130f);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 -8px 14px rgba(0,0,0,.34), 0 0 18px rgba(65,255,198,.22);
+}
+.mines-premium__crest::before {
+  content: "";
+  position: absolute;
+  inset: -18%;
+  border: 1px solid rgba(107,255,212,.2);
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgba(61,255,196,.1);
+}
+.mines-premium__crest svg { filter: drop-shadow(0 0 7px rgba(119,255,221,.75)); }
+
+.mines-premium__status,
+.mines-premium__telemetry {
+  border-color: rgba(116,255,209,.23) !important;
+  background: linear-gradient(180deg, rgba(9,42,34,.9), rgba(4,18,14,.94)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), inset 0 -10px 18px rgba(0,0,0,.22), 0 6px 18px rgba(0,0,0,.24) !important;
+}
+
+.mines-premium__grid-frame {
+  isolation: isolate;
+  border-radius: 22px;
+  filter: drop-shadow(0 18px 24px rgba(0,0,0,.35));
+}
+.mines-premium__grid-frame::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: -1.2%;
+  border-radius: 20px;
+  pointer-events: none;
+  border: 1px solid rgba(244,209,93,.26);
+  box-shadow: inset 0 0 0 1px rgba(105,255,210,.08), 0 0 24px rgba(57,255,195,.08);
+}
+
+.mines-premium__tile {
+  border-color: rgba(120,255,211,.17) !important;
+  background:
+    radial-gradient(circle at 45% 35%, rgba(121,255,218,.045), transparent 29%),
+    linear-gradient(145deg,#103128 0%,#081b15 56%,#03100c 100%) !important;
+  box-shadow:
+    inset 1px 1px 0 rgba(213,255,242,.09),
+    inset -4px -6px 10px rgba(0,0,0,.34),
+    0 2px 7px rgba(0,0,0,.24) !important;
+}
+.mines-premium__tile::before {
+  content: "";
+  position: absolute;
+  inset: 5%;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255,255,255,.055), transparent 28% 72%, rgba(0,0,0,.12));
+}
+.mines-premium__tile--ready:not(:disabled) {
+  transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+}
+.mines-premium__tile--ready:not(:disabled):active {
+  transform: translateY(1px) scale(.985);
+  filter: brightness(1.12);
+}
+
+.mines-premium__tile--gem {
+  background:
+    radial-gradient(circle at 50% 46%, rgba(151,255,231,.22), transparent 34%),
+    linear-gradient(145deg,#0d4e40,#06251c 62%,#03110d) !important;
+  box-shadow: inset 0 0 18px rgba(73,255,198,.18), 0 0 13px rgba(69,255,198,.16) !important;
+}
+.mines-premium__tile--gem svg {
+  filter: drop-shadow(0 3px 0 rgba(0,0,0,.34)) drop-shadow(0 0 9px rgba(121,255,220,.82));
+}
+.mines-premium__tile--fresh-gem {
+  box-shadow: inset 0 0 25px rgba(133,255,225,.28), 0 0 24px rgba(74,255,198,.32) !important;
+}
+
+.mines-premium__tile--mine {
+  background: radial-gradient(circle at 50% 47%, rgba(255,76,87,.24), transparent 35%), linear-gradient(145deg,#4a1618,#210809 66%,#090303) !important;
+}
+.mines-premium__tile--mine svg,
+.mines-premium__tile--triggered svg {
+  filter: drop-shadow(0 0 10px rgba(255,78,89,.7));
+}
+
+.mines-premium__cabinet[data-reveal-phase="danger"] .mines-premium__grid-frame,
+.mines-premium__cabinet[data-reveal-phase="explode"] .mines-premium__grid-frame {
+  filter: drop-shadow(0 0 20px rgba(255,62,79,.22)) drop-shadow(0 18px 24px rgba(0,0,0,.36));
+}
+
+.mines-premium__possible {
+  border-color: rgba(229,197,83,.34) !important;
+  background: linear-gradient(180deg, rgba(18,45,34,.94), rgba(5,18,13,.96)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 8px 22px rgba(0,0,0,.28), 0 0 18px rgba(66,255,196,.06) !important;
+}
+
+@media (max-width: 370px) {
+  .mines-premium__grid-frame { filter: drop-shadow(0 12px 18px rgba(0,0,0,.3)); }
+  .mines-premium__tile { box-shadow: inset 1px 1px 0 rgba(213,255,242,.07), inset -3px -4px 8px rgba(0,0,0,.3) !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mines-premium__tile--ready:not(:disabled) { transition: none; }
+}
