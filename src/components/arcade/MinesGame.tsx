@@ -1,5 +1,5 @@
 import { Bomb, Gem, Play, ShieldCheck, Sparkles, Trophy } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import neonMinesReference from "@/assets/neon-mines-reference.webp";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
   minesRiskLevel,
 } from "@/lib/arcade/minesPresentation";
 import { playMinesSound } from "@/lib/arcade/minesSound";
-import { playSound } from "@/lib/arcade/sound";
+import { playSound, setAmbienceEnergy, setGameAmbience } from "@/lib/arcade/sound";
 import { arcadeActions, useArcade } from "@/lib/arcade/store";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +61,16 @@ export function MinesGame() {
   const multiplier = minesMultiplier(mineCount, revealed.size);
   const nextMultiplier = nextMinesMultiplier(mineCount, revealed.size);
   const mineSet = useMemo(() => new Set(mineField), [mineField]);
+
+  useEffect(() => {
+    setGameAmbience("mines", soundEnabled);
+    return () => setGameAmbience("mines", false);
+  }, [soundEnabled]);
+
+  useEffect(() => {
+    const progressEnergy = status === "playing" ? Math.min(1.24, 0.84 + revealed.size * 0.045) : 0.66;
+    setAmbienceEnergy(revealPhase === "danger" || revealPhase === "explode" ? 1.38 : progressEnergy);
+  }, [revealPhase, revealed.size, status]);
 
   function startRound() {
     if (status === "playing" || roundActiveRef.current || revealBusyRef.current) return;

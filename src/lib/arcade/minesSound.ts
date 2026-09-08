@@ -64,6 +64,7 @@ export function playMinesSound(event: MinesSoundEvent, enabled: boolean, sequenc
     case "gemReveal":
       playSound("minesCrystal", enabled, {
         intensity: Math.min(1.08, 0.82 + Math.max(1, sequence) * 0.035),
+        pitch: Math.min(1.16, 0.98 + Math.max(1, sequence) * 0.018),
       });
       break;
     case "multiplierRise":

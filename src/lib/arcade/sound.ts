@@ -12,12 +12,15 @@ import { AudioEventGate } from "./audioEventGate";
  * - no autoplay and no third-party/commercial audio assets.
  */
 
-type AudioBus = "ui" | "game" | "impact" | "reward";
+type AudioBus = "ui" | "game" | "impact" | "reward" | "ambience";
+export type AmbienceTheme = "tiger" | "olympus" | "candy" | "mines" | "plinko";
 export type SoundOptions = {
   /** -1 = left, 0 = centre, 1 = right. Kept intentionally subtle in use. */
   pan?: number;
   /** Scales one cue without changing the global mixer. */
   intensity?: number;
+  /** Small timbral variation for sequential cues; clamped to avoid cartoonish shifts. */
+  pitch?: number;
 };
 
 let ctx: AudioContext | null = null;
@@ -36,15 +39,38 @@ const repeatedAudioGate = new AudioEventGate();
 let activeBus: AudioBus = "game";
 let activePan = 0;
 let activeIntensity = 1;
+let activePitch = 1;
 
 const BUS_LEVEL: Record<AudioBus, number> = {
   ui: 0.7,
   game: 0.88,
   impact: 0.92,
   reward: 0.86,
+  ambience: 0.34,
+};
+
+type AmbienceVoice = {
+  theme: AmbienceTheme;
+  root: GainNode;
+  sources: AudioScheduledSourceNode[];
+  nodes: AudioNode[];
+};
+
+let desiredAmbienceTheme: AmbienceTheme | null = null;
+let desiredAmbienceEnabled = false;
+let ambienceEnergy = 1;
+let ambienceVoice: AmbienceVoice | null = null;
+
+const AMBIENCE_GAIN: Record<AmbienceTheme, number> = {
+  tiger: 0.052,
+  olympus: 0.058,
+  candy: 0.044,
+  mines: 0.046,
+  plinko: 0.038,
 };
 
 function resetGraphCaches() {
+  stopAmbience();
   masterGain = null;
   masterCompressor = null;
   reverbConvolver = null;
@@ -194,6 +220,138 @@ function duckForAccent(audio: AudioContext, bus: AudioBus) {
   game.gain.setValueAtTime(Math.max(0.0001, game.gain.value), now);
   game.gain.linearRampToValueAtTime(BUS_LEVEL.game * floor, now + 0.018);
   game.gain.exponentialRampToValueAtTime(BUS_LEVEL.game, now + (bus === "impact" ? 0.22 : 0.17));
+
+  const ambience = getBusGain(audio, "ambience");
+  const ambienceFloor = bus === "impact" ? 0.38 : 0.56;
+  ambience.gain.cancelScheduledValues(now);
+  ambience.gain.setValueAtTime(Math.max(0.0001, ambience.gain.value), now);
+  ambience.gain.linearRampToValueAtTime(BUS_LEVEL.ambience * ambienceFloor, now + 0.022);
+  ambience.gain.exponentialRampToValueAtTime(BUS_LEVEL.ambience, now + (bus === "impact" ? 0.34 : 0.26));
+}
+
+
+function stopAmbience() {
+  const voice = ambienceVoice;
+  ambienceVoice = null;
+  if (!voice) return;
+  for (const source of voice.sources) {
+    try { source.stop(); } catch {}
+    try { source.disconnect(); } catch {}
+  }
+  for (const node of voice.nodes) {
+    try { node.disconnect(); } catch {}
+  }
+  try { voice.root.disconnect(); } catch {}
+}
+
+function themeVoiceSpec(theme: AmbienceTheme) {
+  switch (theme) {
+    case "tiger":
+      return { tones: [98, 147, 196], wave: "sine" as OscillatorType, noiseCutoff: 1050, noiseGain: 0.16, lfoHz: 0.115 };
+    case "olympus":
+      return { tones: [55, 82.5, 165], wave: "sine" as OscillatorType, noiseCutoff: 780, noiseGain: 0.24, lfoHz: 0.075 };
+    case "candy":
+      return { tones: [261.63, 392, 523.25], wave: "triangle" as OscillatorType, noiseCutoff: 2350, noiseGain: 0.075, lfoHz: 0.16 };
+    case "mines":
+      return { tones: [43.65, 65.41, 130.81], wave: "sine" as OscillatorType, noiseCutoff: 520, noiseGain: 0.2, lfoHz: 0.055 };
+    case "plinko":
+      return { tones: [110, 220, 329.63], wave: "sine" as OscillatorType, noiseCutoff: 1600, noiseGain: 0.08, lfoHz: 0.13 };
+  }
+}
+
+function ensureAmbience(audio: AudioContext) {
+  if (!desiredAmbienceEnabled || !desiredAmbienceTheme) {
+    stopAmbience();
+    return;
+  }
+  if (ambienceVoice?.theme === desiredAmbienceTheme) {
+    const now = audio.currentTime;
+    const target = AMBIENCE_GAIN[desiredAmbienceTheme] * ambienceEnergy;
+    ambienceVoice.root.gain.cancelScheduledValues(now);
+    ambienceVoice.root.gain.setTargetAtTime(target, now, 0.18);
+    return;
+  }
+
+  stopAmbience();
+  const theme = desiredAmbienceTheme;
+  const spec = themeVoiceSpec(theme);
+  const root = audio.createGain();
+  const now = audio.currentTime;
+  root.gain.setValueAtTime(0.0001, now);
+  root.gain.exponentialRampToValueAtTime(Math.max(0.0001, AMBIENCE_GAIN[theme] * ambienceEnergy), now + 0.7);
+  root.connect(getBusGain(audio, "ambience"));
+
+  const sources: AudioScheduledSourceNode[] = [];
+  const nodes: AudioNode[] = [root];
+
+  // A very quiet harmonic bed: enough to remove dead silence without masking cues.
+  spec.tones.forEach((frequency, index) => {
+    const osc = audio.createOscillator();
+    const amp = audio.createGain();
+    const filter = audio.createBiquadFilter();
+    osc.type = index === 2 && theme === "candy" ? "triangle" : spec.wave;
+    osc.frequency.value = frequency;
+    amp.gain.value = index === 0 ? 0.34 : index === 1 ? 0.18 : 0.085;
+    filter.type = "lowpass";
+    filter.frequency.value = theme === "candy" ? 1800 : theme === "plinko" ? 1450 : 920;
+    filter.Q.value = 0.2;
+    osc.connect(amp).connect(filter).connect(root);
+    osc.start();
+    sources.push(osc);
+    nodes.push(amp, filter);
+  });
+
+  // Loop filtered noise for wind/room tone. This is generated locally, not sampled.
+  const noiseSource = audio.createBufferSource();
+  const noiseAmp = audio.createGain();
+  const noiseFilter = audio.createBiquadFilter();
+  noiseSource.buffer = getNoiseBuffer(audio);
+  noiseSource.loop = true;
+  noiseAmp.gain.value = spec.noiseGain;
+  noiseFilter.type = "lowpass";
+  noiseFilter.frequency.value = spec.noiseCutoff;
+  noiseFilter.Q.value = 0.22;
+  noiseSource.connect(noiseAmp).connect(noiseFilter).connect(root);
+  noiseSource.start();
+  sources.push(noiseSource);
+  nodes.push(noiseAmp, noiseFilter);
+
+  // Slow modulation prevents the bed from sounding like a static synthesizer.
+  const lfo = audio.createOscillator();
+  const lfoGain = audio.createGain();
+  lfo.type = "sine";
+  lfo.frequency.value = spec.lfoHz;
+  lfoGain.gain.value = AMBIENCE_GAIN[theme] * 0.16;
+  lfo.connect(lfoGain).connect(root.gain);
+  lfo.start();
+  sources.push(lfo);
+  nodes.push(lfoGain);
+
+  ambienceVoice = { theme, root, sources, nodes };
+}
+
+/**
+ * Selects a low-level procedural ambience for the current game.
+ * It does not force autoplay: if no AudioContext is already running, the
+ * requested theme waits until the next user-triggered sound resumes audio.
+ */
+export function setGameAmbience(theme: AmbienceTheme, enabled: boolean) {
+  if (!enabled) {
+    if (desiredAmbienceTheme === theme) {
+      desiredAmbienceEnabled = false;
+      desiredAmbienceTheme = null;
+      stopAmbience();
+    }
+    return;
+  }
+  desiredAmbienceTheme = theme;
+  desiredAmbienceEnabled = true;
+  if (ctx?.state === "running") ensureAmbience(ctx);
+}
+
+export function setAmbienceEnergy(value: number) {
+  ambienceEnergy = Math.max(0.58, Math.min(1.45, value));
+  if (ctx?.state === "running") ensureAmbience(ctx);
 }
 
 function getNoiseBuffer(audio: AudioContext) {
@@ -295,6 +453,7 @@ function bufferedCue(name: CachedCueName) {
   const amp = audio.createGain();
   amp.gain.value = activeIntensity;
   source.buffer = buffer;
+  source.playbackRate.value = activePitch;
   const panner = connectWithPan(audio, amp, getBusGain(audio, activeBus), activePan);
   source.connect(amp);
   addAccentReverb(audio, amp, activeBus);
@@ -321,8 +480,8 @@ function tone(
   const amp = audio.createGain();
   const filter = getToneFilter(audio, activeBus);
   osc.type = type;
-  osc.frequency.setValueAtTime(freq, start);
-  if (endFreq && endFreq > 0) osc.frequency.exponentialRampToValueAtTime(endFreq, start + duration);
+  osc.frequency.setValueAtTime(freq * activePitch, start);
+  if (endFreq && endFreq > 0) osc.frequency.exponentialRampToValueAtTime(endFreq * activePitch, start + duration);
   amp.gain.setValueAtTime(0.0001, start);
   amp.gain.exponentialRampToValueAtTime(Math.max(0.0001, gain * activeIntensity), start + 0.008);
   amp.gain.exponentialRampToValueAtTime(0.0001, start + duration);
@@ -377,13 +536,18 @@ export function playOlympusLevelUp(level: number, enabled: boolean) {
   const previousBus = activeBus;
   const previousPan = activePan;
   const previousIntensity = activeIntensity;
+  const previousPitch = activePitch;
   activeBus = "reward";
   activePan = 0;
   activeIntensity = 1;
+  activePitch = 1;
 
   try {
     const audio = getContext();
-    if (audio) duckForAccent(audio, activeBus);
+    if (audio) {
+      ensureAmbience(audio);
+      duckForAccent(audio, activeBus);
+    }
     const clamped = Math.max(2, Math.min(5, Math.round(level)));
     const ratio = 1 + (clamped - 2) * .09;
     tone(220 * ratio, .17, "triangle", .026, 0, 360 * ratio);
@@ -393,6 +557,7 @@ export function playOlympusLevelUp(level: number, enabled: boolean) {
     activeBus = previousBus;
     activePan = previousPan;
     activeIntensity = previousIntensity;
+    activePitch = previousPitch;
   }
 }
 
@@ -444,12 +609,17 @@ export function playSound(name: SoundName, enabled: boolean, options: SoundOptio
   const previousBus = activeBus;
   const previousPan = activePan;
   const previousIntensity = activeIntensity;
+  const previousPitch = activePitch;
   activeBus = busForSound(name);
   activePan = Math.max(-0.78, Math.min(0.78, options.pan ?? 0));
   activeIntensity = Math.max(0.35, Math.min(1.2, options.intensity ?? 1));
+  activePitch = Math.max(0.88, Math.min(1.22, options.pitch ?? 1));
 
   const audio = getContext();
-  if (audio) duckForAccent(audio, activeBus);
+  if (audio) {
+    ensureAmbience(audio);
+    duckForAccent(audio, activeBus);
+  }
 
   try {
     switch (name) {
@@ -570,5 +740,6 @@ export function playSound(name: SoundName, enabled: boolean, options: SoundOptio
     activeBus = previousBus;
     activePan = previousPan;
     activeIntensity = previousIntensity;
+    activePitch = previousPitch;
   }
 }

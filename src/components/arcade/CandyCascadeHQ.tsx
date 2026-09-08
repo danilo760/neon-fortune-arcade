@@ -22,7 +22,7 @@ import {
 } from "@/lib/arcade/candyCascadeMath";
 import { playCandyFeatureSound } from "@/lib/arcade/candySound";
 import { formatCoins } from "@/lib/arcade/format";
-import { playSound } from "@/lib/arcade/sound";
+import { playSound, setAmbienceEnergy, setGameAmbience } from "@/lib/arcade/sound";
 import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store";
 import { cn } from "@/lib/utils";
 
@@ -206,6 +206,17 @@ export function CandyCascadeHQ() {
 
   useEffect(() => hydrateFromStorage(), []);
 
+  useEffect(() => {
+    setGameAmbience("candy", soundEnabled);
+    return () => setGameAmbience("candy", false);
+  }, [soundEnabled]);
+
+  useEffect(() => {
+    const burst = phase === "bombBirth" || phase === "bombBurst" || phase === "bonusTrigger";
+    const energy = burst ? 1.34 : bonusActive ? 1.16 : spinning ? 1.02 : 0.76;
+    setAmbienceEnergy(energy);
+  }, [bonusActive, phase, spinning]);
+
   const featureCost = candyFeatureBuyCost(bet);
   const featureInsufficient = balance < featureCost;
   const energyProgress = Math.min(100, (sugarEnergy / (CANDY_SUGAR_LEVEL_THRESHOLDS[4] ?? 10)) * 100);
@@ -241,9 +252,9 @@ export function CandyCascadeHQ() {
         setCascadeIndex(index + 1);
         setWinning(new Set(cascade.winning));
         setPhase("cluster");
-        playSound("candyPop", soundEnabled, { intensity: Math.min(1.08, 0.78 + index * 0.055) });
+        playSound("candyPop", soundEnabled, { intensity: Math.min(1.08, 0.78 + index * 0.055), pitch: Math.min(1.18, 1 + index * 0.035) });
         await wait(turbo ? 95 : Math.min(260 + index * 35, 410));
-        playSound("candyBreak", soundEnabled, { intensity: Math.min(1.08, 0.82 + index * 0.045) });
+        playSound("candyBreak", soundEnabled, { intensity: Math.min(1.08, 0.82 + index * 0.045), pitch: Math.min(1.16, 0.98 + index * 0.032) });
 
         if (cascade.bomb) {
           setActiveBomb(cascade.bomb);

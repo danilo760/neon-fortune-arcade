@@ -7,7 +7,7 @@ import { formatCoins, formatMultiplier } from "@/lib/arcade/format";
 import { dropBall, plinkoPayouts, RISK_LABELS, type PlinkoRisk } from "@/lib/arcade/plinko";
 import { createRng } from "@/lib/arcade/rng";
 import { BET_STEPS } from "@/lib/arcade/slot-configs";
-import { playSound } from "@/lib/arcade/sound";
+import { playSound, setAmbienceEnergy, setGameAmbience } from "@/lib/arcade/sound";
 import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store";
 import { cn } from "@/lib/utils";
 
@@ -219,6 +219,15 @@ export function PlinkoReference() {
       impactRefs.current.clear();
     };
   }, []);
+
+  useEffect(() => {
+    setGameAmbience("plinko", soundEnabled);
+    return () => setGameAmbience("plinko", false);
+  }, [soundEnabled]);
+
+  useEffect(() => {
+    setAmbienceEnergy(bigWin ? 1.28 : busy ? 1.08 : 0.7);
+  }, [bigWin, busy]);
 
   const payouts = plinkoPayouts(risk, rows);
   const runCost = bet * ballsPerRun;

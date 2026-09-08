@@ -21,7 +21,7 @@ import {
   createOlympusFeatureBuyLock,
   olympusFeatureBuyAvailability,
 } from "@/lib/arcade/olympusStormFeatureBuy";
-import { playOlympusLevelUp, playSound } from "@/lib/arcade/sound";
+import { playOlympusLevelUp, playSound, setAmbienceEnergy, setGameAmbience } from "@/lib/arcade/sound";
 import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store";
 import { cn } from "@/lib/utils";
 
@@ -279,6 +279,17 @@ export function OlympusStormReference() {
   const featureBuyLockRef = useRef(createOlympusFeatureBuyLock());
 
   useEffect(() => hydrateFromStorage(), []);
+
+  useEffect(() => {
+    setGameAmbience("olympus", soundEnabled);
+    return () => setGameAmbience("olympus", false);
+  }, [soundEnabled]);
+
+  useEffect(() => {
+    const stormPhase = phase === "stormCharge" || phase === "stormHit" || phase === "stormImpact";
+    const energy = stormPhase ? 1.42 : bonusActive ? 1.18 : roundBusy ? 0.98 : 0.74;
+    setAmbienceEnergy(energy);
+  }, [bonusActive, phase, roundBusy]);
 
   const revealInitialGrid = useCallback(async (plan: OlympusRoundPlan, compact = false) => {
     setWinning(new Set());

@@ -34,6 +34,8 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
         <circle cx="69" cy="75" r={reaction === "full" ? 6 : 4.5} fill={reaction === "idle" ? "#4a1c09" : "#b91523"} />
         <circle cx="111" cy="75" r={reaction === "full" ? 6 : 4.5} fill={reaction === "idle" ? "#4a1c09" : "#b91523"} />
         <circle cx="67" cy="72" r="2" fill="#fff" /><circle cx="109" cy="72" r="2" fill="#fff" />
+        <ellipse className="gt-hw-tiger-lid gt-hw-tiger-lid--left" cx="69" cy="73" rx="10.5" ry="8.5" fill="#e89a22" stroke="#4a1c09" strokeWidth="1.5" />
+        <ellipse className="gt-hw-tiger-lid gt-hw-tiger-lid--right" cx="111" cy="73" rx="10.5" ry="8.5" fill="#e89a22" stroke="#4a1c09" strokeWidth="1.5" />
         <path d="m84 88 6 7 6-7Z" fill="#b91523" />
         <path d={reaction === "coin" || reaction === "win" || reaction === "full" ? "M74 99q16 20 32 0" : "M78 101q12 7 24 0"} fill="none" stroke="#4a1c09" strokeWidth="3" strokeLinecap="round" />
         <path d="M57 92 29 88M58 99l-27 7M123 92l28-4M122 99l27 7" stroke="#69401c" strokeWidth="2" />

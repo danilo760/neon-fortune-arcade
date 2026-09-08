@@ -191,3 +191,39 @@
     will-change: auto;
   }
 }
+
+/* === Sensory pass 2: ball-first luminance and calmer board response === */
+@keyframes plinko-board-live-v3 {
+  0%,100% { box-shadow: inset 0 0 22px rgba(66,216,255,.05); }
+  50% { box-shadow: inset 0 0 30px rgba(96,226,255,.1); }
+}
+@keyframes plinko-idle-orbit-v3 {
+  0%,100% { filter: brightness(1) drop-shadow(0 0 8px rgba(112,238,255,.65)); }
+  50% { filter: brightness(1.18) drop-shadow(0 0 15px rgba(138,245,255,.9)); }
+}
+.plinko-ref-machine:has(.plinko-ref-ball--falling) .plinko-ref-board {
+  animation: plinko-board-live-v3 1.15s ease-in-out infinite;
+}
+.plinko-ref-ball--falling,
+.plinko-ref-ball--landed {
+  filter:
+    brightness(1.18)
+    drop-shadow(0 0 8px rgba(214,253,255,.96))
+    drop-shadow(0 0 16px rgba(95,224,255,.62));
+}
+.plinko-ref-ball--idle {
+  animation: plinko-idle-orbit-v3 1.8s ease-in-out infinite;
+}
+.plinko-ref-impact--timeline {
+  mix-blend-mode: screen;
+  filter: brightness(1.25) drop-shadow(0 0 7px rgba(170,247,255,.72));
+}
+.plinko-ref-bucket.is-latest-winner {
+  z-index: 4;
+}
+@media (prefers-reduced-motion: reduce) {
+  .plinko-ref-machine:has(.plinko-ref-ball--falling) .plinko-ref-board,
+  .plinko-ref-ball--idle {
+    animation: none !important;
+  }
+}

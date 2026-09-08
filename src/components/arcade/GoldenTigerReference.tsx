@@ -23,7 +23,7 @@ import {
   type HoldWinCoin,
   type HoldWinResult,
 } from "@/lib/arcade/goldenTigerHoldWin";
-import { playSound } from "@/lib/arcade/sound";
+import { playSound, setAmbienceEnergy, setGameAmbience } from "@/lib/arcade/sound";
 import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store";
 import { cn } from "@/lib/utils";
 import "./GoldenTigerReference.css";
@@ -107,6 +107,20 @@ export function GoldenTigerReference() {
     hydrateFromStorage();
     return () => { autoStopRef.current = true; };
   }, []);
+
+  useEffect(() => {
+    setGameAmbience("tiger", soundEnabled);
+    return () => setGameAmbience("tiger", false);
+  }, [soundEnabled]);
+
+  useEffect(() => {
+    const energy =
+      phase === "full-grid" ? 1.42 :
+      phase === "win" ? 1.2 :
+      featureActive ? (phase === "feature-spin" ? 1.12 : 1.25) :
+      phase === "base-spin" ? 0.92 : 0.72;
+    setAmbienceEnergy(energy);
+  }, [featureActive, phase]);
 
   const activationCost = useMemo(() => holdWinActivationCost(bet), [bet]);
   const isBusy = phase !== "idle";

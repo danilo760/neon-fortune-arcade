@@ -51,3 +51,66 @@
     animation: none !important;
   }
 }
+
+/* === Sensory pass 2: mascot readability and event hierarchy === */
+@keyframes gt-hw-blink-v3 {
+  0%, 43%, 47%, 100% { opacity: 0; transform: scaleY(.12); }
+  44.5%, 45.8% { opacity: 1; transform: scaleY(1); }
+}
+@keyframes gt-hw-stage-ring-v3 {
+  0% { opacity: 0; transform: translate(-50%,-50%) scale(.58); }
+  28% { opacity: .78; }
+  100% { opacity: 0; transform: translate(-50%,-50%) scale(1.52); }
+}
+@keyframes gt-hw-watch-focus-v3 {
+  0%,100% { filter: drop-shadow(0 5px 9px #000b) brightness(1); }
+  50% { filter: drop-shadow(0 6px 10px #000c) brightness(1.045); }
+}
+.gt-hw-tiger-lid {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  pointer-events: none;
+}
+.gt-hw-tiger-stage[data-reaction="idle"] .gt-hw-tiger-lid {
+  animation: gt-hw-blink-v3 4.1s ease-in-out infinite;
+}
+.gt-hw-tiger-stage[data-reaction="watch"] .gt-hw-tiger-lid {
+  animation: gt-hw-blink-v3 3.05s ease-in-out infinite .35s;
+}
+.gt-hw-tiger-stage[data-reaction="watch"] .gt-hw-tiger-art {
+  animation:
+    gt-hw-watch .7s ease-in-out infinite alternate,
+    gt-hw-watch-focus-v3 1.4s ease-in-out infinite;
+}
+.gt-hw-tiger-stage[data-reaction="win"]::after,
+.gt-hw-tiger-stage[data-reaction="full"]::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 54%;
+  width: 72%;
+  aspect-ratio: 1;
+  border: 2px solid rgba(255,231,136,.72);
+  border-radius: 50%;
+  box-shadow: 0 0 24px rgba(255,188,48,.42), inset 0 0 18px rgba(255,239,176,.16);
+  pointer-events: none;
+  animation: gt-hw-stage-ring-v3 .72s cubic-bezier(.16,.78,.2,1) both;
+}
+.gt-hw-machine[data-phase="feature-spin"] .gt-hw-tiger-aura {
+  opacity: .78;
+  transform: scale(1.12);
+  transition: opacity .24s ease, transform .32s ease;
+}
+.gt-hw-machine[data-phase="feature-miss"] .gt-hw-tiger-stage {
+  filter: saturate(.86) brightness(.93);
+  transition: filter .18s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gt-hw-tiger-lid,
+  .gt-hw-tiger-stage[data-reaction="win"]::after,
+  .gt-hw-tiger-stage[data-reaction="full"]::after,
+  .gt-hw-tiger-stage[data-reaction="watch"] .gt-hw-tiger-art {
+    animation: none !important;
+  }
+}

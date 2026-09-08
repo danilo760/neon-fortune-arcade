@@ -326,3 +326,61 @@
     animation: none !important;
   }
 }
+
+/* === Sensory pass 2: make Zeus -> charge -> strike -> impact read as one event === */
+@keyframes os-zeus-charge-v3 {
+  0% { transform: scale(.985); filter: brightness(.88) saturate(.95); }
+  55% { transform: scale(1.025); filter: brightness(1.2) saturate(1.18) drop-shadow(0 0 10px rgba(150,226,255,.42)); }
+  100% { transform: scale(1.012); filter: brightness(1.08) saturate(1.08); }
+}
+@keyframes os-bolt-snap-v3 {
+  0% { opacity: 0; transform: scaleY(.22) translateY(-18%); filter: brightness(2.2); }
+  18% { opacity: 1; transform: scaleY(1.08) translateY(0); }
+  52% { opacity: .88; transform: scaleY(.96); filter: brightness(1.55) drop-shadow(0 0 14px #d9f7ff); }
+  100% { opacity: 0; transform: scaleY(.92); filter: brightness(1); }
+}
+@keyframes os-impact-bloom-v3 {
+  0% { opacity: 0; transform: scale(.42); }
+  22% { opacity: .92; }
+  100% { opacity: 0; transform: scale(1.75); }
+}
+.os-ref-machine > img {
+  transition: filter .18s ease;
+}
+.os-ref-machine[data-phase="stormCharge"] > img {
+  filter: brightness(.76) saturate(.94) contrast(1.03);
+}
+.os-ref-machine[data-phase="stormCharge"] .os-ref-zeus-stage {
+  animation: os-zeus-charge-v3 .42s cubic-bezier(.18,.78,.22,1) both;
+}
+.os-ref-machine[data-phase="stormCharge"] .os-ref-zeus-aura {
+  opacity: .96;
+  transform: translate(-50%,-50%) scale(1.18);
+  filter: blur(4px) brightness(1.28);
+}
+.os-ref-machine[data-phase="stormHit"] .os-ref-zeus-bolt {
+  animation: os-bolt-snap-v3 .24s cubic-bezier(.12,.75,.2,1) both;
+}
+.os-ref-machine[data-phase="stormImpact"] .os-ref-grid::after {
+  content: "";
+  position: absolute;
+  inset: 8%;
+  z-index: 30;
+  pointer-events: none;
+  border: 2px solid rgba(210,247,255,.82);
+  border-radius: 18%;
+  box-shadow: 0 0 26px rgba(112,211,255,.7), inset 0 0 30px rgba(255,255,255,.22);
+  animation: os-impact-bloom-v3 .36s ease-out both;
+}
+.os-ref-machine[data-phase="stormImpact"] .os-ref-sky-depth {
+  filter: brightness(1.22) saturate(1.12);
+  transition: filter .08s linear;
+}
+@media (prefers-reduced-motion: reduce) {
+  .os-ref-machine[data-phase="stormCharge"] .os-ref-zeus-stage,
+  .os-ref-machine[data-phase="stormHit"] .os-ref-zeus-bolt,
+  .os-ref-machine[data-phase="stormImpact"] .os-ref-grid::after {
+    animation: none !important;
+  }
+  .os-ref-machine > img { transition: none !important; }
+}
