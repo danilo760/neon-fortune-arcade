@@ -23,7 +23,7 @@ export function resolveGoldenTigerVisualQaRng(fallback: Rng): Rng {
   const env = (import.meta as ImportMeta & {
     env?: Record<string, string | boolean | undefined>;
   }).env;
-  const visualQaEnabled = env?.VITE_GOLDEN_TIGER_VISUAL_QA === "1";
+  const visualQaEnabled = env?.["VITE_GOLDEN_TIGER_VISUAL_QA"] === "1";
 
   if (!visualQaEnabled || typeof window === "undefined") {
     return fallback;
