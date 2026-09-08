@@ -1,3 +1,5 @@
+import { mkdir, writeFile } from "node:fs/promises";
+
 const appUrl = process.env.CANDY_CASCADE_URL ?? "http://127.0.0.1:3000/game/candy-cascade";
 const cdpUrl = process.env.CHROME_CDP_URL ?? "http://127.0.0.1:9224";
 const viewports = [
@@ -5,6 +7,7 @@ const viewports = [
   { width: 390, height: 844 },
   { width: 430, height: 932 },
 ];
+const artifactDir = "artifacts/candy-cascade";
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -69,6 +72,17 @@ async function applyViewport(client, viewport) {
   await client.send("Emulation.setPageScaleFactor", { pageScaleFactor: 1 });
 }
 
+async function capture(client, viewport, state) {
+  const result = await client.send("Page.captureScreenshot", {
+    format: "png",
+    fromSurface: true,
+    captureBeyondViewport: false,
+  });
+  const path = `${artifactDir}/candy-${viewport.width}x${viewport.height}-${state}.png`;
+  await writeFile(path, Buffer.from(result.data, "base64"));
+  return path;
+}
+
 const auditExpression = `(() => {
   const machine = document.querySelector('.ccp-machine');
   const grid = document.querySelector('.ccp-grid');
@@ -95,7 +109,9 @@ const auditExpression = `(() => {
   };
 })()`;
 
+await mkdir(artifactDir, { recursive: true });
 let failed = false;
+const report = [];
 for (const viewport of viewports) {
   const target = await createTarget();
   const client = new CdpClient(target.webSocketDebuggerUrl);
@@ -119,13 +135,16 @@ for (const viewport of viewports) {
     if (idle.imageCount !== 0) errors.push(`reference images still mounted: ${idle.imageCount}`);
     if (!idle.spinHit) errors.push("spin not hittable");
     if (idle.spinDisabled) errors.push("spin disabled on idle load");
+    const idleShot = await capture(client, viewport, "idle");
 
     await evaluate(client, `(() => { document.querySelector('[aria-label="Girar Candy Cascade"]')?.click(); return true; })()`);
     await sleep(120);
     const active = await evaluate(client, auditExpression);
     if (!["spin", "landing", "anticipation"].includes(active.phase)) errors.push(`unexpected phase after spin: ${active.phase}`);
     if (!active.spinDisabled) errors.push("spin should disable during round");
+    const spinShot = await capture(client, viewport, "spin");
 
+    report.push({ viewport, idle, active, errors, screenshots: [idleShot, spinShot] });
     if (errors.length) {
       failed = true;
       console.error(`❌ ${viewport.width}x${viewport.height}: ${errors.join('; ')}`);
@@ -138,4 +157,5 @@ for (const viewport of viewports) {
   }
 }
 
+await writeFile(`${artifactDir}/report.json`, JSON.stringify(report, null, 2));
 if (failed) process.exitCode = 1;

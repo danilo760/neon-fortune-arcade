@@ -5,6 +5,7 @@ on:
     paths:
       - "src/components/arcade/CandyCascadePremium.tsx"
       - "src/components/arcade/CandyCascadePremium.css"
+      - "src/components/arcade/CandyCascadeActivePolish.css"
       - "src/lib/arcade/candyCascade*.ts"
       - "src/lib/arcade/candySound.ts"
       - "src/routes/game/$slug.tsx"
@@ -60,6 +61,17 @@ jobs:
           exit 1
       - name: Audit premium mobile presentation
         run: node scripts/candyCascadeVisualQa.mjs
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: candy-cascade-visual-qa
+          path: |
+            artifacts/candy-cascade/
+            candy-cascade-server.log
+            candy-cascade-chrome.log
+          if-no-files-found: warn
+          retention-days: 7
       - name: Stop processes
         if: always()
         shell: bash
