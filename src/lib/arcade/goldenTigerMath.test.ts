@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  GOLDEN_TIGER_FULL_GRID_MULTIPLIER,
   evaluateGoldenTiger,
   goldenTigerWinTier,
   makeGoldenTigerGrid,
@@ -13,12 +14,13 @@ test("Golden Tiger base grid remains a deterministic 3x3 when RNG is injected", 
   assert.ok(grid.every((symbol) => symbol === "wild"));
 });
 
-test("five fixed paylines still evaluate the existing 3x3 base game", () => {
+test("five fixed paylines apply x10 when all nine positions participate", () => {
   const grid = Array.from({ length: 9 }, () => "orange" as const);
   const result = evaluateGoldenTiger(grid, 100);
   assert.equal(result.lines, 5);
   assert.equal(result.winning.size, 9);
-  assert.equal(result.payout, 5 * 210);
+  assert.equal(result.isFullGrid, true);
+  assert.equal(result.payout, 5 * 210 * GOLDEN_TIGER_FULL_GRID_MULTIPLIER);
 });
 
 test("wild substitutes for regular symbols without creating a new game symbol", () => {
@@ -30,14 +32,16 @@ test("wild substitutes for regular symbols without creating a new game symbol", 
   const result = evaluateGoldenTiger(grid, 100);
   assert.equal(result.lines, 1);
   assert.equal(result.payout, 800);
+  assert.equal(result.isFullGrid, false);
 });
 
-test("Gold Coin indexes block normal paylines", () => {
+test("blocked presentation cells prevent paylines and full-grid multiplication", () => {
   const grid = Array.from({ length: 9 }, () => "orange" as const);
   const blocked = new Set([0, 2]);
   const result = evaluateGoldenTiger(grid, 100, blocked);
   assert.equal(result.lines, 2);
   assert.equal(result.payout, 420);
+  assert.equal(result.isFullGrid, false);
 });
 
 test("win tiers only change presentation intensity", () => {
