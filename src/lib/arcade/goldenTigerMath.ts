@@ -28,10 +28,11 @@ export const GOLDEN_TIGER_FULL_GRID_MULTIPLIER = 10;
 /**
  * Neon-original calibration factor. The public Fortune Tiger reference lists
  * RTP 96.81%, but does not publish reel strips/weights. We keep our existing
- * symbol weights and scale line awards uniformly so the combined base game +
- * Fortune Feature simulation approaches that public RTP target.
+ * symbol weights and scale line awards uniformly so the combined paid-spin
+ * outcomes approach that public RTP target when Fortune Feature replaces the
+ * normal base resolution on triggered spins.
  */
-export const GOLDEN_TIGER_PAYOUT_SCALE = 1.187;
+export const GOLDEN_TIGER_PAYOUT_SCALE = 1.195;
 
 export const GOLDEN_TIGER_PAYLINES = [
   [0, 1, 2],
