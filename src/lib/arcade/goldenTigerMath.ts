@@ -44,6 +44,14 @@ const SYMBOLS: readonly SymbolDef[] = [
 const SYMBOL_BY_ID = new Map(SYMBOLS.map((symbol) => [symbol.id, symbol]));
 const TOTAL_WEIGHT = SYMBOLS.reduce((sum, symbol) => sum + symbol.weight, 0);
 
+export const GOLDEN_TIGER_REGULAR_SYMBOLS: readonly GoldenTigerSymbolId[] = SYMBOLS
+  .map((symbol) => symbol.id)
+  .filter((symbol) => symbol !== "wild");
+
+export function goldenTigerSymbolPay(symbol: GoldenTigerSymbolId) {
+  return SYMBOL_BY_ID.get(symbol)?.pay ?? 0;
+}
+
 export function pickGoldenTigerSymbol(
   rng: () => number = Math.random,
 ): GoldenTigerSymbolId {
@@ -64,9 +72,8 @@ export function makeGoldenTigerGrid(
 }
 
 /**
- * Gold Coins are visual/feature symbols and never participate in base paylines.
- * Their indexes are passed as blocked cells so a line containing a feature coin
- * cannot win using the hidden regular symbol underneath it.
+ * Some presentation features can temporarily block base cells from paylines.
+ * Blocked indexes never expose the regular symbol rendered underneath them.
  */
 export function evaluateGoldenTiger(
   grid: readonly GoldenTigerSymbolId[],
