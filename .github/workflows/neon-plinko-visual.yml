@@ -1,0 +1,70 @@
+name: Neon Plinko Visual
+
+on:
+  pull_request:
+    paths:
+      - "src/components/arcade/PlinkoReference.tsx"
+      - "src/components/arcade/PlinkoReference.css"
+      - "src/components/arcade/PlinkoInteraction.css"
+      - "src/components/arcade/PlinkoPresentation.css"
+      - "src/components/arcade/PlinkoPresentationSafe.css"
+      - "src/lib/arcade/plinko.ts"
+      - "src/routes/game/$slug.tsx"
+      - "scripts/plinkoVisualQa.mjs"
+      - ".github/workflows/neon-plinko-visual.yml"
+  workflow_dispatch:
+
+jobs:
+  mobile-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Production build
+        run: bun run build
+      - name: Detect Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          [ -n "$CHROME" ] || { echo "No Chrome/Chromium binary" >&2; exit 1; }
+          echo "CHROME=$CHROME" >> "$GITHUB_ENV"
+      - name: Start production server
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORT=3000 node .output/server/index.mjs > neon-plinko-server.log 2>&1 &
+          echo $! > /tmp/neon-plinko-server.pid
+          for attempt in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:3000/game/neon-plinko >/dev/null && exit 0
+            sleep 1
+          done
+          cat neon-plinko-server.log
+          exit 1
+      - name: Start headless Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu \
+            --remote-debugging-address=127.0.0.1 --remote-debugging-port=9226 \
+            --user-data-dir=/tmp/neon-plinko-chrome about:blank > neon-plinko-chrome.log 2>&1 &
+          echo $! > /tmp/neon-plinko-chrome.pid
+          for attempt in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:9226/json/version >/dev/null && exit 0
+            sleep 1
+          done
+          cat neon-plinko-chrome.log
+          exit 1
+      - name: Audit generated peg field
+        run: node scripts/plinkoVisualQa.mjs
+      - name: Stop processes
+        if: always()
+        shell: bash
+        run: |
+          [ ! -f /tmp/neon-plinko-chrome.pid ] || kill "$(cat /tmp/neon-plinko-chrome.pid)" 2>/dev/null || true
+          [ ! -f /tmp/neon-plinko-server.pid ] || kill "$(cat /tmp/neon-plinko-server.pid)" 2>/dev/null || true
