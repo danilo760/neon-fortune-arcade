@@ -1,3 +1,5 @@
+import { getArcadeMusicGraph } from "./sound";
+
 export type AdaptiveScoreTheme = "tiger" | "olympus" | "candy" | "mines" | "plinko";
 
 type ScoreSpec = {
@@ -95,16 +97,6 @@ function semitoneRatio(semitones: number) {
 
 function clampEnergy(value: number) {
   return Math.max(0.56, Math.min(1.42, value));
-}
-
-function createContext() {
-  if (typeof window === "undefined") return null;
-  try {
-    const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    return Ctor ? new Ctor() : null;
-  } catch {
-    return null;
-  }
 }
 
 function inferEnergy(theme: AdaptiveScoreTheme) {
@@ -320,8 +312,9 @@ function stopRuntime() {
 
 function startRuntime(theme: AdaptiveScoreTheme) {
   stopRuntime();
-  const context = createContext();
-  if (!context) return;
+  const graph = getArcadeMusicGraph();
+  if (!graph) return;
+  const { context, destination } = graph;
 
   const master = context.createGain();
   const filter = context.createBiquadFilter();
@@ -335,7 +328,7 @@ function startRuntime(theme: AdaptiveScoreTheme) {
   compressor.ratio.value = 2.4;
   compressor.attack.value = 0.008;
   compressor.release.value = 0.18;
-  filter.connect(master).connect(compressor).connect(context.destination);
+  filter.connect(master).connect(compressor).connect(destination);
 
   runtime = {
     context,
