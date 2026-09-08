@@ -89,8 +89,12 @@ async function waitFor(client, expression, label, timeoutMs = 12_000) {
     if (await evaluate(client, expression)) return;
     await sleep(14);
   }
-  const phase = await evaluate(client, `document.querySelector('.gt-hw-machine')?.getAttribute('data-phase') ?? null`);
-  throw new Error(`Timed out waiting for ${label}; current phase=${phase}`);
+  const debug = await evaluate(client, `(() => ({
+    phase: document.querySelector('.gt-hw-machine')?.getAttribute('data-phase') ?? null,
+    randomCalls: window.__gtQaRandom?.calls ?? null,
+    remaining: window.__gtQaRandom?.queue?.length ?? null,
+  }))()`);
+  throw new Error(`Timed out waiting for ${label}; debug=${JSON.stringify(debug)}`);
 }
 
 async function waitForPhase(client, phase, timeoutMs) {
@@ -119,6 +123,8 @@ async function snapshotState(client) {
       overlayMega: overlay?.classList.contains('is-mega') ?? false,
       scrollWidth: document.documentElement.scrollWidth,
       scrollHeight: document.documentElement.scrollHeight,
+      randomCalls: window.__gtQaRandom?.calls ?? null,
+      randomRemaining: window.__gtQaRandom?.queue?.length ?? null,
     };
   })()`);
 }
@@ -137,18 +143,30 @@ async function openScenario(name, values, fallback = 0.9) {
     screenWidth: viewport.width,
     screenHeight: viewport.height,
   });
+
+  // Install the wrapper before application modules load. Production bundling
+  // may capture Math.random while evaluating a module; capturing this wrapper
+  // is fine because the wrapper reads a mutable queue populated only at click.
+  await client.send("Page.addScriptToEvaluateOnNewDocument", {
+    source: `(() => {
+      const state = { queue: [], fallback: 0.9, calls: 0 };
+      Object.defineProperty(window, '__gtQaRandom', { value: state, configurable: true });
+      Math.random = () => {
+        state.calls += 1;
+        return state.queue.length ? state.queue.shift() : state.fallback;
+      };
+    })();`,
+  });
+
   await client.send("Page.navigate", { url: appUrl });
   await waitFor(client, `Boolean(document.querySelector('.gt-hw-spin:not(:disabled)'))`, `${name} idle mount`);
 
-  // Install the deterministic queue and dispatch the click in one synchronous
-  // browser task. This prevents idle/audio timers from consuming queued RNG
-  // values between the override and React's spin handler.
   await evaluate(client, `(() => {
-    const values = ${JSON.stringify(values)};
-    let index = 0;
-    Math.random = () => values[index++] ?? ${fallback};
+    window.__gtQaRandom.queue = ${JSON.stringify(values)}.slice();
+    window.__gtQaRandom.fallback = ${fallback};
+    window.__gtQaRandom.calls = 0;
     document.querySelector('.gt-hw-spin')?.click();
-    return { calls: index };
+    return true;
   })()`);
 
   return { target, client };
@@ -175,14 +193,13 @@ async function capturePhase(client, scenario, phase, validate, timeoutMs = 12_00
 await mkdir(outputDir, { recursive: true });
 const report = [];
 
-// Real Fortune Feature flow: 3 selected symbols land, then the next respin misses.
 const featureProgressValues = [
-  ...Array(9).fill(0.5), // base grid
-  0,                    // feature trigger
-  0.5,                  // selected symbol = jade
-  0.05, 0.05, 0.05,     // first three positions land selected symbol
-  ...Array(6).fill(0.9), // remaining positions blank on respin 1
-  ...Array(6).fill(0.9), // respin 2 misses and ends feature
+  ...Array(9).fill(0.5),
+  0,
+  0.5,
+  0.05, 0.05, 0.05,
+  ...Array(6).fill(0.9),
+  ...Array(6).fill(0.9),
 ];
 
 {
@@ -233,12 +250,11 @@ const featureProgressValues = [
   }
 }
 
-// Two real line wins -> Big tier, without full-grid.
 const bigWinValues = [
-  0, 0, 0,          // top row Wild
-  0.05, 0.05, 0.05, // middle row Lion
-  0.5, 0.9, 0.15,   // bottom mixed: no line/diagonal
-  0.5,               // no feature trigger
+  0, 0, 0,
+  0.05, 0.05, 0.05,
+  0.5, 0.9, 0.15,
+  0.5,
 ];
 
 {
@@ -258,7 +274,6 @@ const bigWinValues = [
   }
 }
 
-// Four lines but only eight participating positions -> Mega tier, not full-grid.
 const megaWinValues = [
   0, 0, 0,
   0, 0, 0,
@@ -284,7 +299,6 @@ const megaWinValues = [
   }
 }
 
-// Base-game full grid must reach the x10 presentation without Fortune Feature.
 const baseFullGridValues = [
   ...Array(9).fill(0),
   0.5,
@@ -309,7 +323,6 @@ const baseFullGridValues = [
   }
 }
 
-// Real Fortune Feature full-grid: trigger, select Jade, then nine Wilds land.
 const featureFullGridValues = [
   ...Array(9).fill(0.5),
   0,
