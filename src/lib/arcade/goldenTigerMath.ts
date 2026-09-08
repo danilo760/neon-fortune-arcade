@@ -1,3 +1,5 @@
+import { resolveGoldenTigerVisualQaRng } from "./goldenTigerVisualQaRng";
+
 export type GoldenTigerSymbolId =
   | "wild"
   | "lion"
@@ -80,7 +82,8 @@ export function pickGoldenTigerSymbol(
 export function makeGoldenTigerGrid(
   rng: () => number = Math.random,
 ): GoldenTigerSymbolId[] {
-  return Array.from({ length: 9 }, () => pickGoldenTigerSymbol(rng));
+  const resolvedRng = resolveGoldenTigerVisualQaRng(rng);
+  return Array.from({ length: 9 }, () => pickGoldenTigerSymbol(resolvedRng));
 }
 
 /**
