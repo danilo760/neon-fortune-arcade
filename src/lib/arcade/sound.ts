@@ -167,6 +167,18 @@ function getBusGain(audio: AudioContext, bus: AudioBus) {
   return node;
 }
 
+/**
+ * Shares the existing arcade AudioContext and ambience bus with adaptive music.
+ * Keeping the score inside this graph means cues, ambience and music all pass
+ * through the same master compressor instead of opening competing contexts.
+ */
+export function getArcadeMusicGraph(): { context: AudioContext; destination: AudioNode } | null {
+  const audio = getContext();
+  if (!audio) return null;
+  ensureAmbience(audio);
+  return { context: audio, destination: getBusGain(audio, "ambience") };
+}
+
 function getToneFilter(audio: AudioContext, bus = activeBus) {
   let node = toneFilters.get(bus);
   if (!node) {
@@ -229,7 +241,6 @@ function duckForAccent(audio: AudioContext, bus: AudioBus) {
   ambience.gain.exponentialRampToValueAtTime(BUS_LEVEL.ambience, now + (bus === "impact" ? 0.34 : 0.26));
 }
 
-
 function stopAmbience() {
   const voice = ambienceVoice;
   ambienceVoice = null;
@@ -284,7 +295,6 @@ function ensureAmbience(audio: AudioContext) {
   const sources: AudioScheduledSourceNode[] = [];
   const nodes: AudioNode[] = [root];
 
-  // A very quiet harmonic bed: enough to remove dead silence without masking cues.
   spec.tones.forEach((frequency, index) => {
     const osc = audio.createOscillator();
     const amp = audio.createGain();
@@ -301,7 +311,6 @@ function ensureAmbience(audio: AudioContext) {
     nodes.push(amp, filter);
   });
 
-  // Loop filtered noise for wind/room tone. This is generated locally, not sampled.
   const noiseSource = audio.createBufferSource();
   const noiseAmp = audio.createGain();
   const noiseFilter = audio.createBiquadFilter();
@@ -316,7 +325,6 @@ function ensureAmbience(audio: AudioContext) {
   sources.push(noiseSource);
   nodes.push(noiseAmp, noiseFilter);
 
-  // Slow modulation prevents the bed from sounding like a static synthesizer.
   const lfo = audio.createOscillator();
   const lfoGain = audio.createGain();
   lfo.type = "sine";
@@ -330,11 +338,6 @@ function ensureAmbience(audio: AudioContext) {
   ambienceVoice = { theme, root, sources, nodes };
 }
 
-/**
- * Selects a low-level procedural ambience for the current game.
- * It does not force autoplay: if no AudioContext is already running, the
- * requested theme waits until the next user-triggered sound resumes audio.
- */
 export function setGameAmbience(theme: AmbienceTheme, enabled: boolean) {
   if (!enabled) {
     if (desiredAmbienceTheme === theme) {
@@ -560,7 +563,6 @@ export function playOlympusLevelUp(level: number, enabled: boolean) {
     activePitch = previousPitch;
   }
 }
-
 
 function busForSound(name: SoundName): AudioBus {
   if (name === "click") return "ui";
