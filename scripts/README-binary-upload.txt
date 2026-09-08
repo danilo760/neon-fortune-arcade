@@ -1,0 +1,1 @@
+This temporary checkpoint will be removed after the binary atlas repair is validated.
