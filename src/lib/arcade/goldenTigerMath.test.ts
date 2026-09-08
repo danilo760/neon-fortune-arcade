@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   GOLDEN_TIGER_FULL_GRID_MULTIPLIER,
+  GOLDEN_TIGER_PAYOUT_SCALE,
   evaluateGoldenTiger,
   goldenTigerWinTier,
   makeGoldenTigerGrid,
@@ -20,7 +21,10 @@ test("five fixed paylines apply x10 when all nine positions participate", () => 
   assert.equal(result.lines, 5);
   assert.equal(result.winning.size, 9);
   assert.equal(result.isFullGrid, true);
-  assert.equal(result.payout, 5 * 210 * GOLDEN_TIGER_FULL_GRID_MULTIPLIER);
+  assert.equal(
+    result.payout,
+    Math.round(5 * 210 * GOLDEN_TIGER_FULL_GRID_MULTIPLIER * GOLDEN_TIGER_PAYOUT_SCALE),
+  );
 });
 
 test("wild substitutes for regular symbols without creating a new game symbol", () => {
@@ -31,7 +35,7 @@ test("wild substitutes for regular symbols without creating a new game symbol", 
   ] as const;
   const result = evaluateGoldenTiger(grid, 100);
   assert.equal(result.lines, 1);
-  assert.equal(result.payout, 800);
+  assert.equal(result.payout, Math.round(800 * GOLDEN_TIGER_PAYOUT_SCALE));
   assert.equal(result.isFullGrid, false);
 });
 
@@ -40,8 +44,12 @@ test("blocked presentation cells prevent paylines and full-grid multiplication",
   const blocked = new Set([0, 2]);
   const result = evaluateGoldenTiger(grid, 100, blocked);
   assert.equal(result.lines, 2);
-  assert.equal(result.payout, 420);
+  assert.equal(result.payout, Math.round(420 * GOLDEN_TIGER_PAYOUT_SCALE));
   assert.equal(result.isFullGrid, false);
+});
+
+test("payout scale is explicitly Neon-original calibration", () => {
+  assert.equal(GOLDEN_TIGER_PAYOUT_SCALE, 1.187);
 });
 
 test("win tiers only change presentation intensity", () => {
