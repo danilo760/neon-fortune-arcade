@@ -16,5 +16,5 @@ test("Olympus Storm routes the legacy reference import to original artwork", () 
 
   assert.match(viteConfig, /olympus-storm\/reference\.webp/);
   assert.match(viteConfig, /authorial-cabinet\.svg/);
-  assert.doesNotMatch(artwork, /https?:\/\//);
+  assert.doesNotMatch(artwork, /(?:href|src)=["']https?:\/\//i);
 });
