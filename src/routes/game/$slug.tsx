@@ -4,8 +4,8 @@ import { lazy, Suspense } from "react";
 import goldenTigerPresentationCss from "../../components/arcade/GoldenTigerPresentationSafe.css?url";
 import olympusStormPresentationCss from "../../components/arcade/OlympusStormActivePolish.css?url";
 import candyCascadePresentationCss from "../../components/arcade/CandyCascadeActivePolish.css?url";
-import minesPresentationCss from "../../components/arcade/MinesPresentationSafe.css?url";
-import plinkoPresentationCss from "../../components/arcade/PlinkoPresentationSafe.css?url";
+import minesPresentationCss from "../../components/arcade/MinesFinalPolish.css?url";
+import plinkoPresentationCss from "../../components/arcade/PlinkoFinalPolish.css?url";
 import { GameShell } from "@/components/arcade/GameShell";
 import { getGame } from "@/lib/arcade/catalog";
 
