@@ -10,12 +10,9 @@ import fortuneBag from "@/assets/golden-tiger/symbols/fortuneBag.webp";
 import lion from "@/assets/golden-tiger/symbols/lion.webp";
 import wild from "@/assets/golden-tiger/symbols/wild.webp";
 
-type CompatibleSymbolId = GoldenTigerSymbolId | "bag";
-
 type Props = {
-  id: CompatibleSymbolId;
+  id: GoldenTigerSymbolId;
   isWinning?: boolean;
-  isLocked?: boolean;
   className?: string;
 };
 
@@ -44,21 +41,18 @@ const LABEL: Record<GoldenTigerSymbolId, string> = {
 export const GoldenTigerSymbol = memo(function GoldenTigerSymbol({
   id,
   isWinning = false,
-  isLocked = false,
   className = "",
 }: Props) {
-  const symbol: GoldenTigerSymbolId = id === "bag" ? "fortuneBag" : id;
-
   return (
     <div
-      className={`gt-hw-symbol ${isWinning ? "is-winning" : ""} ${isLocked ? "is-legacy-locked" : ""} ${className}`}
-      data-symbol={symbol}
-      aria-label={LABEL[symbol]}
+      className={`gt-hw-symbol ${isWinning ? "is-winning" : ""} ${className}`}
+      data-symbol={id}
+      aria-label={LABEL[id]}
     >
       <span className="gt-hw-symbol-aura" aria-hidden />
       <img
         className="gt-hw-symbol-art"
-        src={ART[symbol]}
+        src={ART[id]}
         alt=""
         draggable={false}
         decoding="async"
