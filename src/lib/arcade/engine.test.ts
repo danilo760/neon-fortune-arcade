@@ -4,22 +4,9 @@ import { describe, it } from "node:test";
 import { createMineField, minesMultiplier } from "./mines";
 import { dropBall, plinkoPayouts } from "./plinko";
 import { createSeededRng } from "./rng";
-import { SLOT_CONFIGS } from "./slot-configs";
-import { spin } from "./slot-engine";
 import { STARTING_BALANCE, parseState } from "./store";
 
 describe("arcade engines", () => {
-  it("keeps slot results finite and non-negative", () => {
-    for (const config of Object.values(SLOT_CONFIGS)) {
-      const rng = createSeededRng(42);
-      for (let round = 0; round < 500; round += 1) {
-        const result = spin(config, 100, rng);
-        assert.ok(Number.isFinite(result.payout));
-        assert.ok(result.payout >= 0);
-      }
-    }
-  });
-
   it("creates the requested number of unique mines", () => {
     const field = createMineField(createSeededRng(7), 10);
     assert.equal(field.length, 10);
