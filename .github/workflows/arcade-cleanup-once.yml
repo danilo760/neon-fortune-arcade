@@ -1,0 +1,194 @@
+name: Arcade Cleanup Once
+
+on:
+  push:
+    branches:
+      - cleanup/arcade-consolidation-2026-09-08
+    paths:
+      - ".github/workflows/arcade-cleanup-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: cleanup/arcade-consolidation-2026-09-08
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Apply controlled cleanup
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              file = Path(path)
+              text = file.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected exactly 1 occurrence, found {count}: {old[:80]!r}")
+              file.write_text(text.replace(old, new, 1))
+
+          # Mines: the authored CSS cabinet is now authoritative; remove the invisible legacy bitmap import/layer.
+          replace_once(
+              "src/components/arcade/MinesGame.tsx",
+              'import neonMinesReference from "@/assets/neon-mines-reference.webp";\n',
+              "",
+          )
+          replace_once(
+              "src/components/arcade/MinesGame.tsx",
+              '        <img className="mines-premium__machine-art" src={neonMinesReference} alt="" aria-hidden />\n',
+              "",
+          )
+
+          # Plinko: generated pegs/board are authoritative; remove the invisible screenshot cabinet.
+          replace_once(
+              "src/components/arcade/PlinkoReference.tsx",
+              'import neonPlinkoReference from "@/assets/neon-plinko-reference.webp";\n',
+              "",
+          )
+          replace_once(
+              "src/components/arcade/PlinkoReference.tsx",
+              '        <img className="plinko-ref-machine__art" src={neonPlinkoReference} alt="Neon Plinko Skyfall Tower" draggable={false} />\n',
+              "",
+          )
+
+          # Golden Tiger: depend on a primitive content key instead of complex array-index expressions.
+          replace_once(
+              "src/components/arcade/GoldenTigerReference.tsx",
+              '    ...finalSymbols,\n  ];\n\n  useEffect(() => {\n    brakingRef.current = braking;',
+              '    ...finalSymbols,\n  ];\n  const finalSymbolsKey = finalSymbols.join("|");\n\n  useEffect(() => {\n    brakingRef.current = braking;',
+          )
+          replace_once(
+              "src/components/arcade/GoldenTigerReference.tsx",
+              '  }, [column, turbo, finalSymbols[0], finalSymbols[1], finalSymbols[2], symbols.length]);',
+              '  }, [column, turbo, finalSymbolsKey, symbols.length]);',
+          )
+
+          # Plinko: capture the stable Map/Set instances used by unmount cleanup and settle pending
+          # accounting inline. This preserves credits/history without closing over a render-local function.
+          plinko_path = Path("src/components/arcade/PlinkoReference.tsx")
+          plinko = plinko_path.read_text()
+          pattern = re.compile(
+              r'  useEffect\(\(\) => \{\n    hydrateFromStorage\(\);.*?  \}, \[\]\);\n\n  useEffect\(\(\) => \{\n    setGameAmbience',
+              re.S,
+          )
+          replacement = '''  useEffect(() => {
+    hydrateFromStorage();
+    mountedRef.current = true;
+    const activeAnimations = activeAnimationsRef.current;
+    const pendingSettlements = pendingSettlementsRef.current;
+    const settledOutcomeIds = settledOutcomeIdsRef.current;
+    const balls = ballRefs.current;
+    const trails = trailRefs.current;
+    const impacts = impactRefs.current;
+
+    return () => {
+      mountedRef.current = false;
+      autoRef.current = false;
+      if (autoTimerRef.current !== null) {
+        window.clearTimeout(autoTimerRef.current);
+        autoTimerRef.current = null;
+      }
+      if (collisionRafRef.current !== null) {
+        window.cancelAnimationFrame(collisionRafRef.current);
+        collisionRafRef.current = null;
+      }
+      for (const animation of activeAnimations) animation.cancel();
+      activeAnimations.clear();
+      for (const ball of pendingSettlements.values()) {
+        if (settledOutcomeIds.has(ball.id)) continue;
+        settledOutcomeIds.add(ball.id);
+        if (ball.payout > 0) arcadeActions.credit(ball.payout);
+        arcadeActions.recordRound({
+          slug: "neon-plinko",
+          gameName: "Neon Plinko",
+          bet: ball.bet,
+          payout: ball.payout,
+          multiplier: ball.multiplier,
+          note: `Bola ${ball.ballNumber}/${ball.runBallCount} · Risco ${RISK_LABELS[ball.risk]} · ${ball.rows} linhas`,
+        });
+      }
+      pendingSettlements.clear();
+      settledOutcomeIds.clear();
+      busyRef.current = false;
+      balls.clear();
+      trails.clear();
+      impacts.clear();
+    };
+  }, []);
+
+  useEffect(() => {
+    setGameAmbience'''
+          plinko, count = pattern.subn(replacement, plinko, count=1)
+          if count != 1:
+              raise SystemExit(f"Plinko mount cleanup: expected 1 block, found {count}")
+          plinko_path.write_text(plinko)
+
+          # Shared shadcn-style UI modules intentionally co-export variants/helpers; isolate that known pattern.
+          eslint_path = Path("eslint.config.js")
+          eslint = eslint_path.read_text()
+          marker = '  },\n);\n'
+          if eslint.count(marker) != 1:
+              raise SystemExit("eslint.config.js: unexpected config tail")
+          eslint = eslint.replace(
+              marker,
+              '  },\n  {\n    files: ["src/components/ui/**/*.{ts,tsx}"],\n    rules: {\n      "react-refresh/only-export-components": "off",\n    },\n  },\n);\n',
+              1,
+          )
+          eslint_path.write_text(eslint)
+
+          # Once the known warnings are fixed/isolated, warnings become CI failures too.
+          replace_once(
+              "package.json",
+              '    "lint": "eslint .",',
+              '    "lint": "eslint . --max-warnings=0",',
+          )
+          PY
+
+      - name: Strict lint
+        run: bun run lint
+
+      - name: Tests
+        run: bun run test
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Production build without legacy bitmap bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          bun run build 2>&1 | tee /tmp/arcade-build.log
+          if grep -q 'neon-mines-reference' /tmp/arcade-build.log; then
+            echo 'Legacy Mines bitmap is still bundled' >&2
+            exit 1
+          fi
+          if grep -q 'neon-plinko-reference' /tmp/arcade-build.log; then
+            echo 'Legacy Plinko bitmap is still bundled' >&2
+            exit 1
+          fi
+
+      - name: Commit validated cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/arcade/MinesGame.tsx src/components/arcade/PlinkoReference.tsx src/components/arcade/GoldenTigerReference.tsx eslint.config.js package.json
+          git diff --cached --check
+          git commit -m "refactor: remove legacy arcade bitmap path and lint warnings"
+          git push origin HEAD:cleanup/arcade-consolidation-2026-09-08
