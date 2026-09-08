@@ -25,6 +25,8 @@
     "noUncheckedSideEffectImports": true,
     "paths": {
       "@/assets/olympus-storm/reference.webp": ["./src/assets/olympus-storm/authorial-cabinet.svg"],
+      "@/assets/neon-mines-reference.webp": ["./src/assets/legacy-art-transparent.svg"],
+      "@/assets/neon-plinko-reference.webp": ["./src/assets/legacy-art-transparent.svg"],
       "@/*": ["./src/*"]
     }
   }
