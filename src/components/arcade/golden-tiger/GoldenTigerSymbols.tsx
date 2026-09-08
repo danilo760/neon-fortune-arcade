@@ -9,6 +9,7 @@ import ingot from "@/assets/golden-tiger/symbols/ingot.webp";
 import fortuneBag from "@/assets/golden-tiger/symbols/fortuneBag.webp";
 import lion from "@/assets/golden-tiger/symbols/lion.webp";
 import wild from "@/assets/golden-tiger/symbols/wild.webp";
+import "./GoldenTigerSymbols.css";
 
 type Props = {
   id: GoldenTigerSymbolId;
