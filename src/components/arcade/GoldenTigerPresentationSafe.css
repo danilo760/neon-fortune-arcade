@@ -50,9 +50,122 @@
   box-shadow: inset 0 0 12px rgba(255, 200, 70, .12), 0 0 12px rgba(255, 180, 38, .08);
 }
 
+/* The panel immediately below the mascot already carries the sticky counter.
+   Hiding the small mascot badge during the feature removes duplicated 0/9,
+   3/9 and 9/9 readouts and gives the artwork a cleaner silhouette. */
+.gt-hw-page .gt-hw-tiger-stage[data-feature="on"] .gt-hw-tiger-caption {
+  opacity: 0;
+  transform: translateY(4px) scale(.94);
+}
+
+/* A vertical 3-symbol strip looked like two broken images stacked inside every
+   cell when sampled mid-frame. Cycle complete symbols in place instead: the
+   player still reads selected symbol + Wild motion, while each 3×3 position
+   remains a single coherent reel window. */
+.gt-hw-page .gt-hw-machine[data-phase="feature-spin"] .gt-hw-cell-motion {
+  background:
+    linear-gradient(180deg, rgba(93, 35, 14, .28), transparent 18%, transparent 82%, rgba(70, 20, 8, .30)),
+    radial-gradient(circle at 50% 45%, #f7e7c2 0, #e4c28d 66%, #bc8248 100%);
+}
+
+.gt-hw-page .gt-hw-machine[data-phase="feature-spin"] .gt-hw-cell-motion > div {
+  position: relative;
+  height: 100%;
+  animation: none;
+  filter: none;
+}
+
+.gt-hw-page .gt-hw-machine[data-phase="feature-spin"] .gt-hw-cell-motion span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  height: 100%;
+  overflow: hidden;
+  opacity: 0;
+  background: transparent;
+  animation: gt-fortune-cell-cycle .42s linear infinite;
+  will-change: opacity, transform, filter;
+}
+
+.gt-hw-page .gt-hw-machine[data-phase="feature-spin"] .gt-hw-cell-motion span:nth-child(2) {
+  animation-delay: -.28s;
+}
+
+.gt-hw-page .gt-hw-machine[data-phase="feature-spin"] .gt-hw-cell-motion span:nth-child(3) {
+  animation-delay: -.14s;
+}
+
+.gt-hw-page .gt-hw-machine[data-phase="feature-spin"] .gt-hw-cell-motion .gt-hw-symbol {
+  width: 92%;
+  height: 92%;
+  padding: 5%;
+}
+
+.gt-hw-page .gt-hw-machine[data-phase="feature-spin"] .gt-hw-cell-motion .gt-hw-symbol-art {
+  transform: scale(.88);
+  filter: blur(.55px) saturate(.96) brightness(.98);
+}
+
+@keyframes gt-fortune-cell-cycle {
+  0% {
+    opacity: 0;
+    transform: translateY(-13%) scale(.88);
+    filter: blur(3px);
+  }
+  18%, 46% {
+    opacity: .94;
+    transform: translateY(0) scale(.96);
+    filter: blur(.35px);
+  }
+  64%, 100% {
+    opacity: 0;
+    transform: translateY(13%) scale(.88);
+    filter: blur(3px);
+  }
+}
+
+/* Lock impact should illuminate newly sticky symbols without bleaching all of
+   the still-empty positions into white squares. */
+.gt-hw-page .gt-hw-machine[data-phase="feature-lock"] .gt-hw-cell.is-feature-blank {
+  background: radial-gradient(circle at 50% 42%, #eeddb8 0 18%, #d9bd8e 56%, #ad7846 100%);
+}
+
+/* Full-grid is a climax inside the cabinet, not a detached orange interstitial.
+   Keep the winning 3×3 and mascot visible below a translucent burst so the
+   player can still see what produced the x10 result. */
+.gt-hw-page .gt-hw-win-overlay.is-full {
+  background:
+    radial-gradient(circle at 50% 48%, rgba(255, 238, 159, .44) 0 16%, rgba(224, 127, 34, .40) 30%, rgba(137, 25, 12, .48) 52%, rgba(17, 0, 0, .66) 82%),
+    rgba(12, 0, 0, .28);
+  backdrop-filter: blur(.35px) saturate(1.08);
+}
+
+.gt-hw-page .gt-hw-win-overlay.is-full .gt-hw-win-rays {
+  opacity: .78;
+  mix-blend-mode: screen;
+}
+
+.gt-hw-page .gt-hw-win-overlay.is-full > span,
+.gt-hw-page .gt-hw-win-overlay.is-full > span + span,
+.gt-hw-page .gt-hw-win-overlay.is-full small {
+  position: relative;
+  z-index: 2;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .gt-hw-reel-overlay .gt-hw-reel-track {
     top: 0 !important;
     transition: none !important;
+  }
+
+  .gt-hw-page .gt-hw-machine[data-phase="feature-spin"] .gt-hw-cell-motion span {
+    animation: none !important;
+  }
+
+  .gt-hw-page .gt-hw-machine[data-phase="feature-spin"] .gt-hw-cell-motion span:first-child {
+    opacity: 1;
+    transform: none;
+    filter: none;
   }
 }
