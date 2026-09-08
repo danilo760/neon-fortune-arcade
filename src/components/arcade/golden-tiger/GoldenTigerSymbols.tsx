@@ -1,193 +1,97 @@
-import React, { memo } from "react";
-import type { GoldenTigerSymbolId } from "@/lib/arcade/golden-tiger/goldenTigerConfig";
+import { memo } from "react";
+import type { GoldenTigerSymbolId } from "@/lib/arcade/goldenTigerMath";
 
-interface SymbolProps {
-  id: GoldenTigerSymbolId;
+type CompatibleSymbolId = GoldenTigerSymbolId | "bag";
+
+type Props = {
+  id: CompatibleSymbolId;
   isWinning?: boolean;
   isLocked?: boolean;
   className?: string;
-}
+};
 
 export const GoldenTigerSymbol = memo(function GoldenTigerSymbol({
   id,
   isWinning = false,
   isLocked = false,
   className = "",
-}: SymbolProps) {
+}: Props) {
+  const symbol: GoldenTigerSymbolId = id === "bag" ? "fortuneBag" : id;
+
   return (
     <div
-      className={`relative flex items-center justify-center size-full select-none ${className} ${
-        isWinning ? "animate-pulse" : ""
-      }`}
+      className={`gt-hw-symbol ${isWinning ? "is-winning" : ""} ${isLocked ? "is-legacy-locked" : ""} ${className}`}
+      data-symbol={symbol}
+      aria-label={symbol}
     >
-      {id === "wild" && (
-        <svg viewBox="0 0 100 100" className="size-[85%] drop-shadow-[0_0_12px_#ffd700]">
-          <defs>
-            <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#fff275" />
-              <stop offset="50%" stopColor="#f59e0b" />
-              <stop offset="100%" stopColor="#b45309" />
-            </linearGradient>
-            <radialGradient id="eyeGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#ff0055" />
-              <stop offset="100%" stopColor="#880020" />
-            </radialGradient>
-          </defs>
-          {/* Fundo de escudo / medalha imperial */}
-          <path d="M50 5 L88 22 L82 72 L50 95 L18 72 L12 22 Z" fill="#3b070d" stroke="url(#goldGrad)" strokeWidth="3" />
-          {/* Cabeça do Tigre estilizada */}
-          <path d="M30 30 L40 18 L50 26 L60 18 L70 30 L65 52 L50 62 L35 52 Z" fill="url(#goldGrad)" />
-          {/* Orelhas */}
-          <polygon points="25,25 35,28 30,38" fill="#ff0055" />
-          <polygon points="75,25 65,28 70,38" fill="#ff0055" />
-          {/* Listras */}
-          <path d="M50 28 L50 42 M42 34 L58 34 M38 46 L45 44 M62 46 L55 44" stroke="#4a0404" strokeWidth="2.5" strokeLinecap="round" />
-          {/* Olhos luminosos */}
-          <ellipse cx="42" cy="40" rx="3.5" ry="2.5" fill="url(#eyeGlow)" />
-          <ellipse cx="58" cy="40" rx="3.5" ry="2.5" fill="url(#eyeGlow)" />
-          {/* Focinho e Presas */}
-          <polygon points="46,48 54,48 50,54" fill="#ff0055" />
-          <polygon points="43,52 46,52 44.5,58" fill="#ffffff" />
-          <polygon points="57,52 54,52 55.5,58" fill="#ffffff" />
-          {/* Texto "WILD" */}
-          <rect x="22" y="70" width="56" height="18" rx="4" fill="#b91c1c" stroke="#fef08a" strokeWidth="1.5" />
-          <text x="50" y="83.5" textAnchor="middle" fill="#fef08a" fontSize="11" fontWeight="900" letterSpacing="1">WILD</text>
+      {symbol === "wild" && (
+        <svg viewBox="0 0 100 100" aria-hidden>
+          <path d="M50 5 86 23 80 73 50 95 20 73 14 23Z" fill="#4b0908" stroke="#ffd86a" strokeWidth="3" />
+          <path d="M29 31 40 17 50 27 60 17 71 31 65 55 50 65 35 55Z" fill="#f2a51f" stroke="#fff2a9" strokeWidth="2" />
+          <path d="M50 28v15M41 35h18M36 46l10-4M64 46l-10-4" stroke="#4b1907" strokeWidth="3" strokeLinecap="round" />
+          <ellipse cx="42" cy="42" rx="4" ry="3" fill="#fff" /><ellipse cx="58" cy="42" rx="4" ry="3" fill="#fff" />
+          <circle cx="42" cy="42" r="2" fill="#9d1320" /><circle cx="58" cy="42" r="2" fill="#9d1320" />
+          <path d="m46 51 4 5 4-5Z" fill="#9d1320" />
+          <rect x="20" y="71" width="60" height="18" rx="6" fill="#8d0e0a" stroke="#ffd86a" strokeWidth="2" />
+          <text x="50" y="84" textAnchor="middle" fill="#fff0a6" fontSize="12" fontWeight="900">WILD</text>
         </svg>
       )}
 
-      {id === "ingot" && (
-        <svg viewBox="0 0 100 100" className="size-[82%] drop-shadow-[0_0_10px_#facc15]">
-          <defs>
-            <linearGradient id="ingotGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#fffbeb" />
-              <stop offset="35%" stopColor="#fde047" />
-              <stop offset="70%" stopColor="#ca8a04" />
-              <stop offset="100%" stopColor="#713f12" />
-            </linearGradient>
-          </defs>
-          {/* Yuanbao / Lingote Tradicional */}
-          <ellipse cx="50" cy="45" rx="38" ry="16" fill="#ca8a04" />
-          <ellipse cx="50" cy="42" rx="32" ry="12" fill="#fef08a" />
-          <path d="M12 45 C15 75, 85 75, 88 45 C80 62, 20 62, 12 45 Z" fill="url(#ingotGrad)" stroke="#fef08a" strokeWidth="1.5" />
-          <ellipse cx="50" cy="38" rx="16" ry="7" fill="url(#ingotGrad)" />
-          <circle cx="50" cy="54" r="5" fill="#ca8a04" />
-          <path d="M47 54 L53 54 M50 51 L50 57" stroke="#fef08a" strokeWidth="1.5" />
+      {symbol === "lion" && (
+        <svg viewBox="0 0 100 100" aria-hidden>
+          <circle cx="50" cy="51" r="39" fill="#a5430d" stroke="#ffd86a" strokeWidth="3" />
+          <path d="M23 44 13 31l18 2M77 44l10-13-18 2" fill="#ca6714" stroke="#ffd86a" strokeWidth="2" />
+          <circle cx="50" cy="51" r="28" fill="#ed9a22" stroke="#fff0a6" strokeWidth="2" />
+          <path d="M37 43q5-5 10 0M63 43q-5-5-10 0M45 54l5 5 5-5M38 64q12 10 24 0" stroke="#4c1c08" strokeWidth="3" strokeLinecap="round" fill="none" />
+          <path d="M50 18 55 8l5 10 11-5-4 12H33l-4-12 11 5 5-10Z" fill="#ffd54f" stroke="#fff4b4" strokeWidth="2" />
         </svg>
       )}
 
-      {id === "jade" && (
-        <svg viewBox="0 0 100 100" className="size-[80%] drop-shadow-[0_0_10px_#2dd4bf]">
-          <defs>
-            <radialGradient id="jadeGrad" cx="35%" cy="35%" r="65%">
-              <stop offset="0%" stopColor="#99f6e4" />
-              <stop offset="50%" stopColor="#14b8a6" />
-              <stop offset="85%" stopColor="#0f766e" />
-              <stop offset="100%" stopColor="#042f2e" />
-            </radialGradient>
-          </defs>
-          {/* Amuleto de Jade circular (Bi Disc) */}
-          <circle cx="50" cy="50" r="36" fill="url(#jadeGrad)" stroke="#ccfbf1" strokeWidth="2.5" />
-          <circle cx="50" cy="50" r="14" fill="#240003" stroke="#ccfbf1" strokeWidth="2" />
-          {/* Gravuras e laço vermelho */}
-          <path d="M50 14 L50 5 M45 10 L55 10" stroke="#dc2626" strokeWidth="3" strokeLinecap="round" />
-          <path d="M30 40 C35 30, 65 30, 70 40" stroke="#5eead4" strokeWidth="1.5" strokeDasharray="3 3" fill="none" />
-          <path d="M30 60 C35 70, 65 70, 70 60" stroke="#5eead4" strokeWidth="1.5" strokeDasharray="3 3" fill="none" />
+      {symbol === "ingot" && (
+        <svg viewBox="0 0 100 100" aria-hidden>
+          <path d="M14 47q8 31 36 35 28-4 36-35-13 13-36 13T14 47Z" fill="#d99009" stroke="#fff1a3" strokeWidth="3" />
+          <ellipse cx="50" cy="45" rx="35" ry="15" fill="#ffc92f" stroke="#fff4bc" strokeWidth="2" />
+          <ellipse cx="50" cy="40" rx="18" ry="8" fill="#fff0a1" />
+          <path d="M30 60q20 10 40 0" stroke="#8b4705" strokeWidth="3" fill="none" />
         </svg>
       )}
 
-      {id === "bag" && (
-        <svg viewBox="0 0 100 100" className="size-[80%] drop-shadow-[0_0_10px_#f43f5e]">
-          <defs>
-            <linearGradient id="bagGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#fb7185" />
-              <stop offset="45%" stopColor="#e11d48" />
-              <stop offset="100%" stopColor="#881337" />
-            </linearGradient>
-          </defs>
-          {/* Bolsa vermelha da fortuna */}
-          <path d="M30 32 Q50 36 70 32 Q82 65 70 85 Q50 92 30 85 Q18 65 30 32 Z" fill="url(#bagGrad)" stroke="#fecdd3" strokeWidth="2" />
-          {/* Amarra dourada e boca franzida */}
-          <ellipse cx="50" cy="32" rx="20" ry="7" fill="#fbbf24" stroke="#78350f" strokeWidth="1" />
-          <path d="M28 26 Q50 18 72 26 Q60 33 50 33 Q40 33 28 26 Z" fill="#e11d48" />
-          {/* Ideograma de prosperidade */}
-          <circle cx="50" cy="62" r="12" fill="#fbbf24" />
-          <text x="50" y="67" textAnchor="middle" fill="#881337" fontSize="13" fontWeight="900">福</text>
+      {symbol === "fortuneBag" && (
+        <svg viewBox="0 0 100 100" aria-hidden>
+          <path d="M34 27q16 8 32 0l-7 12q20 17 15 40-24 15-48 0-5-23 15-40Z" fill="#c81d2c" stroke="#ffd86a" strokeWidth="3" />
+          <path d="M34 29q16-11 32 0M31 38h38" stroke="#ffd86a" strokeWidth="5" strokeLinecap="round" />
+          <circle cx="50" cy="62" r="15" fill="#f5b51b" stroke="#fff1a1" strokeWidth="2" />
+          <path d="M42 62h16M50 54v16M44 56l12 12M56 56 44 68" stroke="#8d160f" strokeWidth="2.5" strokeLinecap="round" />
         </svg>
       )}
 
-      {id === "firecracker" && (
-        <svg viewBox="0 0 100 100" className="size-[80%] drop-shadow-[0_0_10px_#fb923c]">
-          {/* Rolo de fogos neon */}
-          <g transform="rotate(-15 50 50)">
-            {/* Cordão central */}
-            <path d="M50 12 L50 88" stroke="#ca8a04" strokeWidth="2" strokeDasharray="2 2" />
-            {/* Cilindros de fogos */}
-            <rect x="36" y="22" width="28" height="15" rx="3" fill="#dc2626" stroke="#fef08a" strokeWidth="1.5" />
-            <rect x="36" y="42" width="28" height="15" rx="3" fill="#dc2626" stroke="#fef08a" strokeWidth="1.5" />
-            <rect x="36" y="62" width="28" height="15" rx="3" fill="#dc2626" stroke="#fef08a" strokeWidth="1.5" />
-            {/* Detalhes dourados */}
-            <line x1="36" y1="28" x2="64" y2="28" stroke="#fef08a" strokeWidth="2" />
-            <line x1="36" y1="48" x2="64" y2="48" stroke="#fef08a" strokeWidth="2" />
-            <line x1="36" y1="68" x2="64" y2="68" stroke="#fef08a" strokeWidth="2" />
-            {/* Faíscas */}
-            <polygon points="50,6 52,11 57,10 53,14 55,19 50,15 45,19 47,14 43,10 48,11" fill="#facc15" />
-          </g>
+      {symbol === "firecracker" && (
+        <svg viewBox="0 0 100 100" aria-hidden>
+          <path d="M52 11q12 4 16 14" stroke="#ffd86a" strokeWidth="3" fill="none" />
+          <path d="m70 19 4-9 4 9 9 2-8 5 2 9-7-6-8 6 3-9-8-5Z" fill="#ffe561" />
+          <g transform="rotate(-12 50 52)"><rect x="31" y="26" width="38" height="17" rx="5" fill="#cf1628" stroke="#ffd86a" strokeWidth="2" /><rect x="31" y="46" width="38" height="17" rx="5" fill="#b70d1d" stroke="#ffd86a" strokeWidth="2" /><rect x="31" y="66" width="38" height="17" rx="5" fill="#cf1628" stroke="#ffd86a" strokeWidth="2" /><path d="M38 34h24M38 54h24M38 74h24" stroke="#fff1a3" strokeWidth="2" /></g>
         </svg>
       )}
 
-      {id === "lantern" && (
-        <svg viewBox="0 0 100 100" className="size-[80%] drop-shadow-[0_0_10px_#ec4899]">
-          <defs>
-            <radialGradient id="lanternGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#fbcfe8" />
-              <stop offset="50%" stopColor="#db2777" />
-              <stop offset="100%" stopColor="#831843" />
-            </radialGradient>
-          </defs>
-          {/* Cúpula superior e base */}
-          <rect x="36" y="16" width="28" height="6" rx="2" fill="#ca8a04" stroke="#fef08a" strokeWidth="1" />
-          <rect x="36" y="78" width="28" height="6" rx="2" fill="#ca8a04" stroke="#fef08a" strokeWidth="1" />
-          {/* Corpo oval da lanterna */}
-          <path d="M38 22 C20 38, 20 62, 38 78 L62 78 C80 62, 80 38, 62 22 Z" fill="url(#lanternGlow)" stroke="#fef08a" strokeWidth="1.5" />
-          {/* Nervuras verticais */}
-          <path d="M50 22 L50 78 M42 22 C34 38, 34 62, 42 78 M58 22 C66 38, 66 62, 58 78" stroke="#fbcfe8" strokeWidth="1.5" fill="none" opacity="0.6" />
-          {/* Franjas inferiores */}
-          <path d="M44 84 L44 94 M50 84 L50 97 M56 84 L56 94" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" />
+      {symbol === "jade" && (
+        <svg viewBox="0 0 100 100" aria-hidden>
+          <circle cx="50" cy="52" r="37" fill="#159f82" stroke="#b7ffe7" strokeWidth="3" /><circle cx="50" cy="52" r="16" fill="#071a17" stroke="#8df6d5" strokeWidth="3" />
+          <path d="M50 15v-9M45 10h10M27 37q23-15 46 0M27 67q23 15 46 0" stroke="#6ae7c0" strokeWidth="2" fill="none" /><path d="M45 9q5-6 10 0" stroke="#e22d38" strokeWidth="3" fill="none" />
         </svg>
       )}
 
-      {id === "orange" && (
-        <svg viewBox="0 0 100 100" className="size-[80%] drop-shadow-[0_0_10px_#f97316]">
-          <defs>
-            <radialGradient id="orangeGrad" cx="35%" cy="35%" r="65%">
-              <stop offset="0%" stopColor="#fed7aa" />
-              <stop offset="45%" stopColor="#f97316" />
-              <stop offset="85%" stopColor="#c2410c" />
-              <stop offset="100%" stopColor="#7c2d12" />
-            </radialGradient>
-          </defs>
-          {/* Folhinhas no topo */}
-          <path d="M50 28 C45 15, 30 18, 32 28 Z" fill="#16a34a" stroke="#86efac" strokeWidth="1" />
-          <path d="M50 28 C55 15, 70 18, 68 28 Z" fill="#15803d" stroke="#86efac" strokeWidth="1" />
-          {/* Caule */}
-          <path d="M50 28 L50 20" stroke="#713f12" strokeWidth="3" strokeLinecap="round" />
-          {/* Corpo da tangerina */}
-          <ellipse cx="50" cy="58" rx="36" ry="32" fill="url(#orangeGrad)" stroke="#ffedd5" strokeWidth="1.5" />
-          {/* Brilho suave */}
-          <ellipse cx="40" cy="46" rx="8" ry="5" fill="#ffffff" opacity="0.35" transform="rotate(-20 40 46)" />
+      {symbol === "lantern" && (
+        <svg viewBox="0 0 100 100" aria-hidden>
+          <path d="M39 14h22v8H39zM37 78h26v8H37z" fill="#dfa516" stroke="#fff0a6" strokeWidth="2" /><path d="M38 22q-20 27 0 56h24q20-29 0-56Z" fill="#ce2549" stroke="#ffb6c6" strokeWidth="2" />
+          <path d="M50 22v56M42 23q-9 27 0 54M58 23q9 27 0 54" stroke="#ff91ad" strokeWidth="2" fill="none" /><path d="M44 86v9M50 86v11M56 86v9" stroke="#f04343" strokeWidth="2" />
         </svg>
       )}
 
-      {/* Moldura de travamento dourada quando travado no Lucky Tiger Respin */}
-      {isLocked && (
-        <div
-          className="absolute inset-0 rounded-xl border-2 border-yellow-300 bg-yellow-400/10 shadow-[0_0_15px_rgba(255,215,0,0.6)] pointer-events-none animate-pulse"
-          aria-hidden="true"
-        >
-          <span className="absolute -top-1.5 -right-1.5 size-4 rounded-full bg-yellow-400 border border-yellow-100 flex items-center justify-center text-[8px] font-black text-amber-950">
-            ★
-          </span>
-        </div>
+      {symbol === "orange" && (
+        <svg viewBox="0 0 100 100" aria-hidden>
+          <path d="M50 28q-4-15-19-12 4 12 19 12ZM50 28q5-15 19-12-3 12-19 12Z" fill="#2d9b45" stroke="#8af09a" strokeWidth="2" /><path d="M50 29V18" stroke="#6f4212" strokeWidth="4" strokeLinecap="round" />
+          <circle cx="50" cy="58" r="34" fill="#ef7214" stroke="#ffd6a3" strokeWidth="3" /><ellipse cx="39" cy="46" rx="8" ry="5" fill="#fff" opacity=".3" transform="rotate(-25 39 46)" /><circle cx="62" cy="66" r="2" fill="#bc4608" /><circle cx="31" cy="62" r="2" fill="#bc4608" />
+        </svg>
       )}
     </div>
   );
