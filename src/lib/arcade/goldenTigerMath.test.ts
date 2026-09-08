@@ -34,7 +34,7 @@ test("wild substitutes for regular symbols without creating a new game symbol", 
 
 test("Gold Coin indexes block normal paylines", () => {
   const grid = Array.from({ length: 9 }, () => "orange" as const);
-  const blocked = new Set([1, 4, 7]);
+  const blocked = new Set([0, 2]);
   const result = evaluateGoldenTiger(grid, 100, blocked);
   assert.equal(result.lines, 2);
   assert.equal(result.payout, 420);
