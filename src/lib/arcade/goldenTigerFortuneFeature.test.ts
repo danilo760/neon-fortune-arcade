@@ -9,6 +9,7 @@ import {
   rollFortuneFeatureTrigger,
   runFortuneFeature,
 } from "./goldenTigerFortuneFeature";
+import { GOLDEN_TIGER_PAYOUT_SCALE } from "./goldenTigerMath";
 
 function seededRng(seed: number) {
   let state = seed >>> 0;
@@ -65,7 +66,12 @@ test("full 3x3 participation applies the verified x10 rule", () => {
   assert.equal(result.respinsUsed, 1);
   assert.equal(result.lines, 5);
   assert.equal(result.payout, base.payout);
-  assert.equal(result.payout, Math.round(5 * 2.1 * 100 * FORTUNE_FEATURE_FULL_GRID_MULTIPLIER));
+  assert.equal(
+    result.payout,
+    Math.round(
+      5 * 2.1 * 100 * FORTUNE_FEATURE_FULL_GRID_MULTIPLIER * GOLDEN_TIGER_PAYOUT_SCALE,
+    ),
+  );
 });
 
 test("feature calibration stays bounded and full grids remain uncommon", () => {
