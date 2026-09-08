@@ -131,19 +131,35 @@
 }
 
 @keyframes gt-media-symbol-breathe {
-  0%, 100% { transform: scale(var(--gt-symbol-scale, 1)) translateY(0); filter: saturate(var(--gt-symbol-saturation,1.03)) contrast(var(--gt-symbol-contrast,1.02)) drop-shadow(0 3px 3px rgba(84,37,14,.2)); }
-  50% { transform: scale(calc(var(--gt-symbol-scale, 1) * 1.012)) translateY(-.7px); filter: saturate(1.075) contrast(1.035) brightness(1.015) drop-shadow(0 4px 4px rgba(84,37,14,.22)); }
+  0%, 100% {
+    translate: 0 0;
+    scale: 1;
+    filter: saturate(var(--gt-symbol-saturation,1.03)) contrast(var(--gt-symbol-contrast,1.02)) drop-shadow(0 3px 3px rgba(84,37,14,.2));
+  }
+  50% {
+    translate: 0 -.7px;
+    scale: 1.012;
+    filter: saturate(1.075) contrast(1.035) brightness(1.015) drop-shadow(0 4px 4px rgba(84,37,14,.22));
+  }
 }
 
 @keyframes gt-media-wild-life {
-  0%, 100% { transform: scale(var(--gt-symbol-scale,1)); filter: saturate(1.12) brightness(1) drop-shadow(0 0 5px rgba(255,204,73,.34)); }
-  50% { transform: scale(calc(var(--gt-symbol-scale,1) * 1.022)) translateY(-1px); filter: saturate(1.18) brightness(1.06) drop-shadow(0 0 10px rgba(255,214,93,.62)); }
+  0%, 100% {
+    translate: 0 0;
+    scale: 1;
+    filter: saturate(1.12) brightness(1) drop-shadow(0 0 5px rgba(255,204,73,.34));
+  }
+  50% {
+    translate: 0 -1px;
+    scale: 1.022;
+    filter: saturate(1.18) brightness(1.06) drop-shadow(0 0 10px rgba(255,214,93,.62));
+  }
 }
 
 @keyframes gt-media-symbol-win {
-  0% { transform: scale(calc(var(--gt-symbol-scale,1) * .9)) rotate(-1deg); filter: brightness(1.1) saturate(1.18); }
-  52% { transform: scale(calc(var(--gt-symbol-scale,1) * 1.105)) rotate(1deg); filter: brightness(1.22) saturate(1.22) drop-shadow(0 0 13px rgba(255,222,110,.78)); }
-  100% { transform: scale(var(--gt-symbol-scale,1)) rotate(0); }
+  0% { translate: 0 2px; scale: .9; rotate: -1deg; filter: brightness(1.1) saturate(1.18); }
+  52% { translate: 0 -2px; scale: 1.105; rotate: 1deg; filter: brightness(1.22) saturate(1.22) drop-shadow(0 0 13px rgba(255,222,110,.78)); }
+  100% { translate: 0 0; scale: 1; rotate: 0deg; }
 }
 
 @media (prefers-reduced-motion: reduce) {
