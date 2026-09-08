@@ -27,7 +27,7 @@
    Acting is artwork-driven; these rules only position the selected cell and
    provide restrained micro-motion around the pose. */
 .gt-hw-machine .gt-hw-tiger-rig {
-  width: 178px;
+  width: clamp(194px, 52vw, 220px);
   height: 132px;
   overflow: visible;
 }
@@ -36,7 +36,7 @@
   position: absolute;
   left: 50%;
   bottom: -23px;
-  width: 178px;
+  width: clamp(194px, 52vw, 220px);
   aspect-ratio: 1;
   transform: translateX(-50%);
   transform-origin: 50% 84%;
