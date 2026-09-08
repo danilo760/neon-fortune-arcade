@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Volume2, VolumeX } from "lucide-react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 
-import { olympusStormReferenceBase64 } from "@/assets/olympus-storm/referenceData";
+import olympusReference from "@/assets/olympus-storm/reference.webp";
 import { formatCoins } from "@/lib/arcade/format";
 import {
   OLYMPUS_COLUMNS,
@@ -113,31 +113,6 @@ function refillDistance(winning: ReadonlySet<number>, index: number) {
   return row < removed ? removed - row : 0;
 }
 
-function useReferenceBlob() {
-  const [src, setSrc] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    let objectUrl: string | null = null;
-    try {
-      if (olympusStormReferenceBase64.length < 83_000) throw new Error("asset incompleto");
-      const binary = window.atob(olympusStormReferenceBase64);
-      const bytes = new Uint8Array(binary.length);
-      for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
-      objectUrl = URL.createObjectURL(new Blob([bytes], { type: "image/webp" }));
-      setSrc(objectUrl);
-    } catch {
-      setFailed(true);
-    }
-
-    return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, []);
-
-  return { src, failed };
-}
-
 const ReferenceSymbol = memo(function ReferenceSymbol({ id, src }: { id: OlympusSymbolId; src: string }) {
   if (id === "scatter") {
     return (
@@ -243,7 +218,8 @@ function visibleScatterCount(grid: readonly OlympusSymbolId[], columns: number) 
 export function OlympusStormReference() {
   const balance = useArcade((state) => state.balance);
   const soundEnabled = useArcade((state) => state.soundEnabled);
-  const { src, failed } = useReferenceBlob();
+  const src = olympusReference;
+  const failed = false;
 
   const [bet, setBet] = useState<number>(200);
   const [grid, setGrid] = useState<OlympusSymbolId[]>(INITIAL_GRID);

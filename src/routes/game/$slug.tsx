@@ -6,7 +6,6 @@ import hudFixesCss from "../../arcade-hud-fixes.css?url";
 import motionPolishCss from "../../arcade-motion-polish.css?url";
 import { GameShell } from "@/components/arcade/GameShell";
 import { getGame } from "@/lib/arcade/catalog";
-import { SLOT_CONFIGS } from "@/lib/arcade/slot-configs";
 
 const GoldenTigerReference = lazy(async () => {
   const module = await import("@/components/arcade/GoldenTigerReference");
@@ -33,10 +32,6 @@ const PlinkoReference = lazy(async () => {
   return { default: module.PlinkoReference };
 });
 
-const SlotGame = lazy(async () => {
-  const module = await import("@/components/arcade/SlotGame");
-  return { default: module.SlotGame };
-});
 
 export const Route = createFileRoute("/game/$slug")({
   loader: ({ params }) => {
@@ -82,13 +77,14 @@ function GameRoute() {
     content = <CandyCascadeReference />;
   } else if (game.slug === "neon-plinko") {
     content = <PlinkoReference />;
-  } else {
-    const slotConfig = SLOT_CONFIGS[game.slug];
+  } else if (game.slug === "neon-mines") {
     content = (
       <GameShell game={game}>
-        {slotConfig ? <SlotGame config={slotConfig} /> : <MinesGame />}
+        <MinesGame />
       </GameShell>
     );
+  } else {
+    throw new Error(`Jogo jogável sem renderer dedicado: ${game.slug}`);
   }
 
   return <Suspense fallback={<GameLoading name={game.name} />}>{content}</Suspense>;

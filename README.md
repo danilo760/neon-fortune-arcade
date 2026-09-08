@@ -115,7 +115,7 @@ ARQUITETURA
 
 - React + TypeScript + Tailwind + shadcn/ui, padrão Lovable.
 - Rotas limpas: /, /game/golden-tiger, /game/olympus-storm, /game/candy-cascade, /game/neon-mines, /game/neon-plinko.
-- Componentes reutilizáveis para GameShell, BetControls, BalanceDisplay, GameCard, WinOverlay, SoundToggle, PaytableModal.
+- Componentes reutilizáveis para GameShell, BetControls, BalanceDisplay, GameCard e SoundToggle.
 - Motor shared de RNG pseudoaleatório apenas para brincadeira local, com funções separadas e testáveis.
 - Estado global leve para saldo, favoritos, som e histórico.
 - Persistência em localStorage com validação defensiva.
@@ -168,3 +168,8 @@ VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_LVqE_QX85CUPU3mYpdMpQw_0xOHfETF
 ```
 
 Nunca coloque uma chave `sb_secret_...` ou `service_role` no frontend.
+
+
+## Arquitetura atual dos jogos
+
+Os cinco jogos jogáveis usam renderers dedicados. O antigo `SlotGame` genérico foi removido para evitar duas gerações de apresentação concorrendo. A matemática compartilhada permanece em `src/lib/arcade`, enquanto áudio e apresentação ficam desacoplados do resultado.
