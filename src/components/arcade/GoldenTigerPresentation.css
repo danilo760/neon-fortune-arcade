@@ -23,6 +23,31 @@
   outline-offset: 2px;
 }
 
+/* Fortune Feature uses selected symbol + Wild + blank. Empty positions must
+   read as intentionally empty, not as broken/missing artwork. */
+.gt-hw-cell.is-feature-blank {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255,247,214,.9) 0 18%, rgba(233,211,164,.9) 54%, rgba(177,126,70,.92) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(107,50,20,.14),
+    inset 0 0 22px rgba(104,44,12,.15);
+}
+
+.gt-hw-feature-blank {
+  width: 56%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px dashed rgba(126,72,25,.16);
+  background: radial-gradient(circle, rgba(255,255,255,.12), rgba(122,60,19,.04) 62%, transparent 64%);
+  opacity: .72;
+}
+
+/* This tile now communicates the random feature rate; it is not a feature-buy button. */
+.gt-hw-feature[aria-label="Fortune Feature aleatória"] {
+  cursor: default;
+  user-select: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .gt-hw-controls button:not(:disabled):active { transform: none; }
 }
