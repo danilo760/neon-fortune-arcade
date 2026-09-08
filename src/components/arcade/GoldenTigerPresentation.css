@@ -23,6 +23,124 @@
   outline-offset: 2px;
 }
 
+/* Eight original mascot poses packed as a 4×2 transparent atlas.
+   Acting is artwork-driven; these rules only position the selected cell and
+   provide restrained micro-motion around the pose. */
+.gt-hw-machine .gt-hw-tiger-rig {
+  width: 178px;
+  height: 132px;
+  overflow: visible;
+}
+
+.gt-hw-tiger-sprite {
+  position: absolute;
+  left: 50%;
+  bottom: -23px;
+  width: 178px;
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  transform-origin: 50% 84%;
+  background-repeat: no-repeat;
+  background-size: 400% 200%;
+  filter:
+    saturate(1.06)
+    contrast(1.025)
+    drop-shadow(0 9px 10px rgba(0,0,0,.38))
+    drop-shadow(0 0 9px rgba(255,184,45,.12));
+  will-change: transform, filter;
+}
+
+.gt-hw-tiger-rig[data-pose="idle"] .gt-hw-tiger-sprite { background-position: 0% 0%; }
+.gt-hw-tiger-rig[data-pose="blink"] .gt-hw-tiger-sprite { background-position: 33.333333% 0%; }
+.gt-hw-tiger-rig[data-pose="watch"] .gt-hw-tiger-sprite { background-position: 66.666667% 0%; }
+.gt-hw-tiger-rig[data-pose="tense"] .gt-hw-tiger-sprite { background-position: 100% 0%; }
+.gt-hw-tiger-rig[data-pose="reveal"] .gt-hw-tiger-sprite { background-position: 0% 100%; }
+.gt-hw-tiger-rig[data-pose="feature"] .gt-hw-tiger-sprite { background-position: 33.333333% 100%; }
+.gt-hw-tiger-rig[data-pose="win"] .gt-hw-tiger-sprite { background-position: 66.666667% 100%; }
+.gt-hw-tiger-rig[data-pose="full"] .gt-hw-tiger-sprite { background-position: 100% 100%; }
+
+.gt-hw-tiger-stage[data-reaction="idle"] .gt-hw-tiger-sprite,
+.gt-hw-tiger-stage[data-reaction="watch"] .gt-hw-tiger-sprite {
+  animation: gt-pose-breathe 2.8s cubic-bezier(.45,0,.55,1) infinite;
+}
+
+.gt-hw-tiger-stage[data-reaction="watch"] .gt-hw-tiger-sprite {
+  filter:
+    saturate(1.08)
+    brightness(1.035)
+    drop-shadow(0 10px 11px rgba(0,0,0,.38));
+}
+
+.gt-hw-tiger-stage[data-reaction="tense"] .gt-hw-tiger-sprite {
+  animation: gt-pose-tense .42s ease-in-out infinite alternate;
+}
+
+.gt-hw-tiger-stage[data-reaction="reveal"] .gt-hw-tiger-sprite {
+  animation: gt-pose-reveal .34s cubic-bezier(.16,.84,.2,1.14) both;
+}
+
+.gt-hw-tiger-stage[data-reaction="feature"] .gt-hw-tiger-sprite {
+  animation: gt-pose-feature .52s cubic-bezier(.16,.84,.2,1.12) both;
+  filter:
+    saturate(1.12)
+    brightness(1.06)
+    drop-shadow(0 9px 10px rgba(0,0,0,.36))
+    drop-shadow(0 0 15px rgba(255,205,77,.32));
+}
+
+.gt-hw-tiger-stage[data-reaction="win"] .gt-hw-tiger-sprite {
+  animation: gt-pose-win .72s cubic-bezier(.16,.82,.18,1.12) both;
+}
+
+.gt-hw-tiger-stage[data-reaction="full"] .gt-hw-tiger-sprite {
+  animation: gt-pose-full .86s ease-in-out infinite alternate;
+  filter:
+    saturate(1.14)
+    brightness(1.08)
+    drop-shadow(0 0 12px rgba(255,244,174,.72))
+    drop-shadow(0 0 24px rgba(255,190,48,.42))
+    drop-shadow(0 9px 10px rgba(0,0,0,.34));
+}
+
+.gt-hw-tiger-stage[data-reaction="feature"] .gt-hw-tiger-sparks,
+.gt-hw-tiger-stage[data-reaction="win"] .gt-hw-tiger-sparks,
+.gt-hw-tiger-stage[data-reaction="full"] .gt-hw-tiger-sparks {
+  opacity: 1;
+}
+
+@keyframes gt-pose-breathe {
+  0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
+  50% { transform: translateX(-50%) translateY(-1.5px) scale(1.012); }
+}
+
+@keyframes gt-pose-tense {
+  from { transform: translateX(-50%) translateY(0) scale(1.01); }
+  to { transform: translateX(-50%) translateY(-2px) scale(1.035); }
+}
+
+@keyframes gt-pose-reveal {
+  0% { transform: translateX(-50%) translateY(5px) scale(.94); filter: brightness(1.2); }
+  58% { transform: translateX(-50%) translateY(-2px) scale(1.045); }
+  100% { transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+@keyframes gt-pose-feature {
+  0% { transform: translateX(-50%) translateY(7px) scale(.92); opacity: .65; }
+  62% { transform: translateX(-50%) translateY(-2px) scale(1.04); opacity: 1; }
+  100% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes gt-pose-win {
+  0% { transform: translateX(-50%) translateY(8px) scale(.92); }
+  52% { transform: translateX(-50%) translateY(-4px) scale(1.055); }
+  100% { transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+@keyframes gt-pose-full {
+  from { transform: translateX(-50%) translateY(0) scale(1.02); }
+  to { transform: translateX(-50%) translateY(-4px) scale(1.065); }
+}
+
 /* Fortune Feature uses selected symbol + Wild + blank. Empty positions must
    read as intentionally empty, not as broken/missing artwork. */
 .gt-hw-cell.is-feature-blank {
@@ -48,6 +166,14 @@
   user-select: none;
 }
 
+@media (max-height: 760px) {
+  .gt-hw-tiger-sprite {
+    width: 160px;
+    bottom: -19px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .gt-hw-controls button:not(:disabled):active { transform: none; }
+  .gt-hw-tiger-sprite { animation: none !important; }
 }
