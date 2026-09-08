@@ -691,3 +691,606 @@
   .gt-hw-tiger-body-shell{ width:178px; height:108px; }
   .gt-hw-tiger-head-shell{ width:156px; height:118px; }
 }
+
+
+/* =====================================================================
+   GOLDEN TIGER — PREMIUM REBUILD V5
+   Visual goal: character-led 3x3 reel presentation with rendered symbols,
+   staged reel landings, anticipation, reveal focus and tiered celebration.
+   ===================================================================== */
+
+.gt-hw-page{
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(166,33,12,.34) 0%, rgba(70,9,4,.18) 35%, transparent 62%),
+    radial-gradient(circle at 50% 35%, rgba(255,176,49,.05) 0%, transparent 45%),
+    #090101;
+}
+
+.gt-hw-machine{
+  width:min(100vw,430px);
+  grid-template-rows:50px 172px 34px minmax(300px,1fr) 32px 43px auto 12px;
+  gap:3px;
+  padding:6px 9px 8px;
+  background:
+    radial-gradient(ellipse at 50% 17%, rgba(255,180,47,.12), transparent 31%),
+    linear-gradient(180deg,#4b0907 0%,#250403 27%,#100101 70%,#290403 100%);
+  box-shadow:
+    0 28px 90px rgba(0,0,0,.72),
+    0 0 0 1px rgba(255,194,83,.18),
+    inset 0 1px 0 rgba(255,235,176,.12);
+}
+
+.gt-hw-machine::before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  inset:0;
+  pointer-events:none;
+  background:
+    linear-gradient(90deg,transparent 0 7%,rgba(255,198,84,.08) 7.2%,transparent 7.7% 92.3%,rgba(255,198,84,.08) 92.8%,transparent 93%),
+    radial-gradient(circle at 8% 26%,rgba(255,79,20,.14),transparent 18%),
+    radial-gradient(circle at 92% 26%,rgba(255,79,20,.14),transparent 18%);
+}
+
+/* Character stage */
+.gt-hw-tiger-stage{
+  position:relative;
+  min-height:0;
+  height:172px;
+  display:grid;
+  place-items:center;
+  overflow:visible;
+  isolation:isolate;
+  pointer-events:none;
+}
+
+.gt-hw-tiger-rig{
+  position:relative;
+  z-index:3;
+  width:278px;
+  height:168px;
+  transform-origin:50% 92%;
+  animation:gt5-idle-breath 2.9s cubic-bezier(.45,0,.55,1) infinite;
+  will-change:transform;
+}
+
+.gt-hw-tiger-pose{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:center bottom;
+  pointer-events:none;
+  user-select:none;
+  transform-origin:50% 88%;
+  transition:
+    opacity .16s ease,
+    transform .24s cubic-bezier(.18,.82,.24,1.12),
+    filter .24s ease;
+}
+
+.gt-hw-tiger-pose--idle{
+  opacity:1;
+  transform:translateY(0) scale(1);
+  filter:
+    saturate(1.06)
+    contrast(1.02)
+    drop-shadow(0 10px 14px rgba(0,0,0,.34))
+    drop-shadow(0 0 10px rgba(255,180,42,.10));
+}
+
+.gt-hw-tiger-pose--win{
+  opacity:0;
+  transform:translateY(12px) scale(.90);
+  filter:
+    saturate(1.12)
+    contrast(1.04)
+    drop-shadow(0 12px 15px rgba(0,0,0,.38))
+    drop-shadow(0 0 15px rgba(255,183,46,.18));
+}
+
+.gt-hw-tiger-stage[data-celebration="true"] .gt-hw-tiger-pose--idle{
+  opacity:0;
+  transform:translateY(5px) scale(.94);
+}
+.gt-hw-tiger-stage[data-celebration="true"] .gt-hw-tiger-pose--win{
+  opacity:1;
+  transform:translateY(-2px) scale(1.02);
+}
+
+.gt-hw-tiger-stage-halo{
+  position:absolute;
+  z-index:1;
+  left:50%;
+  top:47%;
+  width:292px;
+  height:154px;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 50%,rgba(255,227,137,.34) 0%,rgba(255,180,49,.18) 32%,rgba(255,106,19,.07) 55%,transparent 73%);
+  filter:blur(10px);
+  opacity:.82;
+  animation:gt5-halo 3.6s ease-in-out infinite;
+}
+
+.gt-hw-tiger-stage-shadow{
+  position:absolute;
+  z-index:0;
+  left:50%;
+  bottom:7px;
+  width:210px;
+  height:24px;
+  transform:translateX(-50%);
+  border-radius:50%;
+  background:radial-gradient(ellipse,rgba(0,0,0,.48),rgba(0,0,0,.16) 54%,transparent 76%);
+  filter:blur(5px);
+}
+
+.gt-hw-tiger-stage-ray{
+  position:absolute;
+  z-index:0;
+  top:4px;
+  width:72px;
+  height:138px;
+  border-radius:999px;
+  background:linear-gradient(180deg,rgba(255,232,163,.18),rgba(255,172,43,.04) 64%,transparent);
+  filter:blur(8px);
+  opacity:.34;
+}
+.gt-hw-tiger-stage-ray--left{left:calc(50% - 122px);transform:rotate(-18deg)}
+.gt-hw-tiger-stage-ray--right{right:calc(50% - 122px);transform:rotate(18deg)}
+
+.gt-hw-tiger-crown-flare,
+.gt-hw-tiger-medallion-flare,
+.gt-hw-tiger-eye-flare{
+  position:absolute;
+  z-index:4;
+  pointer-events:none;
+}
+.gt-hw-tiger-crown-flare{
+  left:50%;
+  top:9px;
+  width:70px;
+  height:30px;
+  transform:translateX(-50%);
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,248,190,.62),rgba(255,197,67,.19) 46%,transparent 72%);
+  filter:blur(5px);
+  opacity:.58;
+  animation:gt5-crown 2.5s ease-in-out infinite;
+}
+.gt-hw-tiger-medallion-flare{
+  left:50%;
+  bottom:38px;
+  width:66px;
+  height:44px;
+  transform:translateX(-50%);
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,235,154,.36),rgba(255,181,45,.10) 58%,transparent 72%);
+  filter:blur(4px);
+  opacity:.54;
+}
+.gt-hw-tiger-eye-flare{
+  top:57px;
+  width:14px;
+  height:8px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,226,.88),rgba(255,188,68,.22) 55%,transparent 72%);
+  filter:blur(.5px);
+  opacity:.18;
+}
+.gt-hw-tiger-eye-flare--left{left:101px}
+.gt-hw-tiger-eye-flare--right{right:101px}
+
+.gt-hw-tiger-caption{
+  position:absolute;
+  right:4px;
+  bottom:2px;
+  z-index:8;
+  min-width:78px;
+  padding:4px 8px;
+  border:1px solid rgba(247,186,70,.32);
+  border-radius:13px;
+  background:linear-gradient(180deg,rgba(74,12,6,.92),rgba(38,4,3,.92));
+  box-shadow:inset 0 1px 0 rgba(255,240,185,.10),0 5px 10px rgba(0,0,0,.18);
+}
+
+.gt-hw-tiger-sparks{
+  position:absolute;
+  z-index:2;
+  inset:0;
+  pointer-events:none;
+}
+.gt-hw-tiger-sparks i{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:#ffe69a;
+  box-shadow:0 0 7px #ffbd39;
+  opacity:0;
+}
+
+/* Acting beats, not generic constant bouncing */
+.gt-hw-tiger-stage[data-reaction="watch"] .gt-hw-tiger-rig{
+  animation:gt5-watch 1.25s cubic-bezier(.45,0,.55,1) infinite;
+}
+.gt-hw-tiger-stage[data-reaction="watch"] .gt-hw-tiger-pose--idle{
+  filter:saturate(1.08) contrast(1.03) brightness(1.035) drop-shadow(0 12px 14px rgba(0,0,0,.34));
+}
+.gt-hw-tiger-stage[data-reaction="tense"] .gt-hw-tiger-rig{
+  animation:gt5-tense .42s ease-in-out infinite;
+}
+.gt-hw-tiger-stage[data-reaction="tense"] .gt-hw-tiger-stage-halo{
+  opacity:1;
+  filter:blur(8px) brightness(1.24);
+}
+.gt-hw-tiger-stage[data-reaction="reveal"] .gt-hw-tiger-rig{
+  animation:gt5-reveal .38s cubic-bezier(.18,.82,.24,1.16) both;
+}
+.gt-hw-tiger-stage[data-reaction="reveal"] .gt-hw-tiger-eye-flare{
+  animation:gt5-eye-flash .46s ease-out both;
+}
+.gt-hw-tiger-stage[data-reaction="coin"] .gt-hw-tiger-rig{
+  animation:gt5-coin .58s cubic-bezier(.2,.8,.24,1.16) both;
+}
+.gt-hw-tiger-stage[data-reaction="win"] .gt-hw-tiger-rig{
+  animation:gt5-win .82s cubic-bezier(.18,.82,.24,1.08) infinite alternate;
+}
+.gt-hw-tiger-stage[data-reaction="full"] .gt-hw-tiger-rig{
+  animation:gt5-full .64s cubic-bezier(.18,.82,.24,1.12) infinite alternate;
+}
+.gt-hw-tiger-stage[data-reaction="win"] .gt-hw-tiger-sparks i,
+.gt-hw-tiger-stage[data-reaction="full"] .gt-hw-tiger-sparks i,
+.gt-hw-tiger-stage[data-reaction="coin"] .gt-hw-tiger-sparks i{
+  animation:gt5-spark .9s ease-out infinite;
+}
+.gt-hw-tiger-sparks i:nth-child(1){--sx:-105px;--sy:-36px;animation-delay:.02s}
+.gt-hw-tiger-sparks i:nth-child(2){--sx:-80px;--sy:-66px;animation-delay:.11s}
+.gt-hw-tiger-sparks i:nth-child(3){--sx:-52px;--sy:-78px;animation-delay:.21s}
+.gt-hw-tiger-sparks i:nth-child(4){--sx:-18px;--sy:-88px;animation-delay:.07s}
+.gt-hw-tiger-sparks i:nth-child(5){--sx:22px;--sy:-92px;animation-delay:.16s}
+.gt-hw-tiger-sparks i:nth-child(6){--sx:58px;--sy:-76px;animation-delay:.27s}
+.gt-hw-tiger-sparks i:nth-child(7){--sx:92px;--sy:-48px;animation-delay:.13s}
+.gt-hw-tiger-sparks i:nth-child(8){--sx:108px;--sy:-8px;animation-delay:.33s}
+.gt-hw-tiger-sparks i:nth-child(9){--sx:-110px;--sy:2px;animation-delay:.24s}
+.gt-hw-tiger-sparks i:nth-child(10){--sx:-86px;--sy:32px;animation-delay:.37s}
+.gt-hw-tiger-sparks i:nth-child(11){--sx:-48px;--sy:48px;animation-delay:.19s}
+.gt-hw-tiger-sparks i:nth-child(12){--sx:-8px;--sy:58px;animation-delay:.30s}
+.gt-hw-tiger-sparks i:nth-child(13){--sx:34px;--sy:54px;animation-delay:.41s}
+.gt-hw-tiger-sparks i:nth-child(14){--sx:74px;--sy:38px;animation-delay:.15s}
+.gt-hw-tiger-sparks i:nth-child(15){--sx:102px;--sy:16px;animation-delay:.28s}
+.gt-hw-tiger-sparks i:nth-child(16){--sx:0px;--sy:-112px;animation-delay:.04s}
+
+/* Reel window — one unified panel, not nine generic UI cards */
+.gt-hw-grid{
+  border:3px solid #d99825;
+  border-radius:12px;
+  background:
+    linear-gradient(180deg,rgba(255,228,154,.06),transparent 14%),
+    linear-gradient(180deg,#7b4e12 0%,#603809 48%,#432306 100%);
+  box-shadow:
+    0 0 0 1px rgba(82,16,3,.90),
+    0 14px 22px rgba(0,0,0,.38),
+    0 0 20px rgba(255,175,40,.12),
+    inset 0 0 20px rgba(26,6,1,.35);
+  overflow:hidden;
+}
+
+.gt-hw-cell{
+  position:relative;
+  border-right:1px solid rgba(255,211,119,.18);
+  border-bottom:1px solid rgba(255,211,119,.18);
+  background:
+    radial-gradient(circle at 50% 35%,rgba(255,229,163,.12),transparent 38%),
+    linear-gradient(180deg,rgba(183,126,34,.30),rgba(117,68,12,.24) 48%,rgba(72,35,6,.28));
+  box-shadow:
+    inset 0 1px 0 rgba(255,244,201,.08),
+    inset 0 -12px 17px rgba(0,0,0,.07);
+  transform:translateZ(0);
+  transition:filter .18s ease,transform .18s ease,box-shadow .18s ease;
+}
+.gt-hw-cell::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(115deg,rgba(255,255,255,.055),transparent 24% 72%,rgba(255,229,166,.025));
+}
+
+/* rendered symbol art */
+.gt-hw-symbol{
+  position:relative;
+  display:grid;
+  place-items:center;
+  width:100%;
+  height:100%;
+  padding:2.5%;
+  overflow:visible;
+  filter:none;
+  transform-origin:50% 72%;
+}
+.gt-hw-symbol-art{
+  position:relative;
+  z-index:3;
+  width:93%;
+  height:93%;
+  object-fit:contain;
+  object-position:center;
+  transform:translateZ(0);
+  filter:
+    drop-shadow(0 8px 7px rgba(32,7,2,.30))
+    drop-shadow(0 1px 0 rgba(255,242,197,.10));
+  transition:transform .18s cubic-bezier(.2,.8,.24,1.12),filter .18s ease;
+}
+.gt-hw-symbol-aura{
+  position:absolute;
+  z-index:1;
+  inset:13%;
+  border-radius:42%;
+  background:radial-gradient(circle,rgba(255,204,89,.11),rgba(255,171,44,.025) 54%,transparent 74%);
+  filter:blur(7px);
+  opacity:.8;
+}
+.gt-hw-symbol-sheen{
+  position:absolute;
+  z-index:5;
+  inset:10% 17% 46%;
+  border-radius:50%;
+  background:linear-gradient(180deg,rgba(255,255,255,.13),transparent);
+  filter:blur(3px);
+  opacity:.28;
+  mix-blend-mode:screen;
+}
+.gt-hw-symbol[data-symbol="jade"] .gt-hw-symbol-aura{
+  background:radial-gradient(circle,rgba(104,255,190,.18),rgba(23,154,104,.03) 58%,transparent 76%);
+}
+.gt-hw-symbol[data-symbol="wild"] .gt-hw-symbol-aura{
+  inset:5%;
+  background:radial-gradient(circle,rgba(255,226,120,.28),rgba(234,117,25,.08) 58%,transparent 78%);
+}
+.gt-hw-symbol[data-symbol="firecracker"] .gt-hw-symbol-aura,
+.gt-hw-symbol[data-symbol="fortuneBag"] .gt-hw-symbol-aura,
+.gt-hw-symbol[data-symbol="lantern"] .gt-hw-symbol-aura{
+  background:radial-gradient(circle,rgba(255,108,50,.14),rgba(255,61,19,.02) 60%,transparent 77%);
+}
+
+.gt-hw-cell.is-winning{
+  z-index:7;
+  animation:gt5-win-cell .68s ease-in-out 2;
+  box-shadow:
+    inset 0 0 0 2px rgba(255,235,153,.62),
+    inset 0 0 24px rgba(255,211,90,.18),
+    0 0 16px rgba(255,187,44,.42);
+}
+.gt-hw-cell.is-winning .gt-hw-symbol-art{
+  animation:gt5-symbol-win .68s cubic-bezier(.18,.82,.24,1.12) 2;
+  filter:
+    brightness(1.10)
+    saturate(1.08)
+    drop-shadow(0 9px 8px rgba(37,7,1,.28))
+    drop-shadow(0 0 10px rgba(255,217,104,.45));
+}
+
+/* reveal: winning symbols come forward; others step back */
+.gt-hw-grid[data-reveal="true"] .gt-hw-cell:not(.is-winning){
+  filter:brightness(.78) saturate(.78);
+}
+.gt-hw-grid[data-reveal="true"] .gt-hw-cell.is-winning{
+  filter:brightness(1.12) saturate(1.07);
+}
+
+/* Reel landing has a physical settle per column */
+.gt-hw-grid[data-landing-column="0"] .gt-hw-cell:nth-child(3n+1),
+.gt-hw-grid[data-landing-column="1"] .gt-hw-cell:nth-child(3n+2),
+.gt-hw-grid[data-landing-column="2"] .gt-hw-cell:nth-child(3n){
+  animation:gt5-reel-land .25s cubic-bezier(.18,.82,.24,1.12);
+}
+.gt-hw-grid[data-landing-column="0"] .gt-hw-cell:nth-child(3n+1)::after,
+.gt-hw-grid[data-landing-column="1"] .gt-hw-cell:nth-child(3n+2)::after,
+.gt-hw-grid[data-landing-column="2"] .gt-hw-cell:nth-child(3n)::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,238,181,.20),transparent 46%);
+  animation:gt5-land-flash .24s ease-out both;
+}
+
+/* Anticipation only appears when the already-determined result warrants it */
+.gt-hw-machine[data-anticipating="true"] .gt-hw-grid{
+  box-shadow:
+    0 0 0 1px rgba(82,16,3,.90),
+    0 14px 22px rgba(0,0,0,.38),
+    0 0 30px rgba(255,202,83,.22),
+    inset 0 0 24px rgba(255,202,83,.07);
+}
+.gt-hw-machine[data-anticipating="true"] .gt-hw-backdrop{
+  filter:brightness(.84) saturate(.92);
+}
+.gt-hw-machine[data-anticipating="true"] .gt-hw-tiger-stage-halo{
+  filter:blur(8px) brightness(1.25);
+}
+
+/* Reel overlays inherit the rendered symbols */
+.gt-hw-reel-overlay{
+  background:linear-gradient(180deg,#825216,#5d330a);
+}
+.gt-hw-reel-track{
+  filter:blur(1.05px) saturate(1.05) brightness(.98);
+}
+.gt-hw-reel-item{
+  background:
+    radial-gradient(circle at 50% 34%,rgba(255,232,170,.12),transparent 42%),
+    linear-gradient(180deg,#865716,#67400d);
+}
+.gt-hw-reel-shade{
+  background:
+    linear-gradient(180deg,rgba(37,6,1,.48),transparent 18% 81%,rgba(37,6,1,.58)),
+    linear-gradient(90deg,rgba(255,223,134,.025),transparent 24% 76%,rgba(255,223,134,.025));
+}
+
+/* Win takeovers are authored as a staged event, not a generic modal */
+.gt-hw-win-overlay{
+  backdrop-filter:blur(2px);
+  background:
+    radial-gradient(circle at 50% 42%,rgba(255,232,150,.48) 0%,rgba(236,144,32,.42) 22%,rgba(113,18,5,.80) 50%,rgba(18,1,1,.95) 78%);
+}
+.gt-hw-win-overlay::before{
+  content:"";
+  position:absolute;
+  width:150%;
+  aspect-ratio:1;
+  background:repeating-conic-gradient(from 0deg,rgba(255,239,180,.075) 0deg 6deg,transparent 6deg 16deg);
+  animation:gt5-rays 12s linear infinite;
+}
+.gt-hw-win-overlay>span,
+.gt-hw-win-overlay>small{
+  position:relative;
+  z-index:2;
+}
+.gt-hw-win-overlay>span:first-of-type{
+  letter-spacing:.035em;
+  animation:gt5-win-title .55s cubic-bezier(.18,.82,.24,1.12) both;
+}
+.gt-hw-win-overlay>span+span{
+  animation:gt5-win-number .62s cubic-bezier(.18,.82,.24,1.12) .08s both;
+}
+
+/* premium status band */
+.gt-hw-respin-panel,
+.gt-hw-status,
+.gt-hw-hud{
+  backdrop-filter:blur(4px);
+}
+.gt-hw-respin-panel{
+  background:linear-gradient(180deg,rgba(91,15,7,.96),rgba(43,5,3,.96));
+  box-shadow:inset 0 1px 0 rgba(255,235,179,.11),0 5px 12px rgba(0,0,0,.24);
+}
+.gt-hw-status{
+  background:linear-gradient(90deg,transparent,rgba(108,19,9,.82),transparent);
+}
+
+/* motion */
+@keyframes gt5-idle-breath{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(-2px) scale(1.006)}
+}
+@keyframes gt5-watch{
+  0%,100%{transform:translateY(1px) rotate(-.45deg) scale(1.008)}
+  50%{transform:translateY(-2px) rotate(.45deg) scale(1.018)}
+}
+@keyframes gt5-tense{
+  0%,100%{transform:translateY(0) translateX(-1px) scale(1.018)}
+  50%{transform:translateY(-2px) translateX(1px) scale(1.03)}
+}
+@keyframes gt5-reveal{
+  0%{transform:translateY(5px) scale(.965)}
+  48%{transform:translateY(-5px) scale(1.045)}
+  78%{transform:translateY(1px) scale(.995)}
+  100%{transform:translateY(0) scale(1)}
+}
+@keyframes gt5-coin{
+  0%{transform:translateY(5px) scale(.92)}
+  45%{transform:translateY(-5px) scale(1.055)}
+  100%{transform:translateY(0) scale(1)}
+}
+@keyframes gt5-win{
+  from{transform:translateY(1px) scale(1.015)}
+  to{transform:translateY(-5px) scale(1.052)}
+}
+@keyframes gt5-full{
+  from{transform:translateY(0) scale(1.03)}
+  to{transform:translateY(-7px) scale(1.075)}
+}
+@keyframes gt5-halo{
+  0%,100%{opacity:.70;transform:translate(-50%,-50%) scale(.96)}
+  50%{opacity:.92;transform:translate(-50%,-50%) scale(1.04)}
+}
+@keyframes gt5-crown{
+  0%,100%{opacity:.38;transform:translateX(-50%) scale(.90)}
+  50%{opacity:.72;transform:translateX(-50%) scale(1.08)}
+}
+@keyframes gt5-eye-flash{
+  0%{opacity:.1;transform:scale(.7)}
+  36%{opacity:.95;transform:scale(1.45)}
+  100%{opacity:.18;transform:scale(1)}
+}
+@keyframes gt5-spark{
+  0%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(.25)}
+  26%{opacity:1}
+  100%{opacity:0;transform:translate(var(--sx),calc(var(--sy) - 18px)) scale(1.25)}
+}
+@keyframes gt5-reel-land{
+  0%{transform:translateY(-5px) scaleY(1.018)}
+  45%{transform:translateY(3px) scaleY(.982)}
+  100%{transform:translateY(0) scaleY(1)}
+}
+@keyframes gt5-land-flash{
+  0%{opacity:.85}
+  100%{opacity:0}
+}
+@keyframes gt5-win-cell{
+  0%,100%{filter:brightness(1)}
+  50%{filter:brightness(1.16)}
+}
+@keyframes gt5-symbol-win{
+  0%,100%{transform:translateY(0) scale(1)}
+  45%{transform:translateY(-3px) scale(1.06)}
+}
+@keyframes gt5-rays{to{transform:rotate(1turn)}}
+@keyframes gt5-win-title{
+  0%{opacity:0;transform:translateY(12px) scale(.78)}
+  70%{opacity:1;transform:translateY(-2px) scale(1.06)}
+  100%{transform:translateY(0) scale(1)}
+}
+@keyframes gt5-win-number{
+  0%{opacity:0;transform:scale(.72)}
+  72%{opacity:1;transform:scale(1.08)}
+  100%{transform:scale(1)}
+}
+
+@media (max-height:760px){
+  .gt-hw-machine{
+    grid-template-rows:46px 132px 30px minmax(246px,1fr) 28px 38px auto 10px;
+    gap:2px;
+  }
+  .gt-hw-tiger-stage{height:132px}
+  .gt-hw-tiger-rig{width:224px;height:132px}
+  .gt-hw-tiger-caption{transform:scale(.88);transform-origin:right bottom}
+  .gt-hw-symbol-art{width:94%;height:94%}
+}
+
+@media (min-width:700px){
+  .gt-hw-page::before,
+  .gt-hw-page::after{
+    content:"";
+    position:fixed;
+    top:12%;
+    bottom:12%;
+    width:28vw;
+    max-width:420px;
+    pointer-events:none;
+    background:radial-gradient(ellipse at center,rgba(148,23,9,.16),transparent 68%);
+    filter:blur(20px);
+  }
+  .gt-hw-page::before{left:6%}
+  .gt-hw-page::after{right:6%}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .gt-hw-tiger-rig,
+  .gt-hw-tiger-stage-halo,
+  .gt-hw-tiger-crown-flare,
+  .gt-hw-tiger-sparks i,
+  .gt-hw-cell,
+  .gt-hw-symbol-art,
+  .gt-hw-win-overlay::before,
+  .gt-hw-win-overlay>span{
+    animation:none!important;
+  }
+}

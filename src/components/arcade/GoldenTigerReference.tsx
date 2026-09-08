@@ -93,6 +93,7 @@ export function GoldenTigerReference() {
   const [rollingCells, setRollingCells] = useState<Set<number>>(() => new Set());
   const [stoppedColumns, setStoppedColumns] = useState(3);
   const [landingColumn, setLandingColumn] = useState(-1);
+  const [anticipating, setAnticipating] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle");
   const [featureActive, setFeatureActive] = useState(false);
   const [respinsRemaining, setRespinsRemaining] = useState(HOLD_WIN_INITIAL_RESPINS);
@@ -133,7 +134,7 @@ export function GoldenTigerReference() {
   const tigerReaction: TigerReactionState =
     phase === "full-grid" ? "full" :
     phase === "coin-lock" ? "coin" :
-    phase === "feature-spin" && respinsRemaining <= 1 ? "tense" :
+    anticipating || (phase === "feature-spin" && respinsRemaining <= 1) ? "tense" :
     phase === "reveal" ? "reveal" :
     phase === "base-spin" || phase === "feature-spin" || phase === "feature-intro" ? "watch" :
     phase === "win" ? "win" : "idle";
@@ -229,7 +230,7 @@ export function GoldenTigerReference() {
     }
 
     try {
-      setWin(0); setWinTier("none"); setWinning(new Set()); setFreshCoins(new Set()); setRollingCells(new Set()); setFeatureActive(false); setRespinsRemaining(3); setStoppedColumns(0); setLandingColumn(-1); setPhase("base-spin");
+      setWin(0); setWinTier("none"); setWinning(new Set()); setFreshCoins(new Set()); setRollingCells(new Set()); setFeatureActive(false); setRespinsRemaining(3); setStoppedColumns(0); setLandingColumn(-1); setAnticipating(false); setPhase("base-spin");
       const nextGrid = makeGoldenTigerGrid(Math.random);
       const initialCoins = rollBaseGoldCoinGrid(Math.random);
       const baseResult = evaluateGoldenTiger(nextGrid, bet, new Set(initialCoins.map((coin) => coin.index)));
@@ -240,6 +241,11 @@ export function GoldenTigerReference() {
       await wait(turbo ? 160 : 430);
 
       for (let column = 0; column < 3; column += 1) {
+        if (column === 2 && (baseResult.winning.size > 0 || initialCoins.length > 0)) {
+          setAnticipating(true);
+          playSound("anticipation", soundEnabled, { intensity: 0.8, pitch: 1.02 });
+          await wait(turbo ? 35 : 120);
+        }
         const landingCoins = initialCoins.filter((coin) => coin.index % 3 === column);
         if (landingCoins.length) setFreshCoins(new Set(landingCoins.map((coin) => coin.index)));
         setLandingColumn(column);
@@ -253,6 +259,7 @@ export function GoldenTigerReference() {
         await wait(turbo ? 80 : landingCoins.some((coin) => coin.value >= 20) ? 330 : 180);
       }
       setLandingColumn(-1);
+      setAnticipating(false);
       setWinning(baseResult.winning);
       setFreshCoins(new Set());
       setPhase("reveal");
@@ -272,7 +279,7 @@ export function GoldenTigerReference() {
       await settle(total, bet, featurePlan ? `3×3 · ${baseResult.lines} linha(s) · Hold & Win ${featurePlan.totalCoins}/9${fullGrid ? ` · GRID CHEIO ×${HOLD_WIN_FULL_GRID_BONUS}` : ""}` : `3×3 · ${baseResult.lines} linha(s)`, fullGrid);
       return true;
     } finally {
-      setPhase("idle"); setFeatureActive(false); setRollingCells(new Set()); setFreshCoins(new Set()); setStoppedColumns(3); setLandingColumn(-1); busyRef.current = false;
+      setPhase("idle"); setFeatureActive(false); setRollingCells(new Set()); setFreshCoins(new Set()); setStoppedColumns(3); setLandingColumn(-1); setAnticipating(false); busyRef.current = false;
     }
   }, [animateFeature, bet, settle, soundEnabled, turbo]);
 
@@ -297,7 +304,7 @@ export function GoldenTigerReference() {
       const payout = await animateFeature(plan, entry);
       await settle(payout, activationCost, `Golden Fortune · Hold & Win ${plan.totalCoins}/9${plan.isFullGrid ? ` · GRID CHEIO ×${HOLD_WIN_FULL_GRID_BONUS}` : ""}`, plan.isFullGrid);
     } finally {
-      setPhase("idle"); setFeatureActive(false); setRollingCells(new Set()); setFreshCoins(new Set()); setLandingColumn(-1); busyRef.current = false;
+      setPhase("idle"); setFeatureActive(false); setRollingCells(new Set()); setFreshCoins(new Set()); setLandingColumn(-1); setAnticipating(false); busyRef.current = false;
     }
   }, [activationCost, animateFeature, autoLeft, bet, settle, soundEnabled, turbo]);
 
@@ -334,7 +341,7 @@ export function GoldenTigerReference() {
 
   return (
     <main className="gt-hw-page">
-      <section className="gt-hw-machine" data-phase={phase} aria-label="Golden Tiger">
+      <section className="gt-hw-machine" data-phase={phase} data-anticipating={anticipating ? "true" : "false"} aria-label="Golden Tiger">
         <div className="gt-hw-backdrop" aria-hidden />
         <div className="gt-hw-ambient" aria-hidden>{Array.from({ length: 14 }, (_, index) => <i key={index} />)}</div>
         <header className="gt-hw-topbar">
