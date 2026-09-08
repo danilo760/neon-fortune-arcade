@@ -5,6 +5,7 @@ on:
     paths:
       - "src/components/arcade/OlympusStormPremium.tsx"
       - "src/components/arcade/OlympusStormPremium.css"
+      - "src/components/arcade/OlympusStormPremiumPolish.css"
       - "src/lib/arcade/olympusStorm*.ts"
       - "src/routes/game/$slug.tsx"
       - "scripts/olympusStormVisualQa.mjs"
