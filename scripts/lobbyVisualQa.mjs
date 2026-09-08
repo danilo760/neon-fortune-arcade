@@ -62,7 +62,7 @@ const auditExpression = `(() => {
   const originals = document.querySelectorAll('.game-cover-original').length;
   const legacyPlayableCovers = document.querySelectorAll('.game-cover-reference--olympus, .game-cover-reference--candy, .game-cover-reference--mines, .game-cover-reference--plinko').length;
   const tigerCta = [...document.querySelectorAll('a[href="/game/golden-tiger"]')].find((a) => a.textContent?.includes('JOGAR AGORA'));
-  const heroText = hero?.textContent ?? '';
+  const lobbyText = lobby?.textContent ?? '';
   return {
     ready: Boolean(lobby && hero && search),
     width: innerWidth,
@@ -73,7 +73,7 @@ const auditExpression = `(() => {
     originals,
     legacyPlayableCovers,
     tigerCta: Boolean(tigerCta),
-    hasStaleFreeSpinCopy: /giros grátis/i.test(heroText) || [...cards].some((card) => /giros grátis/i.test(card.textContent ?? '')),
+    hasStaleFreeSpinCopy: /giros grátis/i.test(lobbyText),
   };
 })()`;
 
