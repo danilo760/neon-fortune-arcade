@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="941" height="1672" viewBox="0 0 941 1672" role="img" aria-labelledby="title desc">
+  <title id="title">Olympus Storm authorial cabinet and symbol atlas</title>
+  <desc id="desc">Original blue and gold storm-temple cabinet with seven original symbol illustrations positioned to preserve the existing reel crop contract.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#020916"/><stop offset=".35" stop-color="#09285e"/><stop offset=".72" stop-color="#041631"/><stop offset="1" stop-color="#010814"/></linearGradient>
+    <radialGradient id="stormHalo" cx="50%" cy="42%" r="58%"><stop stop-color="#70e8ff" stop-opacity=".72"/><stop offset=".33" stop-color="#275edb" stop-opacity=".34"/><stop offset="1" stop-color="#03091a" stop-opacity="0"/></radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff1a6"/><stop offset=".22" stop-color="#f8ca51"/><stop offset=".55" stop-color="#a86511"/><stop offset=".78" stop-color="#ffd66b"/><stop offset="1" stop-color="#6e3c09"/></linearGradient>
+    <linearGradient id="silver" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#eefaff"/><stop offset=".36" stop-color="#83d9f5"/><stop offset=".66" stop-color="#2c6ab1"/><stop offset="1" stop-color="#d7f7ff"/></linearGradient>
+    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#cda2ff"/><stop offset=".5" stop-color="#7134d4"/><stop offset="1" stop-color="#251055"/></linearGradient>
+    <radialGradient id="orbFill" cx="38%" cy="32%" r="70%"><stop stop-color="#dffcff"/><stop offset=".2" stop-color="#66e8ff"/><stop offset=".5" stop-color="#2d67df"/><stop offset=".76" stop-color="#5a22a9"/><stop offset="1" stop-color="#08152e"/></radialGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#0c3165"/><stop offset=".45" stop-color="#041a3c"/><stop offset="1" stop-color="#020a1b"/></linearGradient>
+    <pattern id="stars" width="73" height="73" patternUnits="userSpaceOnUse"><circle cx="9" cy="17" r="1.1" fill="#bcecff" opacity=".5"/><circle cx="47" cy="8" r=".8" fill="#fff6c7" opacity=".55"/><circle cx="61" cy="49" r="1.2" fill="#7ce8ff" opacity=".3"/><circle cx="28" cy="58" r=".6" fill="#fff" opacity=".55"/></pattern>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#000817" flood-opacity=".75"/></filter>
+    <symbol id="cell" viewBox="0 0 258 235"><rect width="258" height="235" rx="25" fill="#03142d"/><rect x="5" y="5" width="248" height="225" rx="21" fill="url(#panel)" stroke="#6edcf6" stroke-opacity=".16" stroke-width="3"/><path d="M24 29H234M18 202H240" stroke="#9cecff" stroke-opacity=".12" stroke-width="2"/><ellipse cx="129" cy="120" rx="95" ry="82" fill="#268fe7" opacity=".08"/></symbol>
+    <symbol id="sym-bolt" viewBox="0 0 258 235">
+      <use href="#cell"/>
+      <path d="M145 20 69 128h51l-18 87 90-124h-54z" fill="#e9fdff" stroke="#58dfff" stroke-width="12" stroke-linejoin="round" filter="url(#glow)"/>
+      <path d="M145 29 84 119h48l-16 72 61-91h-52z" fill="url(#gold)" stroke="#fff4b1" stroke-width="5" stroke-linejoin="round"/>
+      <circle cx="59" cy="75" r="10" fill="#6ceaff" opacity=".8"/><circle cx="202" cy="159" r="7" fill="#fff2a9" opacity=".9"/>
+    </symbol>
+    <symbol id="sym-crown" viewBox="0 0 258 235">
+      <use href="#cell"/>
+      <path d="M48 86 85 118l42-78 45 78 38-34-18 103H65z" fill="url(#gold)" stroke="#fff0a6" stroke-width="6" stroke-linejoin="round" filter="url(#shadow)"/>
+      <path d="M71 151h117l-8 28H79z" fill="#6c3509" stroke="#f7ca54" stroke-width="5"/>
+      <path d="m127 95 14 19-14 19-14-19z" fill="#62e9ff" stroke="#d8fbff" stroke-width="4" filter="url(#softGlow)"/>
+      <circle cx="84" cy="127" r="9" fill="#e45aff"/><circle cx="171" cy="127" r="9" fill="#54d9ff"/>
+    </symbol>
+    <symbol id="sym-chalice" viewBox="0 0 258 235">
+      <use href="#cell"/>
+      <path d="M71 52h116c-2 61-19 88-47 98v23h31v22H87v-22h31v-23C90 140 73 113 71 52Z" fill="url(#gold)" stroke="#fff0a0" stroke-width="5" filter="url(#shadow)"/>
+      <path d="M82 65h94c-7 24-24 39-47 39S89 89 82 65Z" fill="#41d9ef" opacity=".86"/>
+      <path d="M91 76c22 12 49 12 76 0" fill="none" stroke="#d8fdff" stroke-width="5" stroke-linecap="round" opacity=".8"/>
+      <circle cx="129" cy="129" r="10" fill="#5cf1ff" filter="url(#softGlow)"/>
+    </symbol>
+    <symbol id="sym-coin" viewBox="0 0 258 235">
+      <use href="#cell"/>
+      <circle cx="129" cy="117" r="79" fill="#70400d" stroke="#ffe179" stroke-width="9" filter="url(#shadow)"/>
+      <circle cx="129" cy="117" r="64" fill="url(#gold)" stroke="#7a420b" stroke-width="5"/>
+      <circle cx="129" cy="117" r="48" fill="#123c73" stroke="#fbe291" stroke-width="4"/>
+      <path d="M97 153c16-10 22-25 18-43-4-18-1-31 14-43 16 13 20 27 15 44-5 17 1 31 17 42-20-6-40-6-64 0Z" fill="#dffcff" stroke="#65e7ff" stroke-width="4" filter="url(#softGlow)"/>
+      <path d="M94 94h18m34 0h19" stroke="#ffe48b" stroke-width="6" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="sym-hammer" viewBox="0 0 258 235">
+      <use href="#cell"/>
+      <g transform="rotate(-36 129 118)" filter="url(#shadow)">
+        <rect x="113" y="92" width="32" height="112" rx="12" fill="url(#gold)" stroke="#ffe8a0" stroke-width="4"/>
+        <path d="M63 38h132l15 29-20 54H68L48 67Z" fill="url(#silver)" stroke="#dffaff" stroke-width="6" stroke-linejoin="round"/>
+        <path d="M75 58h108l-12 38H87Z" fill="#16396f" stroke="#64ddff" stroke-width="4"/>
+        <path d="m129 60 13 18-13 18-13-18z" fill="#fff2a5" filter="url(#softGlow)"/>
+      </g>
+      <path d="M45 174c33 20 70 24 110 11" fill="none" stroke="#54dffc" stroke-width="5" stroke-linecap="round" opacity=".55"/>
+    </symbol>
+    <symbol id="sym-orb" viewBox="0 0 258 235">
+      <use href="#cell"/>
+      <circle cx="129" cy="111" r="77" fill="url(#orbFill)" stroke="#b9f5ff" stroke-width="7" filter="url(#glow)"/>
+      <path d="M74 109c24-33 48 25 79-2 14-12 22-27 35-34M82 138c23-19 38 12 59 4 22-8 30-25 39-37" fill="none" stroke="#f3fbff" stroke-width="6" stroke-linecap="round" opacity=".75"/>
+      <path d="M96 63c20-14 42-15 63-3" fill="none" stroke="#fff3a0" stroke-width="5" stroke-linecap="round" opacity=".82"/>
+      <path d="M91 192h76l18 20H73z" fill="url(#gold)" stroke="#ffe69a" stroke-width="4"/>
+    </symbol>
+    <symbol id="sym-zeus" viewBox="0 0 258 235">
+      <use href="#cell"/>
+      <ellipse cx="129" cy="118" rx="88" ry="92" fill="url(#stormHalo)"/>
+      <path d="M82 77c8-41 34-61 50-61 25 0 50 22 56 63l-18 3c-2-17-7-31-18-42-8 14-24 24-47 28-4 6-5 13-5 21Z" fill="url(#silver)" stroke="#c9f4ff" stroke-width="5"/>
+      <path d="M92 87c7-20 22-28 37-28 22 0 39 16 42 40-3 26-15 47-39 61-25-12-39-36-40-73Z" fill="#d6a17a" stroke="#ffd7ac" stroke-width="4"/>
+      <path d="M94 119c9 48 31 73 39 73 9 0 34-28 38-75-13 13-25 18-38 18-14 0-27-5-39-16Z" fill="#eefaff" stroke="#8edff5" stroke-width="5"/>
+      <path d="M105 101h17m14 0h17" stroke="#16396d" stroke-width="5" stroke-linecap="round"/><circle cx="116" cy="105" r="4" fill="#7df4ff" filter="url(#softGlow)"/><circle cx="143" cy="105" r="4" fill="#7df4ff" filter="url(#softGlow)"/>
+      <path d="M129 108v13l-8 5h16" fill="none" stroke="#9b684e" stroke-width="4" stroke-linecap="round"/><path d="M111 143c12 8 25 8 37 0" fill="none" stroke="#6e4535" stroke-width="4" stroke-linecap="round"/>
+      <path d="M75 206c19-25 39-37 57-37 22 0 43 13 63 37" fill="#244b92" stroke="#70def7" stroke-width="5"/>
+      <path d="m55 56 28 15-23 6 18 17" fill="none" stroke="#fff2a4" stroke-width="6" stroke-linecap="round" filter="url(#softGlow)"/>
+    </symbol>
+  </defs>
+
+  <rect width="941" height="1672" fill="url(#sky)"/>
+  <rect width="941" height="1672" fill="url(#stars)" opacity=".75"/>
+  <ellipse cx="470" cy="330" rx="410" ry="340" fill="url(#stormHalo)"/>
+
+  <path d="M0 410C145 352 266 382 376 420c141 49 271-26 565-16V0H0Z" fill="#0c2b62" opacity=".28"/>
+  <path d="M40 356c55-89 105-136 150-141 36-5 70 15 103 58 52-84 111-130 178-139 65-8 132 24 199 97 42-39 89-55 141-49 42 5 83 23 124 55" fill="none" stroke="#8bdcf8" stroke-opacity=".15" stroke-width="7"/>
+  <g opacity=".3" stroke="#8edcf2" stroke-width="3"><path d="M84 376V207M857 376V207"/><path d="M64 207h72M805 207h72"/><path d="M103 210l-28 54h56zM838 210l-28 54h56z" fill="#0b2d62"/></g>
+
+  <g transform="translate(300 70)" filter="url(#shadow)">
+    <path d="M18 74 171 0l153 74-22 31H40Z" fill="#071933" stroke="#f2cf66" stroke-width="6"/>
+    <text x="171" y="70" text-anchor="middle" font-family="Georgia,serif" font-size="55" font-weight="900" fill="url(#gold)" stroke="#4e2d0b" stroke-width="2">OLYMPUS</text>
+    <text x="171" y="113" text-anchor="middle" font-family="Arial,sans-serif" font-size="28" font-weight="900" letter-spacing="8" fill="#dffaff">STORM</text>
+  </g>
+
+  <g transform="translate(278 188)" filter="url(#shadow)">
+    <ellipse cx="190" cy="112" rx="152" ry="102" fill="#1459b2" opacity=".16"/>
+    <path d="M120 64c12-53 47-80 77-80 41 0 77 31 87 84l-28 7c-8-26-20-44-39-57-18 21-45 34-80 40-6 12-9 27-9 45z" fill="url(#silver)" stroke="#d9f8ff" stroke-width="8"/>
+    <path d="M135 83c13-34 38-47 63-47 38 0 66 28 70 69-5 43-27 78-69 100-42-19-66-58-64-122Z" fill="#d5a079" stroke="#ffe0bd" stroke-width="6"/>
+    <path d="M138 137c19 75 51 102 64 102 18 0 54-37 65-106-17 18-39 27-65 27-25 0-46-8-64-23Z" fill="#f0fbff" stroke="#8de4f9" stroke-width="7"/>
+    <path d="M151 105h26m36 0h26" stroke="#143967" stroke-width="8" stroke-linecap="round"/><circle cx="169" cy="111" r="6" fill="#76efff" filter="url(#softGlow)"/><circle cx="221" cy="111" r="6" fill="#76efff" filter="url(#softGlow)"/>
+    <path d="M196 116v22l-13 8h26" fill="none" stroke="#96624b" stroke-width="6" stroke-linecap="round"/>
+    <path d="M152 264c30-39 61-58 94-58 34 0 69 19 104 58l-12 52H161Z" fill="#183d84" stroke="#6bdff6" stroke-width="7"/>
+    <path d="m45 150 61 25-44 14 37 33" fill="none" stroke="#fff3a2" stroke-width="9" stroke-linecap="round" filter="url(#glow)"/>
+  </g>
+
+  <g opacity=".9"><use href="#sym-bolt" x="75" y="414" width="258" height="235"/><use href="#sym-crown" x="333" y="414" width="257" height="235"/><use href="#sym-chalice" x="590" y="414" width="264" height="235"/><use href="#sym-coin" x="75" y="650" width="258" height="234"/><use href="#sym-hammer" x="333" y="650" width="257" height="234"/><use href="#sym-orb" x="590" y="650" width="264" height="234"/><use href="#sym-zeus" x="333" y="884" width="257" height="233"/></g>
+
+  <rect x="67" y="404" width="806" height="916" rx="30" fill="none" stroke="url(#gold)" stroke-width="11" opacity=".82" filter="url(#softGlow)"/>
+  <rect x="75" y="412" width="790" height="900" rx="24" fill="none" stroke="#8de9ff" stroke-opacity=".3" stroke-width="3"/>
+
+  <path d="M0 1288c106-32 177-32 259-3 102 35 183 23 266-18 111-55 218-44 416 28v377H0Z" fill="#020817"/>
+  <path d="M0 1306h941" stroke="#6bdcf8" stroke-opacity=".28" stroke-width="3"/>
+  <g transform="translate(30 1318)"><rect width="193" height="82" rx="18" fill="url(#panel)" stroke="#f5cf67" stroke-width="4"/><circle cx="45" cy="41" r="26" fill="#143f80" stroke="#7ce8ff" stroke-width="4"/><path d="m38 52 17-23 2 17 14-3-23 28 2-17z" fill="#ffe67d"/><text x="119" y="37" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" font-weight="900" fill="#eafbff">STORM</text><text x="119" y="61" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="900" fill="#f8d975">ASCEND</text></g>
+  <g transform="translate(29 1409)"><rect width="261" height="86" rx="17" fill="url(#panel)" stroke="#79dff4" stroke-opacity=".46" stroke-width="3"/><text x="20" y="29" font-family="Arial,sans-serif" font-size="13" font-weight="800" fill="#88dff4">BALANCE</text><text x="20" y="62" font-family="Georgia,serif" font-size="29" font-weight="900" fill="#fff1a2">COINS</text></g>
+  <g transform="translate(691 1409)"><rect width="221" height="86" rx="17" fill="url(#panel)" stroke="#79dff4" stroke-opacity=".46" stroke-width="3"/><text x="110" y="29" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="800" fill="#88dff4">BET</text><text x="110" y="62" text-anchor="middle" font-family="Georgia,serif" font-size="29" font-weight="900" fill="#fff1a2">STAKE</text></g>
+  <g transform="translate(334 1350)" filter="url(#shadow)"><circle cx="136" cy="136" r="128" fill="#04142e" stroke="#f5cf66" stroke-width="9"/><circle cx="136" cy="136" r="108" fill="#0b4b94" stroke="#7ae9ff" stroke-width="7" filter="url(#softGlow)"/><circle cx="136" cy="136" r="82" fill="#07316b" stroke="#d8fbff" stroke-opacity=".55" stroke-width="4"/><path d="M93 141c12-44 46-70 92-66l-24-24 53 6-6 53-22-23c-31-4-57 11-66 41-9 29 3 55 28 70-37-2-68-22-78-52" fill="#dffcff" opacity=".93"/><path d="m187 183-53 6 6-53 22 23c31 4 57-11 66-41 9-29-3-55-28-70 37 2 68 22 78 52 13 44-12 85-56 98z" fill="#ffe277" opacity=".95"/></g>
+  <g transform="translate(42 1548)"><rect width="235" height="91" rx="21" fill="url(#panel)" stroke="#63d7f1" stroke-width="4"/><text x="118" y="55" text-anchor="middle" font-family="Arial,sans-serif" font-size="24" font-weight="900" letter-spacing="4" fill="#dffaff">AUTO</text></g>
+  <g transform="translate(660 1548)"><rect width="240" height="91" rx="21" fill="url(#panel)" stroke="#f2cf66" stroke-width="4"/><text x="120" y="55" text-anchor="middle" font-family="Arial,sans-serif" font-size="24" font-weight="900" letter-spacing="4" fill="#fff0a2">MAX</text></g>
+  <g transform="translate(799 1307)"><circle cx="43" cy="43" r="40" fill="#092b5b" stroke="#7ce9ff" stroke-width="4"/><path d="m31 54 22-29 2 20 15-4-26 31 3-19z" fill="#ffe57d"/><text x="43" y="79" text-anchor="middle" font-family="Arial,sans-serif" font-size="8" font-weight="900" fill="#c9f7ff">TURBO</text></g>
+  <g opacity=".72"><circle cx="58" cy="52" r="39" fill="#081b3a" stroke="#8de8ff" stroke-width="3"/><path d="M44 51h9l12-12v27L53 55h-9z" fill="#dffaff"/><circle cx="881" cy="50" r="39" fill="#081b3a" stroke="#8de8ff" stroke-width="3"/><path d="m870 37 23 13-23 13z" fill="#dffaff"/></g>
+  <text x="470" y="1660" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="800" letter-spacing="3" fill="#7fc4d7" opacity=".7">NEON FORTUNE · ORIGINAL STORM ART</text>
+</svg>
