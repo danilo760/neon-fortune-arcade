@@ -15,11 +15,17 @@ let cachedFallback = 0.9;
  * Visual-QA-only deterministic RNG bridge.
  *
  * The Vite flag is enabled only by the dedicated Golden Tiger visual workflow.
- * Normal production/preview builds compile this path disabled and continue to
- * use the caller-provided RNG (normally Math.random).
+ * Normal production/preview builds and direct Node tests keep using the
+ * caller-provided RNG (normally Math.random). Node's native import.meta does
+ * not expose Vite's env object, so the env read must stay optional.
  */
 export function resolveGoldenTigerVisualQaRng(fallback: Rng): Rng {
-  if (import.meta.env.VITE_GOLDEN_TIGER_VISUAL_QA !== "1" || typeof window === "undefined") {
+  const env = (import.meta as ImportMeta & {
+    env?: Record<string, string | boolean | undefined>;
+  }).env;
+  const visualQaEnabled = env?.VITE_GOLDEN_TIGER_VISUAL_QA === "1";
+
+  if (!visualQaEnabled || typeof window === "undefined") {
     return fallback;
   }
 
