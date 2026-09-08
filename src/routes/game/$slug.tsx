@@ -1,13 +1,15 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 
-import goldenTigerPresentationCss from "../../components/arcade/GoldenTigerPresentationSafe.css?url";
-import olympusStormPresentationCss from "../../components/arcade/OlympusStormActivePolish.css?url";
-import candyCascadePresentationCss from "../../components/arcade/CandyCascadeActivePolish.css?url";
+import goldenTigerPresentationCss from "../../components/arcade/GoldenTigerMediaRig.css?url";
+import olympusStormPresentationCss from "../../components/arcade/OlympusStormMediaRig.css?url";
+import candyCascadePresentationCss from "../../components/arcade/CandyCascadeMediaRig.css?url";
 import minesPresentationCss from "../../components/arcade/MinesFinalPolish.css?url";
 import plinkoPresentationCss from "../../components/arcade/PlinkoFinalPolish.css?url";
 import { GameShell } from "@/components/arcade/GameShell";
+import { setAdaptiveScore, type AdaptiveScoreTheme } from "@/lib/arcade/adaptiveScore";
 import { getGame } from "@/lib/arcade/catalog";
+import { useArcade } from "@/lib/arcade/store";
 
 const PRESENTATION_CSS: Partial<Record<string, string>> = {
   "golden-tiger": goldenTigerPresentationCss,
@@ -15,6 +17,14 @@ const PRESENTATION_CSS: Partial<Record<string, string>> = {
   "candy-cascade": candyCascadePresentationCss,
   "neon-mines": minesPresentationCss,
   "neon-plinko": plinkoPresentationCss,
+};
+
+const SCORE_THEME: Partial<Record<string, AdaptiveScoreTheme>> = {
+  "golden-tiger": "tiger",
+  "olympus-storm": "olympus",
+  "candy-cascade": "candy",
+  "neon-mines": "mines",
+  "neon-plinko": "plinko",
 };
 
 const GoldenTigerReference = lazy(async () => {
@@ -74,6 +84,13 @@ function GameLoading({ name }: { name: string }) {
 
 function GameRoute() {
   const { game } = Route.useLoaderData();
+  const soundEnabled = useArcade((state) => state.soundEnabled);
+
+  useEffect(() => {
+    const theme = SCORE_THEME[game.slug] ?? null;
+    setAdaptiveScore(theme, soundEnabled);
+    return () => setAdaptiveScore(null, false);
+  }, [game.slug, soundEnabled]);
 
   let content;
 
