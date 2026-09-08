@@ -70,12 +70,12 @@ async function applyViewport(client, viewport) {
 }
 
 const auditExpression = `(() => {
-  const machine = document.querySelector('.cc-machine');
-  const grid = document.querySelector('.cc-grid');
+  const machine = document.querySelector('.ccp-machine');
+  const grid = document.querySelector('.ccp-grid');
   const spin = document.querySelector('[aria-label="Girar Candy Cascade"]');
-  const cells = document.querySelectorAll('.cc-grid > .cc-cell');
-  const cropImages = document.querySelectorAll('.cc-grid img');
-  const cabinetImages = [...document.querySelectorAll('.cc-machine > img')];
+  const cells = document.querySelectorAll('.ccp-grid > .ccp-cell');
+  const svgSymbols = document.querySelectorAll('.ccp-grid .ccp-symbol-svg');
+  const images = document.querySelectorAll('.ccp-machine img');
   const rect = (el) => el ? (() => { const r = el.getBoundingClientRect(); return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; })() : null;
   const sr = spin?.getBoundingClientRect();
   const hit = sr ? document.elementFromPoint(sr.left + sr.width/2, sr.top + sr.height/2) : null;
@@ -90,8 +90,8 @@ const auditExpression = `(() => {
     spinDisabled: Boolean(spin?.disabled),
     phase: machine?.getAttribute('data-phase') ?? null,
     cellCount: cells.length,
-    cropImageCount: cropImages.length,
-    cabinetImageCount: cabinetImages.length,
+    svgSymbolCount: svgSymbols.length,
+    imageCount: images.length,
   };
 })()`;
 
@@ -113,21 +113,24 @@ for (const viewport of viewports) {
     const errors = [];
     if (idle.scrollWidth > viewport.width + 1) errors.push(`overflow ${idle.scrollWidth}px`);
     if (!idle.machine || idle.machine.left < -1 || idle.machine.right > viewport.width + 1) errors.push("cabinet outside viewport");
+    if (!idle.machine || idle.machine.bottom > viewport.height + 1) errors.push("cabinet exceeds vertical viewport");
     if (idle.cellCount !== 30) errors.push(`expected 30 cells, got ${idle.cellCount}`);
+    if (idle.svgSymbolCount < 25) errors.push(`expected vector symbol coverage, got ${idle.svgSymbolCount}`);
+    if (idle.imageCount !== 0) errors.push(`reference images still mounted: ${idle.imageCount}`);
     if (!idle.spinHit) errors.push("spin not hittable");
     if (idle.spinDisabled) errors.push("spin disabled on idle load");
 
     await evaluate(client, `(() => { document.querySelector('[aria-label="Girar Candy Cascade"]')?.click(); return true; })()`);
     await sleep(120);
     const active = await evaluate(client, auditExpression);
-    if (!["spinning", "landing"].includes(active.phase)) errors.push(`unexpected phase after spin: ${active.phase}`);
+    if (!["spin", "landing", "anticipation"].includes(active.phase)) errors.push(`unexpected phase after spin: ${active.phase}`);
     if (!active.spinDisabled) errors.push("spin should disable during round");
 
     if (errors.length) {
       failed = true;
       console.error(`❌ ${viewport.width}x${viewport.height}: ${errors.join('; ')}`);
     } else {
-      console.log(`✅ ${viewport.width}x${viewport.height}: layout + spin passed | reference-crops=${idle.cropImageCount} cabinet-images=${idle.cabinetImageCount}`);
+      console.log(`✅ ${viewport.width}x${viewport.height}: premium vector layout + spin passed | images=0 vectors=${idle.svgSymbolCount}`);
     }
   } finally {
     client.close();
