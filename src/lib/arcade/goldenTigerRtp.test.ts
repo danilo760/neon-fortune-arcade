@@ -21,7 +21,7 @@ function seededRng(seed: number) {
   };
 }
 
-test("Neon Golden Tiger combined calibration stays near the published 96.81% RTP reference", () => {
+test("Neon Golden Tiger calibration stays near the published 96.81% RTP reference", () => {
   const rng = seededRng(0x09681a11);
   const spins = 150_000;
   const bet = 100;
@@ -30,11 +30,16 @@ test("Neon Golden Tiger combined calibration stays near the published 96.81% RTP
 
   for (let spin = 0; spin < spins; spin += 1) {
     const baseGrid = makeGoldenTigerGrid(rng);
-    totalPayout += evaluateGoldenTiger(baseGrid, bet).payout;
+    const basePayout = evaluateGoldenTiger(baseGrid, bet).payout;
 
     if (rollFortuneFeatureTrigger(rng)) {
       featureTriggers += 1;
+      // The verified wording describes the randomly triggered feature as the
+      // spin resolution: when it ends, its wins are paid. Do not stack a hidden
+      // base-grid payout on top of the feature outcome.
       totalPayout += runFortuneFeature(bet, rng).payout;
+    } else {
+      totalPayout += basePayout;
     }
   }
 
