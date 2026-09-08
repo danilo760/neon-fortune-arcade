@@ -1,4 +1,5 @@
 import {
+  GOLDEN_TIGER_FULL_GRID_MULTIPLIER,
   GOLDEN_TIGER_PAYLINES,
   goldenTigerSymbolPay,
   pickGoldenTigerSymbol,
@@ -6,7 +7,7 @@ import {
 } from "./goldenTigerMath";
 
 export const FORTUNE_FEATURE_TRIGGER_CHANCE = 0.0099;
-export const FORTUNE_FEATURE_FULL_GRID_MULTIPLIER = 10;
+export const FORTUNE_FEATURE_FULL_GRID_MULTIPLIER = GOLDEN_TIGER_FULL_GRID_MULTIPLIER;
 
 /**
  * These are Neon Fortune calibration values, not published PG SOFT reel weights.
