@@ -49,7 +49,7 @@ test("blocked presentation cells prevent paylines and full-grid multiplication",
 });
 
 test("payout scale is explicitly Neon-original calibration", () => {
-  assert.equal(GOLDEN_TIGER_PAYOUT_SCALE, 1.187);
+  assert.equal(GOLDEN_TIGER_PAYOUT_SCALE, 1.195);
 });
 
 test("win tiers only change presentation intensity", () => {
