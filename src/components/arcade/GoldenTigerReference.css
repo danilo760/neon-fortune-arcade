@@ -102,7 +102,7 @@
   inset: 0;
   width: 267px;
   height: 239px;
-  background: url("/golden-tiger/golden-tiger-2026.png") no-repeat;
+  background: url("/golden-tiger/golden-tiger-2026.webp") no-repeat;
   background-size: 940px 1672px;
   background-position: calc(-1 * var(--crop-x)) calc(-1 * var(--crop-y));
   transform: scale(calc((430px * 0.857 / 3) / 267));

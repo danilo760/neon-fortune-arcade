@@ -13,7 +13,7 @@ import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store
 import { cn } from "@/lib/utils";
 import "./GoldenTigerReference.css";
 
-const ART = "/golden-tiger/golden-tiger-2026.png";
+const ART = "/golden-tiger/golden-tiger-2026.webp";
 const BETS = [10, 20, 50, 100, 200, 500, 1_000] as const;
 const INITIAL: GoldenTigerSymbolId[] = [
   "fortuneBag",
