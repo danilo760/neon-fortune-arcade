@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import premiumCss from "../premium.css?url";
 import mobilePolishCss from "../arcade-mobile-polish.css?url";
 import nativeMotionCss from "../arcade-native-motion-tuning.css?url";
+import premiumPassCss from "../arcade-premium-pass.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -99,6 +100,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: premiumCss },
       { rel: "stylesheet", href: mobilePolishCss },
       { rel: "stylesheet", href: nativeMotionCss },
+      { rel: "stylesheet", href: premiumPassCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
