@@ -141,18 +141,13 @@
   to { transform: translateX(-50%) translateY(-4px) scale(1.065); }
 }
 
-/* Match the reference interaction hierarchy: Turbo | − Spin + | Auto.
-   The feature rate remains in the status strip, not as a competing control. */
+/* Match the reference interaction hierarchy: Turbo | − Spin + | Auto. */
 .gt-hw-machine .gt-hw-controls {
   display: grid;
   grid-template-columns: 52px minmax(0, 1fr) 52px;
   align-items: center;
   gap: 6px;
   padding-inline: 2px;
-}
-
-.gt-hw-machine .gt-hw-feature[aria-label="Fortune Feature aleatória"] {
-  display: none;
 }
 
 .gt-hw-machine .gt-hw-main-controls {
@@ -198,10 +193,6 @@
 }
 
 .gt-hw-machine .gt-hw-secondary-controls > button:nth-child(2) {
-  display: none;
-}
-
-.gt-hw-machine .gt-hw-secondary-controls > button:nth-child(3) {
   grid-column: 3;
   grid-row: 1;
 }
