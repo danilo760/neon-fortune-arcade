@@ -71,10 +71,12 @@
   50% { opacity: 1; scale: 1.055; rotate: 1deg; }
 }
 
+/* The core already has an authored rotate(-8deg) transform. Animate only
+ * translate/scale here so the character never accumulates a second rotation. */
 @keyframes ccp-media-sprite {
-  0%, 100% { translate: 0 0; rotate: -8deg; scale: 1; }
-  35% { translate: -1px -1px; rotate: -6.8deg; scale: 1.01; }
-  68% { translate: 1px -2px; rotate: -8.8deg; scale: 1.018; }
+  0%, 100% { translate: 0 0; scale: 1; }
+  35% { translate: -1px -1px; scale: 1.01; }
+  68% { translate: 1px -2px; scale: 1.018; }
 }
 
 @keyframes ccp-media-face-life {
@@ -89,8 +91,8 @@
 }
 
 @keyframes ccp-media-sprite-celebrate {
-  from { translate: -1px 0; rotate: -10deg; scale: 1.01; filter: brightness(1.04); }
-  to { translate: 1px -4px; rotate: -5deg; scale: 1.075; filter: brightness(1.16); }
+  from { translate: -1px 0; scale: 1.01; filter: brightness(1.04); }
+  to { translate: 1px -4px; scale: 1.075; filter: brightness(1.16); }
 }
 
 @keyframes ccp-media-shine {
