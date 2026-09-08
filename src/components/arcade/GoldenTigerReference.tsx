@@ -422,6 +422,20 @@ export function GoldenTigerReference() {
       setLandingColumn(-1);
       setBrakingColumn(-1);
       setAnticipating(false);
+
+      if (featurePlan) {
+        setWinning(new Set());
+        playSound("tigerFeatureOpen", soundEnabled, { intensity: 1.02 });
+        const featurePayout = await animateFeature(featurePlan);
+        await settle(
+          featurePayout,
+          bet,
+          `3×3 · Fortune Feature ${SYMBOL_LABEL[featurePlan.selectedSymbol]} · ${featurePlan.respinsUsed} respin(s) · ${featurePlan.lines} linha(s)${featurePlan.isFullGrid ? ` · TELA CHEIA ×${GOLDEN_TIGER_FULL_GRID_MULTIPLIER}` : ""}`,
+          featurePlan.isFullGrid,
+        );
+        return true;
+      }
+
       setWinning(baseResult.winning);
       setPhase("reveal");
       if (baseResult.payout > bet) {
@@ -431,22 +445,11 @@ export function GoldenTigerReference() {
       }
       await wait(turbo ? 55 : baseResult.winning.size > 0 ? 180 : 110);
 
-      let featurePayout = 0;
-      if (featurePlan) {
-        await wait(turbo ? 80 : 210);
-        featurePayout = await animateFeature(featurePlan);
-      }
-
-      const total = baseResult.payout + featurePayout;
-      const fullGrid = baseResult.isFullGrid || Boolean(featurePlan?.isFullGrid);
-      const featureNote = featurePlan
-        ? ` · Fortune Feature ${SYMBOL_LABEL[featurePlan.selectedSymbol]} · ${featurePlan.respinsUsed} respin(s) · ${featurePlan.lines} linha(s)`
-        : "";
       await settle(
-        total,
+        baseResult.payout,
         bet,
-        `3×3 · ${baseResult.lines} linha(s)${featureNote}${fullGrid ? ` · TELA CHEIA ×${GOLDEN_TIGER_FULL_GRID_MULTIPLIER}` : ""}`,
-        fullGrid,
+        `3×3 · ${baseResult.lines} linha(s)${baseResult.isFullGrid ? ` · TELA CHEIA ×${GOLDEN_TIGER_FULL_GRID_MULTIPLIER}` : ""}`,
+        baseResult.isFullGrid,
       );
       return true;
     } finally {
