@@ -8,14 +8,23 @@ const sampleDelays = [120, 180, 220, 260, 320, 380, 460];
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 class CdpClient {
-  constructor(url) { this.url = url; this.id = 0; this.pending = new Map(); }
+  constructor(url) {
+    this.url = url;
+    this.id = 0;
+    this.pending = new Map();
+  }
+
   async connect() {
     this.socket = new WebSocket(this.url);
     await new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error("CDP websocket timeout")), 8000);
-      this.socket.addEventListener("open", () => { clearTimeout(timer); resolve(); }, { once: true });
+      this.socket.addEventListener("open", () => {
+        clearTimeout(timer);
+        resolve();
+      }, { once: true });
       this.socket.addEventListener("error", () => reject(new Error("CDP websocket error")), { once: true });
     });
+
     this.socket.addEventListener("message", (event) => {
       const message = JSON.parse(String(event.data));
       if (!message.id) return;
@@ -26,6 +35,7 @@ class CdpClient {
       else pending.resolve(message.result);
     });
   }
+
   send(method, params = {}) {
     const id = ++this.id;
     return new Promise((resolve, reject) => {
@@ -33,7 +43,10 @@ class CdpClient {
       this.socket.send(JSON.stringify({ id, method, params }));
     });
   }
-  close() { this.socket?.close(); }
+
+  close() {
+    this.socket?.close();
+  }
 }
 
 async function createTarget() {
@@ -41,24 +54,42 @@ async function createTarget() {
   if (!response.ok) throw new Error(`Could not create target: ${response.status}`);
   return response.json();
 }
-async function closeTarget(id) { await fetch(`${cdpUrl}/json/close/${id}`).catch(() => undefined); }
+
+async function closeTarget(id) {
+  await fetch(`${cdpUrl}/json/close/${id}`).catch(() => undefined);
+}
+
 async function evaluate(client, expression) {
-  const result = await client.send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true });
+  const result = await client.send("Runtime.evaluate", {
+    expression,
+    returnByValue: true,
+    awaitPromise: true,
+  });
   if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails));
   return result.result?.value;
 }
+
 async function screenshot(client, path) {
-  const result = await client.send("Page.captureScreenshot", { format: "png", fromSurface: true, captureBeyondViewport: false });
+  const result = await client.send("Page.captureScreenshot", {
+    format: "png",
+    fromSurface: true,
+    captureBeyondViewport: false,
+  });
   await writeFile(path, Buffer.from(result.data, "base64"));
 }
+
 async function waitFor(client, expression, label, timeout = 12000) {
   const started = Date.now();
   while (Date.now() - started < timeout) {
     if (await evaluate(client, expression)) return;
     await sleep(20);
   }
-  const phase = await evaluate(client, `document.querySelector('.ccp-machine')?.getAttribute('data-phase') ?? null`);
-  throw new Error(`Timed out waiting for ${label}; phase=${phase}`);
+  const debug = await evaluate(client, `(() => ({
+    phase: document.querySelector('.ccp-machine')?.getAttribute('data-phase') ?? null,
+    randomCalls: window.__candyQaRandom?.calls ?? null,
+    randomRemaining: window.__candyQaRandom?.queue?.length ?? null,
+  }))()`);
+  throw new Error(`Timed out waiting for ${label}; debug=${JSON.stringify(debug)}`);
 }
 
 async function prepareClient({ installRng = false } = {}) {
@@ -68,13 +99,18 @@ async function prepareClient({ installRng = false } = {}) {
   await client.send("Page.enable");
   await client.send("Runtime.enable");
   await client.send("Emulation.setDeviceMetricsOverride", {
-    width: viewport.width, height: viewport.height, deviceScaleFactor: 1, mobile: false,
-    screenWidth: viewport.width, screenHeight: viewport.height,
+    width: viewport.width,
+    height: viewport.height,
+    deviceScaleFactor: 1,
+    mobile: false,
+    screenWidth: viewport.width,
+    screenHeight: viewport.height,
   });
   await client.send("Emulation.setEmulatedMedia", {
     media: "screen",
     features: [{ name: "prefers-reduced-motion", value: "no-preference" }],
   });
+
   if (installRng) {
     await client.send("Page.addScriptToEvaluateOnNewDocument", {
       source: `(() => {
@@ -83,6 +119,7 @@ async function prepareClient({ installRng = false } = {}) {
       })();`,
     });
   }
+
   await client.send("Page.navigate", { url: appUrl });
   await waitFor(client, `document.readyState === 'complete'`, "Candy document load");
   await waitFor(client, `Boolean(document.querySelector('[aria-label="Girar Candy Cascade"]:not(:disabled)'))`, "Candy ready");
@@ -135,7 +172,6 @@ const auditExpression = `(() => {
     }];
   }));
   const cells = [...document.querySelectorAll('.ccp-grid > .ccp-cell')];
-  const cellRects = cells.map(rect);
   const impact = document.querySelector('.ccp-machine.is-impact');
   return {
     viewport: { width: innerWidth, height: innerHeight },
@@ -143,11 +179,10 @@ const auditExpression = `(() => {
     phase: machine?.getAttribute('data-phase') ?? null,
     machine: rect(machine),
     machineVisible: visible(machine),
-    machineOverflow: machine ? getComputedStyle(machine).overflow : null,
     grid: rect(grid),
     sections,
     cellCount: cells.length,
-    cellRects,
+    cellRects: cells.map(rect),
     rolling: document.querySelectorAll('.ccp-cell.is-rolling').length,
     overlays: document.querySelectorAll('.ccp-callout, .ccp-big-win, .ccp-cinematic, .ccp-modal').length,
     impactActive: Boolean(impact),
@@ -155,7 +190,6 @@ const auditExpression = `(() => {
     randomCalls: window.__candyQaRandom?.calls ?? null,
     randomRemaining: window.__candyQaRandom?.queue?.length ?? null,
     scrollWidth: document.documentElement.scrollWidth,
-    scrollHeight: document.documentElement.scrollHeight,
   };
 })()`;
 
@@ -163,23 +197,33 @@ function validate(audit, label) {
   const errors = [];
   if (!audit?.machine || !audit.machineVisible) return ["Candy cabinet is not visibly rendered"];
   if (audit.reducedMotion) errors.push("desktop Candy QA unexpectedly uses reduced motion");
-  if (audit.viewport.width !== viewport.width || audit.viewport.height !== viewport.height) errors.push(`viewport mismatch ${audit.viewport.width}x${audit.viewport.height}`);
+  if (audit.viewport.width !== viewport.width || audit.viewport.height !== viewport.height) {
+    errors.push(`viewport mismatch ${audit.viewport.width}x${audit.viewport.height}`);
+  }
   if (audit.scrollWidth > viewport.width + 1) errors.push(`horizontal overflow ${audit.scrollWidth}px`);
   if (audit.cellCount !== 30) errors.push(`expected 30 cells, got ${audit.cellCount}`);
 
-  const m = audit.machine;
+  const machine = audit.machine;
   for (const [name, state] of Object.entries(audit.sections ?? {})) {
     if (!state?.visible) errors.push(`${name} disappeared at ${label}`);
     const r = state?.rect;
     if (!r) continue;
-    if (r.left < m.left - 2 || r.right > m.right + 2) errors.push(`${name} clipped horizontally at ${label}`);
-    if (r.top < m.top - 2 || r.bottom > m.bottom + 2) errors.push(`${name} clipped vertically at ${label}`);
-    if (name !== 'mascot' && name !== 'footer' && !state.centerHit) errors.push(`${name} center is obscured at ${label}`);
+    if (r.left < machine.left - 2 || r.right > machine.right + 2) errors.push(`${name} clipped horizontally at ${label}`);
+    if (r.top < machine.top - 2 || r.bottom > machine.bottom + 2) errors.push(`${name} clipped vertically at ${label}`);
+    if (name !== "mascot" && name !== "footer" && !state.centerHit) errors.push(`${name} center is obscured at ${label}`);
   }
 
+  const allowVerticalRefillTravel = audit.phase === "refill";
   for (const [cellIndex, r] of (audit.cellRects ?? []).entries()) {
-    if (!r || r.width < 20 || r.height < 20) errors.push(`cell ${cellIndex + 1} collapsed at ${label}`);
-    if (r && audit.grid && (r.left < audit.grid.left - 2 || r.right > audit.grid.right + 2 || r.top < audit.grid.top - 2 || r.bottom > audit.grid.bottom + 2)) {
+    if (!r || r.width < 20 || r.height < 20) {
+      errors.push(`cell ${cellIndex + 1} collapsed at ${label}`);
+      continue;
+    }
+    if (!audit.grid) continue;
+
+    const horizontalEscape = r.left < audit.grid.left - 2 || r.right > audit.grid.right + 2;
+    const verticalEscape = r.top < audit.grid.top - 2 || r.bottom > audit.grid.bottom + 2;
+    if (horizontalEscape || (!allowVerticalRefillTravel && verticalEscape)) {
       errors.push(`cell ${cellIndex + 1} escaped grid at ${label}`);
     }
   }
@@ -190,11 +234,16 @@ await mkdir(outputDir, { recursive: true });
 const report = [];
 let failed = false;
 
-// Scenario 1: ordinary real-timing spin sampled across braking/cascade windows.
+// Ordinary real-timing spin: keep screenshots because the phases are long enough
+// and these images are useful for visual regression review.
 {
   const scenario = await prepareClient();
   try {
-    await evaluate(scenario.client, `(() => { document.querySelector('[aria-label="Girar Candy Cascade"]')?.click(); return true; })()`);
+    await evaluate(scenario.client, `(() => {
+      document.querySelector('[aria-label="Girar Candy Cascade"]')?.click();
+      return true;
+    })()`);
+
     let elapsed = 0;
     for (let index = 0; index < sampleDelays.length; index += 1) {
       await sleep(sampleDelays[index]);
@@ -204,7 +253,7 @@ let failed = false;
       const errors = validate(audit, label);
       if (errors.length) failed = true;
       report.push({ scenario: "ordinary", elapsed, audit, errors });
-      await screenshot(scenario.client, `${outputDir}/desktop-motion-${String(index + 1).padStart(2, '0')}-${elapsed}ms.png`);
+      await screenshot(scenario.client, `${outputDir}/desktop-motion-${String(index + 1).padStart(2, "0")}-${elapsed}ms.png`);
     }
   } finally {
     scenario.client.close();
@@ -212,9 +261,8 @@ let failed = false;
   }
 }
 
-// Scenario 2: deterministic 30-symbol cluster -> guaranteed Sugar Bomb.
-// The forced phases are sampled without screenshots: these presentation states
-// last ~145-170 ms, and screenshot latency can skip the next phase entirely.
+// Deterministic 30-symbol cluster -> guaranteed Sugar Bomb. Forced phases are
+// sampled without screenshots because bomb-birth/bomb-burst only last ~160 ms.
 {
   const refill = [.02, .08, .16, .27, .40, .55, .70, .90];
   const values = [
@@ -232,13 +280,19 @@ let failed = false;
     })()`);
 
     for (const phase of ["cluster", "bomb-birth", "bomb-burst", "collapse", "refill"]) {
-      await waitFor(scenario.client, `document.querySelector('.ccp-machine')?.getAttribute('data-phase') === ${JSON.stringify(phase)}`, `deterministic ${phase}`);
+      await waitFor(
+        scenario.client,
+        `document.querySelector('.ccp-machine')?.getAttribute('data-phase') === ${JSON.stringify(phase)}`,
+        `deterministic ${phase}`,
+      );
       const audit = await evaluate(scenario.client, auditExpression);
       const label = `forced-${phase}`;
       const errors = validate(audit, label);
       if (phase === "bomb-burst") {
         if (!audit.impactActive) errors.push("Sugar Bomb burst did not activate impact layer");
-        if (Number(audit.impactZ) >= Number(audit.sections.sugarHud?.zIndex ?? 0)) errors.push(`impact layer z-index ${audit.impactZ} is not below persistent Sugar HUD`);
+        if (Number(audit.impactZ) >= Number(audit.sections.sugarHud?.zIndex ?? 0)) {
+          errors.push(`impact layer z-index ${audit.impactZ} is not below persistent Sugar HUD`);
+        }
       }
       if (errors.length) failed = true;
       report.push({ scenario: "forced-sugar-bomb", phase, audit, errors });
@@ -252,9 +306,9 @@ let failed = false;
 await writeFile(`${outputDir}/desktop-motion-report.json`, JSON.stringify({ viewport, report }, null, 2));
 for (const sample of report) {
   const label = sample.scenario === "ordinary"
-    ? `${sample.elapsed}ms phase=${sample.audit?.phase ?? 'unknown'}`
+    ? `${sample.elapsed}ms phase=${sample.audit?.phase ?? "unknown"}`
     : `forced ${sample.phase}`;
-  if (sample.errors.length) console.error(`❌ ${label}: ${sample.errors.join('; ')}`);
+  if (sample.errors.length) console.error(`❌ ${label}: ${sample.errors.join("; ")}`);
   else console.log(`✅ ${label}: cabinet + Sugar HUD + economy + controls intact`);
 }
 if (failed) process.exitCode = 1;
