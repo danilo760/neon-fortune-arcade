@@ -138,7 +138,7 @@ function ReelOverlay({
 
       if (isBraking) {
         if (reducedMotion()) {
-          track.style.transform = `translate3d(0, ${-finalOffset}px, 0)`;
+          track.style.transform = `translateY(${-finalOffset}px)`;
           return;
         }
         if (brakeStartedAt === null) {
@@ -149,8 +149,7 @@ function ReelOverlay({
         const progress = Math.min(1, (time - brakeStartedAt) / duration);
         const eased = goldenTigerBrakeEase(progress);
         offset = brakeStartOffset + (finalOffset - brakeStartOffset) * eased;
-        track.style.transform = `translate3d(0, ${-offset}px, 0)`;
-        track.style.filter = `blur(${Math.max(0.08, 0.7 * (1 - progress))}px) saturate(1.05)`;
+        track.style.transform = `translateY(${-offset}px)`;
         if (progress >= 1) return;
       } else {
         const delta = Math.min(34, Math.max(0, time - lastTime));
@@ -158,7 +157,7 @@ function ReelOverlay({
         offset += pxPerMs * delta;
         const wrapAt = itemHeight * REEL_STRIP.length * 3;
         if (offset >= wrapAt) offset -= itemHeight * REEL_STRIP.length;
-        track.style.transform = `translate3d(0, ${-offset}px, 0)`;
+        track.style.transform = `translateY(${-offset}px)`;
       }
 
       lastTime = time;
@@ -182,7 +181,7 @@ function ReelOverlay({
         style={{
           height: `${(symbols.length / 3) * 100}%`,
           animation: "none",
-          transform: "translate3d(0, 0, 0)",
+          transform: "translateY(0)",
         }}
       >
         {symbols.map((symbol, index) => (
