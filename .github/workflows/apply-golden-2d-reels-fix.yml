@@ -22,19 +22,30 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
+          import re
 
           path = Path("src/components/arcade/GoldenTigerReference.tsx")
           source = path.read_text()
-          replacements = {
-              'track.style.transform = `translate3d(0, ${-finalOffset}px, 0)`;': 'track.style.transform = `translateY(${-finalOffset}px)`;',
-              'track.style.transform = `translate3d(0, ${-offset}px, 0)`;': 'track.style.transform = `translateY(${-offset}px)`;',
-              '          track.style.filter = `blur(${Math.max(0.08, 0.7 * (1 - progress))}px) saturate(1.05)`;\n': '',
-              '          transform: "translate3d(0, 0, 0)",': '          transform: "translateY(0)",',
-          }
-          for old, new in replacements.items():
+
+          required = [
+              ('translate3d(0, ${-finalOffset}px, 0)', 'translateY(${-finalOffset}px)'),
+              ('translate3d(0, ${-offset}px, 0)', 'translateY(${-offset}px)'),
+              ('transform: "translate3d(0, 0, 0)"', 'transform: "translateY(0)"'),
+          ]
+          for old, new in required:
               if old not in source:
                   raise SystemExit("Golden reel anchor missing: " + old)
               source = source.replace(old, new)
+
+          # Older revisions added a JS blur during braking. PresentationSafe.css
+          # already disables it, but remove any remaining assignment at source
+          # without depending on its exact constants/spacing.
+          source = re.sub(
+              r'^\s*track\.style\.filter\s*=\s*`blur\([^\n]+\n',
+              '',
+              source,
+              flags=re.MULTILINE,
+          )
           path.write_text(source)
 
       - name: Remove one-shot workflow
