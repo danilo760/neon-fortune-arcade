@@ -4,7 +4,7 @@ const appUrl = process.env.GOLDEN_TIGER_URL ?? "http://127.0.0.1:3000/game/golde
 const cdpUrl = process.env.CHROME_CDP_URL ?? "http://127.0.0.1:9222";
 const outputDir = process.env.GOLDEN_TIGER_QA_DIR ?? "artifacts/golden-tiger";
 const viewport = { width: 1363, height: 936 };
-const sampleDelays = [120, 260, 180, 220, 240, 260];
+const sampleDelays = [180, 180, 200, 250, 250, 300];
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -138,6 +138,7 @@ const auditExpression = `(() => {
   }
   return {
     viewport: { width: innerWidth, height: innerHeight },
+    reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
     phase: machine?.getAttribute('data-phase') ?? null,
     machine: machineRect,
     machineOverflow: machine ? getComputedStyle(machine).overflow : null,
@@ -155,6 +156,7 @@ const auditExpression = `(() => {
 function validate(audit, index) {
   const errors = [];
   if (!audit?.machine) return ["Golden Tiger cabinet did not mount"];
+  if (audit.reducedMotion) errors.push("desktop spin audit unexpectedly uses reduced motion");
   if (audit.viewport.width !== viewport.width || audit.viewport.height !== viewport.height) {
     errors.push(`viewport mismatch ${audit.viewport.width}x${audit.viewport.height}`);
   }
@@ -198,6 +200,10 @@ try {
     mobile: false,
     screenWidth: viewport.width,
     screenHeight: viewport.height,
+  });
+  await client.send("Emulation.setEmulatedMedia", {
+    media: "screen",
+    features: [{ name: "prefers-reduced-motion", value: "no-preference" }],
   });
   await client.send("Page.navigate", { url: appUrl });
   await sleep(1_250);

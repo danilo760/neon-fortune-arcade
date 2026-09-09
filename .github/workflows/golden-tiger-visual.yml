@@ -75,7 +75,6 @@ jobs:
             --headless=new \
             --no-sandbox \
             --disable-dev-shm-usage \
-            --disable-gpu \
             --remote-debugging-address=127.0.0.1 \
             --remote-debugging-port=9222 \
             --user-data-dir=/tmp/golden-tiger-chrome \
