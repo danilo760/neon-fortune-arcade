@@ -1,7 +1,9 @@
 # Golden Tiger — premium art bible
 
-Date: 2026-09-09  
-Scope: Session 1 — mascot, symbol family, and their first in-game integration.  
+Date: 2026-09-09
+
+Scope: Session 1 — mascot, symbol family, and their first in-game integration.
+
 Reference: PG SOFT's official Fortune Tiger game page and game-information PDF, used only as a commercial category benchmark. All Neon artwork must remain original.
 
 ## 1. Creative north star
