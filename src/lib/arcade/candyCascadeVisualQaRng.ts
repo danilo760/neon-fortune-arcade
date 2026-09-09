@@ -12,10 +12,7 @@ type CandyVisualQaRandomState = {
  * so Render continues to use the caller-provided RNG unchanged.
  */
 export function resolveCandyCascadeVisualQaRng(fallback: Rng): Rng {
-  const env = (import.meta as ImportMeta & {
-    env?: Record<string, string | boolean | undefined>;
-  }).env;
-  const visualQaEnabled = env?.["VITE_CANDY_CASCADE_VISUAL_QA"] === "1";
+  const visualQaEnabled = import.meta.env.VITE_CANDY_CASCADE_VISUAL_QA === "1";
 
   if (!visualQaEnabled || typeof window === "undefined") return fallback;
 
