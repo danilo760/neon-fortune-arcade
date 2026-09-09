@@ -16,6 +16,7 @@ on:
       - "src/lib/arcade/adaptiveScore.ts"
       - "src/routes/game/$slug.tsx"
       - "scripts/olympusStormVisualQa.mjs"
+      - "scripts/olympusStormDesktopQa.mjs"
       - "scripts/slotAutoPlayRegressionQa.mjs"
       - "tsconfig.json"
       - ".github/workflows/olympus-storm-visual.yml"
@@ -74,7 +75,6 @@ jobs:
             --headless=new \
             --no-sandbox \
             --disable-dev-shm-usage \
-            --disable-gpu \
             --remote-debugging-address=127.0.0.1 \
             --remote-debugging-port=9223 \
             --user-data-dir=/tmp/olympus-storm-chrome \
@@ -91,6 +91,9 @@ jobs:
 
       - name: Audit mobile viewports
         run: node scripts/olympusStormVisualQa.mjs
+
+      - name: Audit desktop composition
+        run: node scripts/olympusStormDesktopQa.mjs
 
       - name: Audit Auto Play launch and stop
         run: node scripts/slotAutoPlayRegressionQa.mjs olympus
