@@ -1,41 +1,60 @@
 @import "./GoldenTigerSession2.css";
 
-/* Session 2 visual QA hotfix: the three in-place respin symbols must crossfade
-   with overlap. The earlier duty cycle could align all three at zero opacity
-   for a brief frame, making the feature grid look empty even though the
-   animation was running correctly. */
+/* Session 2 visual QA hardening. During a Fortune respin the chosen symbol is
+   the persistent visual anchor and WILD flashes over it. Keeping one authored
+   symbol visible at all times avoids the empty-grid frame that can happen when
+   independent three-way crossfades are sampled on the same compositor tick. */
 .gt-hw-page .gt-premium-machine[data-phase="feature-spin"] .gt-hw-cell-motion span {
-  animation-name: gt-s2-fortune-cell-crossfade;
-  animation-duration: .42s;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
+  animation: none !important;
+  opacity: 0;
+  transform: none;
+  filter: none;
 }
 
-@keyframes gt-s2-fortune-cell-crossfade {
-  0% {
+.gt-hw-page .gt-premium-machine[data-phase="feature-spin"] .gt-hw-cell-motion span:first-child {
+  z-index: 1;
+  opacity: .94;
+  animation: gt-s2-fortune-selected-anchor .42s ease-in-out infinite !important;
+}
+
+.gt-hw-page .gt-premium-machine[data-phase="feature-spin"] .gt-hw-cell-motion span:nth-child(2) {
+  z-index: 2;
+  opacity: 0;
+  animation: gt-s2-fortune-wild-flash .42s cubic-bezier(.2,.78,.24,1) infinite !important;
+}
+
+.gt-hw-page .gt-premium-machine[data-phase="feature-spin"] .gt-hw-cell-motion span:nth-child(3) {
+  display: none;
+}
+
+@keyframes gt-s2-fortune-selected-anchor {
+  0%,100% {
+    opacity: .94;
+    transform: translateY(1%) scale(.95);
+    filter: blur(.18px) brightness(.99) saturate(.98);
+  }
+  46% {
+    opacity: .70;
+    transform: translateY(-1%) scale(.985);
+    filter: blur(.45px) brightness(1.03) saturate(1.02);
+  }
+}
+
+@keyframes gt-s2-fortune-wild-flash {
+  0%,18% {
     opacity: 0;
-    transform: translateY(-8%) scale(.90);
-    filter: blur(2px) brightness(.94);
+    transform: translateY(8%) scale(.82) rotate(-2deg);
+    filter: blur(2px) brightness(.96);
   }
-  10% {
-    opacity: .88;
-    transform: translateY(-2%) scale(.95);
-    filter: blur(.45px) brightness(.99);
+  44% {
+    opacity: .92;
+    transform: translateY(-1%) scale(1.02) rotate(.7deg);
+    filter: blur(.12px) brightness(1.11) saturate(1.08) drop-shadow(0 0 9px rgba(255,211,91,.46));
   }
-  28%, 48% {
-    opacity: .98;
-    transform: translateY(0) scale(.98);
-    filter: blur(.12px) brightness(1.02);
-  }
-  58% {
-    opacity: .78;
-    transform: translateY(2%) scale(.96);
-    filter: blur(.55px) brightness(.98);
-  }
-  70%, 100% {
+  72%,100% {
     opacity: 0;
-    transform: translateY(8%) scale(.90);
-    filter: blur(2px) brightness(.94);
+    transform: translateY(-8%) scale(.88) rotate(2deg);
+    filter: blur(1.6px) brightness(1.02);
   }
 }
 
@@ -47,5 +66,8 @@
     opacity: 1;
     transform: none;
     filter: none;
+  }
+  .gt-hw-page .gt-premium-machine[data-phase="feature-spin"] .gt-hw-cell-motion span:nth-child(2) {
+    opacity: 0;
   }
 }
