@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="Storm Orb premium authorial symbol">
+  <defs>
+    <radialGradient id="orb"><stop stop-color="#f7ffff"/><stop offset=".18" stop-color="#aaf4ff"/><stop offset=".42" stop-color="#5aa8ff"/><stop offset=".7" stop-color="#4d4bd8"/><stop offset="1" stop-color="#17164e"/></radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff4ad"/><stop offset=".28" stop-color="#e7bd56"/><stop offset=".65" stop-color="#9b641d"/><stop offset="1" stop-color="#4f2809"/></linearGradient>
+    <radialGradient id="halo"><stop stop-color="#b8f8ff" stop-opacity=".55"/><stop offset=".45" stop-color="#6596ff" stop-opacity=".18"/><stop offset="1" stop-color="#34246e" stop-opacity="0"/></radialGradient>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="7" stdDeviation="5" flood-color="#020718" flood-opacity=".75"/></filter>
+  </defs>
+  <circle cx="90" cy="84" r="75" fill="url(#halo)"/>
+  <g filter="url(#shadow)">
+    <circle cx="90" cy="80" r="58" fill="#071631" stroke="url(#gold)" stroke-width="7"/>
+    <circle cx="90" cy="80" r="47" fill="url(#orb)" stroke="#c9fbff" stroke-opacity=".6" stroke-width="3"/>
+    <path d="M92 30 69 73h19L75 126l39-57H96l17-39z" fill="#f5ffff" stroke="#88eaff" stroke-width="3" filter="url(#glow)"/>
+    <path d="M50 66c11-19 27-29 46-31" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="6" stroke-linecap="round"/>
+    <path d="M40 141h100l-14 22H54z" fill="url(#gold)" stroke="#fff1a8" stroke-opacity=".44" stroke-width="3"/>
+    <path d="M63 137h54l-9-15H72z" fill="#102d5d" stroke="#84dfff" stroke-opacity=".34" stroke-width="3"/>
+  </g>
+  <g fill="none" stroke="#c2f8ff" stroke-linecap="round" filter="url(#glow)">
+    <path d="M23 46 37 34l10 5 12-19" stroke-width="3"/><path d="M157 46l-14-12-10 5-12-19" stroke-width="3"/>
+    <path d="M25 106l14 8 9-5 9 14M155 106l-14 8-9-5-9 14" stroke-width="2.5" opacity=".7"/>
+  </g>
+</svg>
