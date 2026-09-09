@@ -13,6 +13,10 @@ import {
 import { playGoldenTigerAudio } from "@/lib/arcade/goldenTigerAudio";
 import { GoldenTigerClock } from "@/lib/arcade/goldenTigerClock";
 import {
+  goldenTigerFeatureCellStaggerMs,
+  goldenTigerFeatureRollingOrder,
+} from "@/lib/arcade/goldenTigerFeatureMotion";
+import {
   FORTUNE_FEATURE_FULL_GRID_MULTIPLIER,
   rollFortuneFeatureTrigger,
   runFortuneFeature,
@@ -49,7 +53,6 @@ import "./GoldenTigerPremiumArt.css";
 const BETS = [10, 20, 50, 100, 200, 500, 1_000] as const;
 const INITIAL_GRID: GoldenTigerSymbolId[] = ["fortuneBag", "ingot", "jade", "orange", "wild", "firecracker", "lion", "lantern", "fortuneBag"];
 const REEL_STRIP: readonly GoldenTigerSymbolId[] = ["orange", "jade", "firecracker", "fortuneBag", "ingot", "lantern", "lion", "wild"];
-const CELL_INDEXES = Array.from({ length: 9 }, (_, index) => index);
 const EMPTY_FEATURE_GRID: FortuneFeatureCell[] = Array.from({ length: 9 }, () => null);
 
 const SYMBOL_LABEL: Record<GoldenTigerSymbolId, string> = {
@@ -342,6 +345,10 @@ export function GoldenTigerPremium() {
     return clockRef.current?.wait(duration) ?? Promise.resolve();
   }, []);
 
+  const waitForFeatureStagger = useCallback((orderIndex: number) => {
+    return clockRef.current?.wait(goldenTigerFeatureCellStaggerMs(orderIndex, turbo)) ?? Promise.resolve();
+  }, [turbo]);
+
   const tigerReaction: TigerReactionState =
     phase === "full-grid" ? "full" :
     phase === "bonus-intro" || phase === "feature-intro" || phase === "feature-lock" || phase === "feature-outro" ? "feature" :
@@ -372,7 +379,8 @@ export function GoldenTigerPremium() {
     for (const step of plan.steps) {
       setFeatureAttempt(step.respin);
       const lockedBeforeSpin = visibleGrid.reduce((count, symbol) => count + (symbol === null ? 0 : 1), 0);
-      setRollingCells(new Set(CELL_INDEXES.filter((index) => visibleGrid[index] === null)));
+      const rollingOrder = goldenTigerFeatureRollingOrder(visibleGrid);
+      setRollingCells(new Set(rollingOrder));
       setPhase("feature-spin");
       playGoldenTigerAudio({
         type: "feature-respin",
@@ -381,10 +389,33 @@ export function GoldenTigerPremium() {
       }, soundEnabled);
       await wait(turbo ? 170 : 470);
 
+      const staggeredGrid = [...visibleGrid];
+      const staggeredFresh = new Set<number>();
+
+      for (let orderIndex = 0; orderIndex < rollingOrder.length; orderIndex += 1) {
+        const cellIndex = rollingOrder[orderIndex];
+        if (cellIndex === undefined) continue;
+
+        staggeredGrid[cellIndex] = step.grid[cellIndex] ?? null;
+        if (step.addedIndices.includes(cellIndex)) staggeredFresh.add(cellIndex);
+
+        setFeatureCells([...staggeredGrid]);
+        setFreshCells(new Set(staggeredFresh));
+        setRollingCells((current) => {
+          const next = new Set(current);
+          next.delete(cellIndex);
+          return next;
+        });
+
+        if (orderIndex < rollingOrder.length - 1) {
+          await waitForFeatureStagger(orderIndex);
+          if (!clockRef.current) return plan.payout;
+        }
+      }
+
       visibleGrid = [...step.grid];
       setFeatureCells([...visibleGrid]);
       setFreshCells(new Set(step.addedIndices));
-      await wait(turbo ? 24 : 70);
       setRollingCells(new Set());
 
       if (step.addedIndices.length > 0) {
@@ -414,7 +445,7 @@ export function GoldenTigerPremium() {
     setPhase("feature-outro");
     await wait(turbo ? 170 : 560);
     return plan.payout;
-  }, [soundEnabled, turbo, wait]);
+  }, [soundEnabled, turbo, wait, waitForFeatureStagger]);
 
   const settle = useCallback(async (
     payout: number,
