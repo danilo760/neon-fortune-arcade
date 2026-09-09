@@ -17,6 +17,7 @@ import {
   type CandySymbolId,
 } from "@/lib/arcade/candyCascadeMath";
 import { playCandyFeatureSound } from "@/lib/arcade/candySound";
+import { resolveCandyCascadeVisualQaRng } from "@/lib/arcade/candyCascadeVisualQaRng";
 import { formatCoins } from "@/lib/arcade/format";
 import { playSound, setAmbienceEnergy, setGameAmbience } from "@/lib/arcade/sound";
 import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store";
@@ -356,7 +357,7 @@ export function CandyCascadePremium() {
     setSugarEnergy(0);
     setSugarLevel(1);
     try {
-      const plan = planCandyRound(bet);
+      const plan = planCandyRound(bet, resolveCandyCascadeVisualQaRng(Math.random));
       let displayed = await presentRound(plan, 0, false);
       let feature: CandyFeaturePlan | undefined;
       if (plan.scatterAward > 0) {
