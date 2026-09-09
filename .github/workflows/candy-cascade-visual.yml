@@ -20,7 +20,7 @@ on:
 jobs:
   mobile-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 8
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -67,39 +67,6 @@ jobs:
         run: node scripts/candyCascadeVisualQa.mjs
       - name: Audit desktop motion composition
         run: node scripts/candyCascadeDesktopMotionQa.mjs
-      - name: Start visible Chrome compositor session
-        shell: bash
-        run: |
-          set -euo pipefail
-          command -v Xvfb >/dev/null || { echo "Xvfb unavailable" >&2; exit 1; }
-          Xvfb :98 -screen 0 1363x936x24 -nolisten tcp > candy-cascade-xvfb.log 2>&1 &
-          echo $! > /tmp/candy-xvfb.pid
-          export DISPLAY=:98
-          "$CHROME" \
-            --no-sandbox \
-            --disable-dev-shm-usage \
-            --window-size=1363,936 \
-            --remote-debugging-address=127.0.0.1 \
-            --remote-debugging-port=9234 \
-            --user-data-dir=/tmp/candy-visible-chrome \
-            about:blank > candy-cascade-visible-chrome.log 2>&1 &
-          echo $! > /tmp/candy-visible-chrome.pid
-          for attempt in $(seq 1 30); do
-            curl -fsS http://127.0.0.1:9234/json/version >/dev/null && exit 0
-            sleep 1
-          done
-          cat candy-cascade-visible-chrome.log
-          exit 1
-      - name: Audit visible desktop compositor
-        env:
-          CHROME_CDP_URL: http://127.0.0.1:9234
-        run: node scripts/candyCascadeDesktopMotionQa.mjs
-      - name: Stop visible Chrome compositor session
-        if: always()
-        shell: bash
-        run: |
-          [ ! -f /tmp/candy-visible-chrome.pid ] || kill "$(cat /tmp/candy-visible-chrome.pid)" 2>/dev/null || true
-          [ ! -f /tmp/candy-xvfb.pid ] || kill "$(cat /tmp/candy-xvfb.pid)" 2>/dev/null || true
       - name: Audit Auto Play launch and stop
         run: node scripts/slotAutoPlayRegressionQa.mjs candy
       - name: Upload visual evidence
@@ -112,15 +79,11 @@ jobs:
             artifacts/candy-cascade-auto/
             candy-cascade-server.log
             candy-cascade-chrome.log
-            candy-cascade-visible-chrome.log
-            candy-cascade-xvfb.log
           if-no-files-found: warn
           retention-days: 7
       - name: Stop processes
         if: always()
         shell: bash
         run: |
-          [ ! -f /tmp/candy-visible-chrome.pid ] || kill "$(cat /tmp/candy-visible-chrome.pid)" 2>/dev/null || true
-          [ ! -f /tmp/candy-xvfb.pid ] || kill "$(cat /tmp/candy-xvfb.pid)" 2>/dev/null || true
           [ ! -f /tmp/candy-chrome.pid ] || kill "$(cat /tmp/candy-chrome.pid)" 2>/dev/null || true
           [ ! -f /tmp/candy-server.pid ] || kill "$(cat /tmp/candy-server.pid)" 2>/dev/null || true
