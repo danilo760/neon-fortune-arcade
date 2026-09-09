@@ -12,6 +12,7 @@ on:
       - "src/lib/arcade/adaptiveScore.ts"
       - "src/routes/game/$slug.tsx"
       - "scripts/candyCascadeVisualQa.mjs"
+      - "scripts/slotAutoPlayRegressionQa.mjs"
       - ".github/workflows/candy-cascade-visual.yml"
   workflow_dispatch:
 
@@ -63,6 +64,8 @@ jobs:
           exit 1
       - name: Audit premium mobile presentation
         run: node scripts/candyCascadeVisualQa.mjs
+      - name: Audit Auto Play launch and stop
+        run: node scripts/slotAutoPlayRegressionQa.mjs candy
       - name: Upload visual evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -70,6 +73,7 @@ jobs:
           name: candy-cascade-visual-qa
           path: |
             artifacts/candy-cascade/
+            artifacts/candy-cascade-auto/
             candy-cascade-server.log
             candy-cascade-chrome.log
           if-no-files-found: warn
