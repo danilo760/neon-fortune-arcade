@@ -11,6 +11,7 @@ import {
   runPurchasedFortuneFeature,
 } from "@/lib/arcade/goldenTigerBonusBuy";
 import { playGoldenTigerAudio } from "@/lib/arcade/goldenTigerAudio";
+import { GoldenTigerClock } from "@/lib/arcade/goldenTigerClock";
 import {
   FORTUNE_FEATURE_FULL_GRID_MULTIPLIER,
   rollFortuneFeatureTrigger,
@@ -29,8 +30,14 @@ import {
 import {
   goldenTigerAnticipationMs,
   goldenTigerBrakeEase,
+  goldenTigerReelBlurPx,
   goldenTigerReelBrakeMs,
   goldenTigerReelLandPauseMs,
+  goldenTigerReelOvershootPx,
+  goldenTigerReelReboundMs,
+  goldenTigerReelTensionMs,
+  goldenTigerReelTensionPx,
+  goldenTigerReboundEase,
   goldenTigerSpinLaunchMs,
 } from "@/lib/arcade/goldenTigerMotion";
 import { setAmbienceEnergy, setGameAmbience } from "@/lib/arcade/sound";
@@ -74,16 +81,14 @@ function reducedMotion() {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-function wait(ms: number) {
-  return new Promise<void>((resolve) => window.setTimeout(resolve, reducedMotion() ? 24 : ms));
-}
-
 function reelFinalSymbols(
   grid: readonly GoldenTigerSymbolId[],
   column: number,
 ): [GoldenTigerSymbolId, GoldenTigerSymbolId, GoldenTigerSymbolId] {
   return [grid[column] ?? "orange", grid[column + 3] ?? "jade", grid[column + 6] ?? "ingot"];
 }
+
+type ReelMotionStage = "tension" | "cruise" | "brake" | "rebound" | "landed";
 
 function ReelOverlay({
   column,
@@ -119,10 +124,25 @@ function ReelOverlay({
 
     let frameId = 0;
     let lastTime = performance.now();
+    let stageStartedAt = lastTime;
     let offset = 0;
     let initialized = false;
-    let brakeStartedAt: number | null = null;
+    let stage: ReelMotionStage = "tension";
     let brakeStartOffset = 0;
+
+    const tensionMs = goldenTigerReelTensionMs(turbo);
+    const tensionPx = goldenTigerReelTensionPx(column);
+    const totalBrakeMs = goldenTigerReelBrakeMs(column, turbo);
+    const reboundMs = goldenTigerReelReboundMs(column, turbo);
+    const brakeTravelMs = Math.max(32, totalBrakeMs - reboundMs);
+    const overshootPx = goldenTigerReelOvershootPx(column);
+
+    const renderTrack = (nextOffset: number, velocityPxPerMs: number) => {
+      offset = nextOffset;
+      track.style.transform = `translateY(${-nextOffset}px)`;
+      const blur = reducedMotion() ? 0 : goldenTigerReelBlurPx(velocityPxPerMs);
+      track.style.filter = blur > 0.01 ? `blur(${blur.toFixed(2)}px)` : "none";
+    };
 
     const draw = (time: number) => {
       const itemHeight = overlay.clientHeight / 3;
@@ -134,29 +154,70 @@ function ReelOverlay({
       if (!initialized) {
         offset = itemHeight * REEL_STRIP.length;
         initialized = true;
+        stageStartedAt = time;
+        lastTime = time;
+        renderTrack(offset, 0);
       }
 
+      const delta = Math.min(34, Math.max(1, time - lastTime));
       const finalOffset = itemHeight * (symbols.length - 3);
-      if (brakingRef.current) {
-        if (reducedMotion()) {
-          track.style.transform = `translateY(${-finalOffset}px)`;
+      const overshootOffset = finalOffset + overshootPx;
+
+      if (reducedMotion()) {
+        if (brakingRef.current) {
+          renderTrack(finalOffset, 0);
           return;
         }
-        if (brakeStartedAt === null) {
-          brakeStartedAt = time;
-          brakeStartOffset = offset;
+        renderTrack(offset, 0);
+        lastTime = time;
+        frameId = requestAnimationFrame(draw);
+        return;
+      }
+
+      if (brakingRef.current && stage !== "brake" && stage !== "rebound" && stage !== "landed") {
+        stage = "brake";
+        stageStartedAt = time;
+        brakeStartOffset = offset;
+      }
+
+      if (stage === "tension") {
+        const progress = Math.min(1, (time - stageStartedAt) / tensionMs);
+        const baseOffset = itemHeight * REEL_STRIP.length;
+        const recoil = Math.sin(progress * Math.PI) * tensionPx;
+        const nextOffset = baseOffset - recoil;
+        renderTrack(nextOffset, Math.abs(nextOffset - offset) / delta);
+        if (progress >= 1) {
+          stage = "cruise";
+          stageStartedAt = time;
+          renderTrack(baseOffset, 0);
         }
-        const duration = goldenTigerReelBrakeMs(column, turbo);
-        const progress = Math.min(1, (time - brakeStartedAt) / duration);
-        offset = brakeStartOffset + (finalOffset - brakeStartOffset) * goldenTigerBrakeEase(progress);
-        track.style.transform = `translateY(${-offset}px)`;
-        if (progress >= 1) return;
-      } else {
-        const delta = Math.min(34, Math.max(0, time - lastTime));
-        offset += (itemHeight / (turbo ? 40 : 64)) * delta;
+      } else if (stage === "cruise") {
+        const velocity = itemHeight / (turbo ? 40 : 64);
+        let nextOffset = offset + velocity * delta;
         const wrapAt = itemHeight * REEL_STRIP.length * 3;
-        if (offset >= wrapAt) offset -= itemHeight * REEL_STRIP.length;
-        track.style.transform = `translateY(${-offset}px)`;
+        if (nextOffset >= wrapAt) nextOffset -= itemHeight * REEL_STRIP.length;
+        renderTrack(nextOffset, velocity);
+      } else if (stage === "brake") {
+        const progress = Math.min(1, (time - stageStartedAt) / brakeTravelMs);
+        const nextOffset = brakeStartOffset + (overshootOffset - brakeStartOffset) * goldenTigerBrakeEase(progress);
+        renderTrack(nextOffset, Math.abs(nextOffset - offset) / delta);
+        if (progress >= 1) {
+          stage = "rebound";
+          stageStartedAt = time;
+          renderTrack(overshootOffset, 0);
+        }
+      } else if (stage === "rebound") {
+        const progress = Math.min(1, (time - stageStartedAt) / reboundMs);
+        const nextOffset = overshootOffset + (finalOffset - overshootOffset) * goldenTigerReboundEase(progress);
+        renderTrack(nextOffset, Math.abs(nextOffset - offset) / delta);
+        if (progress >= 1) {
+          stage = "landed";
+          renderTrack(finalOffset, 0);
+          return;
+        }
+      } else {
+        renderTrack(finalOffset, 0);
+        return;
       }
 
       lastTime = time;
@@ -164,7 +225,10 @@ function ReelOverlay({
     };
 
     frameId = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(frameId);
+    return () => {
+      cancelAnimationFrame(frameId);
+      track.style.filter = "none";
+    };
   }, [column, turbo, finalSymbols[0], finalSymbols[1], finalSymbols[2], symbols.length]);
 
   return (
@@ -181,6 +245,7 @@ function ReelOverlay({
           height: `${(symbols.length / 3) * 100}%`,
           animation: "none",
           transform: "translateY(0)",
+          filter: "none",
         }}
       >
         {symbols.map((symbol, index) => (
@@ -240,6 +305,7 @@ export function GoldenTigerPremium() {
   const [bonusOpen, setBonusOpen] = useState(false);
   const busyRef = useRef(false);
   const autoStopRef = useRef(false);
+  const clockRef = useRef<GoldenTigerClock | null>(null);
 
   const bonusCost = bet * GOLDEN_TIGER_BONUS_BUY_MULTIPLIER;
   const isBusy = phase !== "idle";
@@ -248,8 +314,12 @@ export function GoldenTigerPremium() {
 
   useEffect(() => {
     hydrateFromStorage();
+    const clock = new GoldenTigerClock();
+    clockRef.current = clock;
     return () => {
       autoStopRef.current = true;
+      clock.dispose();
+      if (clockRef.current === clock) clockRef.current = null;
     };
   }, []);
 
@@ -266,6 +336,11 @@ export function GoldenTigerPremium() {
       phase === "base-spin" ? 0.96 : 0.76;
     setAmbienceEnergy(energy);
   }, [featureActive, phase]);
+
+  const wait = useCallback((ms: number) => {
+    const duration = reducedMotion() ? 24 : ms;
+    return clockRef.current?.wait(duration) ?? Promise.resolve();
+  }, []);
 
   const tigerReaction: TigerReactionState =
     phase === "full-grid" ? "full" :
@@ -339,7 +414,7 @@ export function GoldenTigerPremium() {
     setPhase("feature-outro");
     await wait(turbo ? 170 : 560);
     return plan.payout;
-  }, [soundEnabled, turbo]);
+  }, [soundEnabled, turbo, wait]);
 
   const settle = useCallback(async (
     payout: number,
@@ -386,7 +461,7 @@ export function GoldenTigerPremium() {
       playGoldenTigerAudio({ type: "lose" }, soundEnabled);
       await wait(turbo ? 70 : 170);
     }
-  }, [soundEnabled, turbo]);
+  }, [soundEnabled, turbo, wait]);
 
   const resetRoundPresentation = useCallback(() => {
     setWin(0);
@@ -493,7 +568,7 @@ export function GoldenTigerPremium() {
     } finally {
       finishRoundPresentation();
     }
-  }, [animateFeature, bet, finishRoundPresentation, resetRoundPresentation, settle, soundEnabled, turbo]);
+  }, [animateFeature, bet, finishRoundPresentation, resetRoundPresentation, settle, soundEnabled, turbo, wait]);
 
   const buyBonus = useCallback(async () => {
     if (busyRef.current || autoLeft > 0 || balance < bonusCost) return;
@@ -532,7 +607,7 @@ export function GoldenTigerPremium() {
       await wait(turbo ? 90 : 250);
     }
     setAutoLeft(0);
-  }, [autoLeft, autoRounds, runSpin, turbo]);
+  }, [autoLeft, autoRounds, runSpin, turbo, wait]);
 
   const changeBet = (direction: -1 | 1) => {
     if (busyRef.current || autoLeft > 0) return;
