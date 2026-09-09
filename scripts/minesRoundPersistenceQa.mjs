@@ -68,6 +68,9 @@ try {
     width: 390, height: 844, deviceScaleFactor: 1, mobile: true, screenWidth: 390, screenHeight: 844,
   });
 
+  const origin = new URL(appUrl).origin;
+  await navigate(client, origin + "/");
+  await evaluate(client, `localStorage.removeItem(${JSON.stringify(roundKey)})`);
   await navigate(client, appUrl);
   await waitFor(client, `Boolean(document.querySelector('.mines-premium__cabinet'))`, "Mines mount");
   const initialStatus = await evaluate(client, `document.querySelector('.mines-premium__cabinet')?.getAttribute('data-round-status')`);
@@ -109,7 +112,6 @@ try {
     arcade: JSON.parse(localStorage.getItem(${JSON.stringify(arcadeKey)})),
   }))()`);
 
-  const origin = new URL(appUrl).origin;
   await navigate(client, origin + "/");
   await navigate(client, appUrl);
   await waitFor(client, `document.querySelector('.mines-premium__cabinet')?.getAttribute('data-round-status') === 'playing'`, "restored playing round");
