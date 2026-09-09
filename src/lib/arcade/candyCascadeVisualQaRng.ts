@@ -6,13 +6,17 @@ type CandyVisualQaRandomState = {
   calls: number;
 };
 
+type CandyVisualQaEnv = {
+  VITE_CANDY_CASCADE_VISUAL_QA?: string;
+};
+
 /**
  * Deterministic RNG bridge used only by the Candy visual workflow.
  * The dedicated Vite flag is absent from normal production/preview builds,
  * so Render continues to use the caller-provided RNG unchanged.
  */
 export function resolveCandyCascadeVisualQaRng(fallback: Rng): Rng {
-  const visualQaEnabled = import.meta.env.VITE_CANDY_CASCADE_VISUAL_QA === "1";
+  const visualQaEnabled = (import.meta.env as CandyVisualQaEnv).VITE_CANDY_CASCADE_VISUAL_QA === "1";
 
   if (!visualQaEnabled || typeof window === "undefined") return fallback;
 
