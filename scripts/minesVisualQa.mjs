@@ -116,6 +116,7 @@ for (const viewport of viewports) {
     if (idle.scrollWidth > viewport.width + 1) errors.push(`overflow ${idle.scrollWidth}px`);
     if (!idle.cabinet || idle.cabinet.left < -1 || idle.cabinet.right > viewport.width + 1) errors.push("cabinet outside viewport");
     if (idle.tileCount !== 25) errors.push(`expected 25 tiles, got ${idle.tileCount}`);
+    if (idle.status !== "idle") errors.push(`expected isolated idle load, got ${idle.status}`);
     if (!idle.openPresent) errors.push("open vault action missing");
     if (idle.openDisabled) errors.push("open vault action disabled on idle load");
     if (idle.legacyArtPresent && idle.legacyArtDisplay !== "none") errors.push(`legacy screenshot is visible (${idle.legacyArtDisplay})`);
@@ -129,17 +130,17 @@ for (const viewport of viewports) {
     const ready = await evaluate(client, auditExpression);
     if (!ready.openInViewport || !ready.openHit) errors.push("open vault action is obscured after scroll");
 
-    await evaluate(client, `(() => { [...document.querySelectorAll('button')].find((button) => button.getAttribute('aria-label')?.startsWith('Abrir cofre apostando'))?.click(); return true; })()`);
-    await sleep(180);
-    const playing = await evaluate(client, auditExpression);
-    if (playing.status !== "playing") errors.push(`expected playing after open, got ${playing.status}`);
-    if (playing.enabledTiles < 20) errors.push(`expected playable minefield, got ${playing.enabledTiles} enabled tiles`);
+    // Do not start a round in the visual smoke. Active Mines rounds are now
+    // intentionally persistent, so starting here couples sequential viewport
+    // targets through the browser profile. The dedicated persistence QA covers
+    // start -> loss -> new round -> safe reveal -> lobby -> reload -> cashout.
+    if (ready.enabledTiles !== 0) errors.push(`idle minefield unexpectedly has ${ready.enabledTiles} enabled tiles`);
 
     if (errors.length) {
       failed = true;
       console.error(`❌ ${viewport.width}x${viewport.height}: ${errors.join('; ')}`);
     } else {
-      console.log(`✅ ${viewport.width}x${viewport.height}: vector cabinet + scroll-to-action + round start passed | legacy-display=${idle.legacyArtDisplay}`);
+      console.log(`✅ ${viewport.width}x${viewport.height}: vector cabinet + idle action visibility passed | legacy-display=${idle.legacyArtDisplay}`);
     }
   } finally {
     client.close();
