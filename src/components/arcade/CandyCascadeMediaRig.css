@@ -3,10 +3,18 @@
 /* Media-tier motion for Candy Cascade. Presentation only: feature math,
  * Sugar Meter rules, payout planning and reveal timings remain untouched. */
 
-/* Real-browser compositor hardening -------------------------------------- */
+/* Real-browser compositor fix --------------------------------------------
+ * The Work retest reproduced partial HUD/control loss while the grid itself
+ * remained alive, especially under Turbo. Keep clipping local to cells/grid,
+ * but stop treating the whole cabinet and all 30 symbols as persistent
+ * compositor surfaces. */
+.ccp-machine {
+  overflow: clip;
+}
+
 .ccp-grid {
-  contain: paint;
-  isolation: isolate;
+  contain: none;
+  isolation: auto;
 }
 
 .ccp-cell.is-rolling .ccp-cell-inner {
@@ -19,6 +27,26 @@
 
 .ccp-machine.is-impact::after {
   z-index: 24;
+}
+
+/* Screen-sized blend layers force extra offscreen surfaces on Chromium.
+   Their look is subtle enough to keep with normal alpha compositing instead. */
+.ccp-machine::after,
+.ccp-grid::after {
+  mix-blend-mode: normal !important;
+}
+
+/* The previous media pass animated all 30 symbols plus 30 shine layers at
+   idle. Under Turbo those layers overlap with rolling/collapse/refill layers
+   and can exceed the real-browser compositor budget. Keep authored motion only
+   where it carries information: wins, Party Candy, Sugar Bomb and mascot. */
+.ccp-symbol,
+.ccp-symbol-shine {
+  animation: none;
+}
+
+.ccp-machine:not([data-phase="idle"]):not([data-phase="settled"]) .ccp-sky i {
+  animation-play-state: paused;
 }
 
 /* Authorial Sugar Sprite -------------------------------------------------- */
@@ -61,7 +89,6 @@
   background-repeat: no-repeat, no-repeat;
   background-position: center, center;
   background-size: 89% 89%, 100% 100%;
-  animation: ccp-media-symbol-idle 4.4s ease-in-out infinite;
 }
 
 .ccp-symbol[aria-label="lollipop"] {
@@ -116,19 +143,6 @@
   animation: ccp-media-sprite-celebrate .72s cubic-bezier(.15,.86,.18,1.14) infinite alternate;
 }
 
-.ccp-symbol-shine {
-  animation: ccp-media-shine 3.5s ease-in-out infinite;
-}
-
-.ccp-cell:nth-child(2n) .ccp-symbol-shine { animation-delay: -.7s; }
-.ccp-cell:nth-child(3n) .ccp-symbol-shine { animation-delay: -1.45s; }
-.ccp-cell:nth-child(5n) .ccp-symbol-shine { animation-delay: -2.15s; }
-
-.ccp-cell:nth-child(2n) .ccp-symbol { animation-delay: -.62s; }
-.ccp-cell:nth-child(3n) .ccp-symbol { animation-delay: -1.26s; }
-.ccp-cell:nth-child(4n) .ccp-symbol { animation-delay: -1.9s; }
-.ccp-cell:nth-child(5n) .ccp-symbol { animation-delay: -2.55s; }
-
 .ccp-cell.is-winning .ccp-symbol {
   animation: ccp-media-symbol-win .42s cubic-bezier(.14,.86,.18,1.16) both;
 }
@@ -172,17 +186,6 @@
   to { translate: 1px -4px; scale: 1.075; filter: brightness(1.16) drop-shadow(0 0 12px rgba(255, 202, 241, .28)); }
 }
 
-@keyframes ccp-media-shine {
-  0%, 62%, 100% { opacity: .18; translate: -7px 3px; scale: .74; }
-  73% { opacity: .82; translate: 1px -2px; scale: 1.1; }
-  86% { opacity: .34; translate: 8px -4px; scale: .9; }
-}
-
-@keyframes ccp-media-symbol-idle {
-  0%, 100% { translate: 0 0; scale: 1; rotate: 0deg; }
-  50% { translate: 0 -.8px; scale: 1.014; rotate: .22deg; }
-}
-
 @keyframes ccp-media-symbol-win {
   0% { translate: 0 3px; scale: .88; rotate: -1.2deg; filter: brightness(1.08); }
   48% { translate: 0 -2px; scale: 1.12; rotate: 1.2deg; filter: brightness(1.26) drop-shadow(0 0 12px rgba(255, 210, 246, .66)); }
@@ -219,7 +222,6 @@
   .ccp-mascot-aura,
   .ccp-mascot-core,
   .ccp-mascot-ribbon,
-  .ccp-symbol-shine,
   .ccp-symbol,
   .ccp-party-orbit,
   .ccp-party-spark,
