@@ -1,0 +1,24 @@
+name: Golden Tiger Step 1 Apply
+
+on:
+  push:
+    branches:
+      - art/premium-direction-2026-09-09
+    paths:
+      - .github/workflows/golden-tiger-step1-apply.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: art/premium-direction-2026-09-09
+      - name: Apply Step 1 patch
+        shell: bash
+        run: |
+          git apply /tmp/golden-tiger-step1.diff
