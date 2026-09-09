@@ -80,10 +80,6 @@ async function prepareClient({ installRng = false } = {}) {
       source: `(() => {
         const state = { queue: [], fallback: .43, calls: 0 };
         Object.defineProperty(window, '__candyQaRandom', { value: state, configurable: true });
-        Math.random = () => {
-          state.calls += 1;
-          return state.queue.length ? state.queue.shift() : state.fallback;
-        };
       })();`,
     });
   }
