@@ -7,12 +7,14 @@ on:
       - "src/components/arcade/CandyCascadePremium.css"
       - "src/components/arcade/CandyCascadeActivePolish.css"
       - "src/components/arcade/CandyCascadeMediaRig.css"
+      - "src/assets/candy-cascade/**"
       - "src/lib/arcade/candyCascade*.ts"
       - "src/lib/arcade/candySound.ts"
       - "src/lib/arcade/adaptiveScore.ts"
       - "src/routes/game/$slug.tsx"
       - "scripts/candyCascadeVisualQa.mjs"
       - "scripts/candyCascadeDesktopMotionQa.mjs"
+      - "scripts/candyCascadePremiumStateQa.mjs"
       - "scripts/slotAutoPlayRegressionQa.mjs"
       - ".github/workflows/candy-cascade-visual.yml"
   workflow_dispatch:
@@ -67,6 +69,8 @@ jobs:
         run: node scripts/candyCascadeVisualQa.mjs
       - name: Audit desktop motion composition
         run: node scripts/candyCascadeDesktopMotionQa.mjs
+      - name: Audit premium Sugar Party scene
+        run: node scripts/candyCascadePremiumStateQa.mjs
       - name: Audit Auto Play launch and stop
         run: node scripts/slotAutoPlayRegressionQa.mjs candy
       - name: Upload visual evidence
