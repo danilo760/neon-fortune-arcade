@@ -1,0 +1,98 @@
+name: Golden Tiger Step 1 Apply V2
+
+on:
+  push:
+    branches:
+      - art/premium-direction-2026-09-09
+    paths:
+      - .github/workflows/golden-tiger-step1-apply-v2.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: art/premium-direction-2026-09-09
+      - name: Apply deterministic source transform
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/components/arcade/GoldenTigerPremium.tsx')
+          s = p.read_text()
+
+          if 'import { GoldenTigerClock } from "@/lib/arcade/goldenTigerClock";' not in s:
+              s = s.replace(
+                  'import { playGoldenTigerAudio } from "@/lib/arcade/goldenTigerAudio";\n',
+                  'import { playGoldenTigerAudio } from "@/lib/arcade/goldenTigerAudio";\nimport { GoldenTigerClock } from "@/lib/arcade/goldenTigerClock";\n',
+              )
+
+          s = s.replace(
+              '''  goldenTigerAnticipationMs,\n  goldenTigerBrakeEase,\n  goldenTigerReelBrakeMs,\n  goldenTigerReelLandPauseMs,\n  goldenTigerSpinLaunchMs,\n''',
+              '''  goldenTigerAnticipationMs,\n  goldenTigerBrakeEase,\n  goldenTigerReelBlurPx,\n  goldenTigerReelBrakeMs,\n  goldenTigerReelLandPauseMs,\n  goldenTigerReelOvershootPx,\n  goldenTigerReelReboundMs,\n  goldenTigerReelTensionMs,\n  goldenTigerReelTensionPx,\n  goldenTigerReboundEase,\n  goldenTigerSpinLaunchMs,\n''',
+          )
+
+          s = s.replace(
+              '''function wait(ms: number) {\n  return new Promise<void>((resolve) => window.setTimeout(resolve, reducedMotion() ? 24 : ms));\n}\n\n''',
+              '',
+          )
+
+          start = s.index('function ReelOverlay({')
+          end = s.index('\nfunction FeatureCellMotion', start)
+          reel = '''type ReelMotionStage = "tension" | "cruise" | "brake" | "rebound" | "landed";\n\nfunction ReelOverlay({\n  column,\n  turbo,\n  braking,\n  finalSymbols,\n}: {\n  column: number;\n  turbo: boolean;\n  braking: boolean;\n  finalSymbols: readonly [GoldenTigerSymbolId, GoldenTigerSymbolId, GoldenTigerSymbolId];\n}) {\n  const overlayRef = useRef<HTMLDivElement>(null);\n  const trackRef = useRef<HTMLDivElement>(null);\n  const brakingRef = useRef(braking);\n  const symbols: GoldenTigerSymbolId[] = [\n    ...REEL_STRIP,\n    ...REEL_STRIP,\n    ...REEL_STRIP,\n    ...REEL_STRIP,\n    ...REEL_STRIP,\n    ...finalSymbols,\n  ];\n\n  useEffect(() => {\n    brakingRef.current = braking;\n  }, [braking]);\n\n  useEffect(() => {\n    const overlay = overlayRef.current;\n    const track = trackRef.current;\n    if (!overlay || !track) return;\n\n    let frameId = 0;\n    let lastTime = performance.now();\n    let stageStartedAt = lastTime;\n    let offset = 0;\n    let initialized = false;\n    let stage: ReelMotionStage = "tension";\n    let brakeStartOffset = 0;\n\n    const tensionMs = goldenTigerReelTensionMs(turbo);\n    const tensionPx = goldenTigerReelTensionPx(column);\n    const totalBrakeMs = goldenTigerReelBrakeMs(column, turbo);\n    const reboundMs = goldenTigerReelReboundMs(column, turbo);\n    const brakeTravelMs = Math.max(32, totalBrakeMs - reboundMs);\n    const overshootPx = goldenTigerReelOvershootPx(column);\n\n    const renderTrack = (nextOffset: number, velocityPxPerMs: number) => {\n      offset = nextOffset;\n      track.style.transform = `translateY(${-nextOffset}px)`;\n      const blur = reducedMotion() ? 0 : goldenTigerReelBlurPx(velocityPxPerMs);\n      track.style.filter = blur > 0.01 ? `blur(${blur.toFixed(2)}px)` : "none";\n    };\n\n    const draw = (time: number) => {\n      const itemHeight = overlay.clientHeight / 3;\n      if (itemHeight <= 0) {\n        frameId = requestAnimationFrame(draw);\n        return;\n      }\n\n      if (!initialized) {\n        offset = itemHeight * REEL_STRIP.length;\n        initialized = true;\n        stageStartedAt = time;\n        lastTime = time;\n        renderTrack(offset, 0);\n      }\n\n      const delta = Math.min(34, Math.max(1, time - lastTime));\n      const finalOffset = itemHeight * (symbols.length - 3);\n      const overshootOffset = finalOffset + overshootPx;\n\n      if (reducedMotion()) {\n        if (brakingRef.current) {\n          renderTrack(finalOffset, 0);\n          return;\n        }\n        renderTrack(offset, 0);\n        lastTime = time;\n        frameId = requestAnimationFrame(draw);\n        return;\n      }\n\n      if (brakingRef.current && stage !== "brake" && stage !== "rebound" && stage !== "landed") {\n        stage = "brake";\n        stageStartedAt = time;\n        brakeStartOffset = offset;\n      }\n\n      if (stage === "tension") {\n        const progress = Math.min(1, (time - stageStartedAt) / tensionMs);\n        const baseOffset = itemHeight * REEL_STRIP.length;\n        const recoil = Math.sin(progress * Math.PI) * tensionPx;\n        const nextOffset = baseOffset - recoil;\n        renderTrack(nextOffset, Math.abs(nextOffset - offset) / delta);\n        if (progress >= 1) {\n          stage = "cruise";\n          stageStartedAt = time;\n          renderTrack(baseOffset, 0);\n        }\n      } else if (stage === "cruise") {\n        const velocity = itemHeight / (turbo ? 40 : 64);\n        let nextOffset = offset + velocity * delta;\n        const wrapAt = itemHeight * REEL_STRIP.length * 3;\n        if (nextOffset >= wrapAt) nextOffset -= itemHeight * REEL_STRIP.length;\n        renderTrack(nextOffset, velocity);\n      } else if (stage === "brake") {\n        const progress = Math.min(1, (time - stageStartedAt) / brakeTravelMs);\n        const nextOffset = brakeStartOffset + (overshootOffset - brakeStartOffset) * goldenTigerBrakeEase(progress);\n        renderTrack(nextOffset, Math.abs(nextOffset - offset) / delta);\n        if (progress >= 1) {\n          stage = "rebound";\n          stageStartedAt = time;\n          renderTrack(overshootOffset, 0);\n        }\n      } else if (stage === "rebound") {\n        const progress = Math.min(1, (time - stageStartedAt) / reboundMs);\n        const nextOffset = overshootOffset + (finalOffset - overshootOffset) * goldenTigerReboundEase(progress);\n        renderTrack(nextOffset, Math.abs(nextOffset - offset) / delta);\n        if (progress >= 1) {\n          stage = "landed";\n          renderTrack(finalOffset, 0);\n          return;\n        }\n      } else {\n        renderTrack(finalOffset, 0);\n        return;\n      }\n\n      lastTime = time;\n      frameId = requestAnimationFrame(draw);\n    };\n\n    frameId = requestAnimationFrame(draw);\n    return () => {\n      cancelAnimationFrame(frameId);\n      track.style.filter = "none";\n    };\n  }, [column, turbo, finalSymbols[0], finalSymbols[1], finalSymbols[2], symbols.length]);\n\n  return (\n    <div\n      ref={overlayRef}\n      className={cn("gt-hw-reel-overlay", braking && "is-braking")}\n      style={{ left: `${column * 33.333333}%` }}\n      aria-hidden\n    >\n      <div\n        ref={trackRef}\n        className="gt-hw-reel-track"\n        style={{\n          height: `${(symbols.length / 3) * 100}%`,\n          animation: "none",\n          transform: "translateY(0)",\n          filter: "none",\n        }}\n      >\n        {symbols.map((symbol, index) => (\n          <div\n            className="gt-hw-reel-item"\n            style={{ height: `${100 / symbols.length}%` }}\n            key={`${column}-${index}`}\n          >\n            <GoldenTigerSymbol id={symbol} />\n          </div>\n        ))}\n      </div>\n      <span className="gt-hw-reel-shade" />\n    </div>\n  );\n}\n'''
+          s = s[:start] + reel + s[end:]
+
+          s = s.replace(
+              '  const busyRef = useRef(false);\n  const autoStopRef = useRef(false);\n',
+              '  const busyRef = useRef(false);\n  const autoStopRef = useRef(false);\n  const clockRef = useRef<GoldenTigerClock | null>(null);\n',
+          )
+
+          s = s.replace(
+              '''  useEffect(() => {\n    hydrateFromStorage();\n    return () => {\n      autoStopRef.current = true;\n    };\n  }, []);\n''',
+              '''  useEffect(() => {\n    hydrateFromStorage();\n    const clock = new GoldenTigerClock();\n    clockRef.current = clock;\n    return () => {\n      autoStopRef.current = true;\n      clock.dispose();\n      if (clockRef.current === clock) clockRef.current = null;\n    };\n  }, []);\n''',
+          )
+
+          marker = '  const tigerReaction: TigerReactionState =\n'
+          if '  const wait = useCallback((ms: number) => {' not in s:
+              s = s.replace(
+                  marker,
+                  '  const wait = useCallback((ms: number) => {\n    const duration = reducedMotion() ? 24 : ms;\n    return clockRef.current?.wait(duration) ?? Promise.resolve();\n  }, []);\n\n' + marker,
+              )
+
+          s = s.replace('  }, [soundEnabled, turbo]);\n\n  const settle', '  }, [soundEnabled, turbo, wait]);\n\n  const settle', 1)
+          s = s.replace('  }, [soundEnabled, turbo]);\n\n  const resetRoundPresentation', '  }, [soundEnabled, turbo, wait]);\n\n  const resetRoundPresentation', 1)
+          s = s.replace(
+              '  }, [animateFeature, bet, finishRoundPresentation, resetRoundPresentation, settle, soundEnabled, turbo]);',
+              '  }, [animateFeature, bet, finishRoundPresentation, resetRoundPresentation, settle, soundEnabled, turbo, wait]);',
+          )
+          s = s.replace(
+              '  }, [autoLeft, autoRounds, runSpin, turbo]);',
+              '  }, [autoLeft, autoRounds, runSpin, turbo, wait]);',
+          )
+
+          required = [
+              'GoldenTigerClock',
+              'type ReelMotionStage = "tension" | "cruise" | "brake" | "rebound" | "landed";',
+              'goldenTigerReelBlurPx',
+              'goldenTigerReelOvershootPx',
+              'goldenTigerReelReboundMs',
+              'const clockRef = useRef<GoldenTigerClock | null>(null);',
+          ]
+          for token in required:
+              assert token in s, token
+          assert 'function wait(ms: number)' not in s
+          p.write_text(s)
+          PY
+      - name: Commit Step 1 source
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/arcade/GoldenTigerPremium.tsx
+          git diff --cached --check
+          git commit -m "refactor: track Golden Tiger clock and reel physics"
+          git push origin HEAD:art/premium-direction-2026-09-09
