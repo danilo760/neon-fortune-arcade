@@ -21,4 +21,15 @@ jobs:
       - name: Apply Step 1 patch
         shell: bash
         run: |
-          git apply /tmp/golden-tiger-step1.diff
+          cat > /tmp/golden-tiger-step1.diff <<'PATCH'
+          --- a/src/components/arcade/GoldenTigerPremium.tsx
+          +++ b/src/components/arcade/GoldenTigerPremium.tsx
+          @@ -11,6 +11,7 @@
+             runPurchasedFortuneFeature,
+           } from "@/lib/arcade/goldenTigerBonusBuy";
+           import { playGoldenTigerAudio } from "@/lib/arcade/goldenTigerAudio";
+          +import { GoldenTigerClock } from "@/lib/arcade/goldenTigerClock";
+           import {
+             FORTUNE_FEATURE_FULL_GRID_MULTIPLIER,
+             rollFortuneFeatureTrigger,
+          PATCH
