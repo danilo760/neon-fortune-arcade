@@ -10,6 +10,7 @@ on:
       - "src/components/arcade/OlympusStormPremiumPolish.css"
       - "src/components/arcade/OlympusStormActivePolish.css"
       - "src/components/arcade/OlympusStormMediaRig.css"
+      - "src/components/arcade/OlympusStormPremiumStage.css"
       - "src/assets/olympus-storm/**"
       - "src/lib/arcade/olympusStorm*.ts"
       - "src/lib/arcade/olympusAuthorialArtwork.test.ts"
