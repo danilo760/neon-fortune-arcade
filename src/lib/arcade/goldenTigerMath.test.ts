@@ -52,10 +52,16 @@ test("payout scale is explicitly Neon-original calibration", () => {
   assert.equal(GOLDEN_TIGER_PAYOUT_SCALE, 1.195);
 });
 
-test("win tiers only change presentation intensity", () => {
-  assert.equal(goldenTigerWinTier(199, 100), "none");
-  assert.equal(goldenTigerWinTier(200, 100), "small");
-  assert.equal(goldenTigerWinTier(500, 100), "nice");
-  assert.equal(goldenTigerWinTier(1_500, 100), "big");
-  assert.equal(goldenTigerWinTier(3_000, 100), "mega");
+test("win tiers follow small, nice, big, mega and super presentation bands", () => {
+  const bet = 100;
+  assert.equal(goldenTigerWinTier(199, bet), "none");
+  assert.equal(goldenTigerWinTier(200, bet), "small");
+  assert.equal(goldenTigerWinTier(499, bet), "small");
+  assert.equal(goldenTigerWinTier(500, bet), "nice");
+  assert.equal(goldenTigerWinTier(1_999, bet), "nice");
+  assert.equal(goldenTigerWinTier(2_000, bet), "big");
+  assert.equal(goldenTigerWinTier(3_499, bet), "big");
+  assert.equal(goldenTigerWinTier(3_500, bet), "mega");
+  assert.equal(goldenTigerWinTier(4_999, bet), "mega");
+  assert.equal(goldenTigerWinTier(5_000, bet), "super");
 });
