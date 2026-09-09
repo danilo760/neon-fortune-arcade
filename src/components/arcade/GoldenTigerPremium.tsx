@@ -6,6 +6,10 @@ import { AnimatedWinCounter } from "./AnimatedWinCounter";
 import { GoldenTigerSymbol } from "./golden-tiger/GoldenTigerSymbols";
 import { GoldenTigerTigerStage, type TigerReactionState } from "./golden-tiger/GoldenTigerTigerStage";
 import { formatCoins } from "@/lib/arcade/format";
+import {
+  GOLDEN_TIGER_BONUS_BUY_MULTIPLIER,
+  runPurchasedFortuneFeature,
+} from "@/lib/arcade/goldenTigerBonusBuy";
 import { playGoldenTigerAudio } from "@/lib/arcade/goldenTigerAudio";
 import {
   FORTUNE_FEATURE_FULL_GRID_MULTIPLIER,
@@ -36,7 +40,6 @@ import "./GoldenTigerReference.css";
 import "./GoldenTigerPremiumArt.css";
 
 const BETS = [10, 20, 50, 100, 200, 500, 1_000] as const;
-const BONUS_BUY_MULTIPLIER = 100;
 const INITIAL_GRID: GoldenTigerSymbolId[] = ["fortuneBag", "ingot", "jade", "orange", "wild", "firecracker", "lion", "lantern", "fortuneBag"];
 const REEL_STRIP: readonly GoldenTigerSymbolId[] = ["orange", "jade", "firecracker", "fortuneBag", "ingot", "lantern", "lion", "wild"];
 const CELL_INDEXES = Array.from({ length: 9 }, (_, index) => index);
@@ -238,7 +241,7 @@ export function GoldenTigerPremium() {
   const busyRef = useRef(false);
   const autoStopRef = useRef(false);
 
-  const bonusCost = bet * BONUS_BUY_MULTIPLIER;
+  const bonusCost = bet * GOLDEN_TIGER_BONUS_BUY_MULTIPLIER;
   const isBusy = phase !== "idle";
   const lockedCount = featureCells.reduce((count, symbol) => count + (symbol === null ? 0 : 1), 0);
   const selectedLabel = selectedSymbol ? SYMBOL_LABEL[selectedSymbol] : "—";
@@ -504,13 +507,13 @@ export function GoldenTigerPremium() {
 
     try {
       resetRoundPresentation();
-      const plan = runFortuneFeature(bet, Math.random);
+      const plan = runPurchasedFortuneFeature(bet, Math.random);
       const payout = await animateFeature(plan, true);
       await settle(
         payout,
         bet,
         bonusCost,
-        `COMPRA Fortune Feature ${BONUS_BUY_MULTIPLIER}× · ${SYMBOL_LABEL[plan.selectedSymbol]} · ${plan.respinsUsed} respin(s) · ${plan.lines} linha(s)${plan.isFullGrid ? ` · TELA CHEIA ×${FORTUNE_FEATURE_FULL_GRID_MULTIPLIER}` : ""}`,
+        `COMPRA Fortune Feature ${GOLDEN_TIGER_BONUS_BUY_MULTIPLIER}× · ${SYMBOL_LABEL[plan.selectedSymbol]} · ${plan.respinsUsed} respin(s) · ${plan.lines} linha(s)${plan.isFullGrid ? ` · TELA CHEIA ×${FORTUNE_FEATURE_FULL_GRID_MULTIPLIER}` : ""}`,
         plan.isFullGrid,
       );
     } finally {
@@ -739,10 +742,10 @@ export function GoldenTigerPremium() {
               <span>FORTUNE FEATURE</span>
               <h2>COMPRAR O BÔNUS?</h2>
               <div className="gt-premium-bonus-medallion" aria-hidden>福</div>
-              <p>Entre diretamente na Fortune Feature. Um símbolo de fortuna é escolhido; ele e os WILDs ficam fixos enquanto novos respins continuarem chegando.</p>
+              <p>Entre diretamente em uma Fortune Feature reforçada. O símbolo escolhido e os WILDs ficam fixos, com maior chance de novos símbolos em cada respin.</p>
               <dl>
                 <div><dt>APOSTA BASE</dt><dd>{formatCoins(bet)}</dd></div>
-                <div><dt>CUSTO</dt><dd>{formatCoins(bonusCost)} · {BONUS_BUY_MULTIPLIER}×</dd></div>
+                <div><dt>CUSTO</dt><dd>{formatCoins(bonusCost)} · {GOLDEN_TIGER_BONUS_BUY_MULTIPLIER}×</dd></div>
                 <div><dt>TELA CHEIA</dt><dd>GANHOS ×{FORTUNE_FEATURE_FULL_GRID_MULTIPLIER}</dd></div>
               </dl>
               <footer>
