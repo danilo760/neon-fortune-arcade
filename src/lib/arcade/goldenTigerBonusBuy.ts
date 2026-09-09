@@ -13,7 +13,7 @@ import { resolveGoldenTigerVisualQaRng } from "./goldenTigerVisualQaRng";
  * natural Fortune Feature so the purchase has a meaningful visual session
  * and an expected fictional return close to the rest of the arcade.
  */
-export const GOLDEN_TIGER_BONUS_BUY_MULTIPLIER = 32;
+export const GOLDEN_TIGER_BONUS_BUY_MULTIPLIER = 31;
 export const GOLDEN_TIGER_BUY_SELECTED_LAND_CHANCE = 0.25;
 export const GOLDEN_TIGER_BUY_WILD_LAND_CHANCE = 0.025;
 const PURCHASED_FEATURE_SAFETY_RESPIN_CAP = 64;
