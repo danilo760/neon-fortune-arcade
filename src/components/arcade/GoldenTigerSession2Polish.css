@@ -72,6 +72,30 @@
   background: none !important;
 }
 
+/* The base information strip already owns the rules. The old mascot badge was
+   partially hidden behind it at 390px and desktop, creating a duplicate 3×3
+   chip. Remove that redundant layer rather than fighting its overlap. */
+.gt-hw-page .gt-premium-machine .gt-hw-tiger-caption {
+  display: none !important;
+}
+
+/* Win takeovers should become readable almost immediately after the phase
+   begins. Start above zero opacity and complete the entrance quickly, while
+   keeping the longer number count and mega pulse intact. */
+.gt-hw-page .gt-premium-machine .gt-hw-win-overlay {
+  animation: gt-s2-win-overlay-enter .24s ease-out both;
+}
+
+.gt-hw-page .gt-premium-machine .gt-hw-win-overlay.is-mega {
+  animation:
+    gt-s2-win-overlay-enter .24s ease-out both,
+    gt-hw-mega-pulse-v4 1.05s ease-in-out .24s infinite;
+}
+
+.gt-hw-page .gt-premium-machine .gt-hw-win-overlay > span:first-of-type {
+  animation: gt-s2-win-title-enter .38s cubic-bezier(.16,.84,.2,1.12) both;
+}
+
 @keyframes gt-s2-fortune-selected-anchor {
   0%,100% {
     opacity: .94;
@@ -103,8 +127,36 @@
   }
 }
 
+@keyframes gt-s2-win-overlay-enter {
+  0% {
+    opacity: .28;
+    transform: scale(1.025);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes gt-s2-win-title-enter {
+  0% {
+    opacity: .34;
+    transform: translateY(8px) scale(.86);
+  }
+  42% {
+    opacity: .96;
+    transform: translateY(-1px) scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .gt-hw-page .gt-premium-machine[data-phase="feature-spin"] .gt-hw-cell-motion > div > span {
+  .gt-hw-page .gt-premium-machine[data-phase="feature-spin"] .gt-hw-cell-motion > div > span,
+  .gt-hw-page .gt-premium-machine .gt-hw-win-overlay,
+  .gt-hw-page .gt-premium-machine .gt-hw-win-overlay > span:first-of-type {
     animation: none !important;
   }
   .gt-hw-page .gt-premium-machine[data-phase="feature-spin"] .gt-hw-cell-motion > div > span:first-child {
