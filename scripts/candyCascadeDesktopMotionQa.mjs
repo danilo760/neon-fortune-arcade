@@ -213,10 +213,8 @@ let failed = false;
 }
 
 // Scenario 2: deterministic 30-symbol cluster -> guaranteed Sugar Bomb.
-// pickCandySymbol consumes two random values per initial cell: one scatter roll
-// and one regular-symbol roll. 0.5 then 0 yields 30 diamonds. A 12+ cluster
-// guarantees a bomb; 0 then .99 selects the strongest value. Refill values are
-// distributed across all regular symbols to prevent a second giant cluster.
+// The forced phases are sampled without screenshots: these presentation states
+// last ~145-170 ms, and screenshot latency can skip the next phase entirely.
 {
   const refill = [.02, .08, .16, .27, .40, .55, .70, .90];
   const values = [
@@ -235,7 +233,6 @@ let failed = false;
 
     for (const phase of ["cluster", "bomb-birth", "bomb-burst", "collapse", "refill"]) {
       await waitFor(scenario.client, `document.querySelector('.ccp-machine')?.getAttribute('data-phase') === ${JSON.stringify(phase)}`, `deterministic ${phase}`);
-      await sleep(28);
       const audit = await evaluate(scenario.client, auditExpression);
       const label = `forced-${phase}`;
       const errors = validate(audit, label);
@@ -245,7 +242,6 @@ let failed = false;
       }
       if (errors.length) failed = true;
       report.push({ scenario: "forced-sugar-bomb", phase, audit, errors });
-      await screenshot(scenario.client, `${outputDir}/desktop-forced-${phase}.png`);
     }
   } finally {
     scenario.client.close();
