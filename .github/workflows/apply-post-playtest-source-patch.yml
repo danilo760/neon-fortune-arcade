@@ -1,0 +1,76 @@
+name: Apply post-playtest source patch
+
+on:
+  push:
+    branches:
+      - fix/arcade-post-playtest-2026-09-08
+    paths:
+      - ".github/workflows/apply-post-playtest-source-patch.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/arcade-post-playtest-2026-09-08
+          fetch-depth: 0
+
+      - name: Apply exact Auto Play lifecycle patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+
+          const files = [
+            'src/components/arcade/OlympusStormPremium.tsx',
+            'src/components/arcade/CandyCascadePremium.tsx',
+          ];
+
+          function replaceOnce(source, before, after, file) {
+            const first = source.indexOf(before);
+            if (first < 0) throw new Error(`${file}: expected source fragment not found: ${before}`);
+            if (source.indexOf(before, first + before.length) >= 0) throw new Error(`${file}: source fragment is not unique: ${before}`);
+            return source.slice(0, first) + after + source.slice(first + before.length);
+          }
+
+          for (const file of files) {
+            let source = fs.readFileSync(file, 'utf8');
+            source = replaceOnce(
+              source,
+              '  useEffect(() => hydrateFromStorage(), []);',
+              '  useEffect(() => {\n    hydrateFromStorage();\n    return () => { autoStopRef.current = true; };\n  }, []);',
+              file,
+            );
+            source = replaceOnce(
+              source,
+              '    if (busyRef.current || featureOpen || autoOpen) return false;',
+              '    if (busyRef.current || featureOpen) return false;',
+              file,
+            );
+            source = replaceOnce(
+              source,
+              '  }, [autoOpen, bet, featureOpen, presentFeature, presentRound, soundEnabled, turbo]);',
+              '  }, [bet, featureOpen, presentFeature, presentRound, soundEnabled, turbo]);',
+              file,
+            );
+            fs.writeFileSync(file, source);
+          }
+          NODE
+
+      - name: Remove one-shot workflow
+        run: rm .github/workflows/apply-post-playtest-source-patch.yml
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "danilo760"
+          git config user.email "62104537+danilo760@users.noreply.github.com"
+          git add src/components/arcade/OlympusStormPremium.tsx src/components/arcade/CandyCascadePremium.tsx .github/workflows/apply-post-playtest-source-patch.yml
+          git commit -m "fix: repair Olympus and Candy auto play lifecycle"
+          git push origin HEAD:fix/arcade-post-playtest-2026-09-08
