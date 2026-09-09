@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" aria-hidden="true">
+  <defs>
+    <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8edb4"/><stop offset=".18" stop-color="#c89a46"/><stop offset=".46" stop-color="#6c5228"/><stop offset=".72" stop-color="#d7b764"/><stop offset="1" stop-color="#553616"/></linearGradient>
+    <linearGradient id="stone" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#244a72"/><stop offset=".48" stop-color="#0d274d"/><stop offset="1" stop-color="#050d22"/></linearGradient>
+    <radialGradient id="glass"><stop stop-color="#8defff" stop-opacity=".12"/><stop offset=".58" stop-color="#416dff" stop-opacity=".04"/><stop offset="1" stop-color="#07142b" stop-opacity="0"/></radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000816" flood-opacity=".7"/></filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <rect x="7" y="7" width="146" height="146" rx="28" fill="url(#stone)" stroke="url(#edge)" stroke-width="5"/>
+    <rect x="13" y="13" width="134" height="134" rx="23" fill="none" stroke="#9bdfff" stroke-opacity=".16" stroke-width="2"/>
+    <path d="M20 46V28c0-5 4-8 9-8h18M113 20h18c5 0 9 3 9 8v18M140 114v18c0 5-4 8-9 8h-18M47 140H29c-5 0-9-3-9-8v-18" fill="none" stroke="#f1d37b" stroke-opacity=".55" stroke-width="4" stroke-linecap="round"/>
+    <path d="M20 80h10M130 80h10M80 20v10M80 130v10" stroke="#8cecff" stroke-opacity=".42" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="80" cy="80" r="57" fill="url(#glass)"/>
+    <path d="M28 30c23-10 81-10 104 0" fill="none" stroke="#fff" stroke-opacity=".08" stroke-width="3"/>
+  </g>
+</svg>

@@ -1,194 +1,326 @@
 @import "./OlympusStormActivePolish.css";
 
-/* Media-tier motion for the active Olympus renderer. It adds acting/material
- * response only; cluster math, feature flow and reel timings stay untouched. */
+/* Premium Olympus media rig.
+ * This is the single routed presentation layer above the stable Olympus base.
+ * Math, cascades, feature planning, payout tables and timing constants remain
+ * in TypeScript. Only visual acting/material response is defined here. */
 
-/* Authorial art pass -------------------------------------------------------
- * The active renderer keeps its semantic DOM and game state. These authored
- * SVGs replace the former flat single-color glyphs/CSS face at paint time,
- * so mechanics, accessibility labels and QA selectors remain stable. */
+.osp-machine {
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 50% 8%, rgba(213,248,255,.24), transparent 18%),
+    radial-gradient(ellipse at 20% 23%, rgba(82,155,255,.24), transparent 28%),
+    radial-gradient(ellipse at 84% 26%, rgba(118,82,255,.2), transparent 30%),
+    linear-gradient(180deg,#020817 0%,#0a2856 28%,#0a2047 54%,#030b1e 100%);
+  box-shadow:
+    0 0 0 1px rgba(146,220,255,.16),
+    0 0 90px rgba(57,143,255,.22),
+    inset 0 -80px 100px rgba(0,4,17,.48);
+}
+
+.osp-machine::before {
+  background:
+    radial-gradient(ellipse at 50% 33%, rgba(120,214,255,.14), transparent 43%),
+    linear-gradient(180deg, transparent 0 69%, rgba(2,9,29,.22) 82%, rgba(0,3,14,.62));
+}
+
+.osp-machine::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:4;
+  pointer-events:none;
+  background:
+    linear-gradient(112deg,transparent 0 18%,rgba(255,255,255,.035) 25%,transparent 31% 70%,rgba(117,215,255,.035) 77%,transparent 84%),
+    radial-gradient(circle at 50% 5%,rgba(238,253,255,.12),transparent 13%);
+}
+
+/* Cinematic sky layers live behind all static HUD. They never wrap or
+ * transform the HUD/grid, avoiding the compositor regressions seen elsewhere. */
+.osp-premium-vault,
+.osp-premium-clouds,
+.osp-premium-runes,
+.osp-premium-throne {
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+
+.osp-premium-vault {
+  z-index:1;
+  background:
+    radial-gradient(ellipse at 50% 14%,rgba(239,253,255,.16),transparent 18%),
+    conic-gradient(from 210deg at 50% 12%,transparent 0 7%,rgba(103,205,255,.08) 9%,transparent 12% 20%,rgba(116,98,255,.07) 22%,transparent 25% 100%);
+  opacity:.9;
+}
+
+.osp-premium-vault::before,
+.osp-premium-vault::after {
+  content:"";
+  position:absolute;
+  top:8%;
+  width:38%;
+  height:22%;
+  border:1px solid rgba(180,228,246,.08);
+  border-bottom:0;
+  border-radius:70% 70% 0 0;
+  background:
+    repeating-linear-gradient(90deg,transparent 0 13%,rgba(203,237,248,.05) 14% 16%,transparent 17% 31%),
+    linear-gradient(180deg,rgba(28,57,94,.24),rgba(5,18,44,.08));
+}
+.osp-premium-vault::before { left:-8%; transform:skewX(-8deg); }
+.osp-premium-vault::after { right:-8%; transform:skewX(8deg); }
+
+.osp-premium-clouds { z-index:2; overflow:hidden; }
+.osp-premium-clouds::before,
+.osp-premium-clouds::after {
+  content:"";
+  position:absolute;
+  width:62%;
+  height:17%;
+  border-radius:50%;
+  background:radial-gradient(ellipse,rgba(187,231,255,.12),rgba(90,145,223,.045) 52%,transparent 70%);
+  opacity:.62;
+  animation:osp-cloud-drift 13s ease-in-out infinite alternate;
+}
+.osp-premium-clouds::before { left:-24%; top:19%; }
+.osp-premium-clouds::after { right:-26%; top:29%; animation-delay:-6s; }
+
+.osp-premium-runes {
+  z-index:5;
+  inset:18.8% 6.5% auto;
+  height:5.5%;
+  opacity:.56;
+  background:
+    radial-gradient(circle at 4% 50%,rgba(151,231,255,.72) 0 1.5px,transparent 2px),
+    radial-gradient(circle at 22% 50%,rgba(151,231,255,.55) 0 1.5px,transparent 2px),
+    radial-gradient(circle at 78% 50%,rgba(151,231,255,.55) 0 1.5px,transparent 2px),
+    radial-gradient(circle at 96% 50%,rgba(151,231,255,.72) 0 1.5px,transparent 2px),
+    linear-gradient(90deg,transparent,rgba(125,218,255,.13) 18% 82%,transparent);
+}
+
+.osp-premium-throne {
+  z-index:3;
+  inset:9.5% 14% auto;
+  height:14%;
+  border-radius:48% 48% 16% 16% / 30% 30% 14% 14%;
+  background:
+    linear-gradient(90deg,transparent 0 7%,rgba(225,240,247,.09) 8% 9%,transparent 10% 90%,rgba(225,240,247,.09) 91% 92%,transparent 93%),
+    radial-gradient(ellipse at 50% 90%,rgba(80,183,255,.11),transparent 58%);
+  opacity:.9;
+}
+
+.osp-sky { z-index:0; opacity:.8; }
+.osp-temple { z-index:2; }
+.osp-topbar,
+.osp-stage-hud,
+.osp-grid,
+.osp-status,
+.osp-economy,
+.osp-controls,
+.osp-machine > footer { position:absolute; z-index:30; }
+
+/* Warden v3 --------------------------------------------------------------- */
+.osp-guardian {
+  z-index:12;
+  top:4.8%;
+  width:66%;
+  height:15.8%;
+  overflow:visible;
+  filter:none;
+}
 .osp-guardian::before,
-.osp-guardian::after {
-  display: none;
-}
-
-.osp-guardian-crest {
-  left: 50%;
-  top: -6px;
-  width: clamp(154px, 46vw, 198px);
-  height: auto;
-  aspect-ratio: 360 / 260;
-  transform: translateX(-50%);
-  background: url("../../assets/olympus-storm/storm-warden-v2.svg") center / contain no-repeat;
-  filter:
-    drop-shadow(0 10px 12px rgba(0, 4, 18, .58))
-    drop-shadow(0 0 14px rgba(88, 205, 255, .18));
-}
-
-.osp-guardian-crest::before,
-.osp-guardian-crest::after {
-  content: none;
-  display: none;
-}
-
-.osp-guardian-label {
-  z-index: 9;
-  bottom: -5px;
-  padding: 2px 9px 3px;
-  border: 1px solid rgba(246, 217, 126, .38);
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(8, 35, 72, .86), rgba(3, 16, 39, .92));
-  box-shadow: 0 4px 12px rgba(0,0,0,.35), inset 0 1px rgba(255,255,255,.08);
-  color: #f9e8a9;
-  font-size: clamp(7px, 1.9vw, 9px);
-  letter-spacing: .12em;
-  text-shadow: 0 1px 0 #071126, 0 0 8px rgba(255, 224, 126, .25);
-}
-
-.osp-symbol {
-  transform-origin: 50% 58%;
-  background-repeat: no-repeat, no-repeat;
-  background-position: center, center;
-  background-size: 88% 88%, 100% 100%;
-  animation: osp-media-symbol-idle 4.9s ease-in-out infinite;
-}
-
-.osp-symbol[aria-label="bolt"] {
-  background-image: url("../../assets/olympus-storm/symbol-bolt-v2.svg"), radial-gradient(circle at 50% 45%, rgba(91, 221, 255, .18), rgba(3, 18, 43, .08) 67%, transparent 72%);
-}
-.osp-symbol[aria-label="crown"] {
-  background-image: url("../../assets/olympus-storm/symbol-crown-v2.svg"), radial-gradient(circle at 50% 45%, rgba(255, 218, 100, .15), rgba(36, 24, 5, .06) 67%, transparent 72%);
-}
-.osp-symbol[aria-label="chalice"] {
-  background-image: url("../../assets/olympus-storm/symbol-chalice-v2.svg"), radial-gradient(circle at 50% 45%, rgba(189, 126, 255, .16), rgba(31, 16, 60, .06) 67%, transparent 72%);
-}
-.osp-symbol[aria-label="coin"] {
-  background-image: url("../../assets/olympus-storm/symbol-coin-v2.svg"), radial-gradient(circle at 50% 45%, rgba(76, 224, 158, .15), rgba(8, 44, 31, .06) 67%, transparent 72%);
-}
-.osp-symbol[aria-label="hammer"] {
-  background-image: url("../../assets/olympus-storm/symbol-hammer-v2.svg"), radial-gradient(circle at 50% 45%, rgba(213, 238, 249, .14), rgba(22, 36, 52, .06) 67%, transparent 72%);
-}
-.osp-symbol[aria-label="orb"] {
-  background-image: url("../../assets/olympus-storm/symbol-orb-v2.svg"), radial-gradient(circle at 50% 45%, rgba(91, 161, 255, .17), rgba(14, 25, 68, .06) 67%, transparent 72%);
-}
-.osp-symbol[aria-label="zeus"] {
-  background-image: url("../../assets/olympus-storm/symbol-warden-v2.svg"), radial-gradient(circle at 50% 45%, rgba(123, 188, 255, .17), rgba(24, 30, 72, .06) 67%, transparent 72%);
-}
-.osp-symbol[aria-label="Storm Orb"] {
-  background-image: url("../../assets/olympus-storm/symbol-scatter-v2.svg"), radial-gradient(circle at 50% 45%, rgba(112, 224, 255, .21), rgba(48, 40, 112, .08) 67%, transparent 72%);
-}
-
-.osp-symbol-svg {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.osp-scatter-rune {
-  opacity: 0;
-}
-
-.osp-cell:nth-child(2n) .osp-symbol { animation-delay: -.72s; }
-.osp-cell:nth-child(3n) .osp-symbol { animation-delay: -1.41s; }
-.osp-cell:nth-child(4n) .osp-symbol { animation-delay: -2.13s; }
-.osp-cell:nth-child(5n) .osp-symbol { animation-delay: -2.84s; }
-
-.osp-cell.is-winning .osp-symbol {
-  animation: osp-media-symbol-win .46s cubic-bezier(.14,.86,.18,1.16) both;
-}
-
-.osp-grid.is-storm-charge .osp-symbol,
-.osp-grid.is-storm-impact .osp-symbol {
-  filter:
-    drop-shadow(0 3px 0 rgba(0,0,0,.28))
-    drop-shadow(0 0 12px rgba(113, 223, 255, .5));
-}
-
+.osp-guardian::after { display:none; }
 .osp-guardian-aura {
-  animation: osp-media-aura 3.7s ease-in-out infinite;
+  width:132%;
+  aspect-ratio:1.6;
+  opacity:.78;
+  background:
+    radial-gradient(ellipse at 50% 50%,rgba(227,251,255,.28),rgba(99,205,255,.14) 29%,rgba(75,88,236,.07) 50%,transparent 70%),
+    conic-gradient(from 0deg at 50% 50%,transparent 0 16%,rgba(105,223,255,.12) 18%,transparent 21% 55%,rgba(245,220,132,.08) 57%,transparent 60%);
+  animation:osp-aura-breathe 3.8s ease-in-out infinite;
 }
-
 .osp-guardian-crest {
-  transform-origin: 50% 78%;
-  animation: osp-media-guardian 4.6s cubic-bezier(.45,0,.55,1) infinite;
+  left:50%;
+  top:-14px;
+  width:clamp(205px,58vw,274px);
+  height:auto;
+  aspect-ratio:520/390;
+  transform:translateX(-50%);
+  transform-origin:50% 76%;
+  overflow:visible;
+  border:0;
+  padding:0;
+  color:transparent;
+  font-size:0;
+  background:url("../../assets/olympus-storm/storm-warden-v3.svg") center/contain no-repeat;
+  filter:drop-shadow(0 11px 13px rgba(0,4,18,.56));
+  animation:osp-warden-idle 4.9s cubic-bezier(.45,0,.55,1) infinite;
+}
+.osp-guardian-crest::before,
+.osp-guardian-crest::after { content:none; display:none; }
+.osp-guardian-label {
+  z-index:13;
+  bottom:-4px;
+  padding:2px 10px 3px;
+  border:1px solid rgba(241,214,124,.42);
+  border-radius:999px;
+  background:linear-gradient(180deg,rgba(8,37,75,.88),rgba(3,14,37,.94));
+  color:#fff0b1;
+  font-size:clamp(7px,1.9vw,9px);
+  letter-spacing:.13em;
+  box-shadow:0 4px 12px rgba(0,0,0,.34),inset 0 1px rgba(255,255,255,.08);
+  text-shadow:0 1px 0 #061127,0 0 8px rgba(255,229,140,.26);
 }
 
 .osp-machine.is-charged .osp-guardian-crest,
-.osp-machine.is-impact .osp-guardian-crest {
-  animation: osp-media-guardian-charged .62s ease-in-out infinite alternate;
+.osp-machine.is-impact .osp-guardian-crest,
+.osp-machine[data-phase="level-up"] .osp-guardian-crest {
+  animation:osp-warden-charge .62s ease-in-out infinite alternate;
+  filter:brightness(1.12) drop-shadow(0 0 18px rgba(95,221,255,.42)) drop-shadow(0 10px 12px rgba(0,5,20,.5));
+}
+.osp-machine.is-impact .osp-guardian-aura,
+.osp-machine[data-phase="level-up"] .osp-guardian-aura { opacity:1; }
+
+/* Premium relic symbols -------------------------------------------------- */
+.osp-symbol {
+  transform-origin:50% 58%;
+  background-repeat:no-repeat,no-repeat,no-repeat;
+  background-position:center,center,center;
+  background-size:78% 78%,96% 96%,100% 100%;
+  animation:osp-symbol-idle 5s ease-in-out infinite;
+}
+.osp-symbol[aria-label="bolt"] { background-image:url("../../assets/olympus-storm/symbol-bolt-v2.svg"),url("../../assets/olympus-storm/symbol-frame-v3.svg"),radial-gradient(circle at 50% 46%,rgba(82,221,255,.16),transparent 69%); }
+.osp-symbol[aria-label="crown"] { background-image:url("../../assets/olympus-storm/symbol-crown-v2.svg"),url("../../assets/olympus-storm/symbol-frame-v3.svg"),radial-gradient(circle at 50% 46%,rgba(255,218,104,.16),transparent 69%); }
+.osp-symbol[aria-label="chalice"] { background-image:url("../../assets/olympus-storm/symbol-chalice-v2.svg"),url("../../assets/olympus-storm/symbol-frame-v3.svg"),radial-gradient(circle at 50% 46%,rgba(197,125,255,.16),transparent 69%); }
+.osp-symbol[aria-label="coin"] { background-image:url("../../assets/olympus-storm/symbol-coin-v2.svg"),url("../../assets/olympus-storm/symbol-frame-v3.svg"),radial-gradient(circle at 50% 46%,rgba(73,226,162,.15),transparent 69%); }
+.osp-symbol[aria-label="hammer"] { background-image:url("../../assets/olympus-storm/symbol-hammer-v2.svg"),url("../../assets/olympus-storm/symbol-frame-v3.svg"),radial-gradient(circle at 50% 46%,rgba(220,240,250,.14),transparent 69%); }
+.osp-symbol[aria-label="orb"] { background-image:url("../../assets/olympus-storm/symbol-orb-v2.svg"),url("../../assets/olympus-storm/symbol-frame-v3.svg"),radial-gradient(circle at 50% 46%,rgba(91,161,255,.17),transparent 69%); }
+.osp-symbol[aria-label="zeus"] { background-image:url("../../assets/olympus-storm/symbol-warden-v2.svg"),url("../../assets/olympus-storm/symbol-frame-v3.svg"),radial-gradient(circle at 50% 46%,rgba(128,194,255,.18),transparent 69%); }
+.osp-symbol[aria-label="Storm Orb"] {
+  background-image:url("../../assets/olympus-storm/symbol-scatter-v3.svg"),url("../../assets/olympus-storm/symbol-frame-v3.svg"),radial-gradient(circle at 50% 46%,rgba(129,231,255,.25),transparent 70%);
+  background-size:88% 88%,98% 98%,100% 100%;
+}
+.osp-symbol-svg,
+.osp-scatter-rune { opacity:0; pointer-events:none; }
+.osp-cell:nth-child(2n) .osp-symbol { animation-delay:-.8s; }
+.osp-cell:nth-child(3n) .osp-symbol { animation-delay:-1.6s; }
+.osp-cell:nth-child(5n) .osp-symbol { animation-delay:-2.5s; }
+.osp-cell.is-winning .osp-symbol { animation:osp-symbol-win .48s cubic-bezier(.14,.86,.18,1.16) both; }
+.osp-symbol-shine { animation:osp-symbol-shine 3.9s ease-in-out infinite; }
+.osp-cell:nth-child(2n) .osp-symbol-shine { animation-delay:-.9s; }
+.osp-cell:nth-child(3n) .osp-symbol-shine { animation-delay:-1.7s; }
+.osp-symbol--scatter .osp-scatter-ring { animation:osp-scatter-ring 2.2s linear infinite; }
+
+/* Storm Level changes the whole scene without moving static HUD layers. */
+.osp-machine[data-storm-level="2"] .osp-premium-vault { opacity:.96; }
+.osp-machine[data-storm-level="3"] .osp-premium-vault,
+.osp-machine[data-storm-level="4"] .osp-premium-vault,
+.osp-machine[data-storm-level="5"] .osp-premium-vault { filter:brightness(1.08) saturate(1.12); }
+.osp-machine[data-storm-level="4"] .osp-premium-runes,
+.osp-machine[data-storm-level="5"] .osp-premium-runes { opacity:.92; }
+.osp-machine[data-storm-level="5"] {
+  box-shadow:0 0 0 1px rgba(175,236,255,.24),0 0 120px rgba(69,163,255,.34),inset 0 -80px 100px rgba(0,4,17,.42);
 }
 
-.osp-symbol-shine {
-  animation: osp-media-shine 3.8s ease-in-out infinite;
+.osp-storm-callout {
+  z-index:48;
+  border:1px solid rgba(189,235,255,.42);
+  background:linear-gradient(180deg,rgba(14,57,105,.93),rgba(3,17,48,.95));
+  box-shadow:0 12px 28px rgba(0,0,0,.42),0 0 24px rgba(91,205,255,.16),inset 0 1px rgba(255,255,255,.11);
+}
+.osp-storm-callout strong { text-shadow:0 0 9px #fff,0 0 22px rgba(91,220,255,.86),0 3px 0 #06152d; }
+.osp-lightning { z-index:46; mix-blend-mode:screen; }
+
+.osp-level-up {
+  z-index:54;
+  border:1px solid rgba(251,222,123,.5);
+  background:radial-gradient(circle at 50% 40%,rgba(121,225,255,.28),transparent 52%),linear-gradient(180deg,rgba(15,53,98,.96),rgba(5,13,41,.98));
+  box-shadow:0 15px 38px rgba(0,0,0,.5),0 0 36px rgba(104,216,255,.26);
+}
+.osp-level-up strong { color:#fff1a5; text-shadow:0 0 10px #fff,0 0 26px rgba(115,223,255,.72); }
+
+.osp-cinematic {
+  z-index:70;
+  background:
+    radial-gradient(circle at 50% 34%,rgba(188,243,255,.28),transparent 22%),
+    radial-gradient(ellipse at 50% 58%,rgba(61,116,226,.24),transparent 48%),
+    linear-gradient(180deg,rgba(1,7,24,.64),rgba(3,10,32,.9));
+}
+.osp-cinematic > div {
+  border:1px solid rgba(225,235,190,.34);
+  background:linear-gradient(180deg,rgba(12,48,91,.94),rgba(4,16,45,.97));
+  box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 36px rgba(89,197,255,.2),inset 0 1px rgba(255,255,255,.12);
+}
+.osp-cinematic strong { color:#fff0a8; text-shadow:0 2px 0 #08162d,0 0 15px rgba(119,225,255,.5); }
+.osp-cinematic--outro strong { color:#fff7cc; }
+
+.osp-feature-orb {
+  background:url("../../assets/olympus-storm/symbol-scatter-v3.svg") center/contain no-repeat;
+  color:transparent;
+  font-size:0;
+  filter:drop-shadow(0 0 15px rgba(95,218,255,.35));
 }
 
-.osp-cell:nth-child(2n) .osp-symbol-shine { animation-delay: -.9s; }
-.osp-cell:nth-child(3n) .osp-symbol-shine { animation-delay: -1.7s; }
-.osp-cell:nth-child(5n) .osp-symbol-shine { animation-delay: -2.5s; }
+/* Do not apply continuous filters/transforms to the grid container itself.
+ * Motion is limited to symbol descendants so HUD/economy remain compositor
+ * siblings rather than children of a promoted animated surface. */
+.osp-grid { isolation:isolate; }
+.osp-grid.is-storm-charge .osp-symbol,
+.osp-grid.is-storm-impact .osp-symbol { filter:none; }
 
-.osp-symbol--scatter .osp-scatter-ring {
-  animation: osp-media-scatter-ring 2.3s linear infinite;
+@keyframes osp-cloud-drift {
+  from { transform:translate3d(-8px,0,0) scale(.98); opacity:.42; }
+  to { transform:translate3d(12px,-3px,0) scale(1.04); opacity:.68; }
+}
+@keyframes osp-aura-breathe {
+  0%,100% { opacity:.68; transform:scale(.97) rotate(-1deg); }
+  50% { opacity:1; transform:scale(1.045) rotate(1deg); }
+}
+@keyframes osp-warden-idle {
+  0%,100% { transform:translateX(-50%) translateY(0) rotate(-.28deg) scale(1); }
+  38% { transform:translateX(-50%) translateY(-1px) rotate(.2deg) scale(1.008); }
+  70% { transform:translateX(-50%) translateY(-2px) rotate(-.08deg) scale(1.014); }
+}
+@keyframes osp-warden-charge {
+  from { transform:translateX(-50%) translateY(0) rotate(-.55deg) scale(1.012); }
+  to { transform:translateX(-50%) translateY(-3px) rotate(.55deg) scale(1.045); }
+}
+@keyframes osp-symbol-idle {
+  0%,100% { transform:translateY(0) scale(1) rotate(0); }
+  50% { transform:translateY(-1px) scale(1.013) rotate(.15deg); }
+}
+@keyframes osp-symbol-win {
+  0% { transform:translateY(3px) scale(.9) rotate(-1deg); filter:brightness(1.05); }
+  52% { transform:translateY(-2px) scale(1.12) rotate(1deg); filter:brightness(1.24) drop-shadow(0 0 12px rgba(145,228,255,.68)); }
+  100% { transform:translateY(0) scale(1) rotate(0); filter:none; }
+}
+@keyframes osp-symbol-shine {
+  0%,64%,100% { opacity:.18; transform:translate(-6px,2px) scale(.8); }
+  74% { opacity:.7; transform:translate(2px,-2px) scale(1.08); }
+  86% { opacity:.34; transform:translate(8px,-4px) scale(.9); }
+}
+@keyframes osp-scatter-ring {
+  from { transform:rotate(0) scale(.97); }
+  50% { transform:rotate(180deg) scale(1.045); }
+  to { transform:rotate(360deg) scale(.97); }
 }
 
-.osp-machine.is-charged .osp-symbol--scatter .osp-scatter-ring,
-.osp-machine.is-impact .osp-symbol--scatter .osp-scatter-ring {
-  animation-duration: .78s;
+@media (max-width:390px) {
+  .osp-guardian { width:64%; top:5.05%; }
+  .osp-guardian-crest { width:clamp(194px,56vw,228px); top:-8px; }
+  .osp-symbol { background-size:80% 80%,97% 97%,100% 100%; }
 }
-
-@keyframes osp-media-aura {
-  0%, 100% { opacity: .72; scale: .96; rotate: -1deg; }
-  50% { opacity: 1; scale: 1.045; rotate: 1deg; }
+@media (max-height:780px) {
+  .osp-guardian { top:4.45%; height:15.1%; }
+  .osp-guardian-crest { width:clamp(182px,53vw,218px); }
 }
-
-@keyframes osp-media-guardian {
-  0%, 100% { translate: 0 0; rotate: -.35deg; scale: 1; }
-  36% { translate: -1px -1px; rotate: .3deg; scale: 1.006; }
-  68% { translate: 1px -2px; rotate: -.12deg; scale: 1.012; }
-}
-
-@keyframes osp-media-guardian-charged {
-  from { translate: -1px 0; rotate: -.65deg; scale: 1.01; filter: brightness(1.06) drop-shadow(0 0 12px rgba(102, 222, 255, .28)); }
-  to { translate: 1px -2px; rotate: .65deg; scale: 1.035; filter: brightness(1.18) drop-shadow(0 0 22px rgba(102, 222, 255, .52)); }
-}
-
-@keyframes osp-media-shine {
-  0%, 64%, 100% { opacity: .2; translate: -6px 2px; scale: .78; }
-  74% { opacity: .76; translate: 2px -2px; scale: 1.08; }
-  86% { opacity: .36; translate: 8px -4px; scale: .9; }
-}
-
-@keyframes osp-media-symbol-idle {
-  0%, 100% { translate: 0 0; scale: 1; rotate: 0deg; }
-  50% { translate: 0 -.7px; scale: 1.012; rotate: .18deg; }
-}
-
-@keyframes osp-media-symbol-win {
-  0% { translate: 0 3px; scale: .9; rotate: -1deg; filter: brightness(1.08); }
-  52% { translate: 0 -2px; scale: 1.11; rotate: 1deg; filter: brightness(1.28) drop-shadow(0 0 13px rgba(142, 228, 255, .72)); }
-  100% { translate: 0 0; scale: 1; rotate: 0deg; }
-}
-
-@keyframes osp-media-scatter-ring {
-  from { rotate: 0deg; scale: .97; }
-  50% { scale: 1.045; }
-  to { rotate: 360deg; scale: .97; }
-}
-
-@media (max-width: 390px) {
-  .osp-guardian-crest {
-    width: clamp(148px, 45vw, 174px);
-    top: -3px;
-  }
-  .osp-symbol {
-    background-size: 91% 91%, 100% 100%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion:reduce) {
+  .osp-premium-clouds::before,
+  .osp-premium-clouds::after,
   .osp-guardian-aura,
   .osp-guardian-crest,
-  .osp-symbol-shine,
   .osp-symbol,
-  .osp-scatter-ring {
-    animation: none !important;
-  }
+  .osp-symbol-shine,
+  .osp-scatter-ring { animation:none!important; }
 }

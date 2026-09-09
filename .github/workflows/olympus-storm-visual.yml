@@ -10,6 +10,7 @@ on:
       - "src/components/arcade/OlympusStormPremiumPolish.css"
       - "src/components/arcade/OlympusStormActivePolish.css"
       - "src/components/arcade/OlympusStormMediaRig.css"
+      - "src/components/arcade/OlympusStormPremiumStage.css"
       - "src/assets/olympus-storm/**"
       - "src/lib/arcade/olympusStorm*.ts"
       - "src/lib/arcade/olympusAuthorialArtwork.test.ts"
@@ -17,6 +18,7 @@ on:
       - "src/routes/game/$slug.tsx"
       - "scripts/olympusStormVisualQa.mjs"
       - "scripts/olympusStormDesktopQa.mjs"
+      - "scripts/olympusStormPremiumStateQa.mjs"
       - "scripts/slotAutoPlayRegressionQa.mjs"
       - "tsconfig.json"
       - ".github/workflows/olympus-storm-visual.yml"
@@ -94,6 +96,9 @@ jobs:
 
       - name: Audit desktop composition
         run: node scripts/olympusStormDesktopQa.mjs
+
+      - name: Audit premium bonus scene
+        run: node scripts/olympusStormPremiumStateQa.mjs
 
       - name: Audit Auto Play launch and stop
         run: node scripts/slotAutoPlayRegressionQa.mjs olympus

@@ -1,14 +1,8 @@
 import { memo } from "react";
+import type { CSSProperties } from "react";
 import type { GoldenTigerSymbolId } from "@/lib/arcade/goldenTigerMath";
 
-import orange from "@/assets/golden-tiger/symbols/orange.webp";
-import jade from "@/assets/golden-tiger/symbols/jade.webp";
-import lantern from "@/assets/golden-tiger/symbols/lantern.webp";
-import firecracker from "@/assets/golden-tiger/symbols/firecracker.webp";
-import ingot from "@/assets/golden-tiger/symbols/ingot.webp";
-import fortuneBag from "@/assets/golden-tiger/symbols/fortuneBag.webp";
-import lion from "@/assets/golden-tiger/symbols/lion.webp";
-import wild from "@/assets/golden-tiger/symbols/wild.webp";
+import premiumAtlas from "@/assets/golden-tiger/premium-symbol-atlas.webp";
 import "./GoldenTigerSymbols.css";
 
 type Props = {
@@ -17,26 +11,26 @@ type Props = {
   className?: string;
 };
 
-const ART: Record<GoldenTigerSymbolId, string> = {
-  orange,
-  jade,
-  lantern,
-  firecracker,
-  ingot,
-  fortuneBag,
-  lion,
-  wild,
-};
-
 const LABEL: Record<GoldenTigerSymbolId, string> = {
   orange: "Laranja da sorte",
-  jade: "Pingente de jade",
+  jade: "Guardião de jade",
   lantern: "Lanterna vermelha",
   firecracker: "Fogos da fortuna",
   ingot: "Lingote dourado",
   fortuneBag: "Bolsa da fortuna",
-  lion: "Medalhão da fortuna",
+  lion: "Guardião da fortuna",
   wild: "Wild Golden Tiger",
+};
+
+const POSITION: Record<GoldenTigerSymbolId, string> = {
+  orange: "0% 0%",
+  jade: "33.3333% 0%",
+  lantern: "66.6667% 0%",
+  firecracker: "100% 0%",
+  ingot: "0% 100%",
+  fortuneBag: "33.3333% 100%",
+  lion: "66.6667% 100%",
+  wild: "100% 100%",
 };
 
 export const GoldenTigerSymbol = memo(function GoldenTigerSymbol({
@@ -44,21 +38,20 @@ export const GoldenTigerSymbol = memo(function GoldenTigerSymbol({
   isWinning = false,
   className = "",
 }: Props) {
+  const style = {
+    "--gt-premium-symbol-atlas": `url(${premiumAtlas})`,
+    "--gt-premium-symbol-position": POSITION[id],
+  } as CSSProperties;
+
   return (
     <div
-      className={`gt-hw-symbol ${isWinning ? "is-winning" : ""} ${className}`}
+      className={`gt-hw-symbol gt-hw-symbol--raster ${isWinning ? "is-winning" : ""} ${className}`}
       data-symbol={id}
       aria-label={LABEL[id]}
+      style={style}
     >
-      <span className="gt-hw-symbol-aura" aria-hidden />
-      <img
-        className="gt-hw-symbol-art"
-        src={ART[id]}
-        alt=""
-        draggable={false}
-        decoding="async"
-      />
-      <span className="gt-hw-symbol-sheen" aria-hidden />
+      <span className="gt-hw-symbol-raster" aria-hidden />
+      {id === "wild" ? <span className="gt-hw-symbol-wild-label" aria-hidden>WILD</span> : null}
     </div>
   );
 });

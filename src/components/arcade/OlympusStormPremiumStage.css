@@ -1,0 +1,125 @@
+@import "./OlympusStormMediaRig.css";
+
+/* Storm Ascension scene director. This route-level sheet only maps existing
+ * machine states to environment changes; it does not wrap or transform HUD. */
+
+.osp-machine .osp-sky {
+  transition:background .34s ease,opacity .34s ease,filter .34s ease;
+}
+.osp-machine .osp-temple {
+  transition:opacity .34s ease,filter .34s ease;
+}
+.osp-machine .osp-guardian-aura {
+  transition:opacity .24s ease,filter .24s ease;
+}
+
+.osp-machine[data-storm-level="1"] .osp-sky {
+  opacity:.76;
+}
+.osp-machine[data-storm-level="2"] .osp-sky {
+  opacity:.84;
+  background:
+    radial-gradient(circle at 50% 14%,rgba(124,223,255,.11),transparent 25%),
+    linear-gradient(180deg,rgba(10,34,79,.16),transparent 58%);
+}
+.osp-machine[data-storm-level="3"] .osp-sky {
+  opacity:.94;
+  background:
+    radial-gradient(circle at 50% 13%,rgba(164,238,255,.17),transparent 24%),
+    radial-gradient(ellipse at 18% 30%,rgba(74,133,255,.13),transparent 27%),
+    radial-gradient(ellipse at 84% 34%,rgba(116,83,235,.12),transparent 28%),
+    linear-gradient(180deg,rgba(11,39,88,.2),transparent 62%);
+}
+.osp-machine[data-storm-level="4"] .osp-sky,
+.osp-machine[data-storm-level="5"] .osp-sky {
+  opacity:1;
+  background:
+    radial-gradient(circle at 50% 12%,rgba(220,251,255,.23),transparent 21%),
+    radial-gradient(ellipse at 13% 28%,rgba(67,151,255,.2),transparent 29%),
+    radial-gradient(ellipse at 88% 31%,rgba(133,91,255,.18),transparent 30%),
+    linear-gradient(180deg,rgba(16,50,105,.23),transparent 64%);
+}
+.osp-machine[data-storm-level="5"] .osp-sky {
+  filter:brightness(1.08) saturate(1.12);
+}
+
+.osp-machine[data-storm-level="3"] .osp-temple { opacity:.92; }
+.osp-machine[data-storm-level="4"] .osp-temple,
+.osp-machine[data-storm-level="5"] .osp-temple {
+  opacity:1;
+  filter:brightness(1.08);
+}
+
+.osp-machine[data-storm-level="2"] .osp-guardian-aura { opacity:.84; }
+.osp-machine[data-storm-level="3"] .osp-guardian-aura { opacity:.92; }
+.osp-machine[data-storm-level="4"] .osp-guardian-aura,
+.osp-machine[data-storm-level="5"] .osp-guardian-aura {
+  opacity:1;
+  filter:brightness(1.16) saturate(1.12);
+}
+
+/* Rune corona behind the reel frame. It is painted on the grid itself but
+ * remains static; only symbols inside the cells animate. */
+.osp-grid::before {
+  content:"";
+  position:absolute;
+  z-index:-1;
+  inset:-7px;
+  border-radius:inherit;
+  pointer-events:none;
+  opacity:.3;
+  background:
+    linear-gradient(90deg,rgba(111,224,255,.16),transparent 12% 88%,rgba(111,224,255,.16)),
+    linear-gradient(180deg,rgba(249,220,123,.14),transparent 12% 88%,rgba(249,220,123,.14));
+  box-shadow:0 0 18px rgba(76,183,255,.08);
+  transition:opacity .26s ease,box-shadow .26s ease;
+}
+.osp-machine[data-storm-level="3"] .osp-grid::before { opacity:.52; }
+.osp-machine[data-storm-level="4"] .osp-grid::before { opacity:.7; box-shadow:0 0 24px rgba(84,199,255,.14); }
+.osp-machine[data-storm-level="5"] .osp-grid::before { opacity:.92; box-shadow:0 0 32px rgba(100,218,255,.2); }
+
+/* Bonus is a distinct scene, not merely a counter. */
+.osp-machine.is-bonus {
+  background:
+    radial-gradient(ellipse at 50% 8%,rgba(230,252,255,.3),transparent 19%),
+    radial-gradient(ellipse at 17% 28%,rgba(66,151,255,.28),transparent 30%),
+    radial-gradient(ellipse at 85% 31%,rgba(136,91,255,.24),transparent 32%),
+    linear-gradient(180deg,#020818 0%,#0b3064 30%,#0d2452 58%,#030a1c 100%);
+}
+.osp-machine.is-bonus .osp-stage-hud {
+  border-color:rgba(246,219,123,.48);
+  box-shadow:inset 0 1px rgba(255,255,255,.1),0 6px 18px rgba(0,0,0,.32),0 0 18px rgba(96,207,255,.12);
+}
+.osp-machine.is-bonus .osp-guardian-label {
+  color:#fff2b4;
+  border-color:rgba(246,219,123,.58);
+}
+
+.osp-machine[data-phase="bonus-intro"] .osp-guardian-crest,
+.osp-machine[data-phase="bonus-outro"] .osp-guardian-crest {
+  filter:brightness(1.12) drop-shadow(0 0 20px rgba(103,224,255,.4)) drop-shadow(0 10px 13px rgba(0,4,18,.5));
+}
+
+.osp-machine[data-phase="storm-charge"]::after {
+  background:
+    radial-gradient(circle at 50% 18%,rgba(222,252,255,.22),transparent 18%),
+    linear-gradient(112deg,transparent 0 26%,rgba(127,225,255,.08) 30%,transparent 34% 66%,rgba(173,147,255,.07) 70%,transparent 74%);
+}
+.osp-machine[data-phase="storm-impact"]::after {
+  background:
+    radial-gradient(circle at 50% 21%,rgba(255,255,255,.34),transparent 21%),
+    linear-gradient(180deg,rgba(156,232,255,.09),transparent 44%),
+    linear-gradient(112deg,transparent 0 25%,rgba(255,255,255,.13) 29%,transparent 33% 67%,rgba(184,225,255,.1) 71%,transparent 75%);
+}
+
+.osp-machine[data-phase="level-up"] .osp-stage-hud {
+  border-color:rgba(255,226,130,.7);
+  box-shadow:0 0 0 1px rgba(255,242,185,.12),0 0 22px rgba(98,215,255,.2),inset 0 1px rgba(255,255,255,.12);
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .osp-machine .osp-sky,
+  .osp-machine .osp-temple,
+  .osp-machine .osp-guardian-aura,
+  .osp-grid::before { transition:none; }
+}

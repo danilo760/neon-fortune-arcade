@@ -5,9 +5,13 @@ on:
     paths:
       - "src/components/arcade/GoldenTigerReference.tsx"
       - "src/components/arcade/GoldenTigerReference.css"
+      - "src/components/arcade/GoldenTigerPremium.tsx"
+      - "src/components/arcade/GoldenTigerPremiumArt.css"
       - "src/components/arcade/GoldenTigerPresentation.css"
       - "src/components/arcade/GoldenTigerPresentationSafe.css"
       - "src/components/arcade/GoldenTigerMediaRig.css"
+      - "src/components/arcade/GoldenTigerSession2.css"
+      - "src/components/arcade/GoldenTigerSession2Polish.css"
       - "src/components/arcade/golden-tiger/**"
       - "src/assets/golden-tiger/**"
       - "src/lib/arcade/goldenTiger*.ts"
@@ -16,6 +20,7 @@ on:
       - "scripts/goldenTigerVisualQa.mjs"
       - "scripts/goldenTigerDesktopSpinQa.mjs"
       - "scripts/goldenTigerSpecialStateQa.mjs"
+      - "scripts/goldenTigerBonusBuyQa.mjs"
       - "scripts/goldenTigerCompositionGuard.mjs"
       - ".github/workflows/golden-tiger-visual.yml"
   workflow_dispatch:
@@ -95,11 +100,34 @@ jobs:
       - name: Audit desktop spin sequence
         run: node scripts/goldenTigerDesktopSpinQa.mjs
 
+      - name: Audit 1366x768 desktop framing
+        env:
+          GOLDEN_TIGER_VIEWPORT_WIDTH: "1366"
+          GOLDEN_TIGER_VIEWPORT_HEIGHT: "768"
+          GOLDEN_TIGER_QA_DIR: "artifacts/golden-tiger/desktop-1366x768"
+        run: node scripts/goldenTigerDesktopSpinQa.mjs
+
       - name: Audit special states
         run: node scripts/goldenTigerSpecialStateQa.mjs
 
+      - name: Audit bonus purchase lifecycle
+        run: node scripts/goldenTigerBonusBuyQa.mjs
+
       - name: Guard mobile composition
         run: node scripts/goldenTigerCompositionGuard.mjs
+
+      - name: Package complete source
+        if: always()
+        shell: bash
+        run: |
+          rm -f neon-fortune-arcade-full-source.zip
+          zip -qr neon-fortune-arcade-full-source.zip . \
+            -x ".git/*" \
+               "node_modules/*" \
+               ".output/*" \
+               "artifacts/*" \
+               "*.log" \
+               "neon-fortune-arcade-full-source.zip"
 
       - name: Upload visual evidence
         if: always()
@@ -109,6 +137,14 @@ jobs:
           path: |
             artifacts/golden-tiger/
             src/assets/golden-tiger/tiger-pose-atlas.webp
+            src/components/arcade/GoldenTiger*.tsx
+            src/components/arcade/GoldenTiger*.css
+            src/components/arcade/golden-tiger/
+            src/lib/arcade/goldenTiger*.ts
+            src/lib/arcade/sound.ts
+            src/routes/game/$slug.tsx
+            scripts/goldenTiger*.mjs
+            neon-fortune-arcade-full-source.zip
             golden-tiger-server.log
             golden-tiger-chrome.log
           if-no-files-found: warn

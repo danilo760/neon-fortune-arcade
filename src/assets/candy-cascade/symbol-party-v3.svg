@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 170" role="img" aria-label="Party Candy premium authorial symbol">
+  <defs>
+    <radialGradient id="core"><stop stop-color="#fff8d0"/><stop offset=".2" stop-color="#ffd867"/><stop offset=".43" stop-color="#ff88bd"/><stop offset=".7" stop-color="#bb70e9"/><stop offset="1" stop-color="#694cc9"/></radialGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff9b8"/><stop offset=".2" stop-color="#ffb957"/><stop offset=".4" stop-color="#ff6fae"/><stop offset=".6" stop-color="#9deaff"/><stop offset=".82" stop-color="#9b78ff"/><stop offset="1" stop-color="#ffe580"/></linearGradient>
+    <filter id="shadow" x="-45%" y="-45%" width="190%" height="190%"><feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#542067" flood-opacity=".55"/></filter>
+    <filter id="glow" x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation="3.8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <circle cx="85" cy="82" r="59" fill="#6a3c92" stroke="url(#ring)" stroke-width="8"/>
+    <circle cx="85" cy="82" r="46" fill="url(#core)" stroke="#fff" stroke-opacity=".46" stroke-width="3"/>
+    <path d="M85 39c13 0 24 4 32 11-19 2-37 8-52 19-8 6-15 14-21 23-2-7-3-14-3-21 0-18 20-32 44-32z" fill="#fff" opacity=".24"/>
+    <path d="M85 54l8 17 19 3-14 13 3 19-16-9-16 9 3-19-14-13 19-3z" fill="#fff7b2" stroke="#ffbd52" stroke-width="3"/>
+    <path d="M85 58v36M67 76h36" stroke="#ff76af" stroke-width="4" stroke-linecap="round" opacity=".55"/>
+    <path d="M42 123h86l-12 20H54z" fill="url(#ring)" stroke="#fff0b6" stroke-opacity=".46" stroke-width="3"/>
+  </g>
+  <g fill="#fff" filter="url(#glow)">
+    <circle cx="29" cy="58" r="3"/><circle cx="141" cy="56" r="2.5"/><circle cx="132" cy="112" r="2.2"/><circle cx="39" cy="113" r="2.1"/>
+    <path d="M31 83l3 6 7 1-5 5 1 7-6-4-6 4 1-7-5-5 7-1zm111 2 3 5 6 1-4 4 1 6-6-3-5 3 1-6-4-4 6-1z" opacity=".7"/>
+  </g>
+</svg>
