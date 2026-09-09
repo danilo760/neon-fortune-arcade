@@ -1,0 +1,43 @@
+name: Apply Candy QA RNG patch
+
+on:
+  push:
+    branches:
+      - fix/arcade-post-playtest-2026-09-08
+    paths:
+      - ".github/workflows/apply-candy-qa-rng-patch.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/arcade-post-playtest-2026-09-08
+      - name: Wire QA-only RNG bridge
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path("src/components/arcade/CandyCascadePremium.tsx")
+          s = p.read_text()
+          old = 'import { playCandyFeatureSound } from "@/lib/arcade/candySound";\n'
+          new = old + 'import { resolveCandyCascadeVisualQaRng } from "@/lib/arcade/candyCascadeVisualQaRng";\n'
+          if old not in s: raise SystemExit("missing Candy import anchor")
+          s = s.replace(old, new, 1)
+          old = '      const plan = planCandyRound(bet);\n'
+          new = '      const plan = planCandyRound(bet, resolveCandyCascadeVisualQaRng(Math.random));\n'
+          if old not in s: raise SystemExit("missing Candy plan anchor")
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+      - name: Remove one-shot workflow
+        run: rm .github/workflows/apply-candy-qa-rng-patch.yml
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/arcade/CandyCascadePremium.tsx .github/workflows/apply-candy-qa-rng-patch.yml
+          git commit -m "test: wire Candy deterministic visual QA RNG"
+          git push origin HEAD:fix/arcade-post-playtest-2026-09-08
