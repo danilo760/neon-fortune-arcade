@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" aria-hidden="true">
+  <defs>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff9d8"/><stop offset=".16" stop-color="#ffd89a"/><stop offset=".35" stop-color="#ff9fc9"/><stop offset=".58" stop-color="#9eeeff"/><stop offset=".78" stop-color="#caa1ff"/><stop offset="1" stop-color="#ffdb88"/></linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffffff" stop-opacity=".18"/><stop offset=".35" stop-color="#ffd6ef" stop-opacity=".08"/><stop offset=".7" stop-color="#8beaff" stop-opacity=".06"/><stop offset="1" stop-color="#6649a8" stop-opacity=".04"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#5a1d63" flood-opacity=".38"/></filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <rect x="8" y="8" width="144" height="144" rx="34" fill="#5f2f79" fill-opacity=".14" stroke="url(#rim)" stroke-width="5"/>
+    <rect x="15" y="15" width="130" height="130" rx="28" fill="url(#glass)" stroke="#fff" stroke-opacity=".16" stroke-width="2"/>
+    <path d="M28 38c26-18 79-19 104-2" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="29" cy="29" r="4" fill="#fff6c0" opacity=".8"/>
+    <circle cx="132" cy="128" r="3" fill="#9ff0ff" opacity=".65"/>
+    <path d="M20 72v-22c0-9 7-16 16-16h15M109 34h15c9 0 16 7 16 16v22M140 92v18c0 9-7 16-16 16h-15M51 126H36c-9 0-16-7-16-16V92" fill="none" stroke="#fff2c5" stroke-opacity=".3" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>
