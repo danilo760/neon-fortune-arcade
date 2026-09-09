@@ -1,0 +1,192 @@
+name: Apply Mines persistence patch
+
+on:
+  push:
+    branches:
+      - fix/arcade-post-playtest-2026-09-08
+    paths:
+      - ".github/workflows/apply-mines-persistence-patch.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/arcade-post-playtest-2026-09-08
+      - name: Patch Mines round lifecycle
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("src/components/arcade/MinesGame.tsx")
+          text = path.read_text()
+
+          def swap(old, new):
+              global text
+              if old not in text:
+                  raise SystemExit(f"expected source block not found:\n{old}")
+              text = text.replace(old, new, 1)
+
+          swap(
+          '''import { playMinesSound } from "@/lib/arcade/minesSound";''',
+          '''import {
+            clearMinesRoundSnapshot,
+            loadMinesRoundSnapshot,
+            saveMinesRoundSnapshot,
+          } from "@/lib/arcade/minesRoundPersistence";
+          import { playMinesSound } from "@/lib/arcade/minesSound";''')
+
+          swap(
+          '''  const revealBusyRef = useRef(false);
+
+          const multiplier = minesMultiplier(mineCount, revealed.size);''',
+          '''  const revealBusyRef = useRef(false);
+          const startedAtRef = useRef(0);
+
+          const multiplier = minesMultiplier(mineCount, revealed.size);''')
+
+          swap(
+          '''  useEffect(() => {
+            setGameAmbience("mines", soundEnabled);''',
+          '''  useEffect(() => {
+            const snapshot = loadMinesRoundSnapshot();
+            if (!snapshot) return;
+
+            const restored = new Set(snapshot.revealed);
+            setBet(snapshot.bet);
+            setMineCount(snapshot.mineCount);
+            setMineField(snapshot.mineField);
+            setRevealed(restored);
+            setLastPayout(0);
+            setLastRoundSafeCells(0);
+            setLastRoundMultiplier(1);
+            setLastSafeReveal(null);
+            setTriggeredMine(null);
+            setOpeningIndex(null);
+            setRevealPhase("idle");
+            setPossibleWinDuration(0);
+            setDisplayedPossibleWin(Math.round(snapshot.bet * minesMultiplier(snapshot.mineCount, restored.size)));
+            setStatus("playing");
+            revealedRef.current = restored;
+            settledRef.current = false;
+            roundActiveRef.current = true;
+            revealBusyRef.current = false;
+            startedAtRef.current = snapshot.startedAt;
+          }, []);
+
+          useEffect(() => {
+            setGameAmbience("mines", soundEnabled);''')
+
+          swap(
+          '''    setMineField(createMineField(createRng(), mineCount));
+            revealedRef.current = new Set();''',
+          '''    const nextMineField = createMineField(createRng(), mineCount);
+            const startedAt = Date.now();
+            startedAtRef.current = startedAt;
+            saveMinesRoundSnapshot({
+              version: 1,
+              bet,
+              mineCount,
+              mineField: nextMineField,
+              revealed: [],
+              startedAt,
+            });
+            setMineField(nextMineField);
+            revealedRef.current = new Set();''')
+
+          swap(
+          '''      arcadeActions.recordRound({
+                slug: "neon-mines",
+                gameName: "Neon Mines",
+                bet,
+                payout,
+                multiplier: finalMultiplier,
+                note: `${safeCells} casas seguras`,
+              });
+              setLastPayout(payout);''',
+          '''      arcadeActions.recordRound({
+                slug: "neon-mines",
+                gameName: "Neon Mines",
+                bet,
+                payout,
+                multiplier: finalMultiplier,
+                note: `${safeCells} casas seguras`,
+              });
+              clearMinesRoundSnapshot();
+              startedAtRef.current = 0;
+              setLastPayout(payout);''')
+
+          swap(
+          '''        setTriggeredMine(index);
+                setRevealPhase("danger");
+                playMinesSound("danger", soundEnabled);
+                await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.danger, reduceMotion));
+
+                settledRef.current = true;
+                roundActiveRef.current = false;
+                playMinesSound("mineArm", soundEnabled);''',
+          '''        setTriggeredMine(index);
+                settledRef.current = true;
+                roundActiveRef.current = false;
+                clearMinesRoundSnapshot();
+                startedAtRef.current = 0;
+                arcadeActions.recordRound({
+                  slug: "neon-mines",
+                  gameName: "Neon Mines",
+                  bet,
+                  payout: 0,
+                  multiplier: 0,
+                  note: `Mina encontrada após ${safeCells} casa(s) segura(s)`,
+                });
+                setRevealPhase("danger");
+                playMinesSound("danger", soundEnabled);
+                await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.danger, reduceMotion));
+
+                playMinesSound("mineArm", soundEnabled);''')
+
+          swap(
+          '''        setStatus("lost");
+                arcadeActions.recordRound({
+                  slug: "neon-mines",
+                  gameName: "Neon Mines",
+                  bet,
+                  payout: 0,
+                  multiplier: 0,
+                  note: `Mina encontrada após ${safeCells} casa(s) segura(s)`,
+                });
+                await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.lostSettle, reduceMotion));''',
+          '''        setStatus("lost");
+                await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.lostSettle, reduceMotion));''')
+
+          swap(
+          '''      revealedRef.current = next;
+              setRevealed(next);
+              setLastSafeReveal(index);''',
+          '''      revealedRef.current = next;
+              setRevealed(next);
+              const startedAt = startedAtRef.current || Date.now();
+              startedAtRef.current = startedAt;
+              saveMinesRoundSnapshot({
+                version: 1,
+                bet,
+                mineCount,
+                mineField,
+                revealed: [...next],
+                startedAt,
+              });
+              setLastSafeReveal(index);''')
+
+          path.write_text(text)
+      - name: Remove one-shot workflow
+        run: rm .github/workflows/apply-mines-persistence-patch.yml
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/arcade/MinesGame.tsx .github/workflows/apply-mines-persistence-patch.yml
+          git commit -m "fix: persist active Mines rounds across navigation"
+          git push origin HEAD:fix/arcade-post-playtest-2026-09-08
