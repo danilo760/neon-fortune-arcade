@@ -51,6 +51,48 @@ async function screenshot(client, path) {
   const result = await client.send("Page.captureScreenshot", { format: "png", fromSurface: true, captureBeyondViewport: false });
   await writeFile(path, Buffer.from(result.data, "base64"));
 }
+async function waitFor(client, expression, label, timeout = 12000) {
+  const started = Date.now();
+  while (Date.now() - started < timeout) {
+    if (await evaluate(client, expression)) return;
+    await sleep(20);
+  }
+  const phase = await evaluate(client, `document.querySelector('.ccp-machine')?.getAttribute('data-phase') ?? null`);
+  throw new Error(`Timed out waiting for ${label}; phase=${phase}`);
+}
+
+async function prepareClient({ installRng = false } = {}) {
+  const target = await createTarget();
+  const client = new CdpClient(target.webSocketDebuggerUrl);
+  await client.connect();
+  await client.send("Page.enable");
+  await client.send("Runtime.enable");
+  await client.send("Emulation.setDeviceMetricsOverride", {
+    width: viewport.width, height: viewport.height, deviceScaleFactor: 1, mobile: false,
+    screenWidth: viewport.width, screenHeight: viewport.height,
+  });
+  await client.send("Emulation.setEmulatedMedia", {
+    media: "screen",
+    features: [{ name: "prefers-reduced-motion", value: "no-preference" }],
+  });
+  if (installRng) {
+    await client.send("Page.addScriptToEvaluateOnNewDocument", {
+      source: `(() => {
+        const state = { queue: [], fallback: .43, calls: 0 };
+        Object.defineProperty(window, '__candyQaRandom', { value: state, configurable: true });
+        Math.random = () => {
+          state.calls += 1;
+          return state.queue.length ? state.queue.shift() : state.fallback;
+        };
+      })();`,
+    });
+  }
+  await client.send("Page.navigate", { url: appUrl });
+  await waitFor(client, `document.readyState === 'complete'`, "Candy document load");
+  await waitFor(client, `Boolean(document.querySelector('[aria-label="Girar Candy Cascade"]:not(:disabled)'))`, "Candy ready");
+  await sleep(300);
+  return { target, client };
+}
 
 const auditExpression = `(() => {
   const machine = document.querySelector('.ccp-machine');
@@ -93,12 +135,12 @@ const auditExpression = `(() => {
       display: element ? getComputedStyle(element).display : null,
       visibility: element ? getComputedStyle(element).visibility : null,
       opacity: element ? getComputedStyle(element).opacity : null,
+      zIndex: element ? getComputedStyle(element).zIndex : null,
     }];
   }));
   const cells = [...document.querySelectorAll('.ccp-grid > .ccp-cell')];
   const cellRects = cells.map(rect);
-  const rolling = document.querySelectorAll('.ccp-cell.is-rolling').length;
-  const overlays = document.querySelectorAll('.ccp-callout, .ccp-big-win, .ccp-cinematic, .ccp-modal').length;
+  const impact = document.querySelector('.ccp-machine.is-impact');
   return {
     viewport: { width: innerWidth, height: innerHeight },
     reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
@@ -110,14 +152,18 @@ const auditExpression = `(() => {
     sections,
     cellCount: cells.length,
     cellRects,
-    rolling,
-    overlays,
+    rolling: document.querySelectorAll('.ccp-cell.is-rolling').length,
+    overlays: document.querySelectorAll('.ccp-callout, .ccp-big-win, .ccp-cinematic, .ccp-modal').length,
+    impactActive: Boolean(impact),
+    impactZ: impact ? getComputedStyle(impact, '::after').zIndex : null,
+    randomCalls: window.__candyQaRandom?.calls ?? null,
+    randomRemaining: window.__candyQaRandom?.queue?.length ?? null,
     scrollWidth: document.documentElement.scrollWidth,
     scrollHeight: document.documentElement.scrollHeight,
   };
 })()`;
 
-function validate(audit, index) {
+function validate(audit, label) {
   const errors = [];
   if (!audit?.machine || !audit.machineVisible) return ["Candy cabinet is not visibly rendered"];
   if (audit.reducedMotion) errors.push("desktop Candy QA unexpectedly uses reduced motion");
@@ -127,65 +173,96 @@ function validate(audit, index) {
 
   const m = audit.machine;
   for (const [name, state] of Object.entries(audit.sections ?? {})) {
-    if (!state?.visible) errors.push(`${name} disappeared at sample ${index}`);
+    if (!state?.visible) errors.push(`${name} disappeared at ${label}`);
     const r = state?.rect;
     if (!r) continue;
-    if (r.left < m.left - 2 || r.right > m.right + 2) errors.push(`${name} clipped horizontally at sample ${index}`);
-    if (r.top < m.top - 2 || r.bottom > m.bottom + 2) errors.push(`${name} clipped vertically at sample ${index}`);
-    if (name !== 'mascot' && name !== 'footer' && !state.centerHit) errors.push(`${name} center is obscured at sample ${index}`);
+    if (r.left < m.left - 2 || r.right > m.right + 2) errors.push(`${name} clipped horizontally at ${label}`);
+    if (r.top < m.top - 2 || r.bottom > m.bottom + 2) errors.push(`${name} clipped vertically at ${label}`);
+    if (name !== 'mascot' && name !== 'footer' && !state.centerHit) errors.push(`${name} center is obscured at ${label}`);
   }
 
   for (const [cellIndex, r] of (audit.cellRects ?? []).entries()) {
-    if (!r || r.width < 20 || r.height < 20) errors.push(`cell ${cellIndex + 1} collapsed at sample ${index}`);
+    if (!r || r.width < 20 || r.height < 20) errors.push(`cell ${cellIndex + 1} collapsed at ${label}`);
     if (r && audit.grid && (r.left < audit.grid.left - 2 || r.right > audit.grid.right + 2 || r.top < audit.grid.top - 2 || r.bottom > audit.grid.bottom + 2)) {
-      errors.push(`cell ${cellIndex + 1} escaped grid at sample ${index}`);
+      errors.push(`cell ${cellIndex + 1} escaped grid at ${label}`);
     }
   }
   return errors;
 }
 
 await mkdir(outputDir, { recursive: true });
-const target = await createTarget();
-const client = new CdpClient(target.webSocketDebuggerUrl);
-const samples = [];
+const report = [];
 let failed = false;
-try {
-  await client.connect();
-  await client.send("Page.enable");
-  await client.send("Runtime.enable");
-  await client.send("Emulation.setDeviceMetricsOverride", {
-    width: viewport.width, height: viewport.height, deviceScaleFactor: 1, mobile: false,
-    screenWidth: viewport.width, screenHeight: viewport.height,
-  });
-  await client.send("Emulation.setEmulatedMedia", {
-    media: "screen",
-    features: [{ name: "prefers-reduced-motion", value: "no-preference" }],
-  });
-  await client.send("Page.navigate", { url: appUrl });
-  await sleep(1100);
-  const ready = await evaluate(client, `Boolean(document.querySelector('[aria-label="Girar Candy Cascade"]:not(:disabled)'))`);
-  if (!ready) throw new Error("Candy Cascade did not become ready for desktop motion QA");
-  await evaluate(client, `(() => { document.querySelector('[aria-label="Girar Candy Cascade"]')?.click(); return true; })()`);
 
-  let elapsed = 0;
-  for (let index = 0; index < sampleDelays.length; index += 1) {
-    await sleep(sampleDelays[index]);
-    elapsed += sampleDelays[index];
-    const audit = await evaluate(client, auditExpression);
-    const errors = validate(audit, index);
-    if (errors.length) failed = true;
-    samples.push({ index, elapsed, audit, errors });
-    await screenshot(client, `${outputDir}/desktop-motion-${String(index + 1).padStart(2, '0')}-${elapsed}ms.png`);
+// Scenario 1: ordinary real-timing spin sampled across braking/cascade windows.
+{
+  const scenario = await prepareClient();
+  try {
+    await evaluate(scenario.client, `(() => { document.querySelector('[aria-label="Girar Candy Cascade"]')?.click(); return true; })()`);
+    let elapsed = 0;
+    for (let index = 0; index < sampleDelays.length; index += 1) {
+      await sleep(sampleDelays[index]);
+      elapsed += sampleDelays[index];
+      const audit = await evaluate(scenario.client, auditExpression);
+      const label = `ordinary-${elapsed}ms-${audit.phase}`;
+      const errors = validate(audit, label);
+      if (errors.length) failed = true;
+      report.push({ scenario: "ordinary", elapsed, audit, errors });
+      await screenshot(scenario.client, `${outputDir}/desktop-motion-${String(index + 1).padStart(2, '0')}-${elapsed}ms.png`);
+    }
+  } finally {
+    scenario.client.close();
+    await closeTarget(scenario.target.id);
   }
-} finally {
-  client.close();
-  await closeTarget(target.id);
 }
 
-await writeFile(`${outputDir}/desktop-motion-report.json`, JSON.stringify({ viewport, samples }, null, 2));
-for (const sample of samples) {
-  const label = `${sample.elapsed}ms phase=${sample.audit?.phase ?? 'unknown'} rolling=${sample.audit?.rolling ?? 'n/a'} overlays=${sample.audit?.overlays ?? 'n/a'}`;
+// Scenario 2: deterministic 30-symbol cluster -> guaranteed Sugar Bomb.
+// pickCandySymbol consumes two random values per initial cell: one scatter roll
+// and one regular-symbol roll. 0.5 then 0 yields 30 diamonds. A 12+ cluster
+// guarantees a bomb; 0 then .99 selects the strongest value. Refill values are
+// distributed across all regular symbols to prevent a second giant cluster.
+{
+  const refill = [.02, .08, .16, .27, .40, .55, .70, .90];
+  const values = [
+    ...Array.from({ length: 30 }, () => [.5, 0]).flat(),
+    0, .99,
+    ...Array.from({ length: 30 }, (_, index) => refill[index % refill.length]),
+  ];
+  const scenario = await prepareClient({ installRng: true });
+  try {
+    await evaluate(scenario.client, `(() => {
+      window.__candyQaRandom.queue = ${JSON.stringify(values)}.slice();
+      window.__candyQaRandom.calls = 0;
+      document.querySelector('[aria-label="Girar Candy Cascade"]')?.click();
+      return true;
+    })()`);
+
+    for (const phase of ["cluster", "bomb-birth", "bomb-burst", "collapse", "refill"]) {
+      await waitFor(scenario.client, `document.querySelector('.ccp-machine')?.getAttribute('data-phase') === ${JSON.stringify(phase)}`, `deterministic ${phase}`);
+      await sleep(28);
+      const audit = await evaluate(scenario.client, auditExpression);
+      const label = `forced-${phase}`;
+      const errors = validate(audit, label);
+      if (phase === "bomb-burst") {
+        if (!audit.impactActive) errors.push("Sugar Bomb burst did not activate impact layer");
+        if (Number(audit.impactZ) >= Number(audit.sections.sugarHud?.zIndex ?? 0)) errors.push(`impact layer z-index ${audit.impactZ} is not below persistent Sugar HUD`);
+      }
+      if (errors.length) failed = true;
+      report.push({ scenario: "forced-sugar-bomb", phase, audit, errors });
+      await screenshot(scenario.client, `${outputDir}/desktop-forced-${phase}.png`);
+    }
+  } finally {
+    scenario.client.close();
+    await closeTarget(scenario.target.id);
+  }
+}
+
+await writeFile(`${outputDir}/desktop-motion-report.json`, JSON.stringify({ viewport, report }, null, 2));
+for (const sample of report) {
+  const label = sample.scenario === "ordinary"
+    ? `${sample.elapsed}ms phase=${sample.audit?.phase ?? 'unknown'}`
+    : `forced ${sample.phase}`;
   if (sample.errors.length) console.error(`❌ ${label}: ${sample.errors.join('; ')}`);
-  else console.log(`✅ ${label}: cabinet + HUD + economy + controls intact`);
+  else console.log(`✅ ${label}: cabinet + Sugar HUD + economy + controls intact`);
 }
 if (failed) process.exitCode = 1;
