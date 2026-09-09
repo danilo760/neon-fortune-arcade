@@ -20,7 +20,7 @@ import {
 } from "@/lib/arcade/minesPresentation";
 import { playMinesSound } from "@/lib/arcade/minesSound";
 import { playSound, setAmbienceEnergy, setGameAmbience } from "@/lib/arcade/sound";
-import { arcadeActions, useArcade } from "@/lib/arcade/store";
+import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store";
 import { cn } from "@/lib/utils";
 
 import { AnimatedWinCounter } from "./AnimatedWinCounter";
@@ -63,16 +63,23 @@ export function MinesGame() {
   const revealedRef = useRef<Set<number>>(new Set());
   const revealBusyRef = useRef(false);
   const startedAtRef = useRef(0);
+  const betRef = useRef(bet);
+  const mineCountRef = useRef(mineCount);
+  const mineFieldRef = useRef<number[]>(mineField);
 
   const multiplier = minesMultiplier(mineCount, revealed.size);
   const nextMultiplier = nextMinesMultiplier(mineCount, revealed.size);
   const mineSet = useMemo(() => new Set(mineField), [mineField]);
 
   useEffect(() => {
+    hydrateFromStorage();
     const snapshot = loadMinesRoundSnapshot();
     if (!snapshot) return;
 
     const restored = new Set(snapshot.revealed);
+    betRef.current = snapshot.bet;
+    mineCountRef.current = snapshot.mineCount;
+    mineFieldRef.current = [...snapshot.mineField];
     setBet(snapshot.bet);
     setMineCount(snapshot.mineCount);
     setMineField(snapshot.mineField);
@@ -92,6 +99,32 @@ export function MinesGame() {
     roundActiveRef.current = true;
     revealBusyRef.current = false;
     startedAtRef.current = snapshot.startedAt;
+  }, []);
+
+  useEffect(() => { betRef.current = bet; }, [bet]);
+  useEffect(() => { mineCountRef.current = mineCount; }, [mineCount]);
+  useEffect(() => { mineFieldRef.current = mineField; }, [mineField]);
+
+  useEffect(() => {
+    const persistActiveRound = () => {
+      if (!roundActiveRef.current || settledRef.current || startedAtRef.current <= 0) return;
+      const activeMineField = mineFieldRef.current;
+      if (activeMineField.length !== mineCountRef.current) return;
+      saveMinesRoundSnapshot({
+        version: 1,
+        bet: betRef.current,
+        mineCount: mineCountRef.current,
+        mineField: [...activeMineField],
+        revealed: [...revealedRef.current],
+        startedAt: startedAtRef.current,
+      });
+    };
+
+    window.addEventListener("pagehide", persistActiveRound);
+    return () => {
+      persistActiveRound();
+      window.removeEventListener("pagehide", persistActiveRound);
+    };
   }, []);
 
   useEffect(() => {
@@ -116,12 +149,15 @@ export function MinesGame() {
 
     const nextMineField = createMineField(createRng(), mineCount);
     const startedAt = Date.now();
+    betRef.current = bet;
+    mineCountRef.current = mineCount;
+    mineFieldRef.current = [...nextMineField];
     startedAtRef.current = startedAt;
     saveMinesRoundSnapshot({
       version: 1,
-      bet,
-      mineCount,
-      mineField: nextMineField,
+      bet: betRef.current,
+      mineCount: mineCountRef.current,
+      mineField: [...mineFieldRef.current],
       revealed: [],
       startedAt,
     });
@@ -245,9 +281,9 @@ export function MinesGame() {
       startedAtRef.current = startedAt;
       saveMinesRoundSnapshot({
         version: 1,
-        bet,
-        mineCount,
-        mineField,
+        bet: betRef.current,
+        mineCount: mineCountRef.current,
+        mineField: [...mineFieldRef.current],
         revealed: [...next],
         startedAt,
       });
