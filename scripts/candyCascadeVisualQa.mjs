@@ -87,12 +87,20 @@ const auditExpression = `(() => {
   const machine = document.querySelector('.ccp-machine');
   const grid = document.querySelector('.ccp-grid');
   const spin = document.querySelector('[aria-label="Girar Candy Cascade"]');
-  const cells = document.querySelectorAll('.ccp-grid > .ccp-cell');
-  const svgSymbols = document.querySelectorAll('.ccp-grid .ccp-symbol-svg');
+  const mascot = document.querySelector('.ccp-mascot-core');
+  const cells = [...document.querySelectorAll('.ccp-grid > .ccp-cell')];
+  const symbols = [...document.querySelectorAll('.ccp-grid .ccp-symbol')];
+  const svgSymbols = [...document.querySelectorAll('.ccp-grid .ccp-symbol-svg')];
   const images = document.querySelectorAll('.ccp-machine img');
+  const paintedSymbols = symbols.filter((symbol) => {
+    const style = getComputedStyle(symbol);
+    return style.backgroundImage.includes('.svg') || style.backgroundImage.includes('image/svg+xml');
+  });
+  const hiddenLegacyVectors = svgSymbols.filter((vector) => Number(getComputedStyle(vector).opacity) <= .01);
   const rect = (el) => el ? (() => { const r = el.getBoundingClientRect(); return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; })() : null;
   const sr = spin?.getBoundingClientRect();
   const hit = sr ? document.elementFromPoint(sr.left + sr.width/2, sr.top + sr.height/2) : null;
+  const mascotStyle = mascot ? getComputedStyle(mascot) : null;
   return {
     width: innerWidth,
     height: innerHeight,
@@ -100,11 +108,15 @@ const auditExpression = `(() => {
     machine: rect(machine),
     grid: rect(grid),
     spin: rect(spin),
+    mascot: rect(mascot),
+    mascotBackground: mascotStyle?.backgroundImage ?? 'none',
     spinHit: Boolean(spin && hit && (hit === spin || spin.contains(hit))),
     spinDisabled: Boolean(spin?.disabled),
     phase: machine?.getAttribute('data-phase') ?? null,
     cellCount: cells.length,
     svgSymbolCount: svgSymbols.length,
+    paintedSymbolCount: paintedSymbols.length,
+    hiddenLegacyVectorCount: hiddenLegacyVectors.length,
     imageCount: images.length,
   };
 })()`;
@@ -131,7 +143,11 @@ for (const viewport of viewports) {
     if (!idle.machine || idle.machine.left < -1 || idle.machine.right > viewport.width + 1) errors.push("cabinet outside viewport");
     if (!idle.machine || idle.machine.bottom > viewport.height + 1) errors.push("cabinet exceeds vertical viewport");
     if (idle.cellCount !== 30) errors.push(`expected 30 cells, got ${idle.cellCount}`);
-    if (idle.svgSymbolCount < 25) errors.push(`expected vector symbol coverage, got ${idle.svgSymbolCount}`);
+    if (idle.paintedSymbolCount !== 30) errors.push(`expected 30 authored painted symbols, got ${idle.paintedSymbolCount}`);
+    if (idle.svgSymbolCount < 25) errors.push(`semantic vector fallback coverage too low: ${idle.svgSymbolCount}`);
+    if (idle.hiddenLegacyVectorCount !== idle.svgSymbolCount) errors.push(`legacy flat glyphs are still visible (${idle.hiddenLegacyVectorCount}/${idle.svgSymbolCount} hidden)`);
+    if (!idle.mascot || idle.mascot.width < 100 || idle.mascot.height < 80) errors.push("Sugar Sprite mascot is missing/collapsed");
+    if (!idle.mascotBackground || (!idle.mascotBackground.includes('.svg') && !idle.mascotBackground.includes('image/svg+xml'))) errors.push("authorial Sugar Sprite SVG is not painted");
     if (idle.imageCount !== 0) errors.push(`reference images still mounted: ${idle.imageCount}`);
     if (!idle.spinHit) errors.push("spin not hittable");
     if (idle.spinDisabled) errors.push("spin disabled on idle load");
@@ -142,6 +158,7 @@ for (const viewport of viewports) {
     const active = await evaluate(client, auditExpression);
     if (!["spin", "landing", "anticipation"].includes(active.phase)) errors.push(`unexpected phase after spin: ${active.phase}`);
     if (!active.spinDisabled) errors.push("spin should disable during round");
+    if (active.paintedSymbolCount !== 30) errors.push(`authored symbols disappeared during spin (${active.paintedSymbolCount}/30)`);
     const spinShot = await capture(client, viewport, "spin");
 
     report.push({ viewport, idle, active, errors, screenshots: [idleShot, spinShot] });
@@ -149,7 +166,7 @@ for (const viewport of viewports) {
       failed = true;
       console.error(`❌ ${viewport.width}x${viewport.height}: ${errors.join('; ')}`);
     } else {
-      console.log(`✅ ${viewport.width}x${viewport.height}: premium vector layout + spin passed | images=0 vectors=${idle.svgSymbolCount}`);
+      console.log(`✅ ${viewport.width}x${viewport.height}: Sugar Sprite + 30 painted symbols + spin passed`);
     }
   } finally {
     client.close();

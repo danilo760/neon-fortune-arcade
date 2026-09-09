@@ -10,7 +10,7 @@ export type GoldenTigerSymbolId =
   | "lantern"
   | "orange";
 
-export type GoldenTigerWinTier = "none" | "small" | "nice" | "big" | "mega";
+export type GoldenTigerWinTier = "none" | "small" | "nice" | "big" | "mega" | "super";
 
 type SymbolDef = {
   id: GoldenTigerSymbolId;
@@ -140,7 +140,8 @@ export function evaluateGoldenTiger(
 export function goldenTigerWinTier(payout: number, bet: number): GoldenTigerWinTier {
   if (bet <= 0 || payout < bet * 2) return "none";
   if (payout < bet * 5) return "small";
-  if (payout < bet * 15) return "nice";
-  if (payout < bet * 30) return "big";
-  return "mega";
+  if (payout < bet * 20) return "nice";
+  if (payout < bet * 35) return "big";
+  if (payout < bet * 50) return "mega";
+  return "super";
 }

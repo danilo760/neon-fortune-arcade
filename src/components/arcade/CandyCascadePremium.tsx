@@ -17,6 +17,7 @@ import {
   type CandySymbolId,
 } from "@/lib/arcade/candyCascadeMath";
 import { playCandyFeatureSound } from "@/lib/arcade/candySound";
+import { resolveCandyCascadeVisualQaRng } from "@/lib/arcade/candyCascadeVisualQaRng";
 import { formatCoins } from "@/lib/arcade/format";
 import { playSound, setAmbienceEnergy, setGameAmbience } from "@/lib/arcade/sound";
 import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store";
@@ -204,7 +205,10 @@ export function CandyCascadePremium() {
   const busyRef = useRef(false);
   const autoStopRef = useRef(false);
 
-  useEffect(() => hydrateFromStorage(), []);
+  useEffect(() => {
+    hydrateFromStorage();
+    return () => { autoStopRef.current = true; };
+  }, []);
   useEffect(() => {
     setGameAmbience("candy", soundEnabled);
     return () => setGameAmbience("candy", false);
@@ -341,7 +345,7 @@ export function CandyCascadePremium() {
   }, [presentRound, soundEnabled, turbo]);
 
   const spinRound = useCallback(async () => {
-    if (busyRef.current || featureOpen || autoOpen) return false;
+    if (busyRef.current || featureOpen) return false;
     if (!arcadeActions.placeBet(bet)) {
       playSound("lose", soundEnabled);
       return false;
@@ -353,7 +357,7 @@ export function CandyCascadePremium() {
     setSugarEnergy(0);
     setSugarLevel(1);
     try {
-      const plan = planCandyRound(bet);
+      const plan = planCandyRound(bet, resolveCandyCascadeVisualQaRng(Math.random));
       let displayed = await presentRound(plan, 0, false);
       let feature: CandyFeaturePlan | undefined;
       if (plan.scatterAward > 0) {
@@ -381,7 +385,7 @@ export function CandyCascadePremium() {
     } finally {
       busyRef.current = false;
     }
-  }, [autoOpen, bet, featureOpen, presentFeature, presentRound, soundEnabled, turbo]);
+  }, [bet, featureOpen, presentFeature, presentRound, soundEnabled, turbo]);
 
   const buyFeature = useCallback(async () => {
     if (busyRef.current || autoLeft > 0) return;

@@ -21,14 +21,54 @@
   }
 }
 
+/* Real-browser compositor fix --------------------------------------------
+   The Work playtest reproduced partial HUD/text loss while the 3×3 itself
+   remained visible. That points at raster/compositor pressure rather than a
+   React/layout collapse. Keep only the reel viewport clipped; do not make the
+   entire cabinet a scroll-style overflow surface, and stop promoting dozens of
+   decorative descendants into persistent compositor layers. */
+.gt-hw-page,
+.gt-hw-page .gt-hw-machine {
+  overflow: clip;
+}
+
+.gt-hw-page .gt-hw-grid,
+.gt-hw-page .gt-hw-reel-overlay {
+  contain: none;
+  isolation: auto;
+}
+
+.gt-hw-page .gt-hw-cell {
+  transform: none;
+}
+
+.gt-hw-page .gt-hw-tiger-rig,
+.gt-hw-page .gt-hw-tiger-layer,
+.gt-hw-page .gt-hw-tiger-sprite,
+.gt-hw-page .gt-hw-reel-track {
+  will-change: auto !important;
+}
+
+.gt-hw-reel-track {
+  position: relative;
+  filter: none !important;
+  backface-visibility: visible;
+}
+
+/* Ambient particles are decorative. Pausing their fourteen transformed
+   surfaces during the critical reel phase substantially lowers compositor
+   pressure without changing the reel/tiger acting or any game timing. */
+.gt-hw-machine[data-phase="base-spin"] .gt-hw-ambient i,
+.gt-hw-machine[data-phase="feature-spin"] .gt-hw-ambient i {
+  animation-play-state: paused;
+}
+
 /* The three base reels share one deterministic symbol strip, but their live
    presentation must not read as three synchronized copies. Offset reels 2/3
    by whole visible cells while cruising, then return to zero as braking starts
-   so the precomputed result still lands on the exact final symbols. */
-.gt-hw-reel-track {
-  position: relative;
-}
-
+   so the precomputed result still lands on the exact final symbols. Blur is
+   intentionally kept off the transformed track; the reel shade supplies the
+   motion-depth cue without creating an oversized filtered compositor layer. */
 .gt-hw-reel-overlay:not(.is-braking)[style*="33.333"] .gt-hw-reel-track {
   top: -33.333333%;
 }
@@ -85,7 +125,7 @@
   opacity: 0;
   background: transparent;
   animation: gt-fortune-cell-cycle .42s linear infinite;
-  will-change: opacity, transform, filter;
+  will-change: auto;
 }
 
 .gt-hw-page .gt-hw-machine[data-phase="feature-spin"] .gt-hw-cell-motion span:nth-child(2) {

@@ -16,6 +16,8 @@ on:
       - "src/lib/arcade/adaptiveScore.ts"
       - "src/routes/game/$slug.tsx"
       - "scripts/olympusStormVisualQa.mjs"
+      - "scripts/olympusStormDesktopQa.mjs"
+      - "scripts/slotAutoPlayRegressionQa.mjs"
       - "tsconfig.json"
       - ".github/workflows/olympus-storm-visual.yml"
   workflow_dispatch:
@@ -73,7 +75,6 @@ jobs:
             --headless=new \
             --no-sandbox \
             --disable-dev-shm-usage \
-            --disable-gpu \
             --remote-debugging-address=127.0.0.1 \
             --remote-debugging-port=9223 \
             --user-data-dir=/tmp/olympus-storm-chrome \
@@ -91,6 +92,12 @@ jobs:
       - name: Audit mobile viewports
         run: node scripts/olympusStormVisualQa.mjs
 
+      - name: Audit desktop composition
+        run: node scripts/olympusStormDesktopQa.mjs
+
+      - name: Audit Auto Play launch and stop
+        run: node scripts/slotAutoPlayRegressionQa.mjs olympus
+
       - name: Upload visual evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -98,6 +105,7 @@ jobs:
           name: olympus-storm-visual-qa
           path: |
             artifacts/olympus-storm/
+            artifacts/olymus-storm-auto/
             olympus-storm-server.log
             olympus-storm-chrome.log
           if-no-files-found: warn

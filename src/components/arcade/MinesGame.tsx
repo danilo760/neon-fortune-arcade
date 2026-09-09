@@ -5,6 +5,11 @@ import neonMinesReference from "@/assets/neon-mines-reference.webp";
 import { Button } from "@/components/ui/button";
 import { formatCoins, formatMultiplier } from "@/lib/arcade/format";
 import { createMineField, minesMultiplier, nextMinesMultiplier } from "@/lib/arcade/mines";
+import {
+  clearMinesRoundSnapshot,
+  loadMinesRoundSnapshot,
+  saveMinesRoundSnapshot,
+} from "@/lib/arcade/minesRoundPersistence";
 import { createRng } from "@/lib/arcade/rng";
 import { BET_STEPS } from "@/lib/arcade/slot-configs";
 import {
@@ -15,7 +20,7 @@ import {
 } from "@/lib/arcade/minesPresentation";
 import { playMinesSound } from "@/lib/arcade/minesSound";
 import { playSound, setAmbienceEnergy, setGameAmbience } from "@/lib/arcade/sound";
-import { arcadeActions, useArcade } from "@/lib/arcade/store";
+import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store";
 import { cn } from "@/lib/utils";
 
 import { AnimatedWinCounter } from "./AnimatedWinCounter";
@@ -57,10 +62,70 @@ export function MinesGame() {
   const roundActiveRef = useRef(false);
   const revealedRef = useRef<Set<number>>(new Set());
   const revealBusyRef = useRef(false);
+  const startedAtRef = useRef(0);
+  const betRef = useRef(bet);
+  const mineCountRef = useRef(mineCount);
+  const mineFieldRef = useRef<number[]>(mineField);
 
   const multiplier = minesMultiplier(mineCount, revealed.size);
   const nextMultiplier = nextMinesMultiplier(mineCount, revealed.size);
   const mineSet = useMemo(() => new Set(mineField), [mineField]);
+
+  useEffect(() => {
+    hydrateFromStorage();
+    const snapshot = loadMinesRoundSnapshot();
+    if (!snapshot) return;
+
+    const restored = new Set(snapshot.revealed);
+    betRef.current = snapshot.bet;
+    mineCountRef.current = snapshot.mineCount;
+    mineFieldRef.current = [...snapshot.mineField];
+    setBet(snapshot.bet);
+    setMineCount(snapshot.mineCount);
+    setMineField(snapshot.mineField);
+    setRevealed(restored);
+    setLastPayout(0);
+    setLastRoundSafeCells(0);
+    setLastRoundMultiplier(1);
+    setLastSafeReveal(null);
+    setTriggeredMine(null);
+    setOpeningIndex(null);
+    setRevealPhase("idle");
+    setPossibleWinDuration(0);
+    setDisplayedPossibleWin(Math.round(snapshot.bet * minesMultiplier(snapshot.mineCount, restored.size)));
+    setStatus("playing");
+    revealedRef.current = restored;
+    settledRef.current = false;
+    roundActiveRef.current = true;
+    revealBusyRef.current = false;
+    startedAtRef.current = snapshot.startedAt;
+  }, []);
+
+  useEffect(() => { betRef.current = bet; }, [bet]);
+  useEffect(() => { mineCountRef.current = mineCount; }, [mineCount]);
+  useEffect(() => { mineFieldRef.current = mineField; }, [mineField]);
+
+  useEffect(() => {
+    const persistActiveRound = () => {
+      if (!roundActiveRef.current || settledRef.current || startedAtRef.current <= 0) return;
+      const activeMineField = mineFieldRef.current;
+      if (activeMineField.length !== mineCountRef.current) return;
+      saveMinesRoundSnapshot({
+        version: 1,
+        bet: betRef.current,
+        mineCount: mineCountRef.current,
+        mineField: [...activeMineField],
+        revealed: [...revealedRef.current],
+        startedAt: startedAtRef.current,
+      });
+    };
+
+    window.addEventListener("pagehide", persistActiveRound);
+    return () => {
+      persistActiveRound();
+      window.removeEventListener("pagehide", persistActiveRound);
+    };
+  }, []);
 
   useEffect(() => {
     setGameAmbience("mines", soundEnabled);
@@ -82,7 +147,21 @@ export function MinesGame() {
       return;
     }
 
-    setMineField(createMineField(createRng(), mineCount));
+    const nextMineField = createMineField(createRng(), mineCount);
+    const startedAt = Date.now();
+    betRef.current = bet;
+    mineCountRef.current = mineCount;
+    mineFieldRef.current = [...nextMineField];
+    startedAtRef.current = startedAt;
+    saveMinesRoundSnapshot({
+      version: 1,
+      bet: betRef.current,
+      mineCount: mineCountRef.current,
+      mineField: [...mineFieldRef.current],
+      revealed: [],
+      startedAt,
+    });
+    setMineField(nextMineField);
     revealedRef.current = new Set();
     setRevealed(revealedRef.current);
     setLastPayout(0);
@@ -109,6 +188,18 @@ export function MinesGame() {
     const finalMultiplier = minesMultiplier(mineCount, safeCells);
     const payout = Math.round(bet * finalMultiplier);
     const reduceMotion = reducedMotion();
+
+    arcadeActions.credit(payout);
+    arcadeActions.recordRound({
+      slug: "neon-mines",
+      gameName: "Neon Mines",
+      bet,
+      payout,
+      multiplier: finalMultiplier,
+      note: `${safeCells} casas seguras`,
+    });
+    clearMinesRoundSnapshot();
+    startedAtRef.current = 0;
     playMinesSound("cashout", soundEnabled);
 
     try {
@@ -120,15 +211,6 @@ export function MinesGame() {
       await wait(countDuration);
       await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.cashoutSettle, reduceMotion));
 
-      arcadeActions.credit(payout);
-      arcadeActions.recordRound({
-        slug: "neon-mines",
-        gameName: "Neon Mines",
-        bet,
-        payout,
-        multiplier: finalMultiplier,
-        note: `${safeCells} casas seguras`,
-      });
       setLastPayout(payout);
       setLastRoundSafeCells(safeCells);
       setLastRoundMultiplier(finalMultiplier);
@@ -164,19 +246,8 @@ export function MinesGame() {
         const safeCells = revealedRef.current.size;
         const reachedMultiplier = minesMultiplier(mineCount, safeCells);
         setTriggeredMine(index);
-        setRevealPhase("danger");
-        playMinesSound("danger", soundEnabled);
-        await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.danger, reduceMotion));
-
         settledRef.current = true;
         roundActiveRef.current = false;
-        playMinesSound("mineArm", soundEnabled);
-        setRevealPhase("explode");
-        playMinesSound("explosion", soundEnabled);
-        await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.explosion, reduceMotion));
-        setLastRoundSafeCells(safeCells);
-        setLastRoundMultiplier(reachedMultiplier);
-        setStatus("lost");
         arcadeActions.recordRound({
           slug: "neon-mines",
           gameName: "Neon Mines",
@@ -185,6 +256,19 @@ export function MinesGame() {
           multiplier: 0,
           note: `Mina encontrada após ${safeCells} casa(s) segura(s)`,
         });
+        clearMinesRoundSnapshot();
+        startedAtRef.current = 0;
+        setRevealPhase("danger");
+        playMinesSound("danger", soundEnabled);
+        await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.danger, reduceMotion));
+
+        playMinesSound("mineArm", soundEnabled);
+        setRevealPhase("explode");
+        playMinesSound("explosion", soundEnabled);
+        await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.explosion, reduceMotion));
+        setLastRoundSafeCells(safeCells);
+        setLastRoundMultiplier(reachedMultiplier);
+        setStatus("lost");
         await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.lostSettle, reduceMotion));
         return;
       }
@@ -193,6 +277,16 @@ export function MinesGame() {
       next.add(index);
       revealedRef.current = next;
       setRevealed(next);
+      const startedAt = startedAtRef.current || Date.now();
+      startedAtRef.current = startedAt;
+      saveMinesRoundSnapshot({
+        version: 1,
+        bet: betRef.current,
+        mineCount: mineCountRef.current,
+        mineField: [...mineFieldRef.current],
+        revealed: [...next],
+        startedAt,
+      });
       setLastSafeReveal(index);
       setRevealPhase("gem");
       playMinesSound("gemReveal", soundEnabled, next.size);

@@ -16,7 +16,7 @@ export function BetControls({ value, onChange, disabled = false, className }: Be
   return (
     <section
       className={cn("rounded-2xl surface-panel p-3", className)}
-      aria-label="Valor da aposta fictícia"
+      aria-label="Controles da aposta fictícia"
     >
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
@@ -35,6 +35,7 @@ export function BetControls({ value, onChange, disabled = false, className }: Be
             variant={value === amount ? "gold" : "outline"}
             className="min-h-10 min-w-[4.25rem] shrink-0 rounded-xl tabular-nums"
             disabled={disabled}
+            aria-label={`Selecionar aposta fictícia ${formatCoins(amount)}`}
             aria-pressed={value === amount}
             onClick={() => onChange(amount)}
           >

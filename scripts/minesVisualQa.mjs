@@ -1,5 +1,6 @@
 const appUrl = process.env.MINES_URL ?? "http://127.0.0.1:3000/game/neon-mines";
 const cdpUrl = process.env.CHROME_CDP_URL ?? "http://127.0.0.1:9225";
+const roundStorageKey = "neon-fortune-arcade:mines-round:v1";
 const viewports = [
   { width: 360, height: 800 },
   { width: 390, height: 844 },
@@ -70,6 +71,8 @@ const auditExpression = `(() => {
   const tiles = [...document.querySelectorAll('.mines-premium__grid .mines-premium__tile')];
   const legacyArt = document.querySelector('.mines-premium__machine-art');
   const open = [...document.querySelectorAll('button')].find((button) => button.getAttribute('aria-label')?.startsWith('Abrir cofre apostando'));
+  const betButtons = [...document.querySelectorAll('.mines-premium__bet button')];
+  const labelledBetButtons = betButtons.filter((button) => button.getAttribute('aria-label')?.startsWith('Selecionar aposta fictícia '));
   const rect = (el) => el ? (() => { const r = el.getBoundingClientRect(); return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; })() : null;
   const br = open?.getBoundingClientRect();
   const centerInViewport = Boolean(br && br.top >= 0 && br.bottom <= innerHeight);
@@ -88,6 +91,9 @@ const auditExpression = `(() => {
     openDisabled: Boolean(open?.disabled),
     openInViewport: centerInViewport,
     openHit: Boolean(open && hit && (hit === open || open.contains(hit))),
+    betButtonCount: betButtons.length,
+    labelledBetButtonCount: labelledBetButtons.length,
+    betLabels: betButtons.map((button) => button.getAttribute('aria-label')),
     legacyArtPresent: Boolean(legacyArt),
     legacyArtDisplay: legacyArt ? getComputedStyle(legacyArt).display : null,
   };
@@ -101,6 +107,9 @@ for (const viewport of viewports) {
     await client.connect();
     await client.send("Page.enable");
     await client.send("Runtime.enable");
+    await client.send("Page.addScriptToEvaluateOnNewDocument", {
+      source: `try { localStorage.removeItem(${JSON.stringify(roundStorageKey)}); } catch {}`,
+    });
     await applyViewport(client, viewport);
     await client.send("Page.navigate", { url: appUrl });
     await sleep(1400);
@@ -112,8 +121,11 @@ for (const viewport of viewports) {
     if (idle.scrollWidth > viewport.width + 1) errors.push(`overflow ${idle.scrollWidth}px`);
     if (!idle.cabinet || idle.cabinet.left < -1 || idle.cabinet.right > viewport.width + 1) errors.push("cabinet outside viewport");
     if (idle.tileCount !== 25) errors.push(`expected 25 tiles, got ${idle.tileCount}`);
+    if (idle.status !== "idle") errors.push(`expected isolated idle load, got ${idle.status}`);
     if (!idle.openPresent) errors.push("open vault action missing");
     if (idle.openDisabled) errors.push("open vault action disabled on idle load");
+    if (idle.betButtonCount === 0) errors.push("bet controls missing");
+    if (idle.labelledBetButtonCount !== idle.betButtonCount) errors.push(`ambiguous bet labels: ${JSON.stringify(idle.betLabels)}`);
     if (idle.legacyArtPresent && idle.legacyArtDisplay !== "none") errors.push(`legacy screenshot is visible (${idle.legacyArtDisplay})`);
 
     await evaluate(client, `(() => {
@@ -125,17 +137,17 @@ for (const viewport of viewports) {
     const ready = await evaluate(client, auditExpression);
     if (!ready.openInViewport || !ready.openHit) errors.push("open vault action is obscured after scroll");
 
-    await evaluate(client, `(() => { [...document.querySelectorAll('button')].find((button) => button.getAttribute('aria-label')?.startsWith('Abrir cofre apostando'))?.click(); return true; })()`);
-    await sleep(180);
-    const playing = await evaluate(client, auditExpression);
-    if (playing.status !== "playing") errors.push(`expected playing after open, got ${playing.status}`);
-    if (playing.enabledTiles < 20) errors.push(`expected playable minefield, got ${playing.enabledTiles} enabled tiles`);
+    // Do not start a round in the visual smoke. Active Mines rounds are now
+    // intentionally persistent, so starting here couples sequential viewport
+    // targets through the browser profile. The dedicated persistence QA covers
+    // start -> loss -> new round -> safe reveal -> lobby -> reload -> cashout.
+    if (ready.enabledTiles !== 0) errors.push(`idle minefield unexpectedly has ${ready.enabledTiles} enabled tiles`);
 
     if (errors.length) {
       failed = true;
       console.error(`❌ ${viewport.width}x${viewport.height}: ${errors.join('; ')}`);
     } else {
-      console.log(`✅ ${viewport.width}x${viewport.height}: vector cabinet + scroll-to-action + round start passed | legacy-display=${idle.legacyArtDisplay}`);
+      console.log(`✅ ${viewport.width}x${viewport.height}: vector cabinet + explicit bet labels + idle action visibility passed | legacy-display=${idle.legacyArtDisplay}`);
     }
   } finally {
     client.close();

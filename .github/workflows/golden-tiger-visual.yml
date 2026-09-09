@@ -14,6 +14,7 @@ on:
       - "src/lib/arcade/adaptiveScore.ts"
       - "src/routes/game/$slug.tsx"
       - "scripts/goldenTigerVisualQa.mjs"
+      - "scripts/goldenTigerDesktopSpinQa.mjs"
       - "scripts/goldenTigerSpecialStateQa.mjs"
       - "scripts/goldenTigerCompositionGuard.mjs"
       - ".github/workflows/golden-tiger-visual.yml"
@@ -74,7 +75,6 @@ jobs:
             --headless=new \
             --no-sandbox \
             --disable-dev-shm-usage \
-            --disable-gpu \
             --remote-debugging-address=127.0.0.1 \
             --remote-debugging-port=9222 \
             --user-data-dir=/tmp/golden-tiger-chrome \
@@ -91,6 +91,9 @@ jobs:
 
       - name: Audit mobile viewports
         run: node scripts/goldenTigerVisualQa.mjs
+
+      - name: Audit desktop spin sequence
+        run: node scripts/goldenTigerDesktopSpinQa.mjs
 
       - name: Audit special states
         run: node scripts/goldenTigerSpecialStateQa.mjs

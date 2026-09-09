@@ -12,6 +12,8 @@ on:
       - "src/lib/arcade/adaptiveScore.ts"
       - "src/routes/game/$slug.tsx"
       - "scripts/candyCascadeVisualQa.mjs"
+      - "scripts/candyCascadeDesktopMotionQa.mjs"
+      - "scripts/slotAutoPlayRegressionQa.mjs"
       - ".github/workflows/candy-cascade-visual.yml"
   workflow_dispatch:
 
@@ -27,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Production build
-        run: bun run build
+        run: VITE_CANDY_CASCADE_VISUAL_QA=1 bun run build
       - name: Detect Chrome
         shell: bash
         run: |
@@ -51,7 +53,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu \
+          "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage \
             --remote-debugging-address=127.0.0.1 --remote-debugging-port=9224 \
             --user-data-dir=/tmp/candy-cascade-chrome about:blank > candy-cascade-chrome.log 2>&1 &
           echo $! > /tmp/candy-chrome.pid
@@ -63,6 +65,10 @@ jobs:
           exit 1
       - name: Audit premium mobile presentation
         run: node scripts/candyCascadeVisualQa.mjs
+      - name: Audit desktop motion composition
+        run: node scripts/candyCascadeDesktopMotionQa.mjs
+      - name: Audit Auto Play launch and stop
+        run: node scripts/slotAutoPlayRegressionQa.mjs candy
       - name: Upload visual evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -70,6 +76,7 @@ jobs:
           name: candy-cascade-visual-qa
           path: |
             artifacts/candy-cascade/
+            artifacts/candy-cascade-auto/
             candy-cascade-server.log
             candy-cascade-chrome.log
           if-no-files-found: warn

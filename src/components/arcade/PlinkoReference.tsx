@@ -57,7 +57,7 @@ function ballPosition(path: readonly number[], step: number, rows: number, bucke
 
 function stepDuration(step: number, rows: number) {
   const progress = step / Math.max(1, rows - 1);
-  return 82 - Math.round(progress * 24);
+  return 64 - Math.round(progress * 20);
 }
 
 function pointTransform(
@@ -83,7 +83,7 @@ function gravityMidpoint(from: BoardPoint, to: BoardPoint, timeProgress: number)
 function buildBallMotion(ball: ActiveBall, rows: number, bucketCount: number, width: number, height: number) {
   const initial = ballPosition(ball.path, -1, rows, ball.bucket, bucketCount);
   const entries: MotionEntry[] = [{ at: 0, point: initial }];
-  let at = 72;
+  let at = 58;
 
   for (let step = 0; step < rows; step += 1) {
     entries.push({ at, point: ballPosition(ball.path, step, rows, ball.bucket, bucketCount) });
@@ -94,7 +94,7 @@ function buildBallMotion(ball: ActiveBall, rows: number, bucketCount: number, wi
   // Reserve a short tail after the bucket contact. The ball visibly compresses
   // at impact, then returns to its round silhouette instead of freezing on the
   // exact collision frame.
-  const duration = Math.max(1, at + 84);
+  const duration = Math.max(1, at + 64);
   const keyframes: Keyframe[] = [
     { transform: pointTransform(entries[0]!.point, width, height), offset: 0 },
   ];
@@ -233,6 +233,31 @@ export function PlinkoReference() {
   const runCost = bet * ballsPerRun;
   const insufficient = runCost > balance;
   const inFlight = Math.max(0, launched - settled);
+  const flightLabel = !busy
+    ? "PRONTO PARA CAIR"
+    : portalPhase === "charging"
+      ? "PREPARANDO QUEDA"
+      : portalPhase === "launching" && inFlight === 0 && launched === 0
+        ? "LANÇANDO BOLAS"
+        : inFlight === 0 && launched > 0 && settled >= launched
+          ? "CONCLUINDO RODADA"
+          : `${inFlight} EM QUEDA`;
+  const dropDetail = !busy
+    ? formatCoins(runCost)
+    : portalPhase === "charging"
+      ? "carregando portal"
+      : portalPhase === "launching" && inFlight === 0 && launched === 0
+        ? `${ballsPerRun} na fila`
+        : inFlight === 0 && launched > 0 && settled >= launched
+          ? `${settled}/${ballsPerRun} concluídas`
+          : `${inFlight} em queda`;
+  const dropActionLabel = !busy
+    ? `SOLTAR ×${ballsPerRun}`
+    : portalPhase === "charging"
+      ? "PREPARANDO"
+      : inFlight === 0 && launched > 0 && settled >= launched
+        ? "CONCLUINDO"
+        : "EM QUEDA";
 
   function clearAutoTimer() {
     if (autoTimerRef.current !== null) {
@@ -483,19 +508,19 @@ export function PlinkoReference() {
     setActiveBalls(prepared);
     setPortalPhase("charging");
     playSound("plinkoPortal", soundEnabled);
-    await wait(180);
+    await wait(130);
     if (!mountedRef.current) {
       busyRef.current = false;
       return;
     }
     setPortalPhase("launching");
-    await wait(100);
+    await wait(70);
     if (!mountedRef.current) {
       busyRef.current = false;
       return;
     }
 
-    const stagger = ballsPerRun >= 10 ? 88 : ballsPerRun >= 5 ? 108 : 136;
+    const stagger = ballsPerRun >= 10 ? 72 : ballsPerRun >= 5 ? 92 : 118;
     startAudioScheduler(prepared, stagger);
     const completed = await Promise.all(prepared.map((ball, index) => animateBall(ball, index * stagger)));
     if (!mountedRef.current) {
@@ -509,14 +534,14 @@ export function PlinkoReference() {
       await wait(90);
       playSound("bigWin", soundEnabled);
       setBigWin({ payout: best.payout, multiplier: best.multiplier });
-      await wait(850);
+      await wait(650);
       if (!mountedRef.current) {
         busyRef.current = false;
         return;
       }
       setBigWin(null);
     } else {
-      await wait(460);
+      await wait(280);
       if (!mountedRef.current) {
         busyRef.current = false;
         return;
@@ -537,7 +562,7 @@ export function PlinkoReference() {
     busyRef.current = false;
     setBusy(false);
 
-    if (autoRef.current) scheduleAuto(240);
+    if (autoRef.current) scheduleAuto(180);
   }
 
   function moveBet(direction: -1 | 1) {
@@ -565,7 +590,7 @@ export function PlinkoReference() {
         </button>
 
         <div className="plinko-ref-status" aria-live="polite">
-          <span>{busy ? `${inFlight} EM QUEDA` : "PRONTO PARA CAIR"}</span>
+          <span>{flightLabel}</span>
           <strong>{busy ? `${settled}/${ballsPerRun} CONCLUÍDAS` : `${ballsPerRun} BOLAS`}</strong>
         </div>
 
@@ -657,11 +682,11 @@ export function PlinkoReference() {
           disabled={busy || insufficient}
           onClick={() => void runSequence()}
           aria-busy={busy}
-          aria-label={busy ? "Bolas em queda" : `Soltar ${ballsPerRun} bolas por ${formatCoins(runCost)}`}
+          aria-label={busy ? flightLabel : `Soltar ${ballsPerRun} bolas por ${formatCoins(runCost)}`}
         >
           {busy ? <CircleDot /> : <Play />}
-          <strong>{busy ? "EM QUEDA" : `SOLTAR ×${ballsPerRun}`}</strong>
-          <small>{busy ? `${inFlight} em queda` : formatCoins(runCost)}</small>
+          <strong>{dropActionLabel}</strong>
+          <small>{dropDetail}</small>
         </button>
 
         <div className="plinko-ref-hud" aria-label="Resumo do jogo">

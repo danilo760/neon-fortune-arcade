@@ -102,7 +102,9 @@ const auditExpression = `(() => {
   const machine = document.querySelector('.osp-machine');
   const grid = document.querySelector('.osp-grid');
   const spin = document.querySelector('.osp-spin');
+  const guardian = document.querySelector('.osp-guardian-crest');
   const cells = [...document.querySelectorAll('.osp-grid > .osp-cell')];
+  const symbols = [...document.querySelectorAll('.osp-symbol')];
   const vectors = [...document.querySelectorAll('.osp-symbol-svg')];
   const referenceImages = [...document.querySelectorAll('.osp-machine img')];
   const rect = (element) => element ? (() => {
@@ -112,6 +114,12 @@ const auditExpression = `(() => {
   const spinRect = spin?.getBoundingClientRect();
   const hit = spinRect ? document.elementFromPoint(spinRect.left + spinRect.width / 2, spinRect.top + spinRect.height / 2) : null;
   const machineStyle = machine ? getComputedStyle(machine) : null;
+  const guardianStyle = guardian ? getComputedStyle(guardian) : null;
+  const paintedSymbols = symbols.filter((symbol) => {
+    const style = getComputedStyle(symbol);
+    return style.backgroundImage.includes('.svg') || style.backgroundImage.includes('image/svg+xml');
+  });
+  const hiddenLegacyVectors = vectors.filter((vector) => Number(getComputedStyle(vector).opacity) <= .01);
   return {
     ready: Boolean(machine && grid && spin),
     width: innerWidth,
@@ -120,13 +128,17 @@ const auditExpression = `(() => {
     machine: rect(machine),
     grid: rect(grid),
     spin: rect(spin),
+    guardian: rect(guardian),
     spinHit: Boolean(hit && spin && (hit === spin || spin.contains(hit))),
     phase: machine?.getAttribute('data-phase') ?? null,
     cellCount: cells.length,
     vectorCount: vectors.length,
+    paintedSymbolCount: paintedSymbols.length,
+    hiddenLegacyVectorCount: hiddenLegacyVectors.length,
     referenceImageCount: referenceImages.length,
     spinDisabled: Boolean(spin?.disabled),
     machineBackground: machineStyle?.backgroundImage ?? 'none',
+    guardianBackground: guardianStyle?.backgroundImage ?? 'none',
   };
 })()`;
 
@@ -155,7 +167,11 @@ function validateIdle(audit, viewport) {
   if (!audit.machine || audit.machine.left < -1 || audit.machine.right > viewport.width + 1) errors.push("machine exceeds horizontal viewport");
   if (!audit.machine || audit.machine.top < -1 || audit.machine.bottom > viewport.height + 1) errors.push("machine exceeds vertical viewport");
   if (audit.cellCount !== 30) errors.push(`expected 30 grid cells, got ${audit.cellCount}`);
-  if (audit.vectorCount !== 30) errors.push(`expected 30 authorial vector symbols on idle grid, got ${audit.vectorCount}`);
+  if (audit.vectorCount !== 30) errors.push(`expected 30 semantic vector fallbacks on idle grid, got ${audit.vectorCount}`);
+  if (audit.paintedSymbolCount !== 30) errors.push(`expected 30 authored painted symbols, got ${audit.paintedSymbolCount}`);
+  if (audit.hiddenLegacyVectorCount !== 30) errors.push(`legacy flat glyphs are still visible (${audit.hiddenLegacyVectorCount}/30 hidden)`);
+  if (!audit.guardian || audit.guardian.width < 130 || audit.guardian.height < 90) errors.push("Storm Warden guardian is missing/collapsed");
+  if (!audit.guardianBackground || (!audit.guardianBackground.includes('.svg') && !audit.guardianBackground.includes('image/svg+xml'))) errors.push("Storm Warden authored SVG is not painted");
   if (audit.referenceImageCount !== 0) errors.push(`reference bitmap is still mounted (${audit.referenceImageCount} image elements)`);
   if (!audit.machineBackground || audit.machineBackground === "none") errors.push("authorial storm background is missing");
   if (!audit.spinHit) errors.push("Spin center is obscured/not hittable");
@@ -168,6 +184,7 @@ function validateSpin(audit) {
   if (audit.phase !== "spin" && audit.phase !== "landing") errors.push(`expected spin/landing after click, got ${audit.phase}`);
   if (!audit.spinDisabled) errors.push("Spin should be disabled while Olympus round is active");
   if (audit.cellCount !== 30) errors.push(`grid changed size during spin: ${audit.cellCount}`);
+  if (audit.paintedSymbolCount !== 30) errors.push(`authored symbols disappeared during spin (${audit.paintedSymbolCount}/30)`);
   if (audit.referenceImageCount !== 0) errors.push("reference bitmap appeared during spin");
   return errors;
 }
@@ -210,6 +227,6 @@ await writeFile(`${outputDir}/report.json`, JSON.stringify(report, null, 2));
 for (const item of report) {
   const label = `${item.viewport.width}x${item.viewport.height}`;
   if (item.errors.length) console.error(`❌ ${label}: ${item.errors.join("; ")}`);
-  else console.log(`✅ ${label}: Olympus idle + spin visual smoke passed`);
+  else console.log(`✅ ${label}: authored Storm Warden + 30 painted symbols + spin passed`);
 }
 if (failed) process.exitCode = 1;
