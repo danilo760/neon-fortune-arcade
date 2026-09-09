@@ -1,16 +1,9 @@
 @import "./CandyCascadeActivePolish.css";
 
-/* Media-tier motion for Candy Cascade. The active Sugar Sprite keeps its CSS
- * silhouette, but now acts continuously and the candy materials respond even
- * outside explicit win states. No feature math or timing is changed here. */
+/* Media-tier motion for Candy Cascade. Presentation only: feature math,
+ * Sugar Meter rules, payout planning and reveal timings remain untouched. */
 
-/* Real-browser playtests exposed intermittent clipping of HUD/control siblings
- * during animated rounds even though geometry remained stable in headless QA.
- * Keep the transformed 6x5 surface in its own paint boundary, avoid combining
- * per-cell roll transforms with blur, and keep the Sugar Bomb flash below every
- * persistent HUD/control surface. The flash still sits above the grid (z20),
- * but can no longer visually wipe the Sugar HUD (z25), status/economy (30/31),
- * controls (38), or topbar (40). */
+/* Real-browser compositor hardening -------------------------------------- */
 .ccp-grid {
   contain: paint;
   isolation: isolate;
@@ -28,6 +21,82 @@
   z-index: 24;
 }
 
+/* Authorial Sugar Sprite -------------------------------------------------- */
+.ccp-mascot::before,
+.ccp-mascot::after {
+  display: none;
+}
+
+.ccp-mascot-core {
+  width: clamp(118px, 39vw, 164px);
+  height: auto;
+  aspect-ratio: 300 / 260;
+  border: 0;
+  border-radius: 0;
+  background: url("../../assets/candy-cascade/sugar-sprite-v2.svg") center / contain no-repeat;
+  box-shadow: none;
+  filter:
+    drop-shadow(0 8px 12px rgba(72, 5, 67, .42))
+    drop-shadow(0 0 14px rgba(255, 137, 220, .18));
+}
+
+.ccp-mascot-core::before,
+.ccp-mascot-core::after {
+  content: none;
+  display: none;
+}
+
+.ccp-mascot-ribbon {
+  width: 132px;
+  height: 18px;
+  bottom: 2px;
+  opacity: .4;
+  background: linear-gradient(90deg, transparent, rgba(116, 224, 255, .78) 22% 42%, rgba(255, 239, 153, .82) 49% 57%, rgba(255, 126, 210, .7) 65% 82%, transparent);
+  filter: blur(1px) drop-shadow(0 0 8px rgba(255, 175, 232, .38));
+}
+
+/* Authorial candy family -------------------------------------------------- */
+.ccp-symbol {
+  transform-origin: 50% 58%;
+  background-repeat: no-repeat, no-repeat;
+  background-position: center, center;
+  background-size: 89% 89%, 100% 100%;
+  animation: ccp-media-symbol-idle 4.4s ease-in-out infinite;
+}
+
+.ccp-symbol[aria-label="lollipop"] {
+  background-image: url("../../assets/candy-cascade/symbol-lollipop-v2.svg"), radial-gradient(circle at 50% 45%, rgba(255, 118, 187, .15), transparent 70%);
+}
+.ccp-symbol[aria-label="star"] {
+  background-image: url("../../assets/candy-cascade/symbol-star-v2.svg"), radial-gradient(circle at 50% 45%, rgba(255, 214, 92, .14), transparent 70%);
+}
+.ccp-symbol[aria-label="jelly"] {
+  background-image: url("../../assets/candy-cascade/symbol-jelly-v2.svg"), radial-gradient(circle at 50% 45%, rgba(178, 100, 255, .16), transparent 70%);
+}
+.ccp-symbol[aria-label="candy"] {
+  background-image: url("../../assets/candy-cascade/symbol-candy-v2.svg"), radial-gradient(circle at 50% 45%, rgba(83, 219, 242, .15), transparent 70%);
+}
+.ccp-symbol[aria-label="cupcake"] {
+  background-image: url("../../assets/candy-cascade/symbol-cupcake-v2.svg"), radial-gradient(circle at 50% 45%, rgba(255, 207, 213, .15), transparent 70%);
+}
+.ccp-symbol[aria-label="sprinkle"] {
+  background-image: url("../../assets/candy-cascade/symbol-sprinkle-v2.svg"), radial-gradient(circle at 50% 45%, rgba(168, 238, 112, .14), transparent 70%);
+}
+.ccp-symbol[aria-label="heart"] {
+  background-image: url("../../assets/candy-cascade/symbol-heart-v2.svg"), radial-gradient(circle at 50% 45%, rgba(255, 101, 139, .15), transparent 70%);
+}
+.ccp-symbol[aria-label="diamond"] {
+  background-image: url("../../assets/candy-cascade/symbol-diamond-v2.svg"), radial-gradient(circle at 50% 45%, rgba(159, 112, 255, .17), transparent 70%);
+}
+.ccp-symbol[aria-label="Party Candy"] {
+  background-image: url("../../assets/candy-cascade/symbol-party-v2.svg"), radial-gradient(circle at 50% 45%, rgba(255, 225, 134, .21), rgba(212, 106, 255, .08) 56%, transparent 72%);
+}
+
+.ccp-symbol-svg {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .ccp-mascot-aura {
   animation: ccp-media-aura 3.3s ease-in-out infinite;
 }
@@ -35,11 +104,6 @@
 .ccp-mascot-core {
   transform-origin: 50% 74%;
   animation: ccp-media-sprite 3.8s cubic-bezier(.45,0,.55,1) infinite;
-}
-
-.ccp-mascot-core::before,
-.ccp-mascot-core::after {
-  animation: ccp-media-face-life 4.6s ease-in-out infinite;
 }
 
 .ccp-mascot-ribbon {
@@ -60,26 +124,23 @@
 .ccp-cell:nth-child(3n) .ccp-symbol-shine { animation-delay: -1.45s; }
 .ccp-cell:nth-child(5n) .ccp-symbol-shine { animation-delay: -2.15s; }
 
-.ccp-symbol-svg {
-  transform-origin: 50% 58%;
-  animation: ccp-media-symbol-idle 4.4s ease-in-out infinite;
-}
+.ccp-cell:nth-child(2n) .ccp-symbol { animation-delay: -.62s; }
+.ccp-cell:nth-child(3n) .ccp-symbol { animation-delay: -1.26s; }
+.ccp-cell:nth-child(4n) .ccp-symbol { animation-delay: -1.9s; }
+.ccp-cell:nth-child(5n) .ccp-symbol { animation-delay: -2.55s; }
 
-.ccp-cell:nth-child(2n) .ccp-symbol-svg { animation-delay: -.62s; }
-.ccp-cell:nth-child(3n) .ccp-symbol-svg { animation-delay: -1.26s; }
-.ccp-cell:nth-child(4n) .ccp-symbol-svg { animation-delay: -1.9s; }
-.ccp-cell:nth-child(5n) .ccp-symbol-svg { animation-delay: -2.55s; }
-
-.ccp-cell.is-winning .ccp-symbol-svg {
+.ccp-cell.is-winning .ccp-symbol {
   animation: ccp-media-symbol-win .42s cubic-bezier(.14,.86,.18,1.16) both;
 }
 
 .ccp-symbol--party .ccp-party-orbit {
   animation: ccp-media-party-orbit 3.2s linear infinite;
+  opacity: .64;
 }
 
 .ccp-symbol--party .ccp-party-spark {
   animation: ccp-media-party-spark 1.7s ease-in-out infinite;
+  opacity: .8;
 }
 
 .ccp-bomb {
@@ -95,28 +156,20 @@
   50% { opacity: 1; scale: 1.055; rotate: 1deg; }
 }
 
-/* The core already has an authored rotate(-8deg) transform. Animate only
- * translate/scale here so the character never accumulates a second rotation. */
 @keyframes ccp-media-sprite {
   0%, 100% { translate: 0 0; scale: 1; }
   35% { translate: -1px -1px; scale: 1.01; }
   68% { translate: 1px -2px; scale: 1.018; }
 }
 
-@keyframes ccp-media-face-life {
-  0%, 72%, 100% { filter: brightness(1); }
-  80% { filter: brightness(1.12); }
-  88% { filter: brightness(1.035); }
-}
-
 @keyframes ccp-media-ribbon {
-  0%, 100% { translate: -2px 0; scale: .97 1; opacity: .58; }
-  50% { translate: 2px -1px; scale: 1.04 1.08; opacity: .88; }
+  0%, 100% { translate: -2px 0; scale: .97 1; opacity: .34; }
+  50% { translate: 2px -1px; scale: 1.04 1.08; opacity: .62; }
 }
 
 @keyframes ccp-media-sprite-celebrate {
   from { translate: -1px 0; scale: 1.01; filter: brightness(1.04); }
-  to { translate: 1px -4px; scale: 1.075; filter: brightness(1.16); }
+  to { translate: 1px -4px; scale: 1.075; filter: brightness(1.16) drop-shadow(0 0 12px rgba(255, 202, 241, .28)); }
 }
 
 @keyframes ccp-media-shine {
@@ -132,7 +185,7 @@
 
 @keyframes ccp-media-symbol-win {
   0% { translate: 0 3px; scale: .88; rotate: -1.2deg; filter: brightness(1.08); }
-  48% { translate: 0 -2px; scale: 1.12; rotate: 1.2deg; filter: brightness(1.26) drop-shadow(0 0 12px currentColor); }
+  48% { translate: 0 -2px; scale: 1.12; rotate: 1.2deg; filter: brightness(1.26) drop-shadow(0 0 12px rgba(255, 210, 246, .66)); }
   78% { translate: 0 1px; scale: .98; rotate: -.3deg; }
   100% { translate: 0 0; scale: 1; rotate: 0deg; }
 }
@@ -153,14 +206,21 @@
   to { scale: 1.055; filter: brightness(1.14) drop-shadow(0 0 11px rgba(255,190,80,.6)); }
 }
 
+@media (max-width: 390px) {
+  .ccp-mascot-core {
+    width: clamp(112px, 38vw, 148px);
+  }
+  .ccp-symbol {
+    background-size: 92% 92%, 100% 100%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ccp-mascot-aura,
   .ccp-mascot-core,
-  .ccp-mascot-core::before,
-  .ccp-mascot-core::after,
   .ccp-mascot-ribbon,
   .ccp-symbol-shine,
-  .ccp-symbol-svg,
+  .ccp-symbol,
   .ccp-party-orbit,
   .ccp-party-spark,
   .ccp-bomb {
