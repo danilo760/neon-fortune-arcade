@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "src/components/arcade/MinesGame.tsx"
+      - "src/components/arcade/BetControls.tsx"
       - "src/components/arcade/MinesPremium.css"
       - "src/components/arcade/MinesInteraction.css"
       - "src/components/arcade/MinesOrchestration.css"
