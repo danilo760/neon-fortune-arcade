@@ -18,12 +18,14 @@ export function GoldenTigerWinStage({
   tier,
   fullGrid,
   beat,
+  countUpMs,
   reducedMotion,
 }: {
   value: number;
   tier: GoldenTigerWinTier;
   fullGrid: boolean;
   beat: GoldenTigerWinBeat;
+  countUpMs: number;
   reducedMotion: boolean;
 }) {
   const title = fullGrid ? "TELA CHEIA" : tier === "super" ? "SUPER MEGA GANHO" : tier === "mega" ? "MEGA GANHO" : "GRANDE GANHO";
@@ -54,7 +56,7 @@ export function GoldenTigerWinStage({
       </div>
       <div className="gt-commercial-win__content">
         <span className="gt-commercial-win__title">{title}</span>
-        <AnimatedWinCounter value={value} duration={reducedMotion ? 0 : 1450} />
+        <AnimatedWinCounter value={beat === "impact" ? 0 : value} duration={reducedMotion ? 0 : countUpMs} />
         {fullGrid ? <small>GANHOS × 10</small> : null}
       </div>
     </div>

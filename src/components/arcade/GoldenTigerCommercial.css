@@ -1,3 +1,5 @@
+@import "./GoldenTigerReference.css";
+@import "./GoldenTigerPremiumArt.css";
 @import "./GoldenTigerSession2Polish.css";
 
 /* =====================================================================
@@ -109,7 +111,7 @@
 }
 
 /* Lock feedback moves from overexposing art into the physical border. */
-.gt-hw-page .gt-premium-machine[data-phase="feature-lock"] .gt-hw-cell.is-fresh .gt-hw-symbol-raster {
+.gt-hw-page .gt-premium-machine[data-feature-mode="active"] .gt-hw-cell.is-fresh .gt-hw-symbol-raster {
   animation: gt-commercial-lock-symbol .38s cubic-bezier(.16,.84,.2,1.12) both !important;
   filter: brightness(1.03) saturate(1.02) !important;
 }
@@ -121,7 +123,7 @@
   box-shadow: inset 0 0 0 1px rgba(142,62,8,.82), 0 0 0 1px rgba(255,177,43,.48);
 }
 
-.gt-hw-page .gt-premium-machine[data-phase="feature-lock"] .gt-hw-cell.is-fresh .gt-premium-lock-ring::before {
+.gt-hw-page .gt-premium-machine[data-feature-mode="active"] .gt-hw-cell.is-fresh .gt-premium-lock-ring::before {
   content: "";
   position: absolute;
   inset: -35% -85%;
@@ -130,10 +132,40 @@
   animation: gt-commercial-lock-sweep .42s ease-out both;
 }
 
-.gt-hw-page .gt-premium-machine[data-phase="feature-lock"] .gt-hw-cell.is-fresh .gt-premium-lock-ring::after {
+.gt-hw-page .gt-premium-machine[data-feature-mode="active"] .gt-hw-cell.is-fresh .gt-premium-lock-ring::after {
   border-color: rgba(255,222,117,.55);
   box-shadow: none;
   animation: gt-commercial-lock-edge .42s ease-out both;
+}
+
+.gt-hw-page .gt-premium-machine[data-feature-mode="active"] .gt-hw-cell.is-fresh .gt-hw-symbol-raster {
+  opacity: .78;
+  filter: brightness(.92) saturate(.96) !important;
+}
+
+.gt-hw-page .gt-premium-machine .gt-premium-lock-ring > i {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  margin: -2px;
+  border-radius: 50%;
+  background: #fff0ac;
+  box-shadow: 0 0 7px rgba(255,190,54,.86);
+  opacity: 0;
+}
+.gt-hw-page .gt-premium-machine[data-feature-mode="active"] .gt-hw-cell.is-fresh .gt-premium-lock-ring > i {
+  animation: gt-commercial-lock-spark .46s cubic-bezier(.16,.72,.28,1) both;
+}
+.gt-hw-page .gt-premium-machine .gt-premium-lock-ring > i:nth-child(1) { --gt-lock-x: -24px; --gt-lock-y: -19px; }
+.gt-hw-page .gt-premium-machine .gt-premium-lock-ring > i:nth-child(2) { --gt-lock-x: 25px; --gt-lock-y: -17px; animation-delay: 35ms; }
+.gt-hw-page .gt-premium-machine .gt-premium-lock-ring > i:nth-child(3) { --gt-lock-x: -22px; --gt-lock-y: 21px; animation-delay: 55ms; }
+.gt-hw-page .gt-premium-machine .gt-premium-lock-ring > i:nth-child(4) { --gt-lock-x: 23px; --gt-lock-y: 20px; animation-delay: 75ms; }
+
+.gt-hw-page .gt-premium-machine[data-win-beat="impact"] {
+  animation: gt-commercial-machine-impact .22s cubic-bezier(.2,.7,.2,1) both;
 }
 
 /* Three-beat win staging; legacy ray/bloom takeover is retired. */
@@ -311,4 +343,16 @@
   .gt-premium-lock-ring::before,
   .gt-premium-lock-ring::after { animation: none !important; }
   .gt-commercial-win__content { opacity: 1; transform: none; }
+}
+
+@keyframes gt-commercial-lock-spark {
+  0% { opacity: 0; transform: translate(0,0) scale(.4); }
+  22% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--gt-lock-x),var(--gt-lock-y)) scale(1.1); }
+}
+@keyframes gt-commercial-machine-impact {
+  0%,100% { transform: translate3d(0,0,0); }
+  22% { transform: translate3d(-2px,1px,0); }
+  44% { transform: translate3d(2px,-1px,0); }
+  68% { transform: translate3d(-1px,0,0); }
 }

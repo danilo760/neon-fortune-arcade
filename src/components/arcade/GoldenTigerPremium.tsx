@@ -3,8 +3,10 @@ import { ArrowLeft, Gift, Sparkles, Volume2, VolumeX, Zap } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AnimatedWinCounter } from "./AnimatedWinCounter";
+import { GoldenTigerScene25D, type GoldenTigerLightingMode } from "./golden-tiger/GoldenTigerScene25D";
 import { GoldenTigerSymbol } from "./golden-tiger/GoldenTigerSymbols";
 import { GoldenTigerTigerStage, type TigerReactionState } from "./golden-tiger/GoldenTigerTigerStage";
+import { GoldenTigerWinStage } from "./golden-tiger/GoldenTigerWinStage";
 import { formatCoins } from "@/lib/arcade/format";
 import {
   GOLDEN_TIGER_BONUS_BUY_MULTIPLIER,
@@ -44,11 +46,11 @@ import {
   goldenTigerReboundEase,
   goldenTigerSpinLaunchMs,
 } from "@/lib/arcade/goldenTigerMotion";
+import { goldenTigerSettleHoldMs, goldenTigerWinTimeline, type GoldenTigerWinBeat } from "@/lib/arcade/goldenTigerWinTimeline";
 import { setAmbienceEnergy, setGameAmbience } from "@/lib/arcade/sound";
 import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store";
 import { cn } from "@/lib/utils";
-import "./GoldenTigerReference.css";
-import "./GoldenTigerPremiumArt.css";
+import "./GoldenTigerCommercial.css";
 
 const BETS = [10, 20, 50, 100, 200, 500, 1_000] as const;
 const INITIAL_GRID: GoldenTigerSymbolId[] = ["fortuneBag", "ingot", "jade", "orange", "wild", "firecracker", "lion", "lantern", "fortuneBag"];
@@ -301,6 +303,7 @@ export function GoldenTigerPremium() {
   const [featurePurchased, setFeaturePurchased] = useState(false);
   const [win, setWin] = useState(0);
   const [winTier, setWinTier] = useState<GoldenTigerWinTier>("none");
+  const [winBeat, setWinBeat] = useState<GoldenTigerWinBeat>(null);
   const [turbo, setTurbo] = useState(false);
   const [autoLeft, setAutoLeft] = useState(0);
   const [autoRounds, setAutoRounds] = useState(10);
@@ -350,12 +353,19 @@ export function GoldenTigerPremium() {
   }, [turbo]);
 
   const tigerReaction: TigerReactionState =
-    phase === "full-grid" ? "full" :
+    phase === "full-grid" && winBeat ? (winBeat === "celebrate" ? "full" : winBeat === "impact" ? "reveal" : "tense") :
+    phase === "win" && winBeat ? (winBeat === "celebrate" ? "win" : winBeat === "impact" ? "reveal" : "tense") :
     phase === "bonus-intro" || phase === "feature-intro" || phase === "feature-lock" || phase === "feature-outro" ? "feature" :
     anticipating || (featureActive && lockedCount >= 6) ? "tense" :
     phase === "reveal" ? "reveal" :
     phase === "base-spin" || phase === "feature-spin" ? "watch" :
-    phase === "win" ? "win" : "idle";
+    phase === "win" ? "win" : phase === "full-grid" ? "full" : "idle";
+
+  const sceneLighting: GoldenTigerLightingMode =
+    phase === "full-grid" ? "full" :
+    phase === "win" ? "win" :
+    featureActive ? "feature" :
+    phase === "base-spin" ? "spin" : "idle";
 
   const animateFeature = useCallback(async (plan: FortuneFeatureResult, purchased = false) => {
     let visibleGrid: FortuneFeatureCell[] = [...EMPTY_FEATURE_GRID];
@@ -469,34 +479,45 @@ export function GoldenTigerPremium() {
     const resolvedTier: GoldenTigerWinTier = payout > visualStake && rawTier === "none" ? "small" : rawTier;
     setWinTier(resolvedTier);
 
-    if (fullGrid) {
-      setPhase("full-grid");
-      playGoldenTigerAudio({ type: "full-grid" }, soundEnabled);
-      await wait(turbo ? 680 : 2100);
+    const cinematicWin = fullGrid || resolvedTier === "big" || resolvedTier === "mega" || resolvedTier === "super";
+
+    if (cinematicWin) {
+      const timeline = goldenTigerWinTimeline(turbo, fullGrid);
+      setPhase(fullGrid ? "full-grid" : "win");
+      playGoldenTigerAudio(
+        fullGrid
+          ? { type: "full-grid" }
+          : { type: "win", tier: resolvedTier === "none" ? "small" : resolvedTier },
+        soundEnabled,
+      );
+
+      setWinBeat("impact");
+      await wait(timeline.impactMs);
+      setWinBeat("reveal");
+      await wait(timeline.revealMs);
+      setWinBeat("celebrate");
+      await wait(timeline.celebrateMs);
+      setWinBeat(null);
     } else if (payout > visualStake) {
       setPhase("win");
       playGoldenTigerAudio({
         type: "win",
         tier: resolvedTier === "none" ? "small" : resolvedTier,
       }, soundEnabled);
-      await wait(
-        turbo ? 280 :
-        resolvedTier === "super" ? 2000 :
-        resolvedTier === "mega" ? 1700 :
-        resolvedTier === "big" ? 1350 : 650,
-      );
+      await wait(goldenTigerSettleHoldMs("simple-win", turbo));
     } else if (payout > 0) {
       setPhase("return");
-      await wait(turbo ? 90 : 260);
+      await wait(goldenTigerSettleHoldMs("return", turbo));
     } else {
       playGoldenTigerAudio({ type: "lose" }, soundEnabled);
-      await wait(turbo ? 70 : 170);
+      await wait(goldenTigerSettleHoldMs("lose", turbo));
     }
   }, [soundEnabled, turbo, wait]);
 
   const resetRoundPresentation = useCallback(() => {
     setWin(0);
     setWinTier("none");
+    setWinBeat(null);
     setWinning(new Set());
     setFreshCells(new Set());
     setRollingCells(new Set());
@@ -512,6 +533,7 @@ export function GoldenTigerPremium() {
   }, []);
 
   const finishRoundPresentation = useCallback(() => {
+    setWinBeat(null);
     setPhase("idle");
     setFeatureActive(false);
     setFeaturePurchased(false);
@@ -668,14 +690,10 @@ export function GoldenTigerPremium() {
         data-feature-mode={featureActive ? "active" : "base"}
         data-feature-purchased={featurePurchased ? "true" : "false"}
         data-anticipating={anticipating ? "true" : "false"}
+        data-win-beat={winBeat ?? "none"}
         aria-label="Golden Tiger"
       >
-        <div className="gt-hw-backdrop gt-premium-backdrop" aria-hidden />
-        <div className="gt-premium-temple" aria-hidden><i /><i /><i /></div>
-        <div className="gt-premium-lanterns" aria-hidden><i /><i /><i /><i /></div>
-        <div className="gt-hw-ambient" aria-hidden>
-          {Array.from({ length: 14 }, (_, index) => <i key={index} />)}
-        </div>
+        <GoldenTigerScene25D lighting={sceneLighting} />
 
         <header className="gt-hw-topbar">
           <Link
@@ -743,7 +761,11 @@ export function GoldenTigerPremium() {
                 {featureActive && selectedSymbol && rollingCells.has(index) && (
                   <FeatureCellMotion selectedSymbol={selectedSymbol} index={index} />
                 )}
-                {locked && <span className="gt-premium-lock-ring" aria-hidden />}
+                {locked && (
+                  <span className="gt-premium-lock-ring" aria-hidden>
+                    {freshCells.has(index) && <><i /><i /><i /><i /></>}
+                  </span>
+                )}
               </div>
             );
           })}
@@ -827,19 +849,15 @@ export function GoldenTigerPremium() {
           </div>
         )}
 
-        {((phase === "win" && (winTier === "big" || winTier === "mega" || winTier === "super")) || phase === "full-grid") && win > 0 && (
-          <div className={cn(
-            "gt-hw-win-overlay",
-            phase === "full-grid" && "is-full",
-            (winTier === "mega" || winTier === "super") && "is-mega",
-            winTier === "super" && "is-super",
-          )}>
-            <div className="gt-hw-win-rays" aria-hidden />
-            <div className="gt-hw-win-crown" aria-hidden>✦</div>
-            <span>{phase === "full-grid" ? "TELA CHEIA" : winTier === "super" ? "SUPER MEGA GANHO" : winTier === "mega" ? "MEGA GANHO" : "GRANDE GANHO"}</span>
-            <AnimatedWinCounter value={win} duration={reducedMotion() ? 0 : 1500} />
-            {phase === "full-grid" && <small>GANHOS × {FORTUNE_FEATURE_FULL_GRID_MULTIPLIER}</small>}
-          </div>
+        {((phase === "win" && (winTier === "big" || winTier === "mega" || winTier === "super")) || phase === "full-grid") && win > 0 && winBeat && (
+          <GoldenTigerWinStage
+            value={win}
+            tier={winTier}
+            fullGrid={phase === "full-grid"}
+            beat={winBeat}
+            countUpMs={goldenTigerWinTimeline(turbo, phase === "full-grid").revealMs}
+            reducedMotion={reducedMotion()}
+          />
         )}
 
         {bonusOpen && (

@@ -16,3 +16,10 @@ export function goldenTigerWinTimeline(turbo: boolean, fullGrid: boolean): Golde
     celebrateMs: fullGrid ? 900 : 650,
   };
 }
+
+export type GoldenTigerSettlePresentation = "simple-win" | "return" | "lose";
+
+export function goldenTigerSettleHoldMs(kind: GoldenTigerSettlePresentation, turbo: boolean) {
+  if (turbo) return kind === "simple-win" ? 280 : kind === "return" ? 90 : 70;
+  return kind === "simple-win" ? 650 : kind === "return" ? 260 : 170;
+}

@@ -109,7 +109,7 @@ async function waitForPhase(client, phase, timeoutMs) {
 async function snapshotState(client) {
   return evaluate(client, `(() => {
     const machine = document.querySelector('.gt-hw-machine');
-    const overlay = document.querySelector('.gt-hw-win-overlay');
+    const overlay = document.querySelector('.gt-commercial-win');
     return {
       phase: machine?.getAttribute('data-phase') ?? null,
       featureActive: document.querySelector('.gt-hw-respin-panel')?.classList.contains('is-active') ?? false,
@@ -121,6 +121,7 @@ async function snapshotState(client) {
       overlay: overlay?.textContent?.replace(/\\s+/g, ' ').trim() ?? '',
       overlayFull: overlay?.classList.contains('is-full') ?? false,
       overlayMega: overlay?.classList.contains('is-mega') ?? false,
+      winBeat: overlay?.getAttribute('data-win-beat') ?? null,
       scrollWidth: document.documentElement.scrollWidth,
       scrollHeight: document.documentElement.scrollHeight,
       randomCalls: window.__gtQaRandom?.calls ?? null,
@@ -189,12 +190,15 @@ function requireState(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-async function capturePhase(client, scenario, phase, validate, timeoutMs = 12_000) {
+async function capturePhase(client, scenario, phase, validate, timeoutMs = 12_000, winBeat = null) {
   await waitForPhase(client, phase, timeoutMs);
+  if (winBeat) {
+    await waitFor(client, `document.querySelector('.gt-commercial-win')?.getAttribute('data-win-beat') === ${JSON.stringify(winBeat)}`, `${scenario} ${winBeat} beat`, timeoutMs);
+  }
   await sleep(42);
   const state = await snapshotState(client);
   validate(state);
-  await screenshot(client, `${outputDir}/special-${scenario}-${phase}.png`);
+  await screenshot(client, `${outputDir}/special-${scenario}-${phase}${winBeat ? `-${winBeat}` : ""}.png`);
   return state;
 }
 
@@ -268,19 +272,25 @@ const bigWinValues = [
 {
   const scenario = await openScenario("big-win", bigWinValues);
   try {
-    report.push({ scenario: "big-win", state: "win", data: await capturePhase(
-      scenario.client,
-      "big-win",
-      "win",
-      (state) => {
-        requireState(state.overlay.includes("GRANDE GANHO"), `expected GRANDE GANHO overlay, got ${state.overlay}`);
-        requireState(!state.overlayFull, "big win incorrectly marked full-grid");
-      },
-    ) });
+    for (const beat of ["impact", "reveal", "celebrate"]) {
+      report.push({ scenario: "big-win", state: `win-${beat}`, data: await capturePhase(
+        scenario.client,
+        "big-win",
+        "win",
+        (state) => {
+          requireState(state.overlay.includes("GRANDE GANHO"), `expected GRANDE GANHO overlay, got ${state.overlay}`);
+          requireState(!state.overlayFull, "big win incorrectly marked full-grid");
+          requireState(state.winBeat === beat, `big win expected ${beat} beat, got ${state.winBeat}`);
+        },
+        12_000,
+        beat,
+      ) });
+    }
   } finally {
     await closeScenario(scenario);
   }
 }
+
 
 const megaWinValues = [
   0, 0, 0,
@@ -300,7 +310,10 @@ const megaWinValues = [
         requireState(state.overlay.includes("MEGA GANHO"), `expected MEGA GANHO overlay, got ${state.overlay}`);
         requireState(state.overlayMega, "mega win overlay missing is-mega state");
         requireState(!state.overlayFull, "mega win incorrectly marked full-grid");
+        requireState(state.winBeat === "reveal", `mega win expected reveal beat, got ${state.winBeat}`);
       },
+      12_000,
+      "reveal",
     ) });
   } finally {
     await closeScenario(scenario);
@@ -324,7 +337,10 @@ const baseFullGridValues = [
         requireState(state.overlayFull, "base full-grid overlay missing is-full state");
         requireState(!state.featureActive, "base full-grid incorrectly kept Fortune Feature active");
         requireState(state.winning === 9, `base full-grid should highlight 9 positions, got ${state.winning}`);
+        requireState(state.winBeat === "reveal", `base full-grid expected reveal beat, got ${state.winBeat}`);
       },
+      12_000,
+      "reveal",
     ) });
   } finally {
     await closeScenario(scenario);
@@ -360,7 +376,10 @@ const featureFullGridValues = [
         requireState(state.overlayFull, "feature full-grid overlay missing is-full state");
         requireState(state.featureActive, "feature full-grid should remain visually inside Fortune Feature until settle completes");
         requireState(state.locked === 9, `feature full-grid should retain 9 sticky cells, got ${state.locked}`);
+        requireState(state.winBeat === "reveal", `feature full-grid expected reveal beat, got ${state.winBeat}`);
       },
+      12_000,
+      "reveal",
     ) });
   } finally {
     await closeScenario(scenario);
