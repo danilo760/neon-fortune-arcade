@@ -25,26 +25,30 @@ export function normalizeMinesRoundSnapshot(value: unknown): MinesRoundSnapshot 
   if (!value || typeof value !== "object") return null;
   const input = value as Partial<MinesRoundSnapshot>;
   if (input.version !== 1) return null;
-  if (!Number.isFinite(input.bet) || Number(input.bet) <= 0) return null;
-  if (!Number.isInteger(input.mineCount) || Number(input.mineCount) < 1 || Number(input.mineCount) > 24) return null;
-  if (!Number.isFinite(input.startedAt) || Number(input.startedAt) <= 0) return null;
+
+  const bet = Number(input.bet);
+  const mineCount = Number(input.mineCount);
+  const startedAt = Number(input.startedAt);
+  if (!Number.isFinite(bet) || bet <= 0) return null;
+  if (!Number.isInteger(mineCount) || mineCount < 1 || mineCount > 24) return null;
+  if (!Number.isFinite(startedAt) || startedAt <= 0) return null;
 
   const mineField = uniqueIndexes(input.mineField);
   const revealed = uniqueIndexes(input.revealed);
   if (!mineField || !revealed) return null;
-  if (mineField.length !== Number(input.mineCount)) return null;
-  if (revealed.length > 25 - Number(input.mineCount)) return null;
+  if (mineField.length !== mineCount) return null;
+  if (revealed.length > 25 - mineCount) return null;
 
   const mines = new Set(mineField);
   if (revealed.some((index) => mines.has(index))) return null;
 
   return {
     version: 1,
-    bet: Number(input.bet),
-    mineCount: Number(input.mineCount),
+    bet,
+    mineCount,
     mineField,
     revealed,
-    startedAt: Number(input.startedAt),
+    startedAt,
   };
 }
 
