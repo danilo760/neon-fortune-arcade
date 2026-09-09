@@ -1,4 +1,4 @@
-import { playArcadeSample, preloadArcadeSamples } from "./sound";
+import { playGoldenTigerSampleUrl, preloadGoldenTigerSampleUrls } from "./goldenTigerSampleEngine";
 
 export type GoldenTigerSampleEvent =
   | { type: "spin" }
@@ -20,7 +20,7 @@ const SAMPLE_URLS = {
 } as const;
 
 export function preloadGoldenTigerSamples() {
-  return preloadArcadeSamples(Object.values(SAMPLE_URLS));
+  return preloadGoldenTigerSampleUrls(Object.values(SAMPLE_URLS));
 }
 
 /** Returns true only when a decoded sample was already available and started.
@@ -30,23 +30,23 @@ export function playGoldenTigerSample(event: GoldenTigerSampleEvent, enabled: bo
   if (!enabled) return false;
   switch (event.type) {
     case "spin":
-      return playArcadeSample(SAMPLE_URLS.spin, { bus: "game", intensity: .86, randomPitchPercent: .05 });
+      return playGoldenTigerSampleUrl(SAMPLE_URLS.spin, { bus: "game", intensity: .86, randomPitchPercent: .05 });
     case "reel-land":
-      return playArcadeSample(
+      return playGoldenTigerSampleUrl(
         event.column === 0 ? SAMPLE_URLS.reel1 : event.column === 1 ? SAMPLE_URLS.reel2 : SAMPLE_URLS.reel3,
         { bus: "impact", intensity: .92, pan: event.column === 0 ? -.4 : event.column === 2 ? .4 : 0, randomPitchPercent: .05 },
       );
     case "anticipation":
-      return playArcadeSample(SAMPLE_URLS.anticipation, { bus: "game", intensity: .9 });
+      return playGoldenTigerSampleUrl(SAMPLE_URLS.anticipation, { bus: "game", intensity: .9 });
     case "feature-lock": {
-      const played = playArcadeSample(SAMPLE_URLS.lock, { bus: "impact", intensity: .9, randomPitchPercent: .035 });
-      void playArcadeSample(SAMPLE_URLS.coin, { bus: "reward", intensity: .48, randomPitchPercent: .05 });
+      const played = playGoldenTigerSampleUrl(SAMPLE_URLS.lock, { bus: "impact", intensity: .9, randomPitchPercent: .035 });
+      void playGoldenTigerSampleUrl(SAMPLE_URLS.coin, { bus: "reward", intensity: .48, randomPitchPercent: .05 });
       return played;
     }
     case "win":
       if (event.tier !== "big" && event.tier !== "mega" && event.tier !== "super") return false;
-      return playArcadeSample(SAMPLE_URLS.bigWin, { bus: "impact", intensity: event.tier === "super" ? 1.12 : 1.02 });
+      return playGoldenTigerSampleUrl(SAMPLE_URLS.bigWin, { bus: "impact", intensity: event.tier === "super" ? 1.12 : 1.02 });
     case "full-grid":
-      return playArcadeSample(SAMPLE_URLS.bigWin, { bus: "impact", intensity: 1.14, pitch: .98 });
+      return playGoldenTigerSampleUrl(SAMPLE_URLS.bigWin, { bus: "impact", intensity: 1.14, pitch: .98 });
   }
 }
