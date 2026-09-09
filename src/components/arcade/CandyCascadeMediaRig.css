@@ -4,6 +4,30 @@
  * silhouette, but now acts continuously and the candy materials respond even
  * outside explicit win states. No feature math or timing is changed here. */
 
+/* Real-browser playtests exposed intermittent clipping of HUD/control siblings
+ * during animated rounds even though geometry remained stable in headless QA.
+ * Keep the transformed 6x5 surface in its own paint boundary, avoid combining
+ * per-cell roll transforms with blur, and keep the Sugar Bomb flash below every
+ * persistent HUD/control surface. The flash still sits above the grid (z20),
+ * but can no longer visually wipe the Sugar HUD (z25), status/economy (30/31),
+ * controls (38), or topbar (40). */
+.ccp-grid {
+  contain: paint;
+  isolation: isolate;
+}
+
+.ccp-cell.is-rolling .ccp-cell-inner {
+  filter: none;
+}
+
+.ccp-grid.is-bomb-burst {
+  filter: none !important;
+}
+
+.ccp-machine.is-impact::after {
+  z-index: 24;
+}
+
 .ccp-mascot-aura {
   animation: ccp-media-aura 3.3s ease-in-out infinite;
 }
