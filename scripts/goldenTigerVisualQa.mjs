@@ -105,7 +105,7 @@ const auditExpression = `(async () => {
   const spin = document.querySelector('.gt-hw-spin');
   const sprite = document.querySelector('.gt-hw-tiger-sprite');
   const cells = [...document.querySelectorAll('.gt-hw-grid > .gt-hw-cell')];
-  const images = [...document.querySelectorAll('.gt-hw-symbol-art')];
+  const rasters = [...document.querySelectorAll('.gt-hw-symbol-raster')];
   const rect = (element) => element ? (() => {
     const r = element.getBoundingClientRect();
     return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
@@ -150,6 +150,13 @@ const auditExpression = `(async () => {
     }
   }
 
+  const rasterPaintedCount = rasters.filter((raster) => {
+    const style = getComputedStyle(raster);
+    const background = style.backgroundImage || '';
+    const r = raster.getBoundingClientRect();
+    return background !== 'none' && background.includes('premium-symbol-atlas') && r.width > 8 && r.height > 8;
+  }).length;
+
   return {
     ready: Boolean(machine && grid && spin && sprite),
     width: innerWidth,
@@ -162,8 +169,8 @@ const auditExpression = `(async () => {
     sprite: rect(sprite),
     spinHit: Boolean(hit && spin && (hit === spin || spin.contains(hit))),
     cellCount: cells.length,
-    symbolImageCount: images.length,
-    brokenImages: images.filter((image) => image.complete && image.naturalWidth === 0).length,
+    rasterSymbolCount: rasters.length,
+    rasterPaintedCount,
     spriteBackground,
     spriteDecoded,
     spriteNaturalWidth,
@@ -179,10 +186,6 @@ const auditExpression = `(async () => {
 async function waitForStableLayout(client, viewport) {
   let lastAudit = null;
   for (let attempt = 0; attempt < 12; attempt += 1) {
-    // Chrome can apply the page's viewport metadata after the first emulation
-    // override, especially on a freshly started runner. Reassert the requested
-    // device metrics after navigation and wait until geometry is physically
-    // plausible before treating it as a product regression.
     await applyViewport(client, viewport);
     await sleep(attempt === 0 ? 160 : 80);
     lastAudit = await evaluate(client, auditExpression);
@@ -205,8 +208,8 @@ function validateIdle(audit, viewport) {
   if (!audit.machine || audit.machine.left < -1 || audit.machine.right > viewport.width + 1) errors.push("machine exceeds horizontal viewport");
   if (!audit.machine || audit.machine.top < -1 || audit.machine.bottom > viewport.height + 1) errors.push("machine exceeds vertical viewport");
   if (audit.cellCount !== 9) errors.push(`expected 9 reel cells, got ${audit.cellCount}`);
-  if (audit.symbolImageCount < 9) errors.push(`expected at least 9 symbol images, got ${audit.symbolImageCount}`);
-  if (audit.brokenImages !== 0) errors.push(`${audit.brokenImages} broken symbol image(s)`);
+  if (audit.rasterSymbolCount < 9) errors.push(`expected at least 9 raster symbol surfaces, got ${audit.rasterSymbolCount}`);
+  if (audit.rasterPaintedCount < 9) errors.push(`expected at least 9 painted raster symbols, got ${audit.rasterPaintedCount}`);
   if (!audit.spriteBackground || audit.spriteBackground === "none") errors.push("tiger pose atlas is not applied");
   if (!audit.spriteDecoded) errors.push(`tiger pose atlas failed to decode: ${audit.spriteDecodeError ?? "unknown"}`);
   if (audit.spriteDecoded && audit.spriteFirstCellVisiblePixels < 1_000) errors.push(`tiger idle atlas cell appears empty: ${audit.spriteFirstCellVisiblePixels} visible pixels`);
@@ -263,7 +266,7 @@ await writeFile(`${outputDir}/report.json`, JSON.stringify(report, null, 2));
 for (const item of report) {
   const label = `${item.viewport.width}x${item.viewport.height}`;
   if (item.errors.length) console.error(`❌ ${label}: ${item.errors.join("; ")}`);
-  else console.log(`✅ ${label}: idle + spin visual smoke passed`);
+  else console.log(`✅ ${label}: raster symbols + idle + spin visual smoke passed`);
 }
 
 if (failed) process.exitCode = 1;
