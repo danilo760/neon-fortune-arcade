@@ -152,7 +152,7 @@ try {
 
   await navigate(client, origin + "/");
   const snapshotInLobby = await evaluate(client, `JSON.parse(localStorage.getItem(${JSON.stringify(roundKey)}) || 'null')`);
-  if (!snapshotInLobby || !snapshotInLobby.revealed.includes(${safeIndex})) throw new Error("active round snapshot was lost in lobby");
+  if (!snapshotInLobby || !snapshotInLobby.revealed.includes(safeIndex)) throw new Error("active round snapshot was lost in lobby");
 
   await navigate(client, appUrl);
   await waitFor(client, `document.querySelector('.mines-premium__cabinet')?.getAttribute('data-round-status') === 'playing'`, "restored playing round after lobby");
