@@ -125,6 +125,7 @@ const auditExpression = `(() => {
       const hit = document.elementFromPoint(x, y);
       const reel = hit?.closest?.('.gt-hw-reel-overlay');
       const cell = hit?.closest?.('.gt-hw-cell');
+      const winOverlay = hit?.closest?.('.gt-hw-win-overlay');
       columns.push({
         column,
         x,
@@ -132,7 +133,8 @@ const auditExpression = `(() => {
         hitClass: hit?.className ?? null,
         reelVisible: Boolean(reel),
         cellVisible: Boolean(cell),
-        coveredByGameSurface: Boolean(reel || cell),
+        winOverlayVisible: Boolean(winOverlay),
+        coveredByGameSurface: Boolean(reel || cell || winOverlay),
       });
     }
   }
