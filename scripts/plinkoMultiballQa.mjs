@@ -77,8 +77,12 @@ try {
   await navigate(client, appUrl);
   await waitFor(client, `Boolean(document.querySelector('.plinko-ref-drop:not(:disabled)'))`, "Plinko ready");
 
-  const initial = await evaluate(client, `JSON.parse(localStorage.getItem(${JSON.stringify(arcadeKey)}))`);
-  if (!initial || !Number.isFinite(initial.balance)) throw new Error("arcade store did not hydrate for Plinko QA");
+  const initialBalance = await evaluate(client, `(() => {
+    const hud = [...document.querySelectorAll('.plinko-ref-hud > div')].find((item) => item.querySelector('small')?.textContent?.trim() === 'SALDO');
+    const text = hud?.querySelector('strong')?.textContent ?? '';
+    return Number(text.replace(/[^0-9-]/g, ''));
+  })()`);
+  if (!Number.isFinite(initialBalance) || initialBalance <= 0) throw new Error(`could not read initial HUD balance: ${initialBalance}`);
 
   const selected = await evaluate(client, `(() => {
     const button = [...document.querySelectorAll('.plinko-ref-panel--balls button')].find((item) => item.textContent?.trim() === '5');
@@ -116,12 +120,13 @@ try {
   if (elapsed > 3500) throw new Error(`5-ball presentation exceeded 3.5s budget: ${elapsed}ms`);
 
   const final = await evaluate(client, `JSON.parse(localStorage.getItem(${JSON.stringify(arcadeKey)}))`);
-  const history = Array.isArray(final?.history) ? final.history : [];
+  if (!final) throw new Error("arcade store was not persisted after Plinko settlements");
+  const history = Array.isArray(final.history) ? final.history : [];
   const plinkoRounds = history.filter((entry) => entry?.slug === 'neon-plinko');
-  if (final.totalSpins !== initial.totalSpins + 5) throw new Error(`expected 5 debits, totalSpins ${initial.totalSpins} -> ${final.totalSpins}`);
+  if (final.totalSpins !== 5) throw new Error(`expected 5 debits from clean store, got totalSpins=${final.totalSpins}`);
   if (plinkoRounds.length !== 5) throw new Error(`expected exactly 5 Plinko settlements, got ${plinkoRounds.length}`);
 
-  const expectedBalance = initial.balance + plinkoRounds.reduce((sum, entry) => sum - Number(entry.bet || 0) + Number(entry.payout || 0), 0);
+  const expectedBalance = initialBalance + plinkoRounds.reduce((sum, entry) => sum - Number(entry.bet || 0) + Number(entry.payout || 0), 0);
   if (final.balance !== expectedBalance) throw new Error(`balance mismatch after 5 settlements: expected ${expectedBalance}, got ${final.balance}`);
 
   const seen = [...labels];
