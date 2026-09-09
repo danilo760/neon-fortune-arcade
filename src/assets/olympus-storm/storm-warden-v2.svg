@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 260" role="img" aria-label="Storm Warden authorial character">
+  <defs>
+    <linearGradient id="armor" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8fe8ff"/><stop offset=".28" stop-color="#2a6eaa"/><stop offset=".62" stop-color="#173b74"/><stop offset="1" stop-color="#08162f"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff4b8"/><stop offset=".3" stop-color="#efc85d"/><stop offset=".72" stop-color="#a96b20"/><stop offset="1" stop-color="#5b2c0b"/></linearGradient>
+    <linearGradient id="skin" x1=".2" y1="0" x2=".8" y2="1"><stop stop-color="#ffd6b5"/><stop offset=".52" stop-color="#c98463"/><stop offset="1" stop-color="#6f362e"/></linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8ffff"/><stop offset=".42" stop-color="#d3e7ee"/><stop offset="1" stop-color="#7398ad"/></linearGradient>
+    <radialGradient id="aura"><stop stop-color="#dcfbff" stop-opacity=".95"/><stop offset=".26" stop-color="#5ed9ff" stop-opacity=".42"/><stop offset=".68" stop-color="#426cff" stop-opacity=".13"/><stop offset="1" stop-color="#10204c" stop-opacity="0"/></radialGradient>
+    <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000714" flood-opacity=".65"/></filter>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <ellipse cx="180" cy="132" rx="166" ry="112" fill="url(#aura)"/>
+  <g filter="url(#shadow)">
+    <path d="M54 254c10-54 48-82 84-92l42 28 42-28c37 10 74 38 84 92z" fill="url(#armor)" stroke="#80dfff" stroke-opacity=".35" stroke-width="3"/>
+    <path d="M74 249c9-37 30-57 59-68l20 21-23 47zm212 0c-9-37-30-57-59-68l-20 21 23 47z" fill="#0a224d" stroke="#e9cc71" stroke-opacity=".45" stroke-width="3"/>
+    <path d="M135 165l45 27 45-27 13 22-58 52-58-52z" fill="#123b73" stroke="url(#gold)" stroke-width="5"/>
+    <path d="M151 173l29 18 29-18-9 59h-40z" fill="#071a3c" opacity=".78"/>
+    <circle cx="180" cy="116" r="58" fill="url(#skin)" stroke="#ffd7b9" stroke-opacity=".35" stroke-width="3"/>
+    <path d="M126 101c3-52 35-77 55-77 28 0 52 27 55 73-13-15-26-23-44-29-16 18-35 27-66 33z" fill="url(#hair)"/>
+    <path d="M126 95c-18 11-24 31-18 50 7 21 20 33 40 39-13-21-17-54-7-78zm108 0c18 11 24 31 18 50-7 21-20 33-40 39 13-21 17-54 7-78z" fill="url(#hair)"/>
+    <path d="M136 151c13 14 28 18 44 11 16 7 31 3 44-11-2 45-17 68-44 82-27-14-42-37-44-82z" fill="url(#hair)" stroke="#ffffff" stroke-opacity=".28" stroke-width="2"/>
+    <path d="M151 151c8 13 17 18 29 18s21-5 29-18c-3 22-12 36-29 45-17-9-26-23-29-45z" fill="#a8c7d7" opacity=".62"/>
+    <path d="M145 112c12-8 23-8 34-2m36 2c-12-8-23-8-34-2" fill="none" stroke="#532e31" stroke-width="7" stroke-linecap="round"/>
+    <ellipse cx="158" cy="124" rx="10" ry="7" fill="#07172f"/><ellipse cx="202" cy="124" rx="10" ry="7" fill="#07172f"/>
+    <circle cx="158" cy="123" r="3.7" fill="#d7fbff" filter="url(#glow)"/><circle cx="202" cy="123" r="3.7" fill="#d7fbff" filter="url(#glow)"/>
+    <path d="M180 124l-7 19 14 1" fill="none" stroke="#7c4038" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M165 153c10 6 20 6 30 0" fill="none" stroke="#6a302d" stroke-width="4" stroke-linecap="round"/>
+    <path d="M140 71l13-36 27 17 27-17 13 36-20-8-20 17-20-17z" fill="url(#gold)" stroke="#fff2b2" stroke-opacity=".55" stroke-width="3"/>
+    <path d="M180 40l7 16-7 14-7-14z" fill="#d8fbff" filter="url(#glow)"/>
+    <path d="M99 196l39-11 13 21-43 26zm162 0l-39-11-13 21 43 26z" fill="url(#gold)" opacity=".92"/>
+  </g>
+  <g fill="none" stroke="#abedff" stroke-linecap="round" filter="url(#glow)">
+    <path d="M38 91l25-21 20 8 18-28" stroke-width="4" opacity=".8"/>
+    <path d="M322 91l-25-21-20 8-18-28" stroke-width="4" opacity=".8"/>
+    <path d="M180 4l-8 15 9 7-7 14" stroke-width="3" opacity=".9"/>
+  </g>
+</svg>
