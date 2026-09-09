@@ -3,7 +3,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 const appUrl = process.env.GOLDEN_TIGER_URL ?? "http://127.0.0.1:3000/game/golden-tiger";
 const cdpUrl = process.env.CHROME_CDP_URL ?? "http://127.0.0.1:9222";
 const outputDir = process.env.GOLDEN_TIGER_QA_DIR ?? "artifacts/golden-tiger";
-const viewport = { width: 1363, height: 936 };
+const viewport = {
+  width: Number(process.env.GOLDEN_TIGER_VIEWPORT_WIDTH ?? 1363),
+  height: Number(process.env.GOLDEN_TIGER_VIEWPORT_HEIGHT ?? 936),
+};
 const sampleDelays = [180, 180, 200, 250, 250, 300];
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -224,7 +227,7 @@ try {
     const errors = validate(audit, index);
     if (errors.length) failed = true;
     samples.push({ index, elapsed, audit, errors });
-    await screenshot(client, `${outputDir}/golden-1363x936-spin-${String(index + 1).padStart(2, '0')}-${elapsed}ms.png`);
+    await screenshot(client, `${outputDir}/golden-${viewport.width}x${viewport.height}-spin-${String(index + 1).padStart(2, '0')}-${elapsed}ms.png`);
   }
 } finally {
   client.close();
@@ -234,7 +237,7 @@ try {
 await writeFile(`${outputDir}/desktop-spin-report.json`, JSON.stringify({ viewport, samples }, null, 2));
 
 for (const sample of samples) {
-  const label = `${sample.elapsed}ms · phase=${sample.audit?.phase ?? 'unknown'} · overlays=${sample.audit?.reelOverlays ?? 'n/a'}`;
+  const label = `${viewport.width}x${viewport.height} · ${sample.elapsed}ms · phase=${sample.audit?.phase ?? 'unknown'} · overlays=${sample.audit?.reelOverlays ?? 'n/a'}`;
   if (sample.errors.length) console.error(`❌ ${label}: ${sample.errors.join('; ')}`);
   else console.log(`✅ ${label}: cabinet + HUD + 3 reel columns visible`);
 }
