@@ -27,9 +27,9 @@ const SCORE_THEME: Partial<Record<string, AdaptiveScoreTheme>> = {
   "neon-plinko": "plinko",
 };
 
-const GoldenTigerReference = lazy(async () => {
-  const module = await import("@/components/arcade/GoldenTigerReference");
-  return { default: module.GoldenTigerReference };
+const GoldenTigerPremium = lazy(async () => {
+  const module = await import("@/components/arcade/GoldenTigerPremium");
+  return { default: module.GoldenTigerPremium };
 });
 
 const OlympusStormPremium = lazy(async () => {
@@ -63,10 +63,7 @@ export const Route = createFileRoute("/game/$slug")({
     return {
       meta: [
         { title: `${loaderData?.game.name ?? "Jogo"} | Neon Fortune Arcade` },
-        {
-          name: "description",
-          content: loaderData?.game.tagline ?? "Arcade privado com moedas fictícias",
-        },
+        { name: "description", content: loaderData?.game.tagline ?? "Arcade privado com moedas fictícias" },
       ],
       links: presentationCss ? [{ rel: "stylesheet", href: presentationCss }] : [],
     };
@@ -95,7 +92,7 @@ function GameRoute() {
   let content;
 
   if (game.slug === "golden-tiger") {
-    content = <GoldenTigerReference />;
+    content = <GoldenTigerPremium />;
   } else if (game.slug === "olympus-storm") {
     content = <OlympusStormPremium />;
   } else if (game.slug === "candy-cascade") {
