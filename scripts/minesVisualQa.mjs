@@ -1,5 +1,6 @@
 const appUrl = process.env.MINES_URL ?? "http://127.0.0.1:3000/game/neon-mines";
 const cdpUrl = process.env.CHROME_CDP_URL ?? "http://127.0.0.1:9225";
+const roundStorageKey = "neon-fortune-arcade:mines-round:v1";
 const viewports = [
   { width: 360, height: 800 },
   { width: 390, height: 844 },
@@ -101,6 +102,9 @@ for (const viewport of viewports) {
     await client.connect();
     await client.send("Page.enable");
     await client.send("Runtime.enable");
+    await client.send("Page.addScriptToEvaluateOnNewDocument", {
+      source: `try { localStorage.removeItem(${JSON.stringify(roundStorageKey)}); } catch {}`,
+    });
     await applyViewport(client, viewport);
     await client.send("Page.navigate", { url: appUrl });
     await sleep(1400);
