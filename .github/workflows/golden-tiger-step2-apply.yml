@@ -1,0 +1,75 @@
+name: Golden Tiger Step 2 Apply
+
+on:
+  push:
+    branches: [art/premium-direction-2026-09-09]
+    paths:
+      - .github/workflows/golden-tiger-step2-apply.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: art/premium-direction-2026-09-09
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Apply Fortune stagger refactor
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+
+          path = Path("src/components/arcade/GoldenTigerPremium.tsx")
+          source = path.read_text()
+
+          anchor = 'import { GoldenTigerClock } from "@/lib/arcade/goldenTigerClock";\n'
+          replacement = anchor + '''import {\n  goldenTigerFeatureCellStaggerMs,\n  goldenTigerFeatureRollingOrder,\n} from "@/lib/arcade/goldenTigerFeatureMotion";\n'''
+          assert anchor in source and "goldenTigerFeatureRollingOrder" not in source
+          source = source.replace(anchor, replacement, 1)
+
+          cell_indexes = 'const CELL_INDEXES = Array.from({ length: 9 }, (_, index) => index);\n'
+          assert cell_indexes in source
+          source = source.replace(cell_indexes, "", 1)
+
+          wait_anchor = '''  const wait = useCallback((ms: number) => {\n    const duration = reducedMotion() ? 24 : ms;\n    return clockRef.current?.wait(duration) ?? Promise.resolve();\n  }, []);\n\n'''
+          wait_replacement = wait_anchor + '''  const waitForFeatureStagger = useCallback((orderIndex: number) => {\n    return clockRef.current?.wait(goldenTigerFeatureCellStaggerMs(orderIndex, turbo)) ?? Promise.resolve();\n  }, [turbo]);\n\n'''
+          assert wait_anchor in source
+          source = source.replace(wait_anchor, wait_replacement, 1)
+
+          old_block = '''      const lockedBeforeSpin = visibleGrid.reduce((count, symbol) => count + (symbol === null ? 0 : 1), 0);\n      setRollingCells(new Set(CELL_INDEXES.filter((index) => visibleGrid[index] === null)));\n      setPhase("feature-spin");\n      playGoldenTigerAudio({\n        type: "feature-respin",\n        attempt: step.respin,\n        lockedCount: lockedBeforeSpin,\n      }, soundEnabled);\n      await wait(turbo ? 170 : 470);\n\n      visibleGrid = [...step.grid];\n      setFeatureCells([...visibleGrid]);\n      setFreshCells(new Set(step.addedIndices));\n      await wait(turbo ? 24 : 70);\n      setRollingCells(new Set());\n\n'''
+          new_block = '''      const lockedBeforeSpin = visibleGrid.reduce((count, symbol) => count + (symbol === null ? 0 : 1), 0);\n      const rollingOrder = goldenTigerFeatureRollingOrder(visibleGrid);\n      setRollingCells(new Set(rollingOrder));\n      setPhase("feature-spin");\n      playGoldenTigerAudio({\n        type: "feature-respin",\n        attempt: step.respin,\n        lockedCount: lockedBeforeSpin,\n      }, soundEnabled);\n      await wait(turbo ? 170 : 470);\n\n      const staggeredGrid = [...visibleGrid];\n      const staggeredFresh = new Set<number>();\n\n      for (let orderIndex = 0; orderIndex < rollingOrder.length; orderIndex += 1) {\n        const cellIndex = rollingOrder[orderIndex];\n        if (cellIndex === undefined) continue;\n\n        staggeredGrid[cellIndex] = step.grid[cellIndex] ?? null;\n        if (step.addedIndices.includes(cellIndex)) staggeredFresh.add(cellIndex);\n\n        setFeatureCells([...staggeredGrid]);\n        setFreshCells(new Set(staggeredFresh));\n        setRollingCells((current) => {\n          const next = new Set(current);\n          next.delete(cellIndex);\n          return next;\n        });\n\n        if (orderIndex < rollingOrder.length - 1) {\n          await waitForFeatureStagger(orderIndex);\n          if (!clockRef.current) return plan.payout;\n        }\n      }\n\n      visibleGrid = [...step.grid];\n      setFeatureCells([...visibleGrid]);\n      setFreshCells(new Set(step.addedIndices));\n      setRollingCells(new Set());\n\n'''
+          assert old_block in source
+          source = source.replace(old_block, new_block, 1)
+
+          deps = '  }, [soundEnabled, turbo, wait]);\n\n  const settle = useCallback(async (\n'
+          deps_replacement = '  }, [soundEnabled, turbo, wait, waitForFeatureStagger]);\n\n  const settle = useCallback(async (\n'
+          assert deps in source
+          source = source.replace(deps, deps_replacement, 1)
+
+          path.write_text(source)
+          PY
+          git diff --check
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Commit source change
+        shell: bash
+        run: |
+          git config user.name "danilo760"
+          git config user.email "62104537+danilo760@users.noreply.github.com"
+          git add src/components/arcade/GoldenTigerPremium.tsx
+          git commit -m "refactor: stagger Golden Tiger Fortune cells"
+          git push origin HEAD:art/premium-direction-2026-09-09
