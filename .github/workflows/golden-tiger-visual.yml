@@ -116,6 +116,19 @@ jobs:
       - name: Guard mobile composition
         run: node scripts/goldenTigerCompositionGuard.mjs
 
+      - name: Package complete source
+        if: always()
+        shell: bash
+        run: |
+          rm -f neon-fortune-arcade-full-source.zip
+          zip -qr neon-fortune-arcade-full-source.zip . \
+            -x ".git/*" \
+               "node_modules/*" \
+               ".output/*" \
+               "artifacts/*" \
+               "*.log" \
+               "neon-fortune-arcade-full-source.zip"
+
       - name: Upload visual evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -131,6 +144,7 @@ jobs:
             src/lib/arcade/sound.ts
             src/routes/game/$slug.tsx
             scripts/goldenTiger*.mjs
+            neon-fortune-arcade-full-source.zip
             golden-tiger-server.log
             golden-tiger-chrome.log
           if-no-files-found: warn
