@@ -96,6 +96,67 @@
   animation: gt-s2-win-title-enter .38s cubic-bezier(.16,.84,.2,1.12) both;
 }
 
+/* Short desktop windows need a compact cabinet composition of their own.
+   This is intentionally width-gated so 360×800 / 390×844 / 430×932 keep the
+   mobile layout that already passed visual QA. */
+@media (min-width: 700px) and (max-height: 800px) {
+  .gt-hw-page .gt-premium-machine {
+    grid-template-rows: 44px 126px 30px minmax(248px,1fr) 27px 36px 50px 9px;
+    gap: 2px;
+    padding: 5px 9px 5px;
+  }
+
+  .gt-hw-page .gt-premium-machine .gt-hw-tiger-stage {
+    height: 126px;
+    min-height: 126px;
+    margin: 0;
+  }
+
+  .gt-hw-page .gt-premium-machine .gt-hw-tiger-rig,
+  .gt-hw-page .gt-premium-machine .gt-hw-tiger-sprite {
+    width: 188px;
+  }
+
+  .gt-hw-page .gt-premium-machine .gt-hw-tiger-rig {
+    height: 126px;
+  }
+
+  .gt-hw-page .gt-premium-machine .gt-hw-tiger-sprite {
+    bottom: -20px;
+  }
+
+  .gt-hw-page .gt-premium-machine .gt-hw-respin-panel {
+    padding-block: 2px;
+  }
+
+  .gt-hw-page .gt-premium-machine .gt-hw-respin-panel strong {
+    font-size: 15px;
+  }
+
+  .gt-hw-page .gt-premium-machine .gt-hw-main-controls {
+    grid-template-columns: 36px minmax(60px,66px) 36px;
+    gap: 5px;
+  }
+
+  .gt-hw-page .gt-premium-machine .gt-hw-main-controls > button:not(.gt-hw-spin) {
+    width: 34px;
+    height: 34px;
+  }
+
+  .gt-hw-page .gt-premium-machine .gt-hw-spin {
+    width: 64px;
+  }
+
+  .gt-hw-page .gt-premium-machine .gt-hw-secondary-controls > button {
+    width: 44px;
+    min-height: 40px;
+  }
+
+  .gt-hw-page .gt-premium-machine .gt-hw-fictional {
+    font-size: 4.5px;
+  }
+}
+
 @keyframes gt-s2-fortune-selected-anchor {
   0%,100% {
     opacity: .94;
