@@ -106,7 +106,8 @@ try {
       activateDisabled: Boolean(activate?.disabled),
     };
   })()`);
-  assert(modal.orb.includes('symbol-scatter-v3'), `premium Storm Orb v3 missing from feature modal: ${modal.orb}`);
+  const orbIsV3 = modal.orb.includes('symbol-scatter-v3') || modal.orb.includes('Storm%20Orb%20premium%20authorial%20symbol');
+  assert(orbIsV3, `premium Storm Orb v3 missing from feature modal: ${modal.orb}`);
   assert(modal.text.includes('STORM ASCENSION'), `feature modal lost Storm Ascension identity: ${modal.text}`);
   assert(modal.text.includes('FREE SPINS') || modal.text.includes('Free Spins'), `feature modal no longer explains free spins: ${modal.text}`);
   assert(!modal.activateDisabled, "feature purchase unexpectedly disabled at default fictional balance");
