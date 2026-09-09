@@ -124,6 +124,13 @@ jobs:
           path: |
             artifacts/golden-tiger/
             src/assets/golden-tiger/tiger-pose-atlas.webp
+            src/components/arcade/GoldenTiger*.tsx
+            src/components/arcade/GoldenTiger*.css
+            src/components/arcade/golden-tiger/
+            src/lib/arcade/goldenTiger*.ts
+            src/lib/arcade/sound.ts
+            src/routes/game/$slug.tsx
+            scripts/goldenTiger*.mjs
             golden-tiger-server.log
             golden-tiger-chrome.log
           if-no-files-found: warn
