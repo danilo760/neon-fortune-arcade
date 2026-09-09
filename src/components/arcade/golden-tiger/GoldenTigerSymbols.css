@@ -9,44 +9,58 @@
 
 .gt-hw-symbol-raster {
   position: absolute;
-  inset: 3%;
-  border-radius: 12px;
+  inset: 1.5%;
   background-image: var(--gt-premium-symbol-atlas);
   background-repeat: no-repeat;
   background-size: 400% 200%;
   background-position: var(--gt-premium-symbol-position);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 232, 158, .28),
-    inset 0 -14px 24px rgba(28, 0, 0, .22),
-    0 6px 12px rgba(0, 0, 0, .28);
+  filter:
+    drop-shadow(0 6px 6px rgba(31, 4, 1, .34))
+    drop-shadow(0 1px 0 rgba(255, 241, 188, .14));
   transform: translateZ(0);
 }
 
-.gt-hw-symbol-aura,
-.gt-hw-symbol-sheen {
+.gt-hw-symbol[data-symbol="jade"] .gt-hw-symbol-raster {
+  filter:
+    drop-shadow(0 6px 6px rgba(2, 42, 24, .34))
+    drop-shadow(0 0 5px rgba(91, 224, 151, .13));
+}
+
+.gt-hw-symbol[data-symbol="lantern"] .gt-hw-symbol-raster,
+.gt-hw-symbol[data-symbol="firecracker"] .gt-hw-symbol-raster {
+  filter:
+    drop-shadow(0 6px 6px rgba(54, 4, 1, .38))
+    drop-shadow(0 0 5px rgba(255, 112, 34, .14));
+}
+
+.gt-hw-symbol[data-symbol="wild"] .gt-hw-symbol-raster {
+  inset: -1%;
+  filter:
+    drop-shadow(0 7px 7px rgba(42, 3, 1, .4))
+    drop-shadow(0 0 7px rgba(255, 202, 76, .2));
+}
+
+.gt-hw-symbol-wild-label {
   position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: 11%;
+  transform: translateX(-50%) rotate(-1deg);
+  color: #fff0a0;
+  font: 950 clamp(10px, 3.8vw, 18px)/1 Georgia, serif;
+  letter-spacing: .025em;
+  -webkit-text-stroke: .7px #751007;
+  text-shadow:
+    0 1px 0 #5a0804,
+    0 2px 2px rgba(34, 0, 0, .74),
+    0 0 4px rgba(255, 214, 98, .35);
   pointer-events: none;
-}
-
-.gt-hw-symbol-aura {
-  inset: 8%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 221, 108, .24), transparent 68%);
-  opacity: .42;
-}
-
-.gt-hw-symbol-sheen {
-  inset: 4%;
-  border-radius: 12px;
-  background: linear-gradient(145deg, rgba(255,255,255,.18), transparent 28%, transparent 68%, rgba(255,197,73,.12));
-  mix-blend-mode: screen;
-  opacity: .5;
 }
 
 .gt-hw-symbol.is-winning .gt-hw-symbol-raster,
 .gt-hw-cell.is-winning .gt-hw-symbol-raster {
   animation: gt-hw-raster-win .38s cubic-bezier(.18,.82,.2,1.12) both;
-  filter: brightness(1.14) saturate(1.08);
+  filter: brightness(1.14) saturate(1.08) drop-shadow(0 0 7px rgba(255, 214, 102, .48));
 }
 
 .gt-hw-cell.is-locked .gt-hw-symbol-raster {

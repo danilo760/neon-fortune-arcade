@@ -18,7 +18,7 @@ const LABEL: Record<GoldenTigerSymbolId, string> = {
   firecracker: "Fogos da fortuna",
   ingot: "Lingote dourado",
   fortuneBag: "Bolsa da fortuna",
-  lion: "Tigre da fortuna",
+  lion: "Guardião da fortuna",
   wild: "Wild Golden Tiger",
 };
 
@@ -50,9 +50,8 @@ export const GoldenTigerSymbol = memo(function GoldenTigerSymbol({
       aria-label={LABEL[id]}
       style={style}
     >
-      <span className="gt-hw-symbol-aura" aria-hidden />
       <span className="gt-hw-symbol-raster" aria-hidden />
-      <span className="gt-hw-symbol-sheen" aria-hidden />
+      {id === "wild" ? <span className="gt-hw-symbol-wild-label" aria-hidden>WILD</span> : null}
     </div>
   );
 });

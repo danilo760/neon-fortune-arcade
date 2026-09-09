@@ -27,3 +27,22 @@ cell background.
 
 The source material is not PG SOFT artwork. Fortune Tiger is used only as an
 interaction, density, and category-quality reference.
+
+## Symbol family
+
+`premium-symbol-atlas.webp` is a 1536×768 RGBA WebP atlas with eight 384×384
+cells. The active order is:
+
+1. orange
+2. jade
+3. lantern
+4. firecracker
+5. ingot
+6. fortune bag
+7. guardian token (the gameplay id remains `lion`)
+8. Wild
+
+The matching files under `symbols/` are individual validated exports from the
+same cells. Material identity comes from the authored raster art; the UI adds
+only restrained state accents. The Wild nameplate is deliberately blank in the
+raster and receives exact `WILD` lettering from the React/CSS layer.
