@@ -75,7 +75,7 @@
 .layer-bg-backplate { z-index: -5; }
 .layer-bg-architecture { z-index: 1; }
 .layer-mascot-platform { z-index: 8; }
-.layer-reels-frame { z-index: 18; }
+.layer-reels-frame { z-index: 14; }
 .layer-foreground {
   z-index: 36;
   transform-origin: 50% 0;
