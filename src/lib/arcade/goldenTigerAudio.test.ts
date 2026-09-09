@@ -52,9 +52,17 @@ test("full-grid lock gets the strongest impact cue", () => {
   assert.equal(impact?.options?.intensity, 1.1);
 });
 
-test("win tiers keep small/nice local and big/mega on the large win cue", () => {
-  assert.equal(goldenTigerAudioPlan({ type: "win", tier: "small" })[0]?.name, "tigerWinAccent");
-  assert.equal(goldenTigerAudioPlan({ type: "win", tier: "nice" })[0]?.name, "tigerWinAccent");
-  assert.equal(goldenTigerAudioPlan({ type: "win", tier: "big" })[0]?.name, "bigWin");
-  assert.equal(goldenTigerAudioPlan({ type: "win", tier: "mega" })[0]?.name, "bigWin");
+test("win tiers keep small/nice local and big/mega/super on the large win cue", () => {
+  const small = goldenTigerAudioPlan({ type: "win", tier: "small" });
+  const nice = goldenTigerAudioPlan({ type: "win", tier: "nice" });
+  const big = goldenTigerAudioPlan({ type: "win", tier: "big" });
+  const mega = goldenTigerAudioPlan({ type: "win", tier: "mega" });
+  const superMega = goldenTigerAudioPlan({ type: "win", tier: "super" });
+
+  assert.equal(small[0]?.name, "tigerWinAccent");
+  assert.equal(nice[0]?.name, "tigerWinAccent");
+  assert.equal(big[0]?.name, "bigWin");
+  assert.equal(mega[0]?.name, "bigWin");
+  assert.equal(superMega[0]?.name, "bigWin");
+  assert.ok((superMega[0]?.options?.intensity ?? 0) > (mega[0]?.options?.intensity ?? 0));
 });
