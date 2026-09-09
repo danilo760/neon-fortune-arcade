@@ -1,0 +1,111 @@
+name: Apply Olympus Candy Audio Tuning
+
+on:
+  push:
+    branches:
+      - fix/arcade-post-playtest-2026-09-08
+    paths:
+      - ".github/workflows/apply-olympus-candy-audio-tuning.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/arcade-post-playtest-2026-09-08
+      - name: Retune procedural cues
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("src/lib/arcade/sound.ts")
+          source = path.read_text()
+          replacements = {
+          '''    case "olympusCluster":
+                tone(430,.085,"triangle",.022,0,620); tone(700,.065,"sine",.013,.02,850); noise(.045,.004,0,2100); break;
+          ''': '''    case "olympusCluster":
+                tone(246,.12,"triangle",.022,0,338); tone(492,.11,"sine",.019,.018,738); tone(984,.08,"sine",.012,.038,1240); noise(.065,.0045,0,1850); break;
+          ''',
+          '''    case "olympusFall":
+                noise(0.14,0.008,0,1050); tone(250,0.13,"sine",0.018,0,172); break;
+          ''': '''    case "olympusFall":
+                noise(.16,.0075,0,980); tone(286,.15,"sine",.019,0,154); tone(143,.12,"triangle",.011,.035,104); break;
+          ''',
+          '''    case "olympusCharge":
+                tone(96,.4,"sine",.035,0,150); tone(220,.32,"sawtooth",.02,.045,650); noise(.22,.005,.07,1350); break;
+          ''': '''    case "olympusCharge":
+                tone(72,.46,"sine",.038,0,156); tone(144,.38,"triangle",.022,.025,520); tone(288,.3,"sawtooth",.015,.085,980); noise(.25,.006,.045,1450); break;
+          ''',
+          '''    case "olympusHit":
+                noise(.115,.022,0,3200); tone(1200,.075,"square",.019,0,590); tone(76,.28,"sine",.05,.012,48); noise(.14,.006,.065,780); break;
+          ''': '''    case "olympusHit":
+                noise(.15,.024,0,3600); tone(1880,.072,"square",.018,0,560); tone(240,.19,"triangle",.027,.006,92); tone(58,.34,"sine",.052,.012,36); noise(.19,.007,.055,820); break;
+          ''',
+          '''    case "olympusMultiplier":
+                tone(659,.12,"triangle",.03,0,880); tone(1046,.14,"sine",.028,.04,1318); break;
+          ''': '''    case "olympusMultiplier":
+                tone(392,.13,"triangle",.021,0,523); tone(659,.15,"triangle",.03,.035,880); tone(1046,.17,"sine",.026,.082,1396); noise(.055,.0032,.055,2800); break;
+          ''',
+          '''    case "candyPop": {
+                const v = 0.975 + Math.random() * 0.05;
+                tone(600*v,0.09,"triangle",0.023,0,920*v); break;
+              }
+          ''': '''    case "candyPop": {
+                const v = 0.965 + Math.random() * 0.07;
+                tone(540*v,.085,"triangle",.02,0,880*v); tone(1260*v,.055,"sine",.008,.018,1540*v); break;
+              }
+          ''',
+          '''    case "candyBreak": {
+                const v = 0.975 + Math.random() * 0.05;
+                tone(820*v,0.105,"triangle",0.024,0,430*v); tone(1180*v,0.075,"sine",0.013,0.02,720*v); break;
+              }
+          ''': '''    case "candyBreak": {
+                const v = 0.965 + Math.random() * 0.07;
+                tone(760*v,.11,"triangle",.022,0,390*v); tone(1420*v,.075,"sine",.011,.018,760*v); noise(.055,.0032,.006,2600); break;
+              }
+          ''',
+          '''    case "candyBounce":
+                tone(300,0.095,"triangle",0.019,0,500); break;
+          ''': '''    case "candyBounce":
+                tone(274,.11,"triangle",.017,0,472); tone(548,.07,"sine",.008,.025,690); break;
+          ''',
+          '''    case "candyBomb":
+                tone(190,0.28,"sine",0.03,0,610); tone(410,0.2,"triangle",0.02,0.07,980); break;
+          ''': '''    case "candyBomb":
+                tone(158,.34,"sine",.031,0,520); tone(316,.28,"triangle",.021,.045,1120); tone(880,.18,"sine",.011,.11,1520); noise(.16,.0048,.075,1900); break;
+          ''',
+          '''    case "candyExplosion":
+                noise(0.15,0.014,0,2500); tone(170,0.22,"sine",0.036,0,78); tone(1220,0.09,"triangle",0.018,0.012,460); break;
+          ''': '''    case "candyExplosion":
+                noise(.17,.015,0,3000); tone(138,.26,"sine",.037,0,64); tone(1180,.1,"triangle",.017,.008,420); tone(2240,.075,"sine",.009,.038,1120); noise(.12,.0045,.045,4200); break;
+          ''',
+          '''    case "candyStreak":
+                [520,680,860].forEach((f,i)=>tone(f,0.115,"triangle",0.019,i*0.04,f*1.16)); break;
+          ''': '''    case "candyStreak":
+                [494,659,880,1174].forEach((f,i)=>tone(f,.12,i<3?"triangle":"sine",.018+i*.0015,i*.038,f*1.12)); break;
+          ''',
+          }
+
+          changed = 0
+          for old, new in replacements.items():
+              if old not in source:
+                  raise SystemExit("Audio tuning anchor missing:\n" + old)
+              source = source.replace(old, new, 1)
+              changed += 1
+
+          if changed != len(replacements):
+              raise SystemExit(f"Expected {len(replacements)} replacements, got {changed}")
+          path.write_text(source)
+      - name: Remove one-shot workflow
+        run: rm .github/workflows/apply-olympus-candy-audio-tuning.yml
+      - name: Commit tuned audio
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "4189823+github-actions[bot]@users.noreply.github.com"
+          git add src/lib/arcade/sound.ts .github/workflows/apply-olympus-candy-audio-tuning.yml
+          git commit -m "feat: deepen Olympus and Candy procedural audio"
+          git push origin HEAD:fix/arcade-post-playtest-2026-09-08
