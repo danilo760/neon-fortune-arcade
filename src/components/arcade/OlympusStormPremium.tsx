@@ -195,7 +195,10 @@ export function OlympusStormPremium() {
   const busyRef = useRef(false);
   const autoStopRef = useRef(false);
 
-  useEffect(() => hydrateFromStorage(), []);
+  useEffect(() => {
+    hydrateFromStorage();
+    return () => { autoStopRef.current = true; };
+  }, []);
   useEffect(() => {
     setGameAmbience("olympus", soundEnabled);
     return () => setGameAmbience("olympus", false);
@@ -324,7 +327,7 @@ export function OlympusStormPremium() {
   }, [bet, presentRound, soundEnabled, turbo]);
 
   const spinRound = useCallback(async () => {
-    if (busyRef.current || featureOpen || autoOpen) return false;
+    if (busyRef.current || featureOpen) return false;
     if (!arcadeActions.placeBet(bet)) {
       playSound("lose", soundEnabled);
       return false;
@@ -364,7 +367,7 @@ export function OlympusStormPremium() {
     } finally {
       busyRef.current = false;
     }
-  }, [autoOpen, bet, featureOpen, presentFeature, presentRound, soundEnabled, turbo]);
+  }, [bet, featureOpen, presentFeature, presentRound, soundEnabled, turbo]);
 
   const buyFeature = useCallback(async () => {
     if (busyRef.current || autoLeft > 0) return;
