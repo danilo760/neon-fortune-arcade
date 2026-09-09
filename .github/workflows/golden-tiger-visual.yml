@@ -5,6 +5,8 @@ on:
     paths:
       - "src/components/arcade/GoldenTigerReference.tsx"
       - "src/components/arcade/GoldenTigerReference.css"
+      - "src/components/arcade/GoldenTigerPremium.tsx"
+      - "src/components/arcade/GoldenTigerPremiumArt.css"
       - "src/components/arcade/GoldenTigerPresentation.css"
       - "src/components/arcade/GoldenTigerPresentationSafe.css"
       - "src/components/arcade/GoldenTigerMediaRig.css"
@@ -16,6 +18,7 @@ on:
       - "scripts/goldenTigerVisualQa.mjs"
       - "scripts/goldenTigerDesktopSpinQa.mjs"
       - "scripts/goldenTigerSpecialStateQa.mjs"
+      - "scripts/goldenTigerBonusBuyQa.mjs"
       - "scripts/goldenTigerCompositionGuard.mjs"
       - ".github/workflows/golden-tiger-visual.yml"
   workflow_dispatch:
@@ -97,6 +100,9 @@ jobs:
 
       - name: Audit special states
         run: node scripts/goldenTigerSpecialStateQa.mjs
+
+      - name: Audit bonus purchase lifecycle
+        run: node scripts/goldenTigerBonusBuyQa.mjs
 
       - name: Guard mobile composition
         run: node scripts/goldenTigerCompositionGuard.mjs
