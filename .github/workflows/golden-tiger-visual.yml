@@ -10,6 +10,8 @@ on:
       - "src/components/arcade/GoldenTigerPresentation.css"
       - "src/components/arcade/GoldenTigerPresentationSafe.css"
       - "src/components/arcade/GoldenTigerMediaRig.css"
+      - "src/components/arcade/GoldenTigerSession2.css"
+      - "src/components/arcade/GoldenTigerSession2Polish.css"
       - "src/components/arcade/golden-tiger/**"
       - "src/assets/golden-tiger/**"
       - "src/lib/arcade/goldenTiger*.ts"
@@ -96,6 +98,13 @@ jobs:
         run: node scripts/goldenTigerVisualQa.mjs
 
       - name: Audit desktop spin sequence
+        run: node scripts/goldenTigerDesktopSpinQa.mjs
+
+      - name: Audit 1366x768 desktop framing
+        env:
+          GOLDEN_TIGER_VIEWPORT_WIDTH: "1366"
+          GOLDEN_TIGER_VIEWPORT_HEIGHT: "768"
+          GOLDEN_TIGER_QA_DIR: "artifacts/golden-tiger/desktop-1366x768"
         run: node scripts/goldenTigerDesktopSpinQa.mjs
 
       - name: Audit special states
