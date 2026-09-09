@@ -75,12 +75,12 @@ try {
     const symbols = [...document.querySelectorAll('.osp-symbol')];
     return {
       guardian: guardian ? getComputedStyle(guardian).backgroundImage : '',
-      painted: symbols.filter((symbol) => getComputedStyle(symbol).backgroundImage.includes('symbol-frame-v3.svg')).length,
+      painted: symbols.filter((symbol) => getComputedStyle(symbol).backgroundImage.includes('symbol-frame-v3')).length,
       scrollWidth: document.documentElement.scrollWidth,
       machineWidth: document.querySelector('.osp-machine')?.getBoundingClientRect().width ?? 0,
     };
   })()`);
-  assert(idle.guardian.includes('storm-warden-v3.svg'), `Storm Warden v3 is not painted: ${idle.guardian}`);
+  assert(idle.guardian.includes('storm-warden-v3'), `Storm Warden v3 is not painted: ${idle.guardian}`);
   assert(idle.painted === 30, `expected 30 relic-framed symbols, got ${idle.painted}`);
   assert(idle.scrollWidth <= 391, `premium Olympus overflowed mobile viewport: ${idle.scrollWidth}`);
   assert(idle.machineWidth > 360 && idle.machineWidth <= 391, `unexpected machine width ${idle.machineWidth}`);
@@ -101,7 +101,7 @@ try {
       activateDisabled: Boolean(activate?.disabled),
     };
   })()`);
-  assert(modal.orb.includes('symbol-scatter-v3.svg'), `premium Storm Orb v3 missing from feature modal: ${modal.orb}`);
+  assert(modal.orb.includes('symbol-scatter-v3'), `premium Storm Orb v3 missing from feature modal: ${modal.orb}`);
   assert(modal.text.includes('STORM ASCENSION'), `feature modal lost Storm Ascension identity: ${modal.text}`);
   assert(modal.text.includes('FREE SPINS') || modal.text.includes('Free Spins'), `feature modal no longer explains free spins: ${modal.text}`);
   assert(!modal.activateDisabled, "feature purchase unexpectedly disabled at default fictional balance");
@@ -127,7 +127,7 @@ try {
     };
   })()`);
   assert(bonus.isBonus, "feature purchase did not switch the full scene into bonus mode");
-  assert(bonus.guardian.includes('storm-warden-v3.svg'), "Warden v3 disappeared during bonus intro");
+  assert(bonus.guardian.includes('storm-warden-v3'), "Warden v3 disappeared during bonus intro");
   assert(bonus.stageHudVisible, "Storm Level HUD disappeared during bonus intro");
   assert(bonus.scrollWidth <= 391, `bonus scene overflowed mobile viewport: ${bonus.scrollWidth}`);
 
