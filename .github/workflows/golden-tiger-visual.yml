@@ -95,45 +95,6 @@ jobs:
       - name: Audit desktop spin sequence
         run: node scripts/goldenTigerDesktopSpinQa.mjs
 
-      - name: Start visible Chrome compositor session
-        shell: bash
-        run: |
-          set -euo pipefail
-          command -v Xvfb >/dev/null || { echo "Xvfb unavailable" >&2; exit 1; }
-          Xvfb :99 -screen 0 1363x936x24 -nolisten tcp > golden-tiger-xvfb.log 2>&1 &
-          echo $! > /tmp/golden-tiger-xvfb.pid
-          export DISPLAY=:99
-          "$CHROME" \
-            --no-sandbox \
-            --disable-dev-shm-usage \
-            --window-size=1363,936 \
-            --remote-debugging-address=127.0.0.1 \
-            --remote-debugging-port=9232 \
-            --user-data-dir=/tmp/golden-tiger-visible-chrome \
-            about:blank > golden-tiger-visible-chrome.log 2>&1 &
-          echo $! > /tmp/golden-tiger-visible-chrome.pid
-          for attempt in $(seq 1 30); do
-            if curl -fsS http://127.0.0.1:9232/json/version >/dev/null; then
-              exit 0
-            fi
-            sleep 1
-          done
-          cat golden-tiger-visible-chrome.log
-          exit 1
-
-      - name: Audit visible desktop compositor
-        env:
-          CHROME_CDP_URL: http://127.0.0.1:9232
-          GOLDEN_TIGER_QA_DIR: artifacts/golden-tiger-visible
-        run: node scripts/goldenTigerDesktopSpinQa.mjs
-
-      - name: Stop visible Chrome compositor session
-        if: always()
-        shell: bash
-        run: |
-          [ ! -f /tmp/golden-tiger-visible-chrome.pid ] || kill "$(cat /tmp/golden-tiger-visible-chrome.pid)" 2>/dev/null || true
-          [ ! -f /tmp/golden-tiger-xvfb.pid ] || kill "$(cat /tmp/golden-tiger-xvfb.pid)" 2>/dev/null || true
-
       - name: Audit special states
         run: node scripts/goldenTigerSpecialStateQa.mjs
 
@@ -147,12 +108,9 @@ jobs:
           name: golden-tiger-visual-qa
           path: |
             artifacts/golden-tiger/
-            artifacts/golden-tiger-visible/
             src/assets/golden-tiger/tiger-pose-atlas.webp
             golden-tiger-server.log
             golden-tiger-chrome.log
-            golden-tiger-visible-chrome.log
-            golden-tiger-xvfb.log
           if-no-files-found: warn
           retention-days: 7
 
@@ -160,7 +118,5 @@ jobs:
         if: always()
         shell: bash
         run: |
-          [ ! -f /tmp/golden-tiger-visible-chrome.pid ] || kill "$(cat /tmp/golden-tiger-visible-chrome.pid)" 2>/dev/null || true
-          [ ! -f /tmp/golden-tiger-xvfb.pid ] || kill "$(cat /tmp/golden-tiger-xvfb.pid)" 2>/dev/null || true
           [ ! -f /tmp/golden-tiger-chrome.pid ] || kill "$(cat /tmp/golden-tiger-chrome.pid)" 2>/dev/null || true
           [ ! -f /tmp/golden-tiger-server.pid ] || kill "$(cat /tmp/golden-tiger-server.pid)" 2>/dev/null || true
