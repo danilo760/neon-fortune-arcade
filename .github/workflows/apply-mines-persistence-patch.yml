@@ -25,34 +25,26 @@ jobs:
           path = Path("src/components/arcade/MinesGame.tsx")
           text = path.read_text()
 
-          def swap(old, new):
+          def replace_once(old, new, label):
               global text
               if old not in text:
-                  raise SystemExit(f"expected source block not found:\n{old}")
+                  raise SystemExit(f"missing {label}")
               text = text.replace(old, new, 1)
 
-          swap(
-          '''import { playMinesSound } from "@/lib/arcade/minesSound";''',
-          '''import {
-            clearMinesRoundSnapshot,
-            loadMinesRoundSnapshot,
-            saveMinesRoundSnapshot,
-          } from "@/lib/arcade/minesRoundPersistence";
-          import { playMinesSound } from "@/lib/arcade/minesSound";''')
+          replace_once(
+              'import { playMinesSound } from "@/lib/arcade/minesSound";\n',
+              'import {\n  clearMinesRoundSnapshot,\n  loadMinesRoundSnapshot,\n  saveMinesRoundSnapshot,\n} from "@/lib/arcade/minesRoundPersistence";\nimport { playMinesSound } from "@/lib/arcade/minesSound";\n',
+              "persistence import",
+          )
 
-          swap(
-          '''  const revealBusyRef = useRef(false);
+          replace_once(
+              '  const revealBusyRef = useRef(false);\n',
+              '  const revealBusyRef = useRef(false);\n  const startedAtRef = useRef(0);\n',
+              "startedAt ref",
+          )
 
-          const multiplier = minesMultiplier(mineCount, revealed.size);''',
-          '''  const revealBusyRef = useRef(false);
-          const startedAtRef = useRef(0);
-
-          const multiplier = minesMultiplier(mineCount, revealed.size);''')
-
-          swap(
-          '''  useEffect(() => {
-            setGameAmbience("mines", soundEnabled);''',
-          '''  useEffect(() => {
+          ambience = '  useEffect(() => {\n    setGameAmbience("mines", soundEnabled);\n'
+          restore = '''  useEffect(() => {
             const snapshot = loadMinesRoundSnapshot();
             if (!snapshot) return;
 
@@ -78,13 +70,12 @@ jobs:
             startedAtRef.current = snapshot.startedAt;
           }, []);
 
-          useEffect(() => {
-            setGameAmbience("mines", soundEnabled);''')
+'''.replace('          ', '')
+          replace_once(ambience, restore + ambience, "restore effect")
 
-          swap(
-          '''    setMineField(createMineField(createRng(), mineCount));
-            revealedRef.current = new Set();''',
-          '''    const nextMineField = createMineField(createRng(), mineCount);
+          replace_once(
+              '    setMineField(createMineField(createRng(), mineCount));\n',
+              '''    const nextMineField = createMineField(createRng(), mineCount);
             const startedAt = Date.now();
             startedAtRef.current = startedAt;
             saveMinesRoundSnapshot({
@@ -96,89 +87,100 @@ jobs:
               startedAt,
             });
             setMineField(nextMineField);
-            revealedRef.current = new Set();''')
+'''.replace('          ', ''),
+              "new round snapshot",
+          )
 
-          swap(
-          '''      arcadeActions.recordRound({
-                slug: "neon-mines",
-                gameName: "Neon Mines",
-                bet,
-                payout,
-                multiplier: finalMultiplier,
-                note: `${safeCells} casas seguras`,
-              });
-              setLastPayout(payout);''',
-          '''      arcadeActions.recordRound({
-                slug: "neon-mines",
-                gameName: "Neon Mines",
-                bet,
-                payout,
-                multiplier: finalMultiplier,
-                note: `${safeCells} casas seguras`,
-              });
-              clearMinesRoundSnapshot();
-              startedAtRef.current = 0;
-              setLastPayout(payout);''')
+          cashout_marker = '    playMinesSound("cashout", soundEnabled);\n\n    try {\n'
+          cashout_settlement = '''    playMinesSound("cashout", soundEnabled);
 
-          swap(
-          '''        setTriggeredMine(index);
-                setRevealPhase("danger");
-                playMinesSound("danger", soundEnabled);
-                await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.danger, reduceMotion));
+            arcadeActions.credit(payout);
+            arcadeActions.recordRound({
+              slug: "neon-mines",
+              gameName: "Neon Mines",
+              bet,
+              payout,
+              multiplier: finalMultiplier,
+              note: `${safeCells} casas seguras`,
+            });
+            clearMinesRoundSnapshot();
+            startedAtRef.current = 0;
 
-                settledRef.current = true;
-                roundActiveRef.current = false;
-                playMinesSound("mineArm", soundEnabled);''',
-          '''        setTriggeredMine(index);
-                settledRef.current = true;
-                roundActiveRef.current = false;
-                clearMinesRoundSnapshot();
-                startedAtRef.current = 0;
-                arcadeActions.recordRound({
-                  slug: "neon-mines",
-                  gameName: "Neon Mines",
-                  bet,
-                  payout: 0,
-                  multiplier: 0,
-                  note: `Mina encontrada após ${safeCells} casa(s) segura(s)`,
-                });
-                setRevealPhase("danger");
-                playMinesSound("danger", soundEnabled);
-                await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.danger, reduceMotion));
+            try {
+'''.replace('          ', '')
+          replace_once(cashout_marker, cashout_settlement, "cashout economic settlement")
 
-                playMinesSound("mineArm", soundEnabled);''')
+          old_cashout_record = '''      arcadeActions.credit(payout);
+            arcadeActions.recordRound({
+              slug: "neon-mines",
+              gameName: "Neon Mines",
+              bet,
+              payout,
+              multiplier: finalMultiplier,
+              note: `${safeCells} casas seguras`,
+            });
+'''.replace('          ', '')
+          replace_once(old_cashout_record, '', "old cashout settlement")
 
-          swap(
-          '''        setStatus("lost");
-                arcadeActions.recordRound({
-                  slug: "neon-mines",
-                  gameName: "Neon Mines",
-                  bet,
-                  payout: 0,
-                  multiplier: 0,
-                  note: `Mina encontrada após ${safeCells} casa(s) segura(s)`,
-                });
-                await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.lostSettle, reduceMotion));''',
-          '''        setStatus("lost");
-                await wait(minesPresentationDelay(MINES_PRESENTATION_TIMING.lostSettle, reduceMotion));''')
+          mine_marker = '''      if (mineSet.has(index)) {
+            const safeCells = revealedRef.current.size;
+            const reachedMultiplier = minesMultiplier(mineCount, safeCells);
+            setTriggeredMine(index);
+            setRevealPhase("danger");
+'''.replace('          ', '')
+          mine_settlement = '''      if (mineSet.has(index)) {
+            const safeCells = revealedRef.current.size;
+            const reachedMultiplier = minesMultiplier(mineCount, safeCells);
+            setTriggeredMine(index);
+            settledRef.current = true;
+            roundActiveRef.current = false;
+            arcadeActions.recordRound({
+              slug: "neon-mines",
+              gameName: "Neon Mines",
+              bet,
+              payout: 0,
+              multiplier: 0,
+              note: `Mina encontrada após ${safeCells} casa(s) segura(s)`,
+            });
+            clearMinesRoundSnapshot();
+            startedAtRef.current = 0;
+            setRevealPhase("danger");
+'''.replace('          ', '')
+          replace_once(mine_marker, mine_settlement, "mine economic settlement")
 
-          swap(
-          '''      revealedRef.current = next;
-              setRevealed(next);
-              setLastSafeReveal(index);''',
-          '''      revealedRef.current = next;
-              setRevealed(next);
-              const startedAt = startedAtRef.current || Date.now();
-              startedAtRef.current = startedAt;
-              saveMinesRoundSnapshot({
-                version: 1,
-                bet,
-                mineCount,
-                mineField,
-                revealed: [...next],
-                startedAt,
-              });
-              setLastSafeReveal(index);''')
+          old_mine_refs = '''
+            settledRef.current = true;
+            roundActiveRef.current = false;
+            playMinesSound("mineArm", soundEnabled);
+'''.replace('          ', '')
+          replace_once(old_mine_refs, '\n      playMinesSound("mineArm", soundEnabled);\n', "old mine refs")
+
+          old_loss_record = '''        arcadeActions.recordRound({
+              slug: "neon-mines",
+              gameName: "Neon Mines",
+              bet,
+              payout: 0,
+              multiplier: 0,
+              note: `Mina encontrada após ${safeCells} casa(s) segura(s)`,
+            });
+'''.replace('          ', '')
+          replace_once(old_loss_record, '', "old loss record")
+
+          safe_marker = '      revealedRef.current = next;\n      setRevealed(next);\n'
+          safe_persist = '''      revealedRef.current = next;
+            setRevealed(next);
+            const startedAt = startedAtRef.current || Date.now();
+            startedAtRef.current = startedAt;
+            saveMinesRoundSnapshot({
+              version: 1,
+              bet,
+              mineCount,
+              mineField,
+              revealed: [...next],
+              startedAt,
+            });
+'''.replace('          ', '')
+          replace_once(safe_marker, safe_persist, "safe reveal persistence")
 
           path.write_text(text)
       - name: Remove one-shot workflow
