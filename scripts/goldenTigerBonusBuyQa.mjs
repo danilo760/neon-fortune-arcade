@@ -1,6 +1,7 @@
 const appUrl = process.env.GOLDEN_TIGER_URL ?? "http://127.0.0.1:3000/game/golden-tiger";
 const cdpUrl = process.env.CHROME_CDP_URL ?? "http://127.0.0.1:9222";
 const storageKey = "lucky-neon-arcade:v1";
+const bonusBuyMultiplier = 31;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 class CdpClient {
@@ -81,7 +82,7 @@ try {
   await evaluate(client, `(() => { [...document.querySelectorAll('button')].find((button) => button.textContent?.includes('BÔNUS'))?.click(); return true; })()`);
   await waitFor(client, `Boolean(document.querySelector('.gt-premium-bonus-modal'))`, "bonus purchase modal");
   const modal = await evaluate(client, `(() => ({ text: document.querySelector('.gt-premium-bonus-modal')?.textContent?.replace(/\\s+/g,' ').trim() ?? '' }))()`);
-  assert(modal.text.includes("100×"), `bonus modal does not expose 100× price: ${modal.text}`);
+  assert(modal.text.includes(`${bonusBuyMultiplier}×`), `bonus modal does not expose ${bonusBuyMultiplier}× price: ${modal.text}`);
   assert(modal.text.includes("ATIVAR FEATURE"), "bonus modal confirmation missing");
 
   await evaluate(client, `(() => {
@@ -102,7 +103,7 @@ try {
       featureTitle: document.querySelector('.gt-premium-feature-title')?.textContent?.replace(/\\s+/g,' ').trim() ?? '',
     };
   })()`);
-  const expectedCost = 20 * 100;
+  const expectedCost = 20 * bonusBuyMultiplier;
   assert(active.balance === initial.balance - expectedCost, `bonus debit mismatch: before=${initial.balance} active=${active.balance} expectedCost=${expectedCost}`);
   assert(active.purchased === "true", "purchased feature marker missing");
   assert(active.featureTitle.includes("FORTUNE FEATURE"), "feature intro title missing");
