@@ -75,13 +75,18 @@ try {
     const symbols = [...document.querySelectorAll('.osp-symbol')];
     return {
       guardian: guardian ? getComputedStyle(guardian).backgroundImage : '',
-      painted: symbols.filter((symbol) => getComputedStyle(symbol).backgroundImage.includes('symbol-frame-v3')).length,
+      relicComposed: symbols.filter((symbol) => {
+        const style = getComputedStyle(symbol);
+        const sizes = style.backgroundSize.split(',').map((value) => value.trim());
+        const layers = style.backgroundImage.split(/,(?![^()]*\\))/).length;
+        return layers >= 3 && sizes.length >= 3 && (style.backgroundSize.includes('96% 96%') || style.backgroundSize.includes('97% 97%'));
+      }).length,
       scrollWidth: document.documentElement.scrollWidth,
       machineWidth: document.querySelector('.osp-machine')?.getBoundingClientRect().width ?? 0,
     };
   })()`);
   assert(idle.guardian.includes('storm-warden-v3'), `Storm Warden v3 is not painted: ${idle.guardian}`);
-  assert(idle.painted === 30, `expected 30 relic-framed symbols, got ${idle.painted}`);
+  assert(idle.relicComposed === 30, `expected 30 three-layer relic symbols, got ${idle.relicComposed}`);
   assert(idle.scrollWidth <= 391, `premium Olympus overflowed mobile viewport: ${idle.scrollWidth}`);
   assert(idle.machineWidth > 360 && idle.machineWidth <= 391, `unexpected machine width ${idle.machineWidth}`);
 
