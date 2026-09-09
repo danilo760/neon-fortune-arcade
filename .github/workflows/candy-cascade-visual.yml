@@ -29,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Production build
-        run: bun run build
+        run: VITE_CANDY_CASCADE_VISUAL_QA=1 bun run build
       - name: Detect Chrome
         shell: bash
         run: |
