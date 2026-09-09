@@ -128,7 +128,7 @@ const auditExpression = `(() => {
       const hit = document.elementFromPoint(x, y);
       const reel = hit?.closest?.('.gt-hw-reel-overlay');
       const cell = hit?.closest?.('.gt-hw-cell');
-      const winOverlay = hit?.closest?.('.gt-hw-win-overlay');
+      const winOverlay = hit?.closest?.('.gt-hw-win-overlay, .gt-commercial-win');
       columns.push({
         column,
         x,

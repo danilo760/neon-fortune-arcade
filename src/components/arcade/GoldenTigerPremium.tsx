@@ -493,10 +493,13 @@ export function GoldenTigerPremium() {
 
       setWinBeat("impact");
       await wait(timeline.impactMs);
+      if (!clockRef.current) return;
       setWinBeat("reveal");
       await wait(timeline.revealMs);
+      if (!clockRef.current) return;
       setWinBeat("celebrate");
       await wait(timeline.celebrateMs);
+      if (!clockRef.current) return;
       setWinBeat(null);
     } else if (payout > visualStake) {
       setPhase("win");
@@ -731,7 +734,6 @@ export function GoldenTigerPremium() {
           <small>{featureActive ? `${lockedCount}/9 FIXOS · R${featureAttempt}` : "5 LINHAS FIXAS"}</small>
         </div>
 
-        <div className="gt-premium-feature-aura" aria-hidden />
         <div
           className="gt-hw-grid gt-premium-grid"
           data-landing-column={landingColumn}
