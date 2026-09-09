@@ -71,6 +71,8 @@ const auditExpression = `(() => {
   const tiles = [...document.querySelectorAll('.mines-premium__grid .mines-premium__tile')];
   const legacyArt = document.querySelector('.mines-premium__machine-art');
   const open = [...document.querySelectorAll('button')].find((button) => button.getAttribute('aria-label')?.startsWith('Abrir cofre apostando'));
+  const betButtons = [...document.querySelectorAll('.mines-premium__bet button')];
+  const labelledBetButtons = betButtons.filter((button) => button.getAttribute('aria-label')?.startsWith('Selecionar aposta fictícia '));
   const rect = (el) => el ? (() => { const r = el.getBoundingClientRect(); return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; })() : null;
   const br = open?.getBoundingClientRect();
   const centerInViewport = Boolean(br && br.top >= 0 && br.bottom <= innerHeight);
@@ -89,6 +91,9 @@ const auditExpression = `(() => {
     openDisabled: Boolean(open?.disabled),
     openInViewport: centerInViewport,
     openHit: Boolean(open && hit && (hit === open || open.contains(hit))),
+    betButtonCount: betButtons.length,
+    labelledBetButtonCount: labelledBetButtons.length,
+    betLabels: betButtons.map((button) => button.getAttribute('aria-label')),
     legacyArtPresent: Boolean(legacyArt),
     legacyArtDisplay: legacyArt ? getComputedStyle(legacyArt).display : null,
   };
@@ -119,6 +124,8 @@ for (const viewport of viewports) {
     if (idle.status !== "idle") errors.push(`expected isolated idle load, got ${idle.status}`);
     if (!idle.openPresent) errors.push("open vault action missing");
     if (idle.openDisabled) errors.push("open vault action disabled on idle load");
+    if (idle.betButtonCount === 0) errors.push("bet controls missing");
+    if (idle.labelledBetButtonCount !== idle.betButtonCount) errors.push(`ambiguous bet labels: ${JSON.stringify(idle.betLabels)}`);
     if (idle.legacyArtPresent && idle.legacyArtDisplay !== "none") errors.push(`legacy screenshot is visible (${idle.legacyArtDisplay})`);
 
     await evaluate(client, `(() => {
@@ -140,7 +147,7 @@ for (const viewport of viewports) {
       failed = true;
       console.error(`❌ ${viewport.width}x${viewport.height}: ${errors.join('; ')}`);
     } else {
-      console.log(`✅ ${viewport.width}x${viewport.height}: vector cabinet + idle action visibility passed | legacy-display=${idle.legacyArtDisplay}`);
+      console.log(`✅ ${viewport.width}x${viewport.height}: vector cabinet + explicit bet labels + idle action visibility passed | legacy-display=${idle.legacyArtDisplay}`);
     }
   } finally {
     client.close();
