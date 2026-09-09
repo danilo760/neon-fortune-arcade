@@ -4,7 +4,7 @@ import {
   type SoundOptions,
 } from "./sound";
 
-export type GoldenTigerAudioWinTier = "small" | "nice" | "big" | "mega";
+export type GoldenTigerAudioWinTier = "small" | "nice" | "big" | "mega" | "super";
 
 export type GoldenTigerAudioEvent =
   | { type: "spin" }
@@ -108,10 +108,10 @@ export function goldenTigerAudioPlan(event: GoldenTigerAudioEvent): GoldenTigerA
       }];
 
     case "win":
-      if (event.tier === "big" || event.tier === "mega") {
+      if (event.tier === "big" || event.tier === "mega" || event.tier === "super") {
         return [{
           name: "bigWin",
-          options: { intensity: event.tier === "mega" ? 1.12 : 1.02 },
+          options: { intensity: event.tier === "super" ? 1.16 : event.tier === "mega" ? 1.12 : 1.02 },
         }];
       }
       return [{

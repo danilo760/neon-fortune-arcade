@@ -252,7 +252,7 @@ export function GoldenTigerReference() {
   useEffect(() => {
     const energy =
       phase === "full-grid" ? 1.42 :
-      phase === "win" ? (winTier === "mega" ? 1.38 : winTier === "big" ? 1.28 : 1.12) :
+      phase === "win" ? (winTier === "super" ? 1.46 : winTier === "mega" ? 1.38 : winTier === "big" ? 1.28 : 1.12) :
       phase === "reveal" ? 0.98 :
       phase === "return" ? 0.74 :
       featureActive ? (phase === "feature-spin" ? 1.12 : 1.25) :
@@ -355,6 +355,7 @@ export function GoldenTigerReference() {
       }, soundEnabled);
       await wait(
         turbo ? 260 :
+        resolvedTier === "super" ? 1900 :
         resolvedTier === "mega" ? 1600 :
         resolvedTier === "big" ? 1280 :
         resolvedTier === "nice" ? 780 : 560,
@@ -652,12 +653,12 @@ export function GoldenTigerReference() {
           </div>
         )}
 
-        {((phase === "win" && (winTier === "big" || winTier === "mega")) || phase === "full-grid") && win > 0 && (
-          <div className={cn("gt-hw-win-overlay", phase === "full-grid" && "is-full", winTier === "mega" && "is-mega")}>
+        {((phase === "win" && (winTier === "big" || winTier === "mega" || winTier === "super")) || phase === "full-grid") && win > 0 && (
+          <div className={cn("gt-hw-win-overlay", phase === "full-grid" && "is-full", (winTier === "mega" || winTier === "super") && "is-mega", winTier === "super" && "is-super")}>
             <div className="gt-hw-win-rays" aria-hidden />
             <div className="gt-hw-win-crown" aria-hidden>✦</div>
-            <span>{phase === "full-grid" ? "TELA CHEIA" : winTier === "mega" ? "MEGA GANHO" : "GRANDE GANHO"}</span>
-            <AnimatedWinCounter value={win} duration={reducedMotion() ? 0 : phase === "full-grid" ? 1500 : winTier === "mega" ? 1300 : 950} />
+            <span>{phase === "full-grid" ? "TELA CHEIA" : winTier === "super" ? "SUPER MEGA GANHO" : winTier === "mega" ? "MEGA GANHO" : "GRANDE GANHO"}</span>
+            <AnimatedWinCounter value={win} duration={reducedMotion() ? 0 : phase === "full-grid" ? 1500 : winTier === "super" ? 1600 : winTier === "mega" ? 1300 : 950} />
             {phase === "full-grid" && <small>GANHOS × {FORTUNE_FEATURE_FULL_GRID_MULTIPLIER}</small>}
           </div>
         )}
