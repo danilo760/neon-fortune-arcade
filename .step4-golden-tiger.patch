@@ -1,0 +1,366 @@
+--- a/src/components/arcade/GoldenTigerPremium.tsx
++++ b/src/components/arcade/GoldenTigerPremium.tsx
+@@ -683,7 +683,8 @@
+     phase === "return" ? `RETORNO ${formatCoins(win)}` :
+     phase === "full-grid" ? `TELA CHEIA · ×${GOLDEN_TIGER_FULL_GRID_MULTIPLIER}` :
+     phase === "win" ? `GANHO ${formatCoins(win)}` :
+-    "FORTUNE FEATURE PODE SURGIR A QUALQUER GIRO";
++    phase === "base-spin" ? "GIRANDO" :
++    "BOA SORTE";
+ 
+   return (
+     <main className="gt-hw-page gt-premium-page">
+@@ -708,9 +709,7 @@
+             <ArrowLeft />
+           </Link>
+           <div className="gt-hw-brand">
+-            <small>NEON FORTUNE ARCADE</small>
+             <h1>GOLDEN TIGER</h1>
+-            <span>FORTUNE ROARS</span>
+           </div>
+           <button
+             className="gt-hw-icon-button"
+@@ -728,18 +727,24 @@
+           lockedCount={lockedCount}
+         />
+ 
+-        <div className={cn("gt-hw-respin-panel", featureActive && "is-active", phase === "feature-lock" && "is-reset")}>
+-          <span>{featureActive ? "FORTUNA ESCOLHIDA" : "PRÊMIO MÁXIMO"}</span>
+-          <strong>{featureActive ? selectedLabel : `GRID ×${GOLDEN_TIGER_FULL_GRID_MULTIPLIER}`}</strong>
+-          <small>{featureActive ? `${lockedCount}/9 FIXOS · R${featureAttempt}` : "5 LINHAS FIXAS"}</small>
+-        </div>
++        {featureActive && (
++          <div className={cn("gt-hw-respin-panel is-active", phase === "feature-lock" && "is-reset")}>
++            <span>FORTUNE</span>
++            <strong>{selectedLabel}</strong>
++            <small>{lockedCount}/9 · R{featureAttempt}</small>
++          </div>
++        )}
+ 
+         <div
+           className="gt-hw-grid gt-premium-grid"
++          data-reel-surface="continuous"
+           data-landing-column={landingColumn}
+           data-reveal={phase === "reveal" ? "true" : "false"}
+           aria-label="Grade de símbolos 3 por 3"
+         >
++          <span className="gt-commercial-reel-cylinder is-0" aria-hidden />
++          <span className="gt-commercial-reel-cylinder is-1" aria-hidden />
++          <span className="gt-commercial-reel-cylinder is-2" aria-hidden />
+           {grid.map((symbol, index) => {
+             const featureSymbol = featureCells[index] ?? null;
+             const locked = featureActive && featureSymbol !== null;
+@@ -794,10 +799,9 @@
+         <div className="gt-hw-hud">
+           <div><span>SALDO</span><strong>{formatCoins(balance)}</strong></div>
+           <div><span>APOSTA</span><strong>{formatCoins(bet)}</strong></div>
+-          <div><span>GANHO</span><strong>{formatCoins(win)}</strong></div>
+         </div>
+ 
+-        <div className="gt-hw-controls gt-premium-controls">
++        <div className="gt-hw-controls gt-premium-controls gt-commercial-console">
+           <div className="gt-hw-main-controls">
+             <button type="button" onClick={() => changeBet(-1)} disabled={isBusy || autoLeft > 0} aria-label="Diminuir aposta">−</button>
+             <button type="button" className="gt-hw-spin" onClick={() => void runSpin()} disabled={isBusy || autoLeft > 0 || balance < bet} aria-label="Girar"><span /></button>
+@@ -840,7 +844,7 @@
+           <div className="gt-premium-feature-title" aria-live="polite">
+             <small>{featurePurchased ? "FEATURE COMPRADA" : "FEATURE ATIVADA"}</small>
+             <strong>FORTUNE FEATURE</strong>
+-            <span>{selectedLabel} + WILD · SÍMBOLOS FICAM FIXOS</span>
++            <span>{selectedLabel} + WILD</span>
+           </div>
+         )}
+ 
+--- a/src/components/arcade/GoldenTigerCommercial.css
++++ b/src/components/arcade/GoldenTigerCommercial.css
+@@ -408,3 +408,222 @@
+   44% { transform: translate3d(2px,-1px,0); }
+   68% { transform: translate3d(-1px,0,0); }
+ }
++
++/* =====================================================================
++   PASS 4 — CONTINUOUS REEL CABINET + HUD CLEANUP
++   Presentation-only. Math, payout and settlement are intentionally untouched.
++   ===================================================================== */
++.gt-hw-page .gt-premium-machine {
++  grid-template-rows: 44px 146px 0 minmax(300px, 1fr) 30px 38px 70px 10px;
++  gap: 3px;
++}
++
++.gt-hw-page .gt-premium-machine .gt-hw-brand small,
++.gt-hw-page .gt-premium-machine .gt-hw-brand > span {
++  display: none !important;
++}
++
++.gt-hw-page .gt-premium-machine .gt-hw-brand h1 {
++  margin: 0;
++  font-size: 21px;
++  letter-spacing: .055em;
++}
++
++/* Pull the mascot into the cabinet crown instead of leaving it floating. */
++.gt-hw-page .gt-premium-machine .gt-hw-tiger-stage {
++  z-index: 19;
++  transform: translateY(8px);
++  margin-bottom: -12px;
++}
++.gt-hw-page .gt-premium-machine .gt-hw-tiger-floor-shadow {
++  bottom: -2px;
++  width: 146px;
++  height: 20px;
++  opacity: .92;
++  filter: blur(7px);
++}
++.gt-hw-page .gt-premium-machine .gt-hw-tiger-stage::after {
++  content: "";
++  position: absolute;
++  z-index: -1;
++  left: 50%;
++  bottom: -8px;
++  width: 74%;
++  height: 26px;
++  transform: translateX(-50%);
++  border-radius: 50%;
++  background: radial-gradient(ellipse, rgba(255,198,71,.22), rgba(87,12,5,.48) 50%, transparent 72%);
++  box-shadow: 0 10px 18px rgba(0,0,0,.45);
++}
++
++/* Base-state rule labels are removed. Fortune telemetry only appears while active. */
++.gt-hw-page .gt-premium-machine .gt-hw-respin-panel {
++  position: absolute;
++  z-index: 31;
++  top: 186px;
++  left: 50%;
++  width: min(78%, 310px);
++  min-height: 24px;
++  transform: translateX(-50%);
++  grid-template-columns: 1fr auto 1fr;
++  padding: 2px 9px;
++  border-radius: 999px;
++  background: rgba(71,8,4,.88);
++  backdrop-filter: blur(5px);
++}
++
++/* Three physical-looking reel cylinders replace nine independent card surfaces. */
++.gt-hw-page .gt-premium-machine .gt-premium-grid {
++  isolation: isolate;
++  border-radius: 13px;
++  border-width: 3px;
++  background: #2d0705;
++  box-shadow:
++    0 0 0 2px #641007,
++    0 0 0 4px rgba(246,200,93,.22),
++    0 12px 28px rgba(0,0,0,.78),
++    0 0 22px rgba(255,178,43,.20),
++    inset 0 12px 22px rgba(44,4,2,.58),
++    inset 0 -14px 24px rgba(36,3,2,.68);
++}
++
++.gt-hw-page .gt-premium-machine .gt-commercial-reel-cylinder {
++  position: absolute;
++  z-index: 0;
++  top: 0;
++  bottom: 0;
++  width: 33.333333%;
++  pointer-events: none;
++  background:
++    linear-gradient(180deg, rgba(63,10,6,.42) 0%, transparent 13%, transparent 86%, rgba(45,5,3,.58) 100%),
++    radial-gradient(ellipse at 50% 48%, #fff4d2 0%, #efd7aa 45%, #c99a61 76%, #7f431f 100%);
++  box-shadow:
++    inset 12px 0 18px rgba(92,42,16,.14),
++    inset -12px 0 18px rgba(92,42,16,.14),
++    inset 0 16px 18px rgba(76,24,10,.18),
++    inset 0 -18px 20px rgba(61,17,8,.22);
++}
++.gt-hw-page .gt-premium-machine .gt-commercial-reel-cylinder.is-0 { left: 0; }
++.gt-hw-page .gt-premium-machine .gt-commercial-reel-cylinder.is-1 { left: 33.333333%; }
++.gt-hw-page .gt-premium-machine .gt-commercial-reel-cylinder.is-2 { left: 66.666666%; }
++.gt-hw-page .gt-premium-machine .gt-commercial-reel-cylinder.is-1,
++.gt-hw-page .gt-premium-machine .gt-commercial-reel-cylinder.is-2 {
++  border-left: 1px solid rgba(122,62,23,.48);
++}
++
++.gt-hw-page .gt-premium-machine .gt-premium-grid .gt-hw-cell {
++  z-index: 2;
++  border: 0 !important;
++  border-radius: 0 !important;
++  background: transparent !important;
++  box-shadow: none !important;
++}
++.gt-hw-page .gt-premium-machine .gt-premium-grid .gt-hw-cell::before {
++  display: none !important;
++}
++.gt-hw-page .gt-premium-machine .gt-premium-grid .gt-hw-cell.is-winning {
++  background: radial-gradient(circle at 50% 50%, rgba(255,238,145,.30), rgba(255,183,45,.10) 55%, transparent 74%) !important;
++  box-shadow: inset 0 0 22px rgba(255,233,132,.28) !important;
++}
++.gt-hw-page .gt-premium-machine[data-feature-mode="active"] .gt-premium-grid .gt-hw-cell.is-feature-blank {
++  background: rgba(29,4,3,.54) !important;
++  box-shadow: inset 0 0 18px rgba(0,0,0,.38) !important;
++}
++.gt-hw-page .gt-premium-machine[data-feature-mode="active"] .gt-premium-grid .gt-hw-cell.is-locked {
++  background: radial-gradient(circle, rgba(255,221,123,.14), rgba(67,14,6,.20) 68%, transparent 100%) !important;
++}
++
++/* Moving reels are one uninterrupted strip per column; item cells are transparent. */
++.gt-hw-page .gt-premium-machine .gt-hw-reel-overlay {
++  border-radius: 0;
++  background:
++    linear-gradient(180deg, rgba(61,12,7,.38), transparent 14%, transparent 86%, rgba(49,8,5,.48)),
++    radial-gradient(ellipse at 50% 50%, #fff4d4 0%, #ead1a2 58%, #b9824d 100%);
++  box-shadow: inset 12px 0 18px rgba(92,42,16,.14), inset -12px 0 18px rgba(92,42,16,.14);
++}
++.gt-hw-page .gt-premium-machine .gt-hw-reel-overlay + .gt-hw-reel-overlay {
++  border-left: 1px solid rgba(122,62,23,.48);
++}
++.gt-hw-page .gt-premium-machine .gt-hw-reel-item {
++  background: transparent !important;
++  box-shadow: none !important;
++}
++.gt-hw-page .gt-premium-machine .gt-hw-reel-shade {
++  background: linear-gradient(180deg, rgba(55,7,5,.42) 0, transparent 18%, transparent 80%, rgba(55,7,5,.50) 100%);
++  box-shadow: inset 0 14px 18px rgba(58,11,6,.24), inset 0 -16px 20px rgba(58,11,6,.28);
++}
++
++/* One compact message strip, then just Balance / Bet. */
++.gt-hw-page .gt-premium-machine .gt-hw-status {
++  min-height: 28px;
++  border: 0;
++  border-block: 1px solid rgba(229,169,70,.26);
++  border-radius: 0;
++  background: linear-gradient(90deg, transparent, rgba(62,8,5,.72) 18% 82%, transparent);
++  box-shadow: none;
++  font-size: 8px;
++  letter-spacing: .10em;
++}
++.gt-hw-page .gt-premium-machine .gt-hw-hud {
++  grid-template-columns: repeat(2, minmax(0, 1fr));
++  border-radius: 9px;
++  background: rgba(10,1,1,.72);
++}
++.gt-hw-page .gt-premium-machine .gt-hw-hud > div {
++  background: transparent;
++  box-shadow: none;
++}
++
++/* Secondary actions and spin controls now live on one physical console deck. */
++.gt-hw-page .gt-premium-machine .gt-commercial-console {
++  min-height: 64px;
++  padding: 7px 8px;
++  border: 1px solid rgba(224,170,76,.44);
++  border-radius: 15px 15px 20px 20px;
++  background:
++    linear-gradient(180deg, rgba(112,20,11,.92), rgba(38,4,3,.96)),
++    radial-gradient(ellipse at 50% 0, rgba(255,211,107,.14), transparent 62%);
++  box-shadow:
++    inset 0 1px 0 rgba(255,232,165,.18),
++    inset 0 -10px 18px rgba(0,0,0,.28),
++    0 8px 18px rgba(0,0,0,.34);
++}
++.gt-hw-page .gt-premium-machine .gt-commercial-console .gt-hw-main-controls > button:not(.gt-hw-spin),
++.gt-hw-page .gt-premium-machine .gt-commercial-console .gt-hw-secondary-controls > button {
++  border: 1px solid rgba(230,183,89,.40);
++  background: linear-gradient(180deg, rgba(104,16,9,.90), rgba(48,5,4,.96));
++  box-shadow: inset 0 1px 0 rgba(255,229,151,.12), 0 2px 4px rgba(0,0,0,.26);
++}
++
++.gt-hw-page .gt-premium-machine .gt-premium-feature-title span {
++  letter-spacing: .12em;
++}
++
++@media (max-width: 699px) {
++  .gt-hw-page .gt-premium-machine {
++    grid-template-rows: 42px 142px 0 minmax(300px, 1fr) 28px 38px 66px 9px;
++    gap: 3px;
++    padding-inline: 7px;
++  }
++  .gt-hw-page .gt-premium-machine .gt-hw-respin-panel { top: 180px; }
++  .gt-hw-page .gt-premium-machine .gt-commercial-console {
++    grid-template-columns: 44px minmax(0,1fr) 44px 44px;
++    gap: 4px;
++    padding: 5px 6px;
++  }
++}
++
++@media (min-width: 700px) and (max-height: 800px) {
++  .gt-hw-page .gt-premium-machine {
++    grid-template-rows: 42px 132px 0 minmax(286px,1fr) 28px 36px 62px 8px;
++    gap: 2px;
++    padding: 5px 9px;
++  }
++  .gt-hw-page .gt-premium-machine .gt-hw-tiger-stage {
++    height: 132px;
++    min-height: 132px;
++    margin-bottom: -10px;
++  }
++  .gt-hw-page .gt-premium-machine .gt-hw-respin-panel { top: 170px; }
++  .gt-hw-page .gt-premium-machine .gt-commercial-console { min-height: 58px; padding-block: 4px; }
++}
+--- a/scripts/goldenTigerDesktopSpinQa.mjs
++++ b/scripts/goldenTigerDesktopSpinQa.mjs
+@@ -93,7 +93,6 @@
+   const sections = {
+     topbar: q('.gt-hw-topbar'),
+     tiger: q('.gt-hw-tiger-stage'),
+-    respin: q('.gt-hw-respin-panel'),
+     grid,
+     status: q('.gt-hw-status'),
+     hud: q('.gt-hw-hud'),
+@@ -119,6 +118,7 @@
+   }));
+   const cells = [...document.querySelectorAll('.gt-hw-grid > .gt-hw-cell')];
+   const overlays = [...document.querySelectorAll('.gt-hw-reel-overlay')];
++  const cylinders = [...document.querySelectorAll('.gt-commercial-reel-cylinder')];
+   const columns = [];
+   if (grid) {
+     const r = grid.getBoundingClientRect();
+@@ -148,6 +148,9 @@
+     machine: machineRect,
+     machineOverflow: machine ? getComputedStyle(machine).overflow : null,
+     reelOverlays: overlays.length,
++    reelCylinders: cylinders.length,
++    continuousSurface: grid?.getAttribute('data-reel-surface') ?? null,
++    decoratedCells: cells.filter((cell) => { const style = getComputedStyle(cell); return style.backgroundImage !== 'none' || parseFloat(style.borderTopWidth) > 0 || parseFloat(style.borderRightWidth) > 0 || parseFloat(style.borderBottomWidth) > 0 || parseFloat(style.borderLeftWidth) > 0 || parseFloat(style.borderRadius) > 0; }).length,
+     overlayRects: overlays.map(rect),
+     cellCount: cells.length,
+     cellRects: cells.map(rect),
+@@ -167,6 +170,9 @@
+   }
+   if (audit.scrollWidth > viewport.width + 1) errors.push(`horizontal overflow ${audit.scrollWidth}px`);
+   if (audit.cellCount !== 9) errors.push(`expected 9 cells, got ${audit.cellCount}`);
++  if (audit.reelCylinders !== 3) errors.push(`expected 3 continuous reel cylinders, got ${audit.reelCylinders}`);
++  if (audit.continuousSurface !== 'continuous') errors.push(`continuous reel surface marker missing: ${audit.continuousSurface}`);
++  if (audit.decoratedCells !== 0) errors.push(`expected zero individually decorated reel cells, got ${audit.decoratedCells}`);
+ 
+   for (const [name, state] of Object.entries(audit.sections ?? {})) {
+     if (!state?.visible) errors.push(`${name} is not visibly rendered at sample ${index}`);
+--- a/scripts/goldenTigerVisualQa.mjs
++++ b/scripts/goldenTigerVisualQa.mjs
+@@ -106,6 +106,7 @@
+   const sprite = document.querySelector('.gt-hw-tiger-sprite');
+   const cells = [...document.querySelectorAll('.gt-hw-grid > .gt-hw-cell')];
+   const rasters = [...document.querySelectorAll('.gt-hw-symbol-raster')];
++  const cylinders = [...document.querySelectorAll('.gt-commercial-reel-cylinder')];
+   const rect = (element) => element ? (() => {
+     const r = element.getBoundingClientRect();
+     return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
+@@ -169,6 +170,9 @@
+     sprite: rect(sprite),
+     spinHit: Boolean(hit && spin && (hit === spin || spin.contains(hit))),
+     cellCount: cells.length,
++    reelCylinders: cylinders.length,
++    continuousSurface: grid?.getAttribute('data-reel-surface') ?? null,
++    decoratedCells: cells.filter((cell) => { const style = getComputedStyle(cell); return style.backgroundImage !== 'none' || parseFloat(style.borderTopWidth) > 0 || parseFloat(style.borderRightWidth) > 0 || parseFloat(style.borderBottomWidth) > 0 || parseFloat(style.borderLeftWidth) > 0 || parseFloat(style.borderRadius) > 0; }).length,
+     rasterSymbolCount: rasters.length,
+     rasterPaintedCount,
+     spriteBackground,
+@@ -208,6 +212,9 @@
+   if (!audit.machine || audit.machine.left < -1 || audit.machine.right > viewport.width + 1) errors.push("machine exceeds horizontal viewport");
+   if (!audit.machine || audit.machine.top < -1 || audit.machine.bottom > viewport.height + 1) errors.push("machine exceeds vertical viewport");
+   if (audit.cellCount !== 9) errors.push(`expected 9 reel cells, got ${audit.cellCount}`);
++  if (audit.reelCylinders !== 3) errors.push(`expected 3 continuous reel cylinders, got ${audit.reelCylinders}`);
++  if (audit.continuousSurface !== 'continuous') errors.push(`continuous reel surface marker missing: ${audit.continuousSurface}`);
++  if (audit.decoratedCells !== 0) errors.push(`expected zero individually decorated reel cells, got ${audit.decoratedCells}`);
+   if (audit.rasterSymbolCount < 9) errors.push(`expected at least 9 raster symbol surfaces, got ${audit.rasterSymbolCount}`);
+   if (audit.rasterPaintedCount < 9) errors.push(`expected at least 9 painted raster symbols, got ${audit.rasterPaintedCount}`);
+   if (!audit.spriteBackground || audit.spriteBackground === "none") errors.push("tiger pose atlas is not applied");
