@@ -106,6 +106,7 @@ const auditExpression = `(async () => {
   const sprite = document.querySelector('.gt-hw-tiger-sprite');
   const cells = [...document.querySelectorAll('.gt-hw-grid > .gt-hw-cell')];
   const rasters = [...document.querySelectorAll('.gt-hw-symbol-raster')];
+  const cylinders = [...document.querySelectorAll('.gt-commercial-reel-cylinder')];
   const rect = (element) => element ? (() => {
     const r = element.getBoundingClientRect();
     return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
@@ -169,6 +170,9 @@ const auditExpression = `(async () => {
     sprite: rect(sprite),
     spinHit: Boolean(hit && spin && (hit === spin || spin.contains(hit))),
     cellCount: cells.length,
+    reelCylinders: cylinders.length,
+    continuousSurface: grid?.getAttribute('data-reel-surface') ?? null,
+    decoratedCells: cells.filter((cell) => { const style = getComputedStyle(cell); return style.backgroundImage !== 'none' || parseFloat(style.borderTopWidth) > 0 || parseFloat(style.borderRightWidth) > 0 || parseFloat(style.borderBottomWidth) > 0 || parseFloat(style.borderLeftWidth) > 0 || parseFloat(style.borderRadius) > 0; }).length,
     rasterSymbolCount: rasters.length,
     rasterPaintedCount,
     spriteBackground,
@@ -208,6 +212,9 @@ function validateIdle(audit, viewport) {
   if (!audit.machine || audit.machine.left < -1 || audit.machine.right > viewport.width + 1) errors.push("machine exceeds horizontal viewport");
   if (!audit.machine || audit.machine.top < -1 || audit.machine.bottom > viewport.height + 1) errors.push("machine exceeds vertical viewport");
   if (audit.cellCount !== 9) errors.push(`expected 9 reel cells, got ${audit.cellCount}`);
+  if (audit.reelCylinders !== 3) errors.push(`expected 3 continuous reel cylinders, got ${audit.reelCylinders}`);
+  if (audit.continuousSurface !== 'continuous') errors.push(`continuous reel surface marker missing: ${audit.continuousSurface}`);
+  if (audit.decoratedCells !== 0) errors.push(`expected zero individually decorated reel cells, got ${audit.decoratedCells}`);
   if (audit.rasterSymbolCount < 9) errors.push(`expected at least 9 raster symbol surfaces, got ${audit.rasterSymbolCount}`);
   if (audit.rasterPaintedCount < 9) errors.push(`expected at least 9 painted raster symbols, got ${audit.rasterPaintedCount}`);
   if (!audit.spriteBackground || audit.spriteBackground === "none") errors.push("tiger pose atlas is not applied");
