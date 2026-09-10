@@ -1,7 +1,12 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
 import tigerPoseAtlas from "@/assets/golden-tiger/tiger-pose-atlas.webp";
-import { goldenTigerPose, type TigerReactionState } from "@/lib/arcade/goldenTigerActing";
+import {
+  goldenTigerPose,
+  goldenTigerPoseTransitionMs,
+  type TigerPose,
+  type TigerReactionState,
+} from "@/lib/arcade/goldenTigerActing";
 
 export type { TigerReactionState } from "@/lib/arcade/goldenTigerActing";
 
@@ -19,8 +24,10 @@ function reducedMotion() {
  * Presentation-only mascot stage using an original 4×2 pose atlas.
  *
  * Pose order: idle, blink, watch, tense / reveal, feature, win, full.
- * Active poses follow the parent's reel/feature/win timeline. Only idle blinks
- * have a local timer: an independent acting loop must not invent game events.
+ * Gameplay owns the acting state. This component only adds a short authored
+ * overlap between adjacent atlas poses so the mascot reads as one performer
+ * rather than an instantaneous sprite replacement. Idle blinking remains the
+ * only locally scheduled action.
  */
 export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
   reaction,
@@ -28,6 +35,11 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
   lockedCount,
 }: Props) {
   const [idleBlink, setIdleBlink] = useState(false);
+  const requestedPose = goldenTigerPose(reaction, idleBlink);
+  const activePoseRef = useRef<TigerPose>(requestedPose);
+  const [activePose, setActivePose] = useState<TigerPose>(requestedPose);
+  const [previousPose, setPreviousPose] = useState<TigerPose | null>(null);
+  const [transitionMs, setTransitionMs] = useState(0);
 
   useEffect(() => {
     if (reaction !== "idle" || reducedMotion()) {
@@ -60,7 +72,29 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
     };
   }, [reaction]);
 
-  const pose = goldenTigerPose(reaction, idleBlink);
+  useEffect(() => {
+    const from = activePoseRef.current;
+    if (from === requestedPose) return;
+
+    const duration = goldenTigerPoseTransitionMs(from, requestedPose, reducedMotion());
+    activePoseRef.current = requestedPose;
+    setActivePose(requestedPose);
+
+    if (duration <= 0) {
+      setPreviousPose(null);
+      setTransitionMs(0);
+      return;
+    }
+
+    setPreviousPose(from);
+    setTransitionMs(duration);
+    const timer = window.setTimeout(() => {
+      setPreviousPose(null);
+      setTransitionMs(0);
+    }, duration + 24);
+    return () => window.clearTimeout(timer);
+  }, [requestedPose]);
+
   const celebrationPose = reaction === "feature" || reaction === "win" || reaction === "full";
 
   return (
@@ -69,6 +103,7 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
       data-reaction={reaction}
       data-feature={featureActive ? "on" : "off"}
       data-celebration={celebrationPose ? "true" : "false"}
+      data-pose-transition={previousPose ? "active" : "settled"}
     >
       <span className="gt-hw-tiger-stage-halo" aria-hidden />
       <span className="gt-hw-tiger-stage-shadow" aria-hidden />
@@ -77,14 +112,32 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
 
       <div
         className="gt-hw-tiger-rig"
-        data-pose={pose}
+        data-pose={activePose}
         data-acting="primary"
         aria-hidden
       >
+        {previousPose && (
+          <span
+            className="gt-hw-tiger-pose-layer gt-hw-tiger-pose-layer--exit"
+            data-pose={previousPose}
+            style={{ animationDuration: `${transitionMs}ms` }}
+          >
+            <span
+              className="gt-hw-tiger-sprite"
+              style={{ backgroundImage: `url(${tigerPoseAtlas})` }}
+            />
+          </span>
+        )}
         <span
-          className="gt-hw-tiger-sprite"
-          style={{ backgroundImage: `url(${tigerPoseAtlas})` }}
-        />
+          className={`gt-hw-tiger-pose-layer gt-hw-tiger-pose-layer--current${previousPose ? " is-entering" : ""}`}
+          data-pose={activePose}
+          style={previousPose ? { animationDuration: `${transitionMs}ms` } : undefined}
+        >
+          <span
+            className="gt-hw-tiger-sprite"
+            style={{ backgroundImage: `url(${tigerPoseAtlas})` }}
+          />
+        </span>
         <span className="gt-hw-tiger-eye-flare gt-hw-tiger-eye-flare--left" />
         <span className="gt-hw-tiger-eye-flare gt-hw-tiger-eye-flare--right" />
         <span className="gt-hw-tiger-crown-flare" />
