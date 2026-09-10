@@ -150,22 +150,61 @@
   100% { opacity: 0; transform: translateX(115%) skewX(-14deg); }
 }
 
+/* Widescreen ambience fills the desktop without changing the vertical game canvas. */
 @media (min-width: 900px) {
   .gt-hw-page.gt-premium-page {
     background:
-      radial-gradient(ellipse at 12% 48%, rgba(177, 36, 17, .25), transparent 27%),
-      radial-gradient(ellipse at 88% 46%, rgba(177, 36, 17, .23), transparent 27%),
-      radial-gradient(ellipse at 50% 24%, rgba(255, 183, 59, .12), transparent 31%),
-      linear-gradient(180deg, #160306 0%, #090102 57%, #020101 100%);
+      radial-gradient(ellipse at 9% 46%, rgba(210, 48, 20, .34) 0%, rgba(115, 16, 10, .22) 18%, transparent 38%),
+      radial-gradient(ellipse at 91% 46%, rgba(210, 48, 20, .32) 0%, rgba(115, 16, 10, .21) 18%, transparent 38%),
+      radial-gradient(ellipse at 17% 18%, rgba(255, 192, 69, .18), transparent 22%),
+      radial-gradient(ellipse at 83% 18%, rgba(255, 192, 69, .17), transparent 22%),
+      radial-gradient(ellipse at 50% 30%, rgba(255, 170, 48, .13), transparent 33%),
+      linear-gradient(90deg, #250507 0%, #130204 23%, #070102 40% 60%, #130204 77%, #250507 100%);
   }
 
   .gt-hw-page.gt-premium-page::before {
+    inset: 0;
     background:
-      radial-gradient(ellipse at 8% 43%, rgba(255, 184, 55, .13) 0 2.6%, transparent 3.1%),
-      radial-gradient(ellipse at 92% 43%, rgba(255, 184, 55, .13) 0 2.6%, transparent 3.1%),
-      linear-gradient(74deg, transparent 0 18%, rgba(154, 28, 12, .10) 18.3% 19%, transparent 19.4% 80%, rgba(154, 28, 12, .09) 80.4% 81.1%, transparent 81.5%),
-      repeating-linear-gradient(90deg, transparent 0 8%, rgba(255, 203, 111, .024) 8.3%, transparent 8.8% 16%);
-    filter: blur(5px);
+      radial-gradient(circle at 12% 22%, rgba(255, 215, 116, .42) 0 12px, rgba(224, 63, 25, .28) 13px 27px, transparent 52px),
+      radial-gradient(circle at 88% 22%, rgba(255, 215, 116, .40) 0 12px, rgba(224, 63, 25, .27) 13px 27px, transparent 52px),
+      radial-gradient(circle at 7% 61%, rgba(255, 178, 54, .25) 0 9px, rgba(173, 31, 16, .18) 10px 24px, transparent 46px),
+      radial-gradient(circle at 93% 61%, rgba(255, 178, 54, .24) 0 9px, rgba(173, 31, 16, .17) 10px 24px, transparent 46px),
+      linear-gradient(90deg,
+        transparent 0 5%,
+        rgba(94, 17, 11, .56) 5.2% 8.6%,
+        rgba(224, 127, 44, .10) 8.8% 9.15%,
+        transparent 9.4% 17%,
+        rgba(82, 12, 9, .46) 17.2% 20.3%,
+        transparent 20.6% 79.4%,
+        rgba(82, 12, 9, .46) 79.7% 82.8%,
+        transparent 83% 90.6%,
+        rgba(224, 127, 44, .10) 90.85% 91.2%,
+        rgba(94, 17, 11, .56) 91.4% 94.8%,
+        transparent 95% 100%),
+      repeating-linear-gradient(90deg, transparent 0 7.8%, rgba(255, 210, 122, .035) 8%, transparent 8.35% 16%);
+    filter: blur(3px);
+    opacity: .94;
+  }
+
+  .gt-hw-page.gt-premium-page::after {
+    left: 50%;
+    top: 46%;
+    width: min(1380px, 98vw);
+    height: min(940px, 96vh);
+    background:
+      radial-gradient(ellipse at 50% 48%, rgba(255, 176, 55, .10) 0 22%, rgba(147, 26, 13, .11) 44%, transparent 72%),
+      radial-gradient(ellipse at 15% 52%, rgba(200, 45, 20, .16), transparent 32%),
+      radial-gradient(ellipse at 85% 52%, rgba(200, 45, 20, .15), transparent 32%);
+    filter: blur(22px);
+    opacity: 1;
+  }
+
+  .gt-hw-page .gt-premium-machine {
+    box-shadow:
+      0 30px 74px rgba(0, 0, 0, .72),
+      0 0 74px rgba(178, 37, 15, .24),
+      0 0 130px rgba(255, 145, 36, .08),
+      0 0 0 1px rgba(255, 213, 125, .07);
   }
 }
 
