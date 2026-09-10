@@ -22,15 +22,15 @@ const LABEL: Record<GoldenTigerSymbolId, string> = {
   wild: "Wild Golden Tiger",
 };
 
-const POSITION: Record<GoldenTigerSymbolId, string> = {
-  orange: "0% 0%",
-  jade: "33.3333% 0%",
-  lantern: "66.6667% 0%",
-  firecracker: "100% 0%",
-  ingot: "0% 100%",
-  fortuneBag: "33.3333% 100%",
-  lion: "66.6667% 100%",
-  wild: "100% 100%",
+const POSITION: Record<GoldenTigerSymbolId, { x: string; y: string }> = {
+  orange: { x: "0%", y: "0%" },
+  jade: { x: "-100%", y: "0%" },
+  lantern: { x: "-200%", y: "0%" },
+  firecracker: { x: "-300%", y: "0%" },
+  ingot: { x: "0%", y: "-100%" },
+  fortuneBag: { x: "-100%", y: "-100%" },
+  lion: { x: "-200%", y: "-100%" },
+  wild: { x: "-300%", y: "-100%" },
 };
 
 export const GoldenTigerSymbol = memo(function GoldenTigerSymbol({
@@ -38,9 +38,10 @@ export const GoldenTigerSymbol = memo(function GoldenTigerSymbol({
   isWinning = false,
   className = "",
 }: Props) {
+  const position = POSITION[id];
   const style = {
-    "--gt-premium-symbol-atlas": `url(${premiumAtlas})`,
-    "--gt-premium-symbol-position": POSITION[id],
+    "--gt-premium-symbol-x": position.x,
+    "--gt-premium-symbol-y": position.y,
   } as CSSProperties;
 
   return (
@@ -50,7 +51,16 @@ export const GoldenTigerSymbol = memo(function GoldenTigerSymbol({
       aria-label={LABEL[id]}
       style={style}
     >
-      <span className="gt-hw-symbol-raster" aria-hidden />
+      <span className="gt-hw-symbol-raster" aria-hidden>
+        <img
+          src={premiumAtlas}
+          alt=""
+          loading="eager"
+          decoding="async"
+          draggable={false}
+          data-symbol-art={id}
+        />
+      </span>
       {id === "wild" ? <span className="gt-hw-symbol-wild-label" aria-hidden>WILD</span> : null}
     </div>
   );
