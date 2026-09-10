@@ -172,7 +172,10 @@ function validate(audit, index) {
   if (audit.cellCount !== 9) errors.push(`expected 9 cells, got ${audit.cellCount}`);
   if (audit.reelCylinders !== 3) errors.push(`expected 3 continuous reel cylinders, got ${audit.reelCylinders}`);
   if (audit.continuousSurface !== 'continuous') errors.push(`continuous reel surface marker missing: ${audit.continuousSurface}`);
-  if (audit.decoratedCells !== 0) errors.push(`expected zero individually decorated reel cells, got ${audit.decoratedCells}`);
+  const transientCellDecorationAllowed = ['reveal', 'win', 'full-grid'].includes(audit.phase ?? '');
+  if (!transientCellDecorationAllowed && audit.decoratedCells !== 0) {
+    errors.push(`expected zero individually decorated reel cells outside transient win feedback, got ${audit.decoratedCells}`);
+  }
 
   for (const [name, state] of Object.entries(audit.sections ?? {})) {
     if (!state?.visible) errors.push(`${name} is not visibly rendered at sample ${index}`);

@@ -567,6 +567,7 @@ export function GoldenTigerPremium() {
   const finishRoundPresentation = useCallback(() => {
     setWinBeat(null);
     setPhase("idle");
+    setWinning(new Set());
     setFeatureActive(false);
     setFeaturePurchased(false);
     setFeatureCells([...EMPTY_FEATURE_GRID]);
