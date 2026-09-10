@@ -116,6 +116,18 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
         data-acting="primary"
         aria-hidden
       >
+        {/* Keep the active actor first in DOM so visual QA and assistive tooling
+            always measure the live pose, even during the short overlap window. */}
+        <span
+          className={`gt-hw-tiger-pose-layer gt-hw-tiger-pose-layer--current${previousPose ? " is-entering" : ""}`}
+          data-pose={activePose}
+          style={previousPose ? { animationDuration: `${transitionMs}ms` } : undefined}
+        >
+          <span
+            className="gt-hw-tiger-sprite"
+            style={{ backgroundImage: `url(${tigerPoseAtlas})` }}
+          />
+        </span>
         {previousPose && (
           <span
             className="gt-hw-tiger-pose-layer gt-hw-tiger-pose-layer--exit"
@@ -128,16 +140,6 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
             />
           </span>
         )}
-        <span
-          className={`gt-hw-tiger-pose-layer gt-hw-tiger-pose-layer--current${previousPose ? " is-entering" : ""}`}
-          data-pose={activePose}
-          style={previousPose ? { animationDuration: `${transitionMs}ms` } : undefined}
-        >
-          <span
-            className="gt-hw-tiger-sprite"
-            style={{ backgroundImage: `url(${tigerPoseAtlas})` }}
-          />
-        </span>
         <span className="gt-hw-tiger-eye-flare gt-hw-tiger-eye-flare--left" />
         <span className="gt-hw-tiger-eye-flare gt-hw-tiger-eye-flare--right" />
         <span className="gt-hw-tiger-crown-flare" />
