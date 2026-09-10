@@ -1,0 +1,160 @@
++});
+diff --git a/src/lib/arcade/goldenTigerAudio.ts b/src/lib/arcade/goldenTigerAudio.ts
+index 3b60528..1515d61 100644
+--- a/src/lib/arcade/goldenTigerAudio.ts
++++ b/src/lib/arcade/goldenTigerAudio.ts
+@@ -3,6 +3,8 @@ import {
+   type SoundName,
+   type SoundOptions,
+ } from "./sound";
++import { AudioEventGate, type RepeatedAudioEvent } from "./audioEventGate";
++import type { GoldenTigerClock } from "./goldenTigerClock";
+ import { playGoldenTigerSample } from "./goldenTigerSamples";
+ 
+ export type GoldenTigerAudioWinTier = "small" | "nice" | "big" | "mega" | "super";
+@@ -17,6 +19,8 @@ export type GoldenTigerAudioEvent =
+   | { type: "feature-miss" }
+   | { type: "reveal"; winMultiple: number }
+   | { type: "win"; tier: GoldenTigerAudioWinTier }
++  | { type: "win-counter"; progress: number; tier: GoldenTigerAudioWinTier }
++  | { type: "win-celebrate"; tier: GoldenTigerAudioWinTier; fullGrid: boolean }
+   | { type: "full-grid" }
+   | { type: "lose" }
+   | { type: "click" };
+@@ -160,6 +164,27 @@ export function goldenTigerAudioPlan(event: GoldenTigerAudioEvent): GoldenTigerA
+         },
+       }];
+ 
++    case "win-counter": {
++      const progress = clamp(event.progress, 0, 1);
++      const tierLift = event.tier === "super" ? 1.08 : event.tier === "mega" ? 1.05 : event.tier === "big" ? 1.03 : 1;
++      return [{
++        name: "tick",
++        options: {
++          intensity: clamp(0.42 + progress * 0.22, 0.42, 0.64),
++          pitch: clamp((0.94 + progress * 0.2) * tierLift, 0.94, 1.2),
++        },
++      }];
++    }
++
++    case "win-celebrate":
++      return [{
++        name: "tigerWinAccent",
++        options: {
++          intensity: event.fullGrid ? 0.82 : event.tier === "super" ? 0.76 : event.tier === "mega" ? 0.7 : 0.62,
++          pitch: event.fullGrid ? 1.08 : event.tier === "super" ? 1.1 : 1.05,
++        },
++      }];
++
+     case "full-grid":
+       return [
+         { name: "tigerFullGrid", options: { intensity: 1.12, pitch: 0.97 } },
+@@ -175,6 +200,24 @@ export function goldenTigerAudioPlan(event: GoldenTigerAudioEvent): GoldenTigerA
+ }
+ 
+ const delayedGoldenTigerAudio = new Set<ReturnType<typeof globalThis.setTimeout>>();
++const trackedClockAudioCancels = new Set<() => void>();
++const goldenTigerAudioEventGate = new AudioEventGate();
++
++function scheduleWithGoldenTigerClock(clock: GoldenTigerClock, delayMs: number, callback: () => void) {
++  let cancel = () => {};
++  cancel = clock.schedule(delayMs, () => {
++    trackedClockAudioCancels.delete(cancel);
++    callback();
++  });
++  trackedClockAudioCancels.add(cancel);
++}
++
++function gatedEventName(event: GoldenTigerAudioEvent): RepeatedAudioEvent | null {
++  if (event.type === "reel-land") return "tigerReelLand";
++  if (event.type === "feature-lock") return "tigerFeatureLock";
++  if (event.type === "win-counter") return "tigerWinCounter";
++  return null;
++}
+ 
+ function eventSampleStarted(event: GoldenTigerAudioEvent, enabled: boolean) {
+   switch (event.type) {
+@@ -188,8 +231,16 @@ function eventSampleStarted(event: GoldenTigerAudioEvent, enabled: boolean) {
+   }
+ }
+ 
+-export function playGoldenTigerAudio(event: GoldenTigerAudioEvent, enabled: boolean) {
++export function playGoldenTigerAudio(
++  event: GoldenTigerAudioEvent,
++  enabled: boolean,
++  clock?: GoldenTigerClock,
++) {
+   if (!enabled) return;
++  const gatedName = gatedEventName(event);
++  const now = typeof performance === "undefined" ? Date.now() : performance.now();
++  if (gatedName && !goldenTigerAudioEventGate.allow(gatedName, now)) return;
++
+   const sampleStarted = eventSampleStarted(event, enabled);
+   const cues = goldenTigerAudioPlan(event);
+   const startAt = sampleStarted ? 1 : 0;
+@@ -198,16 +249,41 @@ export function playGoldenTigerAudio(event: GoldenTigerAudioEvent, enabled: bool
+     if (!cue) continue;
+     const play = () => playSound(cue.name, true, cue.options);
+     if ((cue.delayMs ?? 0) > 0) {
+-      const id = globalThis.setTimeout(() => {
+-        delayedGoldenTigerAudio.delete(id);
+-        play();
+-      }, cue.delayMs);
+-      delayedGoldenTigerAudio.add(id);
++      if (clock) {
++        scheduleWithGoldenTigerClock(clock, cue.delayMs ?? 0, play);
++      } else {
++        const id = globalThis.setTimeout(() => {
++          delayedGoldenTigerAudio.delete(id);
++          play();
++        }, cue.delayMs);
++        delayedGoldenTigerAudio.add(id);
++      }
+     } else play();
+   }
+ }
+ 
++export function scheduleGoldenTigerWinCounterAudio(
++  durationMs: number,
++  tier: GoldenTigerAudioWinTier,
++  enabled: boolean,
++  clock?: GoldenTigerClock,
++) {
++  if (!enabled || !clock) return;
++  const duration = Math.max(180, durationMs);
++  const pulseCount = Math.max(4, Math.min(12, Math.round(duration / 145)));
++  for (let index = 0; index < pulseCount; index += 1) {
++    const progress = pulseCount <= 1 ? 1 : index / (pulseCount - 1);
++    const delayMs = Math.round(progress * Math.max(0, duration - 90));
++    scheduleWithGoldenTigerClock(clock, delayMs, () => {
++      playGoldenTigerAudio({ type: "win-counter", progress, tier }, enabled, clock);
++    });
++  }
++}
++
+ export function disposeGoldenTigerAudio() {
++  for (const cancel of trackedClockAudioCancels) cancel();
++  trackedClockAudioCancels.clear();
+   for (const id of delayedGoldenTigerAudio) globalThis.clearTimeout(id);
+   delayedGoldenTigerAudio.clear();
++  goldenTigerAudioEventGate.reset();
+ }
+diff --git a/src/lib/arcade/goldenTigerClock.test.ts b/src/lib/arcade/goldenTigerClock.test.ts
+new file mode 100644
+index 0000000..a72e095
+--- /dev/null
++++ b/src/lib/arcade/goldenTigerClock.test.ts
+@@ -0,0 +1,15 @@
++import assert from "node:assert/strict";
++import test from "node:test";
++
++import { GoldenTigerClock } from "./goldenTigerClock";
++
++test("GoldenTigerClock schedule is inert outside the browser", async () => {
++  const clock = new GoldenTigerClock();
++  let fired = false;
++  const cancel = clock.schedule(1, () => { fired = true; });
++  cancel();
++  await new Promise((resolve) => setTimeout(resolve, 4));
++  clock.dispose();
++  assert.equal(fired, false);
