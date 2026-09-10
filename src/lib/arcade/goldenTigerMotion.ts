@@ -1,26 +1,26 @@
 export const GOLDEN_TIGER_REEL_COUNT = 3;
 
 export function goldenTigerSpinLaunchMs(turbo: boolean) {
-  return turbo ? 92 : 300;
+  return turbo ? 92 : 360;
 }
 
 export function goldenTigerReelBrakeMs(column: number, turbo: boolean) {
   const safeColumn = Math.max(0, Math.min(GOLDEN_TIGER_REEL_COUNT - 1, Math.trunc(column)));
-  return turbo ? 78 + safeColumn * 9 : 230 + safeColumn * 34;
+  return turbo ? 78 + safeColumn * 9 : 260 + safeColumn * 38;
 }
 
 export function goldenTigerReelLandPauseMs(column: number, turbo: boolean) {
   const safeColumn = Math.max(0, Math.min(GOLDEN_TIGER_REEL_COUNT - 1, Math.trunc(column)));
-  return turbo ? 20 + safeColumn * 4 : 64 + safeColumn * 10;
+  return turbo ? 20 + safeColumn * 4 : 74 + safeColumn * 12;
 }
 
 export function goldenTigerAnticipationMs(turbo: boolean) {
-  return turbo ? 44 : 220;
+  return turbo ? 44 : 250;
 }
 
-/** Two-to-three visual frames of upward tension before the strip launches. */
+/** A slightly longer upward tension sells weight before the normal strip launches. */
 export function goldenTigerReelTensionMs(turbo: boolean) {
-  return turbo ? 28 : 46;
+  return turbo ? 28 : 58;
 }
 
 export function goldenTigerReelTensionPx(column: number) {
@@ -57,7 +57,7 @@ export function goldenTigerBrakeEase(progress: number) {
   return 1 - (1 - t) ** 4;
 }
 
-/** Small critically-damped-looking curve for the 60–90ms overshoot return. */
+/** Small critically-damped-looking curve for the overshoot return. */
 export function goldenTigerReboundEase(progress: number) {
   const t = Math.max(0, Math.min(1, Number.isFinite(progress) ? progress : 0));
   return 1 - Math.cos((t * Math.PI) / 2);
