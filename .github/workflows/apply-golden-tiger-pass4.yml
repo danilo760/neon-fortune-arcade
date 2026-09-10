@@ -26,9 +26,7 @@ jobs:
           node-version: 22
 
       - name: Apply visual patch
-        run: |
-          git apply --check .step4-golden-tiger.patch
-          git apply .step4-golden-tiger.patch
+        run: patch -p1 --forward < .step4-golden-tiger.patch
 
       - name: Install dependencies
         run: npm install --include=dev
