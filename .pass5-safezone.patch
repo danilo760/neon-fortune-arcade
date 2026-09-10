@@ -1,0 +1,11 @@
+--- a/src/components/arcade/GoldenTigerCommercial.css
++++ b/src/components/arcade/GoldenTigerCommercial.css
+@@ -673,8 +673,8 @@
+ }
+ @keyframes gt-p5-tiger-breathe {
+-  0%,100% { transform: translate3d(0,0,0) rotateZ(-.2deg) scale(1); }
+-  50% { transform: translate3d(0,-2px,0) rotateZ(.18deg) scale(1.012,1.018); }
++  0%,100% { transform: translate3d(0,3px,0) rotateZ(-.2deg) scale(1); }
++  50% { transform: translate3d(0,1px,0) rotateZ(.18deg) scale(1.012,1.018); }
+ }
+ @keyframes gt-p5-tiger-track {
