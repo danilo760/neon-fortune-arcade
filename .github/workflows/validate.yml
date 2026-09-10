@@ -36,5 +36,11 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
+      - name: Typecheck scripts
+        run: bun run typecheck:scripts
+
+      - name: Golden Tiger simulator smoke test
+        run: SPINS=2500 FEATURE_ENTRIES=500 SEEDS=20260910 BETS=20 bun run simulate:golden-tiger > /tmp/golden-tiger-sim.json
+
       - name: Production build
         run: bun run build

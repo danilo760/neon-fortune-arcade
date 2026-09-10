@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["scripts/simulate-golden-tiger.ts"],
+  "compilerOptions": {
+    "types": ["node", "vite/client"]
+  }
+}
