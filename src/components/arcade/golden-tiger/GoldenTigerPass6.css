@@ -111,6 +111,57 @@
   animation: gt-p6-win-sweep .56s cubic-bezier(.25,.65,.3,1) both;
 }
 
+/*
+ * Presentation-only payline energy traces. The real payout still comes only
+ * from evaluateGoldenTiger; these selectors merely connect cells already
+ * marked as winning by the engine. Multiple winning rows/full-grid can light
+ * more than one trace without changing the result or line count.
+ */
+.gt-hw-page .gt-premium-machine .gt-premium-grid {
+  --gt-p6-line-top: transparent;
+  --gt-p6-line-middle: transparent;
+  --gt-p6-line-bottom: transparent;
+  --gt-p6-line-down: transparent;
+  --gt-p6-line-up: transparent;
+}
+
+.gt-hw-page .gt-premium-machine .gt-premium-grid:has(> .gt-hw-cell:nth-of-type(1).is-winning):has(> .gt-hw-cell:nth-of-type(2).is-winning):has(> .gt-hw-cell:nth-of-type(3).is-winning) {
+  --gt-p6-line-top: rgba(255, 227, 122, .92);
+}
+.gt-hw-page .gt-premium-machine .gt-premium-grid:has(> .gt-hw-cell:nth-of-type(4).is-winning):has(> .gt-hw-cell:nth-of-type(5).is-winning):has(> .gt-hw-cell:nth-of-type(6).is-winning) {
+  --gt-p6-line-middle: rgba(255, 227, 122, .92);
+}
+.gt-hw-page .gt-premium-machine .gt-premium-grid:has(> .gt-hw-cell:nth-of-type(7).is-winning):has(> .gt-hw-cell:nth-of-type(8).is-winning):has(> .gt-hw-cell:nth-of-type(9).is-winning) {
+  --gt-p6-line-bottom: rgba(255, 227, 122, .92);
+}
+.gt-hw-page .gt-premium-machine .gt-premium-grid:has(> .gt-hw-cell:nth-of-type(1).is-winning):has(> .gt-hw-cell:nth-of-type(5).is-winning):has(> .gt-hw-cell:nth-of-type(9).is-winning) {
+  --gt-p6-line-down: rgba(255, 206, 86, .78);
+}
+.gt-hw-page .gt-premium-machine .gt-premium-grid:has(> .gt-hw-cell:nth-of-type(7).is-winning):has(> .gt-hw-cell:nth-of-type(5).is-winning):has(> .gt-hw-cell:nth-of-type(3).is-winning) {
+  --gt-p6-line-up: rgba(255, 206, 86, .78);
+}
+
+.gt-hw-page .gt-premium-machine .gt-hw-grid-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    linear-gradient(90deg, transparent 2%, var(--gt-p6-line-top) 10% 90%, transparent 98%) 0 16.666% / 100% 3px no-repeat,
+    linear-gradient(90deg, transparent 2%, var(--gt-p6-line-middle) 10% 90%, transparent 98%) 0 50% / 100% 3px no-repeat,
+    linear-gradient(90deg, transparent 2%, var(--gt-p6-line-bottom) 10% 90%, transparent 98%) 0 83.333% / 100% 3px no-repeat,
+    linear-gradient(to bottom right, transparent 49.55%, var(--gt-p6-line-down) 49.7% 50.3%, transparent 50.45%),
+    linear-gradient(to top right, transparent 49.55%, var(--gt-p6-line-up) 49.7% 50.3%, transparent 50.45%);
+  filter: drop-shadow(0 0 4px rgba(255, 187, 53, .72));
+  mix-blend-mode: screen;
+}
+
+.gt-hw-page .gt-premium-machine .gt-premium-grid:has(> .gt-hw-cell.is-winning) .gt-hw-grid-glass::before {
+  animation: gt-p6-payline-pulse .72s ease-in-out infinite alternate;
+}
+
 /* Make authored mascot pose changes read as acting, not a floating sticker. */
 .gt-hw-page .gt-premium-machine .gt-hw-tiger-rig[data-acting="secondary"] {
   filter: brightness(1.035) saturate(1.035);
@@ -148,6 +199,11 @@
   18% { opacity: .7; }
   78% { opacity: .5; }
   100% { opacity: 0; transform: translateX(115%) skewX(-14deg); }
+}
+
+@keyframes gt-p6-payline-pulse {
+  from { opacity: .34; filter: drop-shadow(0 0 3px rgba(255, 187, 53, .5)); }
+  to { opacity: .9; filter: drop-shadow(0 0 8px rgba(255, 208, 84, .92)); }
 }
 
 /* Widescreen ambience fills the desktop without changing the vertical game canvas. */
@@ -210,7 +266,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .gt-hw-page .gt-premium-machine[data-landing-column] .gt-commercial-reel-cylinder,
-  .gt-hw-page .gt-premium-machine .gt-premium-grid[data-reveal="true"] .gt-hw-grid-glass::after {
+  .gt-hw-page .gt-premium-machine .gt-premium-grid[data-reveal="true"] .gt-hw-grid-glass::after,
+  .gt-hw-page .gt-premium-machine .gt-premium-grid:has(> .gt-hw-cell.is-winning) .gt-hw-grid-glass::before {
     animation: none !important;
   }
 }
