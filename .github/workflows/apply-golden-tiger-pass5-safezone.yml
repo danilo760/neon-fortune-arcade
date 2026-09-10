@@ -20,7 +20,29 @@ jobs:
           fetch-depth: 0
       - uses: oven-sh/setup-bun@v2
       - name: Apply safe-zone correction
-        run: patch -p1 --forward < .pass5-safezone.patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('src/components/arcade/GoldenTigerCommercial.css')
+          text = path.read_text()
+          old = '''@keyframes gt-p5-tiger-breathe {
+            0%,100% { transform: translate3d(0,0,0) rotateZ(-.2deg) scale(1); }
+            50% { transform: translate3d(0,-2px,0) rotateZ(.18deg) scale(1.012,1.018); }
+          }'''
+          new = '''@keyframes gt-p5-tiger-breathe {
+            0%,100% { transform: translate3d(0,3px,0) rotateZ(-.2deg) scale(1); }
+            50% { transform: translate3d(0,1px,0) rotateZ(.18deg) scale(1.012,1.018); }
+          }'''
+          # Normalize indentation only inside the exact keyframe block so this
+          # replacement remains explicit and refuses unexpected source drift.
+          old = '\n'.join(line.strip() if i else line for i, line in enumerate(old.splitlines()))
+          new = '\n'.join(line.strip() if i else line for i, line in enumerate(new.splitlines()))
+          canonical = text.replace('  0%,100% { transform: translate3d(0,0,0) rotateZ(-.2deg) scale(1); }\n  50% { transform: translate3d(0,-2px,0) rotateZ(.18deg) scale(1.012,1.018); }',
+                                   '  0%,100% { transform: translate3d(0,3px,0) rotateZ(-.2deg) scale(1); }\n  50% { transform: translate3d(0,1px,0) rotateZ(.18deg) scale(1.012,1.018); }', 1)
+          if canonical == text:
+            raise SystemExit('Expected Pass 5 breathe keyframe was not found exactly once')
+          path.write_text(canonical)
+          PY
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Lint
