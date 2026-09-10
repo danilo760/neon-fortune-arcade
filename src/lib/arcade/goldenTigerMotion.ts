@@ -39,9 +39,14 @@ export function goldenTigerReelReboundMs(column: number, turbo: boolean) {
   return turbo ? 60 + safe * 4 : 68 + safe * 8;
 }
 
+/**
+ * Motion blur is intentionally restrained. The reel strip itself supplies the
+ * speed cue; keeping the cap below one pixel preserves symbol identity during
+ * cruise instead of washing the reel into a flat gold/brown block.
+ */
 export function goldenTigerReelBlurPx(velocityPxPerMs: number) {
   const velocity = Math.max(0, Number.isFinite(velocityPxPerMs) ? velocityPxPerMs : 0);
-  return Math.min(2.6, velocity * 1.15);
+  return Math.min(0.82, velocity * 0.34);
 }
 
 /** A smooth ease-out keeps the strip moving quickly at the beginning of the
