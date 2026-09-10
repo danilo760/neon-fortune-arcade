@@ -1,26 +1,26 @@
 export const GOLDEN_TIGER_REEL_COUNT = 3;
 
 export function goldenTigerSpinLaunchMs(turbo: boolean) {
-  return turbo ? 92 : 360;
+  return turbo ? 92 : 400;
 }
 
 export function goldenTigerReelBrakeMs(column: number, turbo: boolean) {
   const safeColumn = Math.max(0, Math.min(GOLDEN_TIGER_REEL_COUNT - 1, Math.trunc(column)));
-  return turbo ? 78 + safeColumn * 9 : 260 + safeColumn * 38;
+  return turbo ? 78 + safeColumn * 9 : 300 + safeColumn * 42;
 }
 
 export function goldenTigerReelLandPauseMs(column: number, turbo: boolean) {
   const safeColumn = Math.max(0, Math.min(GOLDEN_TIGER_REEL_COUNT - 1, Math.trunc(column)));
-  return turbo ? 20 + safeColumn * 4 : 74 + safeColumn * 12;
+  return turbo ? 20 + safeColumn * 4 : 86 + safeColumn * 14;
 }
 
 export function goldenTigerAnticipationMs(turbo: boolean) {
-  return turbo ? 44 : 250;
+  return turbo ? 44 : 280;
 }
 
 /** A slightly longer upward tension sells weight before the normal strip launches. */
 export function goldenTigerReelTensionMs(turbo: boolean) {
-  return turbo ? 28 : 58;
+  return turbo ? 28 : 64;
 }
 
 export function goldenTigerReelTensionPx(column: number) {
