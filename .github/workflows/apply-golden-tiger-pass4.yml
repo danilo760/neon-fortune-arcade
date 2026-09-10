@@ -14,221 +14,21 @@ jobs:
   apply:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout branch
+        uses: actions/checkout@v4
         with:
           ref: art/golden-tiger-cabinet-pass4-2026-09-10
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: package-lock.json
-        continue-on-error: true
 
-      - name: Apply presentation-only redesign
-        shell: bash
+      - name: Apply visual patch
         run: |
-          python <<'PY'
-          from pathlib import Path
-
-          tsx = Path('src/components/arcade/GoldenTigerPremium.tsx')
-          s = tsx.read_text()
-          s = s.replace('''          <div className="gt-hw-brand">\n            <small>NEON FORTUNE ARCADE</small>\n            <h1>GOLDEN TIGER</h1>\n            <span>FORTUNE ROARS</span>\n          </div>''','''          <div className="gt-hw-brand">\n            <h1>GOLDEN TIGER</h1>\n          </div>''')
-          s = s.replace('''        <div className={cn("gt-hw-respin-panel", featureActive && "is-active", phase === "feature-lock" && "is-reset")}>\n          <span>{featureActive ? "FORTUNA ESCOLHIDA" : "PRÊMIO MÁXIMO"}</span>\n          <strong>{featureActive ? selectedLabel : `GRID ×${GOLDEN_TIGER_FULL_GRID_MULTIPLIER}`}</strong>\n          <small>{featureActive ? `${lockedCount}/9 FIXOS · R${featureAttempt}` : "5 LINHAS FIXAS"}</small>\n        </div>''','''        {featureActive && (\n          <div className={cn("gt-hw-respin-panel is-active", phase === "feature-lock" && "is-reset")}>\n            <span>FORTUNE</span>\n            <strong>{selectedLabel}</strong>\n            <small>{lockedCount}/9 · R{featureAttempt}</small>\n          </div>\n        )}''')
-          s = s.replace('''          className="gt-hw-grid gt-premium-grid"\n          data-landing-column={landingColumn}''','''          className="gt-hw-grid gt-premium-grid"\n          data-reel-surface="continuous"\n          data-landing-column={landingColumn}''')
-          s = s.replace('''        >\n          {grid.map((symbol, index) => {''','''        >\n          <span className="gt-commercial-reel-cylinder is-0" aria-hidden />\n          <span className="gt-commercial-reel-cylinder is-1" aria-hidden />\n          <span className="gt-commercial-reel-cylinder is-2" aria-hidden />\n          {grid.map((symbol, index) => {''')
-          s = s.replace('''        <div className="gt-hw-hud">\n          <div><span>SALDO</span><strong>{formatCoins(balance)}</strong></div>\n          <div><span>APOSTA</span><strong>{formatCoins(bet)}</strong></div>\n          <div><span>GANHO</span><strong>{formatCoins(win)}</strong></div>\n        </div>''','''        <div className="gt-hw-hud">\n          <div><span>SALDO</span><strong>{formatCoins(balance)}</strong></div>\n          <div><span>APOSTA</span><strong>{formatCoins(bet)}</strong></div>\n        </div>''')
-          s = s.replace('''        <div className="gt-hw-controls gt-premium-controls">''','''        <div className="gt-hw-controls gt-premium-controls gt-commercial-console">''')
-          s = s.replace('''            <span>{selectedLabel} + WILD · SÍMBOLOS FICAM FIXOS</span>''','''            <span>{selectedLabel} + WILD</span>''')
-          s = s.replace('''    phase === "win" ? `GANHO ${formatCoins(win)}` :\n    "FORTUNE FEATURE PODE SURGIR A QUALQUER GIRO";''','''    phase === "win" ? `GANHO ${formatCoins(win)}` :\n    phase === "base-spin" ? "GIRANDO" :\n    "BOA SORTE";''')
-          tsx.write_text(s)
-
-          css = Path('src/components/arcade/GoldenTigerCommercial.css')
-          c = css.read_text()
-          marker = 'PASS 4 — CONTINUOUS REEL CABINET + HUD CLEANUP'
-          if marker not in c:
-              c += r'''
-
-/* =====================================================================
-   PASS 4 — CONTINUOUS REEL CABINET + HUD CLEANUP
-   Presentation-only. Math, payout and settlement are intentionally untouched.
-   ===================================================================== */
-.gt-hw-page .gt-premium-machine {
-  grid-template-rows: 44px 146px 0 minmax(300px, 1fr) 30px 38px 70px 10px;
-  gap: 3px;
-}
-
-.gt-hw-page .gt-premium-machine .gt-hw-brand small,
-.gt-hw-page .gt-premium-machine .gt-hw-brand > span { display: none !important; }
-.gt-hw-page .gt-premium-machine .gt-hw-brand h1 { margin: 0; font-size: 21px; letter-spacing: .055em; }
-
-.gt-hw-page .gt-premium-machine .gt-hw-tiger-stage {
-  z-index: 19;
-  transform: translateY(8px);
-  margin-bottom: -12px;
-}
-.gt-hw-page .gt-premium-machine .gt-hw-tiger-floor-shadow {
-  bottom: -2px; width: 146px; height: 20px; opacity: .92; filter: blur(7px);
-}
-.gt-hw-page .gt-premium-machine .gt-hw-tiger-stage::after {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  left: 50%;
-  bottom: -8px;
-  width: 74%;
-  height: 26px;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(255,198,71,.22), rgba(87,12,5,.48) 50%, transparent 72%);
-  box-shadow: 0 10px 18px rgba(0,0,0,.45);
-}
-
-.gt-hw-page .gt-premium-machine .gt-hw-respin-panel {
-  position: absolute;
-  z-index: 31;
-  top: 186px;
-  left: 50%;
-  width: min(78%, 310px);
-  min-height: 24px;
-  transform: translateX(-50%);
-  grid-template-columns: 1fr auto 1fr;
-  padding: 2px 9px;
-  border-radius: 999px;
-  background: rgba(71,8,4,.88);
-  backdrop-filter: blur(5px);
-}
-
-.gt-hw-page .gt-premium-machine .gt-premium-grid {
-  isolation: isolate;
-  border-radius: 13px;
-  border-width: 3px;
-  background: #2d0705;
-  box-shadow: 0 0 0 2px #641007, 0 0 0 4px rgba(246,200,93,.22), 0 12px 28px rgba(0,0,0,.78), 0 0 22px rgba(255,178,43,.20), inset 0 12px 22px rgba(44,4,2,.58), inset 0 -14px 24px rgba(36,3,2,.68);
-}
-.gt-hw-page .gt-premium-machine .gt-commercial-reel-cylinder {
-  position: absolute;
-  z-index: 0;
-  top: 0;
-  bottom: 0;
-  width: 33.333333%;
-  pointer-events: none;
-  background: linear-gradient(180deg, rgba(63,10,6,.42) 0%, transparent 13%, transparent 86%, rgba(45,5,3,.58) 100%), radial-gradient(ellipse at 50% 48%, #fff4d2 0%, #efd7aa 45%, #c99a61 76%, #7f431f 100%);
-  box-shadow: inset 12px 0 18px rgba(92,42,16,.14), inset -12px 0 18px rgba(92,42,16,.14), inset 0 16px 18px rgba(76,24,10,.18), inset 0 -18px 20px rgba(61,17,8,.22);
-}
-.gt-hw-page .gt-premium-machine .gt-commercial-reel-cylinder.is-0 { left: 0; }
-.gt-hw-page .gt-premium-machine .gt-commercial-reel-cylinder.is-1 { left: 33.333333%; }
-.gt-hw-page .gt-premium-machine .gt-commercial-reel-cylinder.is-2 { left: 66.666666%; }
-.gt-hw-page .gt-premium-machine .gt-commercial-reel-cylinder.is-1,
-.gt-hw-page .gt-premium-machine .gt-commercial-reel-cylinder.is-2 { border-left: 1px solid rgba(122,62,23,.48); }
-
-.gt-hw-page .gt-premium-machine .gt-premium-grid .gt-hw-cell {
-  z-index: 2;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-.gt-hw-page .gt-premium-machine .gt-premium-grid .gt-hw-cell::before { display: none !important; }
-.gt-hw-page .gt-premium-machine .gt-premium-grid .gt-hw-cell.is-winning {
-  background: radial-gradient(circle at 50% 50%, rgba(255,238,145,.30), rgba(255,183,45,.10) 55%, transparent 74%) !important;
-  box-shadow: inset 0 0 22px rgba(255,233,132,.28) !important;
-}
-.gt-hw-page .gt-premium-machine[data-feature-mode="active"] .gt-premium-grid .gt-hw-cell.is-feature-blank {
-  background: rgba(29,4,3,.54) !important;
-  box-shadow: inset 0 0 18px rgba(0,0,0,.38) !important;
-}
-.gt-hw-page .gt-premium-machine[data-feature-mode="active"] .gt-premium-grid .gt-hw-cell.is-locked {
-  background: radial-gradient(circle, rgba(255,221,123,.14), rgba(67,14,6,.20) 68%, transparent 100%) !important;
-}
-
-.gt-hw-page .gt-premium-machine .gt-hw-reel-overlay {
-  border-radius: 0;
-  background: linear-gradient(180deg, rgba(61,12,7,.38), transparent 14%, transparent 86%, rgba(49,8,5,.48)), radial-gradient(ellipse at 50% 50%, #fff4d4 0%, #ead1a2 58%, #b9824d 100%);
-  box-shadow: inset 12px 0 18px rgba(92,42,16,.14), inset -12px 0 18px rgba(92,42,16,.14);
-}
-.gt-hw-page .gt-premium-machine .gt-hw-reel-overlay + .gt-hw-reel-overlay { border-left: 1px solid rgba(122,62,23,.48); }
-.gt-hw-page .gt-premium-machine .gt-hw-reel-item { background: transparent !important; box-shadow: none !important; }
-.gt-hw-page .gt-premium-machine .gt-hw-reel-shade {
-  background: linear-gradient(180deg, rgba(55,7,5,.42) 0, transparent 18%, transparent 80%, rgba(55,7,5,.50) 100%);
-  box-shadow: inset 0 14px 18px rgba(58,11,6,.24), inset 0 -16px 20px rgba(58,11,6,.28);
-}
-
-.gt-hw-page .gt-premium-machine .gt-hw-status {
-  min-height: 28px;
-  border: 0;
-  border-block: 1px solid rgba(229,169,70,.26);
-  border-radius: 0;
-  background: linear-gradient(90deg, transparent, rgba(62,8,5,.72) 18% 82%, transparent);
-  box-shadow: none;
-  font-size: 8px;
-  letter-spacing: .10em;
-}
-.gt-hw-page .gt-premium-machine .gt-hw-hud {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  border-radius: 9px;
-  background: rgba(10,1,1,.72);
-}
-.gt-hw-page .gt-premium-machine .gt-hw-hud > div { background: transparent; box-shadow: none; }
-
-.gt-hw-page .gt-premium-machine .gt-commercial-console {
-  min-height: 64px;
-  padding: 7px 8px;
-  border: 1px solid rgba(224,170,76,.44);
-  border-radius: 15px 15px 20px 20px;
-  background: linear-gradient(180deg, rgba(112,20,11,.92), rgba(38,4,3,.96)), radial-gradient(ellipse at 50% 0, rgba(255,211,107,.14), transparent 62%);
-  box-shadow: inset 0 1px 0 rgba(255,232,165,.18), inset 0 -10px 18px rgba(0,0,0,.28), 0 8px 18px rgba(0,0,0,.34);
-}
-.gt-hw-page .gt-premium-machine .gt-commercial-console .gt-hw-main-controls > button:not(.gt-hw-spin),
-.gt-hw-page .gt-premium-machine .gt-commercial-console .gt-hw-secondary-controls > button {
-  border: 1px solid rgba(230,183,89,.40);
-  background: linear-gradient(180deg, rgba(104,16,9,.90), rgba(48,5,4,.96));
-  box-shadow: inset 0 1px 0 rgba(255,229,151,.12), 0 2px 4px rgba(0,0,0,.26);
-}
-.gt-hw-page .gt-premium-machine .gt-premium-feature-title span { letter-spacing: .12em; }
-
-@media (max-width: 699px) {
-  .gt-hw-page .gt-premium-machine {
-    grid-template-rows: 42px 142px 0 minmax(300px, 1fr) 28px 38px 66px 9px;
-    gap: 3px;
-    padding-inline: 7px;
-  }
-  .gt-hw-page .gt-premium-machine .gt-hw-respin-panel { top: 180px; }
-  .gt-hw-page .gt-premium-machine .gt-commercial-console {
-    grid-template-columns: 44px minmax(0,1fr) 44px 44px;
-    gap: 4px;
-    padding: 5px 6px;
-  }
-}
-@media (min-width: 700px) and (max-height: 800px) {
-  .gt-hw-page .gt-premium-machine {
-    grid-template-rows: 42px 132px 0 minmax(286px,1fr) 28px 36px 62px 8px;
-    gap: 2px;
-    padding: 5px 9px;
-  }
-  .gt-hw-page .gt-premium-machine .gt-hw-tiger-stage { height: 132px; min-height: 132px; margin-bottom: -10px; }
-  .gt-hw-page .gt-premium-machine .gt-hw-respin-panel { top: 170px; }
-  .gt-hw-page .gt-premium-machine .gt-commercial-console { min-height: 58px; padding-block: 4px; }
-}
-'''
-          css.write_text(c)
-
-          desktop = Path('scripts/goldenTigerDesktopSpinQa.mjs')
-          d = desktop.read_text()
-          d = d.replace("    respin: q('.gt-hw-respin-panel'),\n", "")
-          d = d.replace("  const overlays = [...document.querySelectorAll('.gt-hw-reel-overlay')];\n", "  const overlays = [...document.querySelectorAll('.gt-hw-reel-overlay')];\n  const cylinders = [...document.querySelectorAll('.gt-commercial-reel-cylinder')];\n")
-          d = d.replace("    reelOverlays: overlays.length,\n", "    reelOverlays: overlays.length,\n    reelCylinders: cylinders.length,\n    continuousSurface: grid?.getAttribute('data-reel-surface') ?? null,\n    decoratedCells: cells.filter((cell) => { const style = getComputedStyle(cell); return style.backgroundImage !== 'none' || parseFloat(style.borderTopWidth) > 0 || parseFloat(style.borderRightWidth) > 0 || parseFloat(style.borderBottomWidth) > 0 || parseFloat(style.borderLeftWidth) > 0 || parseFloat(style.borderRadius) > 0; }).length,\n")
-          d = d.replace("  if (audit.cellCount !== 9) errors.push(`expected 9 cells, got ${audit.cellCount}`);\n", "  if (audit.cellCount !== 9) errors.push(`expected 9 cells, got ${audit.cellCount}`);\n  if (audit.reelCylinders !== 3) errors.push(`expected 3 continuous reel cylinders, got ${audit.reelCylinders}`);\n  if (audit.continuousSurface !== 'continuous') errors.push(`continuous reel surface marker missing: ${audit.continuousSurface}`);\n  if (audit.decoratedCells !== 0) errors.push(`expected zero individually decorated reel cells, got ${audit.decoratedCells}`);\n")
-          desktop.write_text(d)
-
-          mobile = Path('scripts/goldenTigerVisualQa.mjs')
-          m = mobile.read_text()
-          m = m.replace("  const rasters = [...document.querySelectorAll('.gt-hw-symbol-raster')];\n", "  const rasters = [...document.querySelectorAll('.gt-hw-symbol-raster')];\n  const cylinders = [...document.querySelectorAll('.gt-commercial-reel-cylinder')];\n")
-          m = m.replace("    cellCount: cells.length,\n", "    cellCount: cells.length,\n    reelCylinders: cylinders.length,\n    continuousSurface: grid?.getAttribute('data-reel-surface') ?? null,\n    decoratedCells: cells.filter((cell) => { const style = getComputedStyle(cell); return style.backgroundImage !== 'none' || parseFloat(style.borderTopWidth) > 0 || parseFloat(style.borderRightWidth) > 0 || parseFloat(style.borderBottomWidth) > 0 || parseFloat(style.borderLeftWidth) > 0 || parseFloat(style.borderRadius) > 0; }).length,\n")
-          m = m.replace("  if (audit.cellCount !== 9) errors.push(`expected 9 reel cells, got ${audit.cellCount}`);\n", "  if (audit.cellCount !== 9) errors.push(`expected 9 reel cells, got ${audit.cellCount}`);\n  if (audit.reelCylinders !== 3) errors.push(`expected 3 continuous reel cylinders, got ${audit.reelCylinders}`);\n  if (audit.continuousSurface !== 'continuous') errors.push(`continuous reel surface marker missing: ${audit.continuousSurface}`);\n  if (audit.decoratedCells !== 0) errors.push(`expected zero individually decorated reel cells, got ${audit.decoratedCells}`);\n")
-          mobile.write_text(m)
-          PY
+          git apply --check .step4-golden-tiger.patch
+          git apply .step4-golden-tiger.patch
 
       - name: Install dependencies
         run: npm install --include=dev
@@ -239,12 +39,11 @@ jobs:
       - name: Production build
         run: npm run build
 
-      - name: Commit pass 4
-        shell: bash
+      - name: Commit validated pass 4
         run: |
           git config user.name "danilo760"
           git config user.email "62104537+danilo760@users.noreply.github.com"
-          git rm .github/workflows/apply-golden-tiger-pass4.yml
+          git rm .step4-golden-tiger.patch .github/workflows/apply-golden-tiger-pass4.yml
           git add src/components/arcade/GoldenTigerPremium.tsx src/components/arcade/GoldenTigerCommercial.css scripts/goldenTigerDesktopSpinQa.mjs scripts/goldenTigerVisualQa.mjs
           git commit -m "refactor: reshape Golden Tiger cabinet into continuous reels"
           git push origin HEAD:art/golden-tiger-cabinet-pass4-2026-09-10
