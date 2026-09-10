@@ -683,7 +683,8 @@ export function GoldenTigerPremium() {
     phase === "return" ? `RETORNO ${formatCoins(win)}` :
     phase === "full-grid" ? `TELA CHEIA · ×${GOLDEN_TIGER_FULL_GRID_MULTIPLIER}` :
     phase === "win" ? `GANHO ${formatCoins(win)}` :
-    "FORTUNE FEATURE PODE SURGIR A QUALQUER GIRO";
+    phase === "base-spin" ? "GIRANDO" :
+    "BOA SORTE";
 
   return (
     <main className="gt-hw-page gt-premium-page">
@@ -708,9 +709,7 @@ export function GoldenTigerPremium() {
             <ArrowLeft />
           </Link>
           <div className="gt-hw-brand">
-            <small>NEON FORTUNE ARCADE</small>
             <h1>GOLDEN TIGER</h1>
-            <span>FORTUNE ROARS</span>
           </div>
           <button
             className="gt-hw-icon-button"
@@ -728,18 +727,24 @@ export function GoldenTigerPremium() {
           lockedCount={lockedCount}
         />
 
-        <div className={cn("gt-hw-respin-panel", featureActive && "is-active", phase === "feature-lock" && "is-reset")}>
-          <span>{featureActive ? "FORTUNA ESCOLHIDA" : "PRÊMIO MÁXIMO"}</span>
-          <strong>{featureActive ? selectedLabel : `GRID ×${GOLDEN_TIGER_FULL_GRID_MULTIPLIER}`}</strong>
-          <small>{featureActive ? `${lockedCount}/9 FIXOS · R${featureAttempt}` : "5 LINHAS FIXAS"}</small>
-        </div>
+        {featureActive && (
+          <div className={cn("gt-hw-respin-panel is-active", phase === "feature-lock" && "is-reset")}>
+            <span>FORTUNE</span>
+            <strong>{selectedLabel}</strong>
+            <small>{lockedCount}/9 · R{featureAttempt}</small>
+          </div>
+        )}
 
         <div
           className="gt-hw-grid gt-premium-grid"
+          data-reel-surface="continuous"
           data-landing-column={landingColumn}
           data-reveal={phase === "reveal" ? "true" : "false"}
           aria-label="Grade de símbolos 3 por 3"
         >
+          <span className="gt-commercial-reel-cylinder is-0" aria-hidden />
+          <span className="gt-commercial-reel-cylinder is-1" aria-hidden />
+          <span className="gt-commercial-reel-cylinder is-2" aria-hidden />
           {grid.map((symbol, index) => {
             const featureSymbol = featureCells[index] ?? null;
             const locked = featureActive && featureSymbol !== null;
@@ -794,10 +799,9 @@ export function GoldenTigerPremium() {
         <div className="gt-hw-hud">
           <div><span>SALDO</span><strong>{formatCoins(balance)}</strong></div>
           <div><span>APOSTA</span><strong>{formatCoins(bet)}</strong></div>
-          <div><span>GANHO</span><strong>{formatCoins(win)}</strong></div>
         </div>
 
-        <div className="gt-hw-controls gt-premium-controls">
+        <div className="gt-hw-controls gt-premium-controls gt-commercial-console">
           <div className="gt-hw-main-controls">
             <button type="button" onClick={() => changeBet(-1)} disabled={isBusy || autoLeft > 0} aria-label="Diminuir aposta">−</button>
             <button type="button" className="gt-hw-spin" onClick={() => void runSpin()} disabled={isBusy || autoLeft > 0 || balance < bet} aria-label="Girar"><span /></button>
@@ -840,7 +844,7 @@ export function GoldenTigerPremium() {
           <div className="gt-premium-feature-title" aria-live="polite">
             <small>{featurePurchased ? "FEATURE COMPRADA" : "FEATURE ATIVADA"}</small>
             <strong>FORTUNE FEATURE</strong>
-            <span>{selectedLabel} + WILD · SÍMBOLOS FICAM FIXOS</span>
+            <span>{selectedLabel} + WILD</span>
           </div>
         )}
 

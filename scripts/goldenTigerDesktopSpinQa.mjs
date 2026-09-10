@@ -93,7 +93,6 @@ const auditExpression = `(() => {
   const sections = {
     topbar: q('.gt-hw-topbar'),
     tiger: q('.gt-hw-tiger-stage'),
-    respin: q('.gt-hw-respin-panel'),
     grid,
     status: q('.gt-hw-status'),
     hud: q('.gt-hw-hud'),
@@ -119,6 +118,7 @@ const auditExpression = `(() => {
   }]));
   const cells = [...document.querySelectorAll('.gt-hw-grid > .gt-hw-cell')];
   const overlays = [...document.querySelectorAll('.gt-hw-reel-overlay')];
+  const cylinders = [...document.querySelectorAll('.gt-commercial-reel-cylinder')];
   const columns = [];
   if (grid) {
     const r = grid.getBoundingClientRect();
@@ -148,6 +148,9 @@ const auditExpression = `(() => {
     machine: machineRect,
     machineOverflow: machine ? getComputedStyle(machine).overflow : null,
     reelOverlays: overlays.length,
+    reelCylinders: cylinders.length,
+    continuousSurface: grid?.getAttribute('data-reel-surface') ?? null,
+    decoratedCells: cells.filter((cell) => { const style = getComputedStyle(cell); return style.backgroundImage !== 'none' || parseFloat(style.borderTopWidth) > 0 || parseFloat(style.borderRightWidth) > 0 || parseFloat(style.borderBottomWidth) > 0 || parseFloat(style.borderLeftWidth) > 0 || parseFloat(style.borderRadius) > 0; }).length,
     overlayRects: overlays.map(rect),
     cellCount: cells.length,
     cellRects: cells.map(rect),
@@ -167,6 +170,9 @@ function validate(audit, index) {
   }
   if (audit.scrollWidth > viewport.width + 1) errors.push(`horizontal overflow ${audit.scrollWidth}px`);
   if (audit.cellCount !== 9) errors.push(`expected 9 cells, got ${audit.cellCount}`);
+  if (audit.reelCylinders !== 3) errors.push(`expected 3 continuous reel cylinders, got ${audit.reelCylinders}`);
+  if (audit.continuousSurface !== 'continuous') errors.push(`continuous reel surface marker missing: ${audit.continuousSurface}`);
+  if (audit.decoratedCells !== 0) errors.push(`expected zero individually decorated reel cells, got ${audit.decoratedCells}`);
 
   for (const [name, state] of Object.entries(audit.sections ?? {})) {
     if (!state?.visible) errors.push(`${name} is not visibly rendered at sample ${index}`);
