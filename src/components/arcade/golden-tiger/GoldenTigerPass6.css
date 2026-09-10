@@ -1,0 +1,177 @@
+/* =====================================================================
+   GOLDEN TIGER — PASS 6
+   Production-safe symbol rendering + reel clarity + presentation depth.
+   Presentation only: no outcome, payout, RTP or settlement changes.
+   ===================================================================== */
+
+.gt-hw-page.gt-premium-page {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 18% 44%, rgba(144, 20, 10, .22), transparent 32%),
+    radial-gradient(ellipse at 82% 42%, rgba(176, 88, 14, .18), transparent 30%),
+    radial-gradient(ellipse at 50% 18%, rgba(255, 179, 54, .09), transparent 32%),
+    linear-gradient(180deg, #120204 0%, #070102 54%, #020102 100%);
+}
+
+.gt-hw-page.gt-premium-page::before,
+.gt-hw-page.gt-premium-page::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.gt-hw-page.gt-premium-page::before {
+  inset: -8%;
+  background:
+    radial-gradient(circle at 10% 30%, rgba(255, 180, 49, .18) 0 1.2%, transparent 1.6%),
+    radial-gradient(circle at 91% 26%, rgba(255, 180, 49, .16) 0 1.1%, transparent 1.55%),
+    radial-gradient(circle at 13% 68%, rgba(216, 46, 23, .13) 0 1.4%, transparent 1.9%),
+    radial-gradient(circle at 88% 70%, rgba(216, 46, 23, .12) 0 1.4%, transparent 1.9%),
+    repeating-linear-gradient(90deg, transparent 0 9.5%, rgba(255, 202, 94, .025) 10%, transparent 10.5% 20%);
+  filter: blur(2px);
+  opacity: .9;
+}
+
+.gt-hw-page.gt-premium-page::after {
+  left: 50%;
+  top: 44%;
+  width: min(1220px, 96vw);
+  height: min(900px, 92vh);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 159, 40, .08), rgba(120, 14, 8, .045) 46%, transparent 72%);
+  filter: blur(30px);
+}
+
+.gt-hw-page .gt-premium-machine {
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, .68),
+    0 0 54px rgba(150, 28, 12, .16),
+    0 0 0 1px rgba(255, 204, 109, .06);
+}
+
+/* Keep moving symbols readable: speed comes from continuous travel, not blur wash. */
+.gt-hw-page .gt-premium-machine .gt-hw-reel-overlay {
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(82, 29, 6, .12), transparent 16% 84%, rgba(82, 29, 6, .12)),
+    radial-gradient(ellipse at 50% 50%, rgba(255, 225, 150, .055), transparent 72%);
+  transform-style: preserve-3d;
+}
+
+.gt-hw-page .gt-premium-machine .gt-hw-reel-item {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.gt-hw-page .gt-premium-machine .gt-hw-reel-item .gt-hw-symbol-raster {
+  opacity: .98;
+  filter:
+    brightness(.97)
+    saturate(.98)
+    contrast(1.06)
+    drop-shadow(0 5px 5px rgba(45,13,4,.28));
+}
+
+.gt-hw-page .gt-premium-machine .gt-hw-reel-shade {
+  background:
+    linear-gradient(180deg, rgba(45, 7, 2, .72), rgba(45, 7, 2, .08) 20%, transparent 36% 66%, rgba(45, 7, 2, .12) 82%, rgba(45, 7, 2, .74)),
+    linear-gradient(90deg, rgba(51, 9, 2, .22), transparent 17% 83%, rgba(51, 9, 2, .22));
+}
+
+/* Each stop gets its own short cabinet compression rather than a flat freeze. */
+.gt-hw-page .gt-premium-machine[data-landing-column="0"] .gt-commercial-reel-cylinder.is-0,
+.gt-hw-page .gt-premium-machine[data-landing-column="1"] .gt-commercial-reel-cylinder.is-1,
+.gt-hw-page .gt-premium-machine[data-landing-column="2"] .gt-commercial-reel-cylinder.is-2 {
+  animation: gt-p6-reel-impact .18s cubic-bezier(.16,.78,.22,1.12) both;
+}
+
+.gt-hw-page .gt-premium-machine[data-landing-column="0"] .gt-hw-grid-glass,
+.gt-hw-page .gt-premium-machine[data-landing-column="1"] .gt-hw-grid-glass,
+.gt-hw-page .gt-premium-machine[data-landing-column="2"] .gt-hw-grid-glass {
+  animation: gt-p6-glass-impact .2s ease-out both;
+}
+
+/* Reveal sweep ties winning symbol motion together without obscuring the art. */
+.gt-hw-page .gt-premium-machine .gt-hw-grid-glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-115%) skewX(-14deg);
+  background: linear-gradient(90deg, transparent 28%, rgba(255, 239, 179, .12) 46%, rgba(255, 212, 96, .24) 51%, rgba(255, 239, 179, .10) 57%, transparent 72%);
+  mix-blend-mode: screen;
+}
+
+.gt-hw-page .gt-premium-machine .gt-premium-grid[data-reveal="true"] .gt-hw-grid-glass::after {
+  animation: gt-p6-win-sweep .56s cubic-bezier(.25,.65,.3,1) both;
+}
+
+/* Make authored mascot pose changes read as acting, not a floating sticker. */
+.gt-hw-page .gt-premium-machine .gt-hw-tiger-rig[data-acting="secondary"] {
+  filter: brightness(1.035) saturate(1.035);
+}
+
+.gt-hw-page .gt-premium-machine[data-phase="base-spin"] .gt-hw-tiger-stage {
+  transform-origin: 50% 100%;
+}
+
+.gt-hw-page .gt-premium-machine[data-phase="feature-lock"] .gt-hw-tiger-stage-halo {
+  opacity: .82;
+  transform: scale(1.035);
+}
+
+.gt-hw-page .gt-premium-machine[data-win-beat="impact"] .gt-hw-tiger-stage-shadow,
+.gt-hw-page .gt-premium-machine[data-win-beat="celebrate"] .gt-hw-tiger-stage-shadow {
+  transform: translateX(-50%) scaleX(1.12);
+  opacity: .7;
+}
+
+@keyframes gt-p6-reel-impact {
+  0% { transform: scaleY(1); filter: brightness(1); }
+  42% { transform: scaleY(.982); filter: brightness(1.11); }
+  100% { transform: scaleY(1); filter: brightness(1); }
+}
+
+@keyframes gt-p6-glass-impact {
+  0% { filter: brightness(1); }
+  45% { filter: brightness(1.12); }
+  100% { filter: brightness(1); }
+}
+
+@keyframes gt-p6-win-sweep {
+  0% { opacity: 0; transform: translateX(-115%) skewX(-14deg); }
+  18% { opacity: .7; }
+  78% { opacity: .5; }
+  100% { opacity: 0; transform: translateX(115%) skewX(-14deg); }
+}
+
+@media (min-width: 900px) {
+  .gt-hw-page.gt-premium-page {
+    background:
+      radial-gradient(ellipse at 12% 48%, rgba(177, 36, 17, .25), transparent 27%),
+      radial-gradient(ellipse at 88% 46%, rgba(177, 36, 17, .23), transparent 27%),
+      radial-gradient(ellipse at 50% 24%, rgba(255, 183, 59, .12), transparent 31%),
+      linear-gradient(180deg, #160306 0%, #090102 57%, #020101 100%);
+  }
+
+  .gt-hw-page.gt-premium-page::before {
+    background:
+      radial-gradient(ellipse at 8% 43%, rgba(255, 184, 55, .13) 0 2.6%, transparent 3.1%),
+      radial-gradient(ellipse at 92% 43%, rgba(255, 184, 55, .13) 0 2.6%, transparent 3.1%),
+      linear-gradient(74deg, transparent 0 18%, rgba(154, 28, 12, .10) 18.3% 19%, transparent 19.4% 80%, rgba(154, 28, 12, .09) 80.4% 81.1%, transparent 81.5%),
+      repeating-linear-gradient(90deg, transparent 0 8%, rgba(255, 203, 111, .024) 8.3%, transparent 8.8% 16%);
+    filter: blur(5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gt-hw-page .gt-premium-machine[data-landing-column] .gt-commercial-reel-cylinder,
+  .gt-hw-page .gt-premium-machine .gt-premium-grid[data-reveal="true"] .gt-hw-grid-glass::after {
+    animation: none !important;
+  }
+}
