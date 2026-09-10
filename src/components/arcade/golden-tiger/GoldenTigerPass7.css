@@ -1,0 +1,180 @@
+/* =====================================================================
+   PASS 7 — PREMIUM CONTROL DECK
+   Presentation only. No math, RTP, payout, settlement or Bonus Buy changes.
+   ===================================================================== */
+
+.gt-hw-page .gt-premium-machine .gt-commercial-console {
+  border-color: rgba(243, 198, 101, .64) !important;
+  background:
+    radial-gradient(ellipse at 50% -24%, rgba(255, 235, 166, .20), transparent 55%),
+    linear-gradient(180deg, rgba(132, 23, 12, .98), rgba(54, 6, 5, .99)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 200, .30),
+    inset 0 -12px 18px rgba(0, 0, 0, .31),
+    0 9px 18px rgba(0, 0, 0, .40),
+    0 0 18px rgba(255, 190, 72, .12) !important;
+}
+
+.gt-hw-page .gt-premium-machine .gt-hw-main-controls > button:not(.gt-hw-spin) {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid #dca33f !important;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(255, 233, 163, .18), transparent 36%),
+    linear-gradient(180deg, #8c2112 0%, #5a0c08 56%, #320403 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 241, 190, .28),
+    inset 0 -7px 10px rgba(0, 0, 0, .30),
+    0 0 0 1px rgba(104, 44, 4, .78),
+    0 4px 8px rgba(0, 0, 0, .34) !important;
+  color: #ffe39a !important;
+  text-shadow: 0 1px 0 #681006, 0 0 7px rgba(255, 199, 74, .24);
+}
+.gt-hw-page .gt-premium-machine .gt-hw-main-controls > button:not(.gt-hw-spin)::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(255, 229, 151, .18);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.gt-hw-page .gt-premium-machine .gt-hw-main-controls > button:not(.gt-hw-spin):not(:disabled):active {
+  transform: translateY(1px) scale(.94);
+  box-shadow: inset 0 4px 8px rgba(0, 0, 0, .38), 0 2px 4px rgba(0, 0, 0, .24) !important;
+}
+
+.gt-hw-page .gt-premium-machine .gt-hw-spin {
+  isolation: isolate;
+  overflow: hidden;
+  border-color: #ffdb73 !important;
+  background:
+    radial-gradient(circle at 36% 27%, rgba(255, 255, 255, .36) 0 7%, rgba(142, 255, 209, .18) 12%, transparent 22%),
+    radial-gradient(circle at 50% 50%, #2be09a 0%, #089e68 58%, #03472f 100%) !important;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 249, 215, .52),
+    inset 0 -9px 13px rgba(0, 50, 31, .56),
+    0 0 0 3px #834107,
+    0 5px 9px rgba(0, 0, 0, .44),
+    0 0 20px rgba(255, 207, 84, .48) !important;
+}
+.gt-hw-page .gt-premium-machine .gt-hw-spin::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 5px;
+  border: 1px solid rgba(255, 240, 172, .34);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgba(0, 72, 45, .24);
+}
+.gt-hw-page .gt-premium-machine .gt-hw-spin::after {
+  content: "";
+  position: absolute;
+  left: 20%;
+  right: 20%;
+  top: 10%;
+  height: 22%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .30), transparent);
+  pointer-events: none;
+}
+.gt-hw-page .gt-premium-machine .gt-hw-spin > span {
+  width: 47%;
+  border-color: #fff0a0 !important;
+  border-left-color: transparent !important;
+  filter: drop-shadow(0 1px 1px rgba(49, 20, 0, .54));
+}
+.gt-hw-page .gt-premium-machine .gt-hw-spin > span::after {
+  border-top-color: #fff0a0 !important;
+  border-right-color: #fff0a0 !important;
+}
+.gt-hw-page .gt-premium-machine .gt-hw-spin:not(:disabled):active {
+  transform: translateY(1px) scale(.93) !important;
+}
+.gt-hw-page .gt-premium-machine[data-phase="base-spin"] .gt-hw-spin,
+.gt-hw-page .gt-premium-machine[data-phase="feature-spin"] .gt-hw-spin {
+  animation: gt-p7-spin-button .96s ease-in-out infinite !important;
+}
+
+.gt-hw-page .gt-premium-machine .gt-hw-secondary-controls > button {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(235, 190, 96, .54) !important;
+  background: linear-gradient(180deg, rgba(108, 17, 10, .97), rgba(43, 4, 4, .99)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 233, 165, .17),
+    inset 0 -7px 10px rgba(0, 0, 0, .27),
+    0 4px 8px rgba(0, 0, 0, .28) !important;
+  transition: transform .12s ease, filter .14s ease, box-shadow .14s ease;
+}
+.gt-hw-page .gt-premium-machine .gt-hw-secondary-controls > button::before {
+  content: "";
+  position: absolute;
+  inset: 1px 2px auto;
+  height: 42%;
+  border-radius: 9px 9px 50% 50%;
+  background: linear-gradient(180deg, rgba(255, 239, 183, .11), transparent);
+  pointer-events: none;
+}
+.gt-hw-page .gt-premium-machine .gt-hw-secondary-controls > button:not(:disabled):active {
+  transform: translateY(1px) scale(.96);
+  filter: brightness(.96);
+}
+.gt-hw-page .gt-premium-machine .gt-hw-secondary-controls > button.is-active {
+  border-color: rgba(255, 220, 122, .74) !important;
+  background: linear-gradient(180deg, rgba(149, 30, 15, .99), rgba(70, 7, 5, .99)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 242, 190, .24),
+    inset 0 0 12px rgba(255, 194, 70, .11),
+    0 0 11px rgba(255, 185, 60, .22),
+    0 4px 8px rgba(0, 0, 0, .28) !important;
+}
+.gt-hw-page .gt-premium-machine .gt-hw-secondary-controls > button:nth-child(1).is-active svg {
+  color: #ffd763;
+  filter: drop-shadow(0 0 5px rgba(255, 201, 73, .48));
+}
+.gt-hw-page .gt-premium-machine .gt-hw-secondary-controls > button:nth-child(2) {
+  border-color: rgba(255, 216, 112, .70) !important;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 224, 127, .16), transparent 48%),
+    linear-gradient(180deg, rgba(170, 40, 16, .99), rgba(88, 9, 6, .99)) !important;
+  color: #ffe49b !important;
+}
+.gt-hw-page .gt-premium-machine .gt-hw-secondary-controls > button:nth-child(2) svg {
+  color: #ffd56d;
+  filter: drop-shadow(0 0 4px rgba(255, 201, 74, .32));
+}
+.gt-hw-page .gt-premium-machine .gt-hw-secondary-controls > button:nth-child(3) strong {
+  min-width: 20px;
+  padding: 1px 4px;
+  border: 1px solid rgba(255, 221, 130, .25);
+  border-radius: 999px;
+  background: rgba(255, 219, 121, .09);
+  color: #ffe49a;
+  font-size: 9px;
+}
+
+.gt-hw-page .gt-premium-machine .gt-hw-hud {
+  border-color: rgba(236, 190, 91, .34) !important;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 211, 105, .06), transparent 66%),
+    rgba(10, 1, 1, .78) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 232, 161, .08), inset 0 -5px 8px rgba(0, 0, 0, .18) !important;
+}
+.gt-hw-page .gt-premium-machine .gt-hw-hud > div + div {
+  border-left: 1px solid rgba(219, 158, 55, .20);
+}
+
+@keyframes gt-p7-spin-button {
+  0%, 100% {
+    filter: brightness(1) saturate(1);
+  }
+  50% {
+    filter: brightness(1.07) saturate(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gt-hw-page .gt-premium-machine .gt-hw-spin {
+    animation: none !important;
+  }
+}
