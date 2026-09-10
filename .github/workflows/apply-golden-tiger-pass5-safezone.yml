@@ -1,0 +1,41 @@
+name: Apply Golden Tiger Pass 5 Safe Zone
+
+on:
+  push:
+    branches:
+      - polish/golden-tiger-pass5-av-sync-2026-09-10
+    paths:
+      - .github/workflows/apply-golden-tiger-pass5-safezone.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: polish/golden-tiger-pass5-av-sync-2026-09-10
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+      - name: Apply safe-zone correction
+        run: patch -p1 --forward < .pass5-safezone.patch
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Lint
+        run: bun run lint
+      - name: Tests
+        run: bun run test
+      - name: Typecheck
+        run: bun run typecheck
+      - name: Production build
+        run: bun run build
+      - name: Commit validated safe-zone correction
+        run: |
+          git config user.name "danilo760"
+          git config user.email "62104537+danilo760@users.noreply.github.com"
+          git rm .pass5-safezone.patch .github/workflows/apply-golden-tiger-pass5-safezone.yml
+          git add src/components/arcade/GoldenTigerCommercial.css
+          git commit -m "fix: keep Golden Tiger idle mascot inside safe zone"
+          git push origin HEAD:polish/golden-tiger-pass5-av-sync-2026-09-10
