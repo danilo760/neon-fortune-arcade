@@ -1,0 +1,63 @@
+name: Apply Golden Tiger Pass 5
+
+on:
+  push:
+    branches:
+      - polish/golden-tiger-pass5-av-sync-2026-09-10
+    paths:
+      - .github/workflows/apply-golden-tiger-pass5.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: polish/golden-tiger-pass5-av-sync-2026-09-10
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Assemble and apply patch
+        run: |
+          cat .pass5/patch-00.diff .pass5/patch-01.diff .pass5/patch-02.diff .pass5/patch-03.diff .pass5/patch-04.diff > /tmp/pass5.diff
+          git apply --check /tmp/pass5.diff
+          git apply /tmp/pass5.diff
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Tests
+        run: bun run test
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Production build
+        run: bun run build
+
+      - name: Commit validated Pass 5
+        run: |
+          git config user.name "danilo760"
+          git config user.email "62104537+danilo760@users.noreply.github.com"
+          git rm -r .pass5 .github/workflows/apply-golden-tiger-pass5.yml
+          git add src/components/arcade/GoldenTigerCommercial.css \
+                  src/components/arcade/GoldenTigerPremium.tsx \
+                  src/lib/arcade/audioEventGate.ts \
+                  src/lib/arcade/audioEventGate.test.ts \
+                  src/lib/arcade/goldenTigerAudio.ts \
+                  src/lib/arcade/goldenTigerAudio.test.ts \
+                  src/lib/arcade/goldenTigerClock.ts \
+                  src/lib/arcade/goldenTigerClock.test.ts \
+                  src/lib/arcade/goldenTigerSampleEngine.ts \
+                  src/lib/arcade/sound.ts
+          git commit -m "polish: synchronize Golden Tiger mascot and audio"
+          git push origin HEAD:polish/golden-tiger-pass5-av-sync-2026-09-10
