@@ -1,26 +1,26 @@
 export const GOLDEN_TIGER_REEL_COUNT = 3;
 
 export function goldenTigerSpinLaunchMs(turbo: boolean) {
-  return turbo ? 92 : 300;
+  return turbo ? 92 : 400;
 }
 
 export function goldenTigerReelBrakeMs(column: number, turbo: boolean) {
   const safeColumn = Math.max(0, Math.min(GOLDEN_TIGER_REEL_COUNT - 1, Math.trunc(column)));
-  return turbo ? 78 + safeColumn * 9 : 230 + safeColumn * 34;
+  return turbo ? 78 + safeColumn * 9 : 300 + safeColumn * 42;
 }
 
 export function goldenTigerReelLandPauseMs(column: number, turbo: boolean) {
   const safeColumn = Math.max(0, Math.min(GOLDEN_TIGER_REEL_COUNT - 1, Math.trunc(column)));
-  return turbo ? 20 + safeColumn * 4 : 64 + safeColumn * 10;
+  return turbo ? 20 + safeColumn * 4 : 86 + safeColumn * 14;
 }
 
 export function goldenTigerAnticipationMs(turbo: boolean) {
-  return turbo ? 44 : 220;
+  return turbo ? 44 : 280;
 }
 
-/** Two-to-three visual frames of upward tension before the strip launches. */
+/** A slightly longer upward tension sells weight before the normal strip launches. */
 export function goldenTigerReelTensionMs(turbo: boolean) {
-  return turbo ? 28 : 46;
+  return turbo ? 28 : 64;
 }
 
 export function goldenTigerReelTensionPx(column: number) {
@@ -39,9 +39,14 @@ export function goldenTigerReelReboundMs(column: number, turbo: boolean) {
   return turbo ? 60 + safe * 4 : 68 + safe * 8;
 }
 
+/**
+ * Motion blur is intentionally restrained. The reel strip itself supplies the
+ * speed cue; keeping the cap below one pixel preserves symbol identity during
+ * cruise instead of washing the reel into a flat gold/brown block.
+ */
 export function goldenTigerReelBlurPx(velocityPxPerMs: number) {
   const velocity = Math.max(0, Number.isFinite(velocityPxPerMs) ? velocityPxPerMs : 0);
-  return Math.min(2.6, velocity * 1.15);
+  return Math.min(0.82, velocity * 0.34);
 }
 
 /** A smooth ease-out keeps the strip moving quickly at the beginning of the
@@ -52,7 +57,7 @@ export function goldenTigerBrakeEase(progress: number) {
   return 1 - (1 - t) ** 4;
 }
 
-/** Small critically-damped-looking curve for the 60–90ms overshoot return. */
+/** Small critically-damped-looking curve for the overshoot return. */
 export function goldenTigerReboundEase(progress: number) {
   const t = Math.max(0, Math.min(1, Number.isFinite(progress) ? progress : 0));
   return 1 - Math.cos((t * Math.PI) / 2);

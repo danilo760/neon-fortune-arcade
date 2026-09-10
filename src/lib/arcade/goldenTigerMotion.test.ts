@@ -15,16 +15,16 @@ test("Golden Tiger reel brakes get slightly longer from left to right", () => {
   assert.ok(goldenTigerReelBrakeMs(0, true) < goldenTigerReelBrakeMs(2, true));
 });
 
-test("Golden Tiger normal spin has readable reel weight while Turbo stays quick", () => {
+test("Golden Tiger normal spin has deliberate reel weight while Turbo stays quick", () => {
   const normal = goldenTigerNominalSpinMs(false, true);
   const turbo = goldenTigerNominalSpinMs(true, true);
-  assert.ok(normal >= 1400 && normal <= 1580, `normal=${normal}`);
+  assert.ok(normal >= 1960 && normal <= 2050, `normal=${normal}`);
   assert.ok(turbo >= 400 && turbo <= 500, `turbo=${turbo}`);
-  assert.ok(normal > turbo * 3, `normal=${normal} turbo=${turbo}`);
+  assert.ok(normal > turbo * 4, `normal=${normal} turbo=${turbo}`);
 });
 
 test("anticipation is a deliberate beat in normal mode without stalling Turbo", () => {
-  assert.ok(goldenTigerAnticipationMs(false) >= 180);
+  assert.ok(goldenTigerAnticipationMs(false) >= 240);
   assert.ok(goldenTigerAnticipationMs(false) > goldenTigerReelLandPauseMs(2, false) * 2);
   assert.ok(goldenTigerAnticipationMs(true) < 60);
 });

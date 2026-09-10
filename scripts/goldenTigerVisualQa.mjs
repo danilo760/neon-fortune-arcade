@@ -106,11 +106,19 @@ const auditExpression = `(async () => {
   const sprite = document.querySelector('.gt-hw-tiger-sprite');
   const cells = [...document.querySelectorAll('.gt-hw-grid > .gt-hw-cell')];
   const rasters = [...document.querySelectorAll('.gt-hw-symbol-raster')];
+  const settledSymbolImages = [...document.querySelectorAll('.gt-hw-grid > .gt-hw-cell .gt-hw-symbol-raster > img[data-symbol-art]')];
+  const movingSymbolImages = [...document.querySelectorAll('.gt-hw-reel-overlay .gt-hw-symbol-raster > img[data-symbol-art]')];
   const cylinders = [...document.querySelectorAll('.gt-commercial-reel-cylinder')];
   const rect = (element) => element ? (() => {
     const r = element.getBoundingClientRect();
     return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
   })() : null;
+  const visible = (element) => {
+    if (!element) return false;
+    const style = getComputedStyle(element);
+    const r = element.getBoundingClientRect();
+    return style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity || 1) > .02 && r.width > 8 && r.height > 8;
+  };
   const spinRect = spin?.getBoundingClientRect();
   const hit = spinRect ? document.elementFromPoint(spinRect.left + spinRect.width / 2, spinRect.top + spinRect.height / 2) : null;
 
@@ -151,12 +159,22 @@ const auditExpression = `(async () => {
     }
   }
 
-  const rasterPaintedCount = rasters.filter((raster) => {
-    const style = getComputedStyle(raster);
-    const background = style.backgroundImage || '';
-    const r = raster.getBoundingClientRect();
-    return background !== 'none' && background.includes('premium-symbol-atlas') && r.width > 8 && r.height > 8;
-  }).length;
+  const settledSymbolArt = settledSymbolImages.map((image) => ({
+    symbol: image.getAttribute('data-symbol-art'),
+    src: image.currentSrc || image.getAttribute('src'),
+    complete: image.complete,
+    naturalWidth: image.naturalWidth,
+    naturalHeight: image.naturalHeight,
+    visible: visible(image) && visible(image.parentElement),
+  }));
+  const movingSymbolArt = movingSymbolImages.map((image) => ({
+    complete: image.complete,
+    naturalWidth: image.naturalWidth,
+    naturalHeight: image.naturalHeight,
+    visible: visible(image) && visible(image.parentElement),
+  }));
+  const rasterPaintedCount = settledSymbolArt.filter((item) => item.complete && item.naturalWidth > 0 && item.naturalHeight > 0 && item.visible).length;
+  const movingPaintedCount = movingSymbolArt.filter((item) => item.complete && item.naturalWidth > 0 && item.naturalHeight > 0 && item.visible).length;
 
   return {
     ready: Boolean(machine && grid && spin && sprite),
@@ -174,7 +192,11 @@ const auditExpression = `(async () => {
     continuousSurface: grid?.getAttribute('data-reel-surface') ?? null,
     decoratedCells: cells.filter((cell) => { const style = getComputedStyle(cell); return style.backgroundImage !== 'none' || parseFloat(style.borderTopWidth) > 0 || parseFloat(style.borderRightWidth) > 0 || parseFloat(style.borderBottomWidth) > 0 || parseFloat(style.borderLeftWidth) > 0 || parseFloat(style.borderRadius) > 0; }).length,
     rasterSymbolCount: rasters.length,
+    settledSymbolArtCount: settledSymbolImages.length,
     rasterPaintedCount,
+    movingSymbolArtCount: movingSymbolImages.length,
+    movingPaintedCount,
+    settledSymbolArt,
     spriteBackground,
     spriteDecoded,
     spriteNaturalWidth,
@@ -199,7 +221,9 @@ async function waitForStableLayout(client, viewport) {
       lastAudit.machine?.height > viewport.height * 0.8 &&
       lastAudit.machine?.height <= viewport.height + 2 &&
       lastAudit.spin?.height > 30 &&
-      lastAudit.scrollWidth <= viewport.width + 1;
+      lastAudit.scrollWidth <= viewport.width + 1 &&
+      lastAudit.settledSymbolArtCount === 9 &&
+      lastAudit.rasterPaintedCount === 9;
     if (stable) return lastAudit;
   }
   return lastAudit;
@@ -216,7 +240,10 @@ function validateIdle(audit, viewport) {
   if (audit.continuousSurface !== 'continuous') errors.push(`continuous reel surface marker missing: ${audit.continuousSurface}`);
   if (audit.decoratedCells !== 0) errors.push(`expected zero individually decorated reel cells, got ${audit.decoratedCells}`);
   if (audit.rasterSymbolCount < 9) errors.push(`expected at least 9 raster symbol surfaces, got ${audit.rasterSymbolCount}`);
-  if (audit.rasterPaintedCount < 9) errors.push(`expected at least 9 painted raster symbols, got ${audit.rasterPaintedCount}`);
+  if (audit.settledSymbolArtCount !== 9) errors.push(`expected exactly 9 symbol <img> elements, got ${audit.settledSymbolArtCount}`);
+  if (audit.rasterPaintedCount !== 9) errors.push(`expected 9 decoded and visible symbol images, got ${audit.rasterPaintedCount}`);
+  const broken = (audit.settledSymbolArt ?? []).filter((item) => !item.complete || item.naturalWidth <= 0 || item.naturalHeight <= 0 || !item.visible);
+  if (broken.length) errors.push(`broken symbol art: ${broken.map((item) => `${item.symbol}:${item.naturalWidth}x${item.naturalHeight}:${item.visible ? 'visible' : 'hidden'}`).join(', ')}`);
   if (!audit.spriteBackground || audit.spriteBackground === "none") errors.push("tiger pose atlas is not applied");
   if (!audit.spriteDecoded) errors.push(`tiger pose atlas failed to decode: ${audit.spriteDecodeError ?? "unknown"}`);
   if (audit.spriteDecoded && audit.spriteFirstCellVisiblePixels < 1_000) errors.push(`tiger idle atlas cell appears empty: ${audit.spriteFirstCellVisiblePixels} visible pixels`);
@@ -229,6 +256,8 @@ function validateSpin(audit) {
   const errors = [];
   if (audit.phase !== "base-spin") errors.push(`expected base-spin after click, got ${audit.phase}`);
   if (audit.reelOverlays !== 3) errors.push(`expected 3 moving reel overlays, got ${audit.reelOverlays}`);
+  if (audit.movingSymbolArtCount < 9) errors.push(`expected moving reel symbol images, got ${audit.movingSymbolArtCount}`);
+  if (audit.movingPaintedCount !== audit.movingSymbolArtCount) errors.push(`moving symbol images not fully decoded/visible: ${audit.movingPaintedCount}/${audit.movingSymbolArtCount}`);
   if (!audit.spinDisabled) errors.push("Spin should be disabled while a round is active");
   if (!audit.spriteDecoded) errors.push("tiger pose atlas stopped decoding during spin");
   return errors;
@@ -273,7 +302,7 @@ await writeFile(`${outputDir}/report.json`, JSON.stringify(report, null, 2));
 for (const item of report) {
   const label = `${item.viewport.width}x${item.viewport.height}`;
   if (item.errors.length) console.error(`❌ ${label}: ${item.errors.join("; ")}`);
-  else console.log(`✅ ${label}: raster symbols + idle + spin visual smoke passed`);
+  else console.log(`✅ ${label}: 9 decoded symbols + idle + moving reel symbol art passed`);
 }
 
 if (failed) process.exitCode = 1;

@@ -1,3 +1,6 @@
+@import "./GoldenTigerPass6.css";
+@import "./GoldenTigerPass7.css";
+
 .gt-hw-symbol {
   position: relative;
   width: 100%;
@@ -10,14 +13,27 @@
 .gt-hw-symbol-raster {
   position: absolute;
   inset: 1.5%;
-  background-image: var(--gt-premium-symbol-atlas);
-  background-repeat: no-repeat;
-  background-size: 400% 200%;
-  background-position: var(--gt-premium-symbol-position);
+  overflow: hidden;
   filter:
     drop-shadow(0 6px 6px rgba(31, 4, 1, .34))
     drop-shadow(0 1px 0 rgba(255, 241, 188, .14));
   transform: translateZ(0);
+}
+
+.gt-hw-symbol-raster > img {
+  position: absolute;
+  left: var(--gt-premium-symbol-x);
+  top: var(--gt-premium-symbol-y);
+  width: 400%;
+  height: 200%;
+  max-width: none;
+  object-fit: fill;
+  display: block;
+  opacity: 1;
+  transform: translateZ(0);
+  user-select: none;
+  pointer-events: none;
+  -webkit-user-drag: none;
 }
 
 .gt-hw-symbol[data-symbol="jade"] .gt-hw-symbol-raster {
@@ -59,18 +75,63 @@
 
 .gt-hw-symbol.is-winning .gt-hw-symbol-raster,
 .gt-hw-cell.is-winning .gt-hw-symbol-raster {
-  animation: gt-hw-raster-win .38s cubic-bezier(.18,.82,.2,1.12) both;
   filter: brightness(1.14) saturate(1.08) drop-shadow(0 0 7px rgba(255, 214, 102, .48));
+}
+
+.gt-hw-cell.is-winning .gt-hw-symbol[data-symbol="orange"] .gt-hw-symbol-raster {
+  animation: gt-p6-orange-win .62s cubic-bezier(.18,.82,.2,1.12) infinite alternate;
+}
+.gt-hw-cell.is-winning .gt-hw-symbol[data-symbol="jade"] .gt-hw-symbol-raster {
+  animation: gt-p6-jade-win .76s ease-in-out infinite alternate;
+}
+.gt-hw-cell.is-winning .gt-hw-symbol[data-symbol="lantern"] .gt-hw-symbol-raster {
+  animation: gt-p6-lantern-win .66s ease-in-out infinite alternate;
+}
+.gt-hw-cell.is-winning .gt-hw-symbol[data-symbol="firecracker"] .gt-hw-symbol-raster {
+  animation: gt-p6-firecracker-win .48s cubic-bezier(.2,.75,.25,1) infinite alternate;
+}
+.gt-hw-cell.is-winning .gt-hw-symbol[data-symbol="ingot"] .gt-hw-symbol-raster {
+  animation: gt-p6-ingot-win .7s ease-in-out infinite alternate;
+}
+.gt-hw-cell.is-winning .gt-hw-symbol[data-symbol="fortuneBag"] .gt-hw-symbol-raster {
+  animation: gt-p6-bag-win .58s cubic-bezier(.2,.72,.22,1.08) infinite alternate;
+}
+.gt-hw-cell.is-winning .gt-hw-symbol[data-symbol="lion"] .gt-hw-symbol-raster,
+.gt-hw-cell.is-winning .gt-hw-symbol[data-symbol="wild"] .gt-hw-symbol-raster {
+  animation: gt-p6-hero-win .56s cubic-bezier(.18,.82,.2,1.12) infinite alternate;
 }
 
 .gt-hw-cell.is-locked .gt-hw-symbol-raster {
   filter: brightness(1.06) saturate(1.06) drop-shadow(0 0 8px rgba(255,205,73,.45));
 }
 
-@keyframes gt-hw-raster-win {
-  0% { transform: scale(.94); }
-  55% { transform: scale(1.08); }
-  100% { transform: scale(1); }
+@keyframes gt-p6-orange-win {
+  from { transform: translateY(1px) rotate(-2deg) scale(.98); }
+  to { transform: translateY(-3px) rotate(3deg) scale(1.07); }
+}
+@keyframes gt-p6-jade-win {
+  from { transform: scale(.99); filter: brightness(1.04) saturate(1.02) drop-shadow(0 0 5px rgba(91,224,151,.25)); }
+  to { transform: scale(1.055); filter: brightness(1.18) saturate(1.12) drop-shadow(0 0 12px rgba(91,224,151,.52)); }
+}
+@keyframes gt-p6-lantern-win {
+  from { transform: translateY(1px) rotate(-1.2deg) scale(1); }
+  to { transform: translateY(-3px) rotate(1.2deg) scale(1.045); }
+}
+@keyframes gt-p6-firecracker-win {
+  from { transform: translateX(-1px) rotate(-2deg) scale(.99); }
+  to { transform: translateX(2px) rotate(2deg) scale(1.055); }
+}
+@keyframes gt-p6-ingot-win {
+  from { transform: translateY(1px) scale(.98); filter: brightness(1.04) saturate(1.04); }
+  to { transform: translateY(-2px) scale(1.065); filter: brightness(1.2) saturate(1.12); }
+}
+@keyframes gt-p6-bag-win {
+  from { transform: rotate(-2.4deg) scale(.985); }
+  to { transform: rotate(2.4deg) scale(1.06); }
+}
+@keyframes gt-p6-hero-win {
+  from { transform: translateY(1px) scale(.985); filter: brightness(1.06) saturate(1.04); }
+  to { transform: translateY(-4px) scale(1.075); filter: brightness(1.2) saturate(1.12) drop-shadow(0 0 12px rgba(255,210,92,.5)); }
 }
 
 @media (prefers-reduced-motion: reduce) {

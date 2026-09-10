@@ -1,0 +1,273 @@
+/* =====================================================================
+   GOLDEN TIGER — PASS 6
+   Production-safe symbol rendering + reel clarity + presentation depth.
+   Presentation only: no outcome, payout, RTP or settlement changes.
+   ===================================================================== */
+
+.gt-hw-page.gt-premium-page {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 18% 44%, rgba(144, 20, 10, .22), transparent 32%),
+    radial-gradient(ellipse at 82% 42%, rgba(176, 88, 14, .18), transparent 30%),
+    radial-gradient(ellipse at 50% 18%, rgba(255, 179, 54, .09), transparent 32%),
+    linear-gradient(180deg, #120204 0%, #070102 54%, #020102 100%);
+}
+
+.gt-hw-page.gt-premium-page::before,
+.gt-hw-page.gt-premium-page::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.gt-hw-page.gt-premium-page::before {
+  inset: -8%;
+  background:
+    radial-gradient(circle at 10% 30%, rgba(255, 180, 49, .18) 0 1.2%, transparent 1.6%),
+    radial-gradient(circle at 91% 26%, rgba(255, 180, 49, .16) 0 1.1%, transparent 1.55%),
+    radial-gradient(circle at 13% 68%, rgba(216, 46, 23, .13) 0 1.4%, transparent 1.9%),
+    radial-gradient(circle at 88% 70%, rgba(216, 46, 23, .12) 0 1.4%, transparent 1.9%),
+    repeating-linear-gradient(90deg, transparent 0 9.5%, rgba(255, 202, 94, .025) 10%, transparent 10.5% 20%);
+  filter: blur(2px);
+  opacity: .9;
+}
+
+.gt-hw-page.gt-premium-page::after {
+  left: 50%;
+  top: 44%;
+  width: min(1220px, 96vw);
+  height: min(900px, 92vh);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 159, 40, .08), rgba(120, 14, 8, .045) 46%, transparent 72%);
+  filter: blur(30px);
+}
+
+.gt-hw-page .gt-premium-machine {
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, .68),
+    0 0 54px rgba(150, 28, 12, .16),
+    0 0 0 1px rgba(255, 204, 109, .06);
+}
+
+/* Keep moving symbols readable: speed comes from continuous travel, not blur wash. */
+.gt-hw-page .gt-premium-machine .gt-hw-reel-overlay {
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(82, 29, 6, .12), transparent 16% 84%, rgba(82, 29, 6, .12)),
+    radial-gradient(ellipse at 50% 50%, rgba(255, 225, 150, .055), transparent 72%);
+  transform-style: preserve-3d;
+}
+
+.gt-hw-page .gt-premium-machine .gt-hw-reel-item {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.gt-hw-page .gt-premium-machine .gt-hw-reel-item .gt-hw-symbol-raster {
+  opacity: .98;
+  filter:
+    brightness(.97)
+    saturate(.98)
+    contrast(1.06)
+    drop-shadow(0 5px 5px rgba(45,13,4,.28));
+}
+
+.gt-hw-page .gt-premium-machine .gt-hw-reel-shade {
+  background:
+    linear-gradient(180deg, rgba(45, 7, 2, .72), rgba(45, 7, 2, .08) 20%, transparent 36% 66%, rgba(45, 7, 2, .12) 82%, rgba(45, 7, 2, .74)),
+    linear-gradient(90deg, rgba(51, 9, 2, .22), transparent 17% 83%, rgba(51, 9, 2, .22));
+}
+
+/* Each stop gets its own short cabinet compression rather than a flat freeze. */
+.gt-hw-page .gt-premium-machine[data-landing-column="0"] .gt-commercial-reel-cylinder.is-0,
+.gt-hw-page .gt-premium-machine[data-landing-column="1"] .gt-commercial-reel-cylinder.is-1,
+.gt-hw-page .gt-premium-machine[data-landing-column="2"] .gt-commercial-reel-cylinder.is-2 {
+  animation: gt-p6-reel-impact .18s cubic-bezier(.16,.78,.22,1.12) both;
+}
+
+.gt-hw-page .gt-premium-machine[data-landing-column="0"] .gt-hw-grid-glass,
+.gt-hw-page .gt-premium-machine[data-landing-column="1"] .gt-hw-grid-glass,
+.gt-hw-page .gt-premium-machine[data-landing-column="2"] .gt-hw-grid-glass {
+  animation: gt-p6-glass-impact .2s ease-out both;
+}
+
+/* Reveal sweep ties winning symbol motion together without obscuring the art. */
+.gt-hw-page .gt-premium-machine .gt-hw-grid-glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-115%) skewX(-14deg);
+  background: linear-gradient(90deg, transparent 28%, rgba(255, 239, 179, .12) 46%, rgba(255, 212, 96, .24) 51%, rgba(255, 239, 179, .10) 57%, transparent 72%);
+  mix-blend-mode: screen;
+}
+
+.gt-hw-page .gt-premium-machine .gt-premium-grid[data-reveal="true"] .gt-hw-grid-glass::after {
+  animation: gt-p6-win-sweep .56s cubic-bezier(.25,.65,.3,1) both;
+}
+
+/*
+ * Presentation-only payline energy traces. The real payout still comes only
+ * from evaluateGoldenTiger; these selectors merely connect cells already
+ * marked as winning by the engine. Multiple winning rows/full-grid can light
+ * more than one trace without changing the result or line count.
+ */
+.gt-hw-page .gt-premium-machine .gt-premium-grid {
+  --gt-p6-line-top: transparent;
+  --gt-p6-line-middle: transparent;
+  --gt-p6-line-bottom: transparent;
+  --gt-p6-line-down: transparent;
+  --gt-p6-line-up: transparent;
+}
+
+.gt-hw-page .gt-premium-machine .gt-premium-grid:has(> .gt-hw-cell:nth-of-type(1).is-winning):has(> .gt-hw-cell:nth-of-type(2).is-winning):has(> .gt-hw-cell:nth-of-type(3).is-winning) {
+  --gt-p6-line-top: rgba(255, 227, 122, .92);
+}
+.gt-hw-page .gt-premium-machine .gt-premium-grid:has(> .gt-hw-cell:nth-of-type(4).is-winning):has(> .gt-hw-cell:nth-of-type(5).is-winning):has(> .gt-hw-cell:nth-of-type(6).is-winning) {
+  --gt-p6-line-middle: rgba(255, 227, 122, .92);
+}
+.gt-hw-page .gt-premium-machine .gt-premium-grid:has(> .gt-hw-cell:nth-of-type(7).is-winning):has(> .gt-hw-cell:nth-of-type(8).is-winning):has(> .gt-hw-cell:nth-of-type(9).is-winning) {
+  --gt-p6-line-bottom: rgba(255, 227, 122, .92);
+}
+.gt-hw-page .gt-premium-machine .gt-premium-grid:has(> .gt-hw-cell:nth-of-type(1).is-winning):has(> .gt-hw-cell:nth-of-type(5).is-winning):has(> .gt-hw-cell:nth-of-type(9).is-winning) {
+  --gt-p6-line-down: rgba(255, 206, 86, .78);
+}
+.gt-hw-page .gt-premium-machine .gt-premium-grid:has(> .gt-hw-cell:nth-of-type(7).is-winning):has(> .gt-hw-cell:nth-of-type(5).is-winning):has(> .gt-hw-cell:nth-of-type(3).is-winning) {
+  --gt-p6-line-up: rgba(255, 206, 86, .78);
+}
+
+.gt-hw-page .gt-premium-machine .gt-hw-grid-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    linear-gradient(90deg, transparent 2%, var(--gt-p6-line-top) 10% 90%, transparent 98%) 0 16.666% / 100% 3px no-repeat,
+    linear-gradient(90deg, transparent 2%, var(--gt-p6-line-middle) 10% 90%, transparent 98%) 0 50% / 100% 3px no-repeat,
+    linear-gradient(90deg, transparent 2%, var(--gt-p6-line-bottom) 10% 90%, transparent 98%) 0 83.333% / 100% 3px no-repeat,
+    linear-gradient(to bottom right, transparent 49.55%, var(--gt-p6-line-down) 49.7% 50.3%, transparent 50.45%),
+    linear-gradient(to top right, transparent 49.55%, var(--gt-p6-line-up) 49.7% 50.3%, transparent 50.45%);
+  filter: drop-shadow(0 0 4px rgba(255, 187, 53, .72));
+  mix-blend-mode: screen;
+}
+
+.gt-hw-page .gt-premium-machine .gt-premium-grid:has(> .gt-hw-cell.is-winning) .gt-hw-grid-glass::before {
+  animation: gt-p6-payline-pulse .72s ease-in-out infinite alternate;
+}
+
+/* Make authored mascot pose changes read as acting, not a floating sticker. */
+.gt-hw-page .gt-premium-machine .gt-hw-tiger-rig[data-acting="secondary"] {
+  filter: brightness(1.035) saturate(1.035);
+}
+
+.gt-hw-page .gt-premium-machine[data-phase="base-spin"] .gt-hw-tiger-stage {
+  transform-origin: 50% 100%;
+}
+
+.gt-hw-page .gt-premium-machine[data-phase="feature-lock"] .gt-hw-tiger-stage-halo {
+  opacity: .82;
+  transform: scale(1.035);
+}
+
+.gt-hw-page .gt-premium-machine[data-win-beat="impact"] .gt-hw-tiger-stage-shadow,
+.gt-hw-page .gt-premium-machine[data-win-beat="celebrate"] .gt-hw-tiger-stage-shadow {
+  transform: translateX(-50%) scaleX(1.12);
+  opacity: .7;
+}
+
+@keyframes gt-p6-reel-impact {
+  0% { transform: scaleY(1); filter: brightness(1); }
+  42% { transform: scaleY(.982); filter: brightness(1.11); }
+  100% { transform: scaleY(1); filter: brightness(1); }
+}
+
+@keyframes gt-p6-glass-impact {
+  0% { filter: brightness(1); }
+  45% { filter: brightness(1.12); }
+  100% { filter: brightness(1); }
+}
+
+@keyframes gt-p6-win-sweep {
+  0% { opacity: 0; transform: translateX(-115%) skewX(-14deg); }
+  18% { opacity: .7; }
+  78% { opacity: .5; }
+  100% { opacity: 0; transform: translateX(115%) skewX(-14deg); }
+}
+
+@keyframes gt-p6-payline-pulse {
+  from { opacity: .34; filter: drop-shadow(0 0 3px rgba(255, 187, 53, .5)); }
+  to { opacity: .9; filter: drop-shadow(0 0 8px rgba(255, 208, 84, .92)); }
+}
+
+/* Widescreen ambience fills the desktop without changing the vertical game canvas. */
+@media (min-width: 900px) {
+  .gt-hw-page.gt-premium-page {
+    background:
+      radial-gradient(ellipse at 9% 46%, rgba(210, 48, 20, .34) 0%, rgba(115, 16, 10, .22) 18%, transparent 38%),
+      radial-gradient(ellipse at 91% 46%, rgba(210, 48, 20, .32) 0%, rgba(115, 16, 10, .21) 18%, transparent 38%),
+      radial-gradient(ellipse at 17% 18%, rgba(255, 192, 69, .18), transparent 22%),
+      radial-gradient(ellipse at 83% 18%, rgba(255, 192, 69, .17), transparent 22%),
+      radial-gradient(ellipse at 50% 30%, rgba(255, 170, 48, .13), transparent 33%),
+      linear-gradient(90deg, #250507 0%, #130204 23%, #070102 40% 60%, #130204 77%, #250507 100%);
+  }
+
+  .gt-hw-page.gt-premium-page::before {
+    inset: 0;
+    background:
+      radial-gradient(circle at 12% 22%, rgba(255, 215, 116, .42) 0 12px, rgba(224, 63, 25, .28) 13px 27px, transparent 52px),
+      radial-gradient(circle at 88% 22%, rgba(255, 215, 116, .40) 0 12px, rgba(224, 63, 25, .27) 13px 27px, transparent 52px),
+      radial-gradient(circle at 7% 61%, rgba(255, 178, 54, .25) 0 9px, rgba(173, 31, 16, .18) 10px 24px, transparent 46px),
+      radial-gradient(circle at 93% 61%, rgba(255, 178, 54, .24) 0 9px, rgba(173, 31, 16, .17) 10px 24px, transparent 46px),
+      linear-gradient(90deg,
+        transparent 0 5%,
+        rgba(94, 17, 11, .56) 5.2% 8.6%,
+        rgba(224, 127, 44, .10) 8.8% 9.15%,
+        transparent 9.4% 17%,
+        rgba(82, 12, 9, .46) 17.2% 20.3%,
+        transparent 20.6% 79.4%,
+        rgba(82, 12, 9, .46) 79.7% 82.8%,
+        transparent 83% 90.6%,
+        rgba(224, 127, 44, .10) 90.85% 91.2%,
+        rgba(94, 17, 11, .56) 91.4% 94.8%,
+        transparent 95% 100%),
+      repeating-linear-gradient(90deg, transparent 0 7.8%, rgba(255, 210, 122, .035) 8%, transparent 8.35% 16%);
+    filter: blur(3px);
+    opacity: .94;
+  }
+
+  .gt-hw-page.gt-premium-page::after {
+    left: 50%;
+    top: 46%;
+    width: min(1380px, 98vw);
+    height: min(940px, 96vh);
+    background:
+      radial-gradient(ellipse at 50% 48%, rgba(255, 176, 55, .10) 0 22%, rgba(147, 26, 13, .11) 44%, transparent 72%),
+      radial-gradient(ellipse at 15% 52%, rgba(200, 45, 20, .16), transparent 32%),
+      radial-gradient(ellipse at 85% 52%, rgba(200, 45, 20, .15), transparent 32%);
+    filter: blur(22px);
+    opacity: 1;
+  }
+
+  .gt-hw-page .gt-premium-machine {
+    box-shadow:
+      0 30px 74px rgba(0, 0, 0, .72),
+      0 0 74px rgba(178, 37, 15, .24),
+      0 0 130px rgba(255, 145, 36, .08),
+      0 0 0 1px rgba(255, 213, 125, .07);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gt-hw-page .gt-premium-machine[data-landing-column] .gt-commercial-reel-cylinder,
+  .gt-hw-page .gt-premium-machine .gt-premium-grid[data-reveal="true"] .gt-hw-grid-glass::after,
+  .gt-hw-page .gt-premium-machine .gt-premium-grid:has(> .gt-hw-cell.is-winning) .gt-hw-grid-glass::before {
+    animation: none !important;
+  }
+}

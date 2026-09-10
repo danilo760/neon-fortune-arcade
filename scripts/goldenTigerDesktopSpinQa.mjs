@@ -117,6 +117,16 @@ const auditExpression = `(() => {
     overflow: element ? getComputedStyle(element).overflow : null,
   }]));
   const cells = [...document.querySelectorAll('.gt-hw-grid > .gt-hw-cell')];
+  const settledSymbolImages = [...document.querySelectorAll('.gt-hw-grid > .gt-hw-cell .gt-hw-symbol-raster > img[data-symbol-art]')];
+  const symbolArt = settledSymbolImages.map((image) => ({
+    symbol: image.getAttribute('data-symbol-art'),
+    src: image.currentSrc || image.getAttribute('src'),
+    complete: image.complete,
+    naturalWidth: image.naturalWidth,
+    naturalHeight: image.naturalHeight,
+    visible: visible(image) && visible(image.parentElement),
+    rect: rect(image),
+  }));
   const overlays = [...document.querySelectorAll('.gt-hw-reel-overlay')];
   const cylinders = [...document.querySelectorAll('.gt-commercial-reel-cylinder')];
   const columns = [];
@@ -154,6 +164,10 @@ const auditExpression = `(() => {
     overlayRects: overlays.map(rect),
     cellCount: cells.length,
     cellRects: cells.map(rect),
+    symbolArtCount: symbolArt.length,
+    loadedSymbolArtCount: symbolArt.filter((item) => item.complete && item.naturalWidth > 0 && item.naturalHeight > 0).length,
+    visibleSymbolArtCount: symbolArt.filter((item) => item.visible).length,
+    symbolArt,
     sections: sectionState,
     columns,
     scrollWidth: document.documentElement.scrollWidth,
@@ -170,6 +184,13 @@ function validate(audit, index) {
   }
   if (audit.scrollWidth > viewport.width + 1) errors.push(`horizontal overflow ${audit.scrollWidth}px`);
   if (audit.cellCount !== 9) errors.push(`expected 9 cells, got ${audit.cellCount}`);
+  if (audit.symbolArtCount !== 9) errors.push(`expected 9 settled symbol images, got ${audit.symbolArtCount}`);
+  if (audit.loadedSymbolArtCount !== 9) errors.push(`expected 9 decoded symbol images, got ${audit.loadedSymbolArtCount}`);
+  if (audit.visibleSymbolArtCount !== 9) errors.push(`expected 9 visibly rendered symbol images, got ${audit.visibleSymbolArtCount}`);
+  const brokenSymbols = (audit.symbolArt ?? []).filter((item) => !item.complete || item.naturalWidth <= 0 || item.naturalHeight <= 0 || !item.visible);
+  if (brokenSymbols.length) {
+    errors.push(`broken symbol art: ${brokenSymbols.map((item) => `${item.symbol}:${item.naturalWidth}x${item.naturalHeight}:${item.visible ? 'visible' : 'hidden'}`).join(', ')}`);
+  }
   if (audit.reelCylinders !== 3) errors.push(`expected 3 continuous reel cylinders, got ${audit.reelCylinders}`);
   if (audit.continuousSurface !== 'continuous') errors.push(`continuous reel surface marker missing: ${audit.continuousSurface}`);
   const transientCellDecorationAllowed = ['reveal', 'win', 'full-grid'].includes(audit.phase ?? '');
@@ -222,8 +243,20 @@ try {
   await client.send("Page.navigate", { url: appUrl });
   await sleep(1_250);
 
-  const ready = await evaluate(client, `Boolean(document.querySelector('.gt-hw-spin') && document.querySelector('.gt-hw-grid'))`);
-  if (!ready) throw new Error("Golden Tiger did not become ready for desktop spin audit");
+  let ready = false;
+  for (let attempt = 0; attempt < 10 && !ready; attempt += 1) {
+    ready = await evaluate(client, `(() => {
+      const images = [...document.querySelectorAll('.gt-hw-grid > .gt-hw-cell .gt-hw-symbol-raster > img[data-symbol-art]')];
+      return Boolean(
+        document.querySelector('.gt-hw-spin') &&
+        document.querySelector('.gt-hw-grid') &&
+        images.length === 9 &&
+        images.every((image) => image.complete && image.naturalWidth > 0 && image.naturalHeight > 0)
+      );
+    })()`);
+    if (!ready) await sleep(200);
+  }
+  if (!ready) throw new Error("Golden Tiger did not become ready with 9 decoded symbol images for desktop spin audit");
 
   await evaluate(client, `(() => { document.querySelector('.gt-hw-spin')?.click(); return true; })()`);
 
@@ -246,9 +279,9 @@ try {
 await writeFile(`${outputDir}/desktop-spin-report.json`, JSON.stringify({ viewport, samples }, null, 2));
 
 for (const sample of samples) {
-  const label = `${viewport.width}x${viewport.height} · ${sample.elapsed}ms · phase=${sample.audit?.phase ?? 'unknown'} · overlays=${sample.audit?.reelOverlays ?? 'n/a'}`;
+  const label = `${viewport.width}x${viewport.height} · ${sample.elapsed}ms · phase=${sample.audit?.phase ?? 'unknown'} · overlays=${sample.audit?.reelOverlays ?? 'n/a'} · symbols=${sample.audit?.visibleSymbolArtCount ?? 'n/a'}/9`;
   if (sample.errors.length) console.error(`❌ ${label}: ${sample.errors.join('; ')}`);
-  else console.log(`✅ ${label}: cabinet + HUD + 3 reel columns visible`);
+  else console.log(`✅ ${label}: cabinet + HUD + 3 reel columns + 9 decoded symbol images visible`);
 }
 
 if (failed) process.exitCode = 1;
