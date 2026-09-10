@@ -84,3 +84,22 @@ test("win tiers keep small/nice local and layer character accent on large wins",
   assert.deepEqual(superMega.map((cue) => cue.name), ["bigWin", "tigerWinAccent"]);
   assert.ok((superMega[0]?.options?.intensity ?? 0) > (mega[0]?.options?.intensity ?? 0));
 });
+
+
+test("win counter audio rises in pitch/intensity and resolves to a celebration accent", () => {
+  const early = goldenTigerAudioPlan({ type: "win-counter", progress: 0, tier: "big" });
+  const late = goldenTigerAudioPlan({ type: "win-counter", progress: 1, tier: "big" });
+  const settle = goldenTigerAudioPlan({ type: "win-celebrate", tier: "big", fullGrid: false });
+
+  assert.equal(early[0]?.name, "tick");
+  assert.equal(late[0]?.name, "tick");
+  assert.ok((late[0]?.options?.pitch ?? 0) > (early[0]?.options?.pitch ?? 0));
+  assert.ok((late[0]?.options?.intensity ?? 0) > (early[0]?.options?.intensity ?? 0));
+  assert.equal(settle[0]?.name, "tigerWinAccent");
+});
+
+test("full-grid celebration accent remains stronger than a normal big-win settle", () => {
+  const big = goldenTigerAudioPlan({ type: "win-celebrate", tier: "big", fullGrid: false });
+  const full = goldenTigerAudioPlan({ type: "win-celebrate", tier: "super", fullGrid: true });
+  assert.ok((full[0]?.options?.intensity ?? 0) > (big[0]?.options?.intensity ?? 0));
+});

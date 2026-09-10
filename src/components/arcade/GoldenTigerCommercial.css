@@ -52,9 +52,9 @@
   opacity: 0;
 }
 
-.gt-commercial-scene[data-lighting="feature"] .gt-scene-particles,
-.gt-commercial-scene[data-lighting="win"] .gt-scene-particles,
-.gt-commercial-scene[data-lighting="full"] .gt-scene-particles { opacity: 1; }
+.gt-commercial-scene[data-lighting="feature"] .gt-scene-particles { opacity: .62; }
+.gt-commercial-scene[data-lighting="win"] .gt-scene-particles { opacity: .72; }
+.gt-commercial-scene[data-lighting="full"] .gt-scene-particles { opacity: .78; }
 
 .gt-commercial-scene[data-lighting="feature"] .gt-scene-particles i,
 .gt-commercial-scene[data-lighting="win"] .gt-scene-particles i,
@@ -124,9 +124,21 @@
 .gt-commercial-scene[data-lighting="full"] .gt-scene-vignette { opacity: .42; }
 
 /* The baked raster assets already contain shadow/highlight information. */
-.gt-hw-page .gt-premium-machine .gt-hw-tiger-sprite,
+.gt-hw-page .gt-premium-machine .gt-hw-tiger-sprite {
+  filter:
+    saturate(1.04)
+    contrast(1.035)
+    drop-shadow(0 9px 10px rgba(0,0,0,.36))
+    drop-shadow(0 0 8px rgba(255,184,45,.10));
+}
+
 .gt-hw-page .gt-premium-machine .gt-hw-symbol-raster {
-  filter: none;
+  filter:
+    brightness(.985)
+    saturate(.96)
+    contrast(1.055)
+    drop-shadow(0 6px 6px rgba(45,13,4,.30))
+    drop-shadow(0 1px 0 rgba(255,241,188,.12));
 }
 
 /* rAF supplies only a transient velocity blur while a reel is physically moving. */
@@ -609,6 +621,97 @@
   letter-spacing: .12em;
 }
 
+/* =====================================================================
+   PASS 5 — CHARACTER ACTING + AUDIO-VISUAL MICRO POLISH
+   Presentation-only: no outcome, payout, RTP or settlement changes.
+   ===================================================================== */
+
+/* Give the atlas poses authored body timing instead of generic bobbing. */
+.gt-hw-page .gt-premium-machine[data-phase="idle"] .gt-hw-tiger-stage[data-reaction="idle"] .gt-hw-tiger-rig {
+  animation: gt-p5-tiger-breathe 3.4s cubic-bezier(.45,0,.55,1) infinite;
+}
+.gt-hw-page .gt-premium-machine[data-phase="base-spin"] .gt-hw-tiger-stage[data-reaction="watch"] .gt-hw-tiger-rig {
+  animation: gt-p5-tiger-track .92s cubic-bezier(.42,0,.58,1) infinite alternate;
+}
+.gt-hw-page .gt-premium-machine[data-phase="feature-intro"] .gt-hw-tiger-stage[data-reaction="feature"] .gt-hw-tiger-rig,
+.gt-hw-page .gt-premium-machine[data-phase="bonus-intro"] .gt-hw-tiger-stage[data-reaction="feature"] .gt-hw-tiger-rig {
+  animation: gt-p5-tiger-feature-charge .52s cubic-bezier(.16,.84,.2,1.14) both;
+}
+.gt-hw-page .gt-premium-machine[data-phase="feature-lock"] .gt-hw-tiger-stage[data-reaction="feature"] .gt-hw-tiger-rig {
+  animation: gt-p5-tiger-feature-lock .34s cubic-bezier(.18,.76,.22,1.1) both;
+}
+.gt-hw-page .gt-premium-machine[data-win-beat="impact"] .gt-hw-tiger-rig {
+  animation: gt-p5-tiger-win-impact .24s cubic-bezier(.16,.84,.2,1.14) both !important;
+}
+.gt-hw-page .gt-premium-machine[data-win-beat="reveal"] .gt-hw-tiger-rig {
+  animation: gt-p5-tiger-win-reveal .78s ease-in-out infinite alternate !important;
+}
+.gt-hw-page .gt-premium-machine[data-win-beat="celebrate"] .gt-hw-tiger-rig {
+  animation: gt-p5-tiger-celebrate .66s cubic-bezier(.16,.84,.2,1.12) infinite alternate !important;
+}
+
+/* One restrained specular pass across the complete 3-reel surface while spinning. */
+.gt-hw-page .gt-premium-machine .gt-premium-grid::after {
+  content: "";
+  position: absolute;
+  z-index: 24;
+  top: -8%;
+  bottom: -8%;
+  left: -34%;
+  width: 24%;
+  pointer-events: none;
+  opacity: 0;
+  transform: skewX(-13deg) translateX(0);
+  background: linear-gradient(90deg, transparent, rgba(255,249,218,.16) 42%, rgba(255,231,159,.08) 58%, transparent);
+  mix-blend-mode: screen;
+}
+.gt-hw-page .gt-premium-machine[data-phase="base-spin"] .gt-premium-grid::after {
+  opacity: .72;
+  animation: gt-p5-reel-specular 1.08s cubic-bezier(.32,.02,.22,1) infinite;
+}
+
+/* Slightly reduce scene spark density over the compact 3×3 while retaining depth. */
+.gt-hw-page .gt-premium-machine .gt-scene-particles i:nth-child(3n) { opacity: .55; }
+.gt-hw-page .gt-premium-machine .gt-scene-particles i:nth-child(4n) { filter: blur(.45px); }
+
+@keyframes gt-p5-tiger-breathe {
+  0%,100% { transform: translate3d(0,0,0) rotateZ(-.2deg) scale(1); }
+  50% { transform: translate3d(0,-2px,0) rotateZ(.18deg) scale(1.012,1.018); }
+}
+@keyframes gt-p5-tiger-track {
+  from { transform: translate3d(-2px,1px,0) rotateZ(-.7deg) scale(.997); }
+  to { transform: translate3d(2px,-2px,0) rotateZ(.7deg) scale(1.014); }
+}
+@keyframes gt-p5-tiger-feature-charge {
+  0% { transform: translate3d(0,5px,0) scale(.95); filter: brightness(.92); }
+  58% { transform: translate3d(0,-4px,0) scale(1.045); filter: brightness(1.12); }
+  100% { transform: translate3d(0,0,0) scale(1); filter: brightness(1); }
+}
+@keyframes gt-p5-tiger-feature-lock {
+  0% { transform: translate3d(-1px,1px,0) rotateZ(-.6deg) scale(1.01); }
+  45% { transform: translate3d(2px,-2px,0) rotateZ(.8deg) scale(1.035); }
+  100% { transform: translate3d(0,0,0) rotateZ(0) scale(1); }
+}
+@keyframes gt-p5-tiger-win-impact {
+  0% { transform: translate3d(0,5px,0) scale(.96); }
+  60% { transform: translate3d(0,-4px,0) scale(1.05); }
+  100% { transform: translate3d(0,0,0) scale(1); }
+}
+@keyframes gt-p5-tiger-win-reveal {
+  from { transform: translate3d(-1px,0,0) rotateZ(-.35deg) scale(1.008); }
+  to { transform: translate3d(1px,-3px,0) rotateZ(.35deg) scale(1.026); }
+}
+@keyframes gt-p5-tiger-celebrate {
+  from { transform: translate3d(-1px,-1px,0) rotateZ(-.75deg) scale(1.025); }
+  to { transform: translate3d(1px,-5px,0) rotateZ(.75deg) scale(1.06); }
+}
+@keyframes gt-p5-reel-specular {
+  0% { transform: skewX(-13deg) translateX(-15%); opacity: 0; }
+  18% { opacity: .54; }
+  62% { opacity: .72; }
+  100% { transform: skewX(-13deg) translateX(610%); opacity: 0; }
+}
+
 @media (max-width: 699px) {
   .gt-hw-page .gt-premium-machine {
     grid-template-rows: 42px 142px 0 minmax(300px, 1fr) 28px 38px 66px 9px;
@@ -636,4 +739,8 @@
   }
   .gt-hw-page .gt-premium-machine .gt-hw-respin-panel { top: 170px; }
   .gt-hw-page .gt-premium-machine .gt-commercial-console { min-height: 58px; padding-block: 4px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gt-hw-page .gt-premium-machine .gt-premium-grid::after { animation: none !important; opacity: 0 !important; }
 }

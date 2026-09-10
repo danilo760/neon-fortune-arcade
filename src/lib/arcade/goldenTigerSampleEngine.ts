@@ -14,6 +14,7 @@ const loads = new Map<string, Promise<AudioBuffer | null>>();
 const failed = new Set<string>();
 let boundContext: AudioContext | null = null;
 const buses = new Map<GoldenTigerSampleBus, GainNode>();
+const activeSources = new Set<AudioBufferSourceNode>();
 
 const BUS_LEVEL: Record<GoldenTigerSampleBus, number> = {
   game: 1,
@@ -107,16 +108,23 @@ export function playGoldenTigerSampleUrl(url: string, options: GoldenTigerSample
   }
 
   source.onended = () => {
+    activeSources.delete(source);
     try { source.disconnect(); } catch {}
     try { amp.disconnect(); } catch {}
     try { panner?.disconnect(); } catch {}
   };
+  activeSources.add(source);
   source.start();
   return true;
 }
 
 export function disposeGoldenTigerSampleEngine() {
   loads.clear();
-  // Decoded buffers are intentionally cached for the page lifetime; active
-  // AudioBufferSourceNodes self-disconnect onended and are not retained here.
+  for (const source of activeSources) {
+    try { source.stop(); } catch {}
+    try { source.disconnect(); } catch {}
+  }
+  activeSources.clear();
+  // Decoded buffers stay cached for the page lifetime so returning to the game
+  // does not re-decode the commissioned pack.
 }

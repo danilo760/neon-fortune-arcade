@@ -1,4 +1,4 @@
-export type RepeatedAudioEvent = "plinkoPeg";
+export type RepeatedAudioEvent = "plinkoPeg" | "tigerReelLand" | "tigerFeatureLock" | "tigerWinCounter";
 
 type GateConfig = {
   cooldownMs: number;
@@ -11,6 +11,21 @@ export const REPEATED_AUDIO_CONFIG: Record<RepeatedAudioEvent, GateConfig> = {
     cooldownMs: 30,
     maxVoices: 5,
     voiceLifetimeMs: 70,
+  },
+  tigerReelLand: {
+    cooldownMs: 52,
+    maxVoices: 2,
+    voiceLifetimeMs: 150,
+  },
+  tigerFeatureLock: {
+    cooldownMs: 26,
+    maxVoices: 4,
+    voiceLifetimeMs: 105,
+  },
+  tigerWinCounter: {
+    cooldownMs: 72,
+    maxVoices: 2,
+    voiceLifetimeMs: 95,
   },
 };
 

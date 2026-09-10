@@ -12,8 +12,14 @@ import {
   GOLDEN_TIGER_BONUS_BUY_MULTIPLIER,
   runPurchasedFortuneFeature,
 } from "@/lib/arcade/goldenTigerBonusBuy";
-import { playGoldenTigerAudio } from "@/lib/arcade/goldenTigerAudio";
+import {
+  disposeGoldenTigerAudio,
+  playGoldenTigerAudio,
+  scheduleGoldenTigerWinCounterAudio,
+  type GoldenTigerAudioEvent,
+} from "@/lib/arcade/goldenTigerAudio";
 import { GoldenTigerClock } from "@/lib/arcade/goldenTigerClock";
+import { disposeGoldenTigerSampleEngine } from "@/lib/arcade/goldenTigerSampleEngine";
 import {
   goldenTigerFeatureCellStaggerMs,
   goldenTigerFeatureRollingOrder,
@@ -313,6 +319,10 @@ export function GoldenTigerPremium() {
   const autoStopRef = useRef(false);
   const clockRef = useRef<GoldenTigerClock | null>(null);
 
+  const playTigerAudio = useCallback((event: GoldenTigerAudioEvent) => {
+    playGoldenTigerAudio(event, soundEnabled, clockRef.current ?? undefined);
+  }, [soundEnabled]);
+
   const bonusCost = bet * GOLDEN_TIGER_BONUS_BUY_MULTIPLIER;
   const isBusy = phase !== "idle";
   const lockedCount = featureCells.reduce((count, symbol) => count + (symbol === null ? 0 : 1), 0);
@@ -324,12 +334,18 @@ export function GoldenTigerPremium() {
     clockRef.current = clock;
     return () => {
       autoStopRef.current = true;
+      disposeGoldenTigerAudio();
+      disposeGoldenTigerSampleEngine();
       clock.dispose();
       if (clockRef.current === clock) clockRef.current = null;
     };
   }, []);
 
   useEffect(() => {
+    if (!soundEnabled) {
+      disposeGoldenTigerAudio();
+      disposeGoldenTigerSampleEngine();
+    }
     setGameAmbience("tiger", soundEnabled);
     return () => setGameAmbience("tiger", false);
   }, [soundEnabled]);
@@ -379,7 +395,7 @@ export function GoldenTigerPremium() {
 
     if (purchased) {
       setPhase("bonus-intro");
-      playGoldenTigerAudio({ type: "feature-open" }, soundEnabled);
+      playTigerAudio({ type: "feature-open" });
       await wait(turbo ? 260 : 900);
     }
 
@@ -392,11 +408,11 @@ export function GoldenTigerPremium() {
       const rollingOrder = goldenTigerFeatureRollingOrder(visibleGrid);
       setRollingCells(new Set(rollingOrder));
       setPhase("feature-spin");
-      playGoldenTigerAudio({
+      playTigerAudio({
         type: "feature-respin",
         attempt: step.respin,
         lockedCount: lockedBeforeSpin,
-      }, soundEnabled);
+      });
       await wait(turbo ? 170 : 470);
 
       const staggeredGrid = [...visibleGrid];
@@ -417,6 +433,16 @@ export function GoldenTigerPremium() {
           return next;
         });
 
+        if (step.addedIndices.includes(cellIndex)) {
+          const lockedAtThisBeat = lockedBeforeSpin + staggeredFresh.size;
+          playTigerAudio({
+            type: "feature-lock",
+            lockedCount: lockedAtThisBeat,
+            addedWild: step.grid[cellIndex] === "wild",
+            fullGrid: step.isFullGrid && lockedAtThisBeat === 9,
+          });
+        }
+
         if (orderIndex < rollingOrder.length - 1) {
           await waitForFeatureStagger(orderIndex);
           if (!clockRef.current) return plan.payout;
@@ -431,17 +457,10 @@ export function GoldenTigerPremium() {
       if (step.addedIndices.length > 0) {
         setPhase("feature-lock");
         const addedWild = step.addedIndices.some((index) => step.grid[index] === "wild");
-        const lockedAfterSpin = visibleGrid.reduce((count, symbol) => count + (symbol === null ? 0 : 1), 0);
-        playGoldenTigerAudio({
-          type: "feature-lock",
-          lockedCount: lockedAfterSpin,
-          addedWild,
-          fullGrid: step.isFullGrid,
-        }, soundEnabled);
         await wait(turbo ? 170 : step.isFullGrid ? 700 : addedWild ? 540 : 380);
       } else {
         setPhase("feature-miss");
-        playGoldenTigerAudio({ type: "feature-miss" }, soundEnabled);
+        playTigerAudio({ type: "feature-miss" });
         await wait(turbo ? 110 : 330);
       }
 
@@ -455,7 +474,7 @@ export function GoldenTigerPremium() {
     setPhase("feature-outro");
     await wait(turbo ? 170 : 560);
     return plan.payout;
-  }, [soundEnabled, turbo, wait, waitForFeatureStagger]);
+  }, [playTigerAudio, turbo, wait, waitForFeatureStagger]);
 
   const settle = useCallback(async (
     payout: number,
@@ -484,38 +503,48 @@ export function GoldenTigerPremium() {
     if (cinematicWin) {
       const timeline = goldenTigerWinTimeline(turbo, fullGrid);
       setPhase(fullGrid ? "full-grid" : "win");
-      playGoldenTigerAudio(
+      playTigerAudio(
         fullGrid
           ? { type: "full-grid" }
           : { type: "win", tier: resolvedTier === "none" ? "small" : resolvedTier },
-        soundEnabled,
       );
 
       setWinBeat("impact");
       await wait(timeline.impactMs);
       if (!clockRef.current) return;
       setWinBeat("reveal");
+      scheduleGoldenTigerWinCounterAudio(
+        timeline.revealMs,
+        resolvedTier === "none" ? "small" : resolvedTier,
+        soundEnabled,
+        clockRef.current,
+      );
       await wait(timeline.revealMs);
       if (!clockRef.current) return;
       setWinBeat("celebrate");
+      playTigerAudio({
+        type: "win-celebrate",
+        tier: resolvedTier === "none" ? "small" : resolvedTier,
+        fullGrid,
+      });
       await wait(timeline.celebrateMs);
       if (!clockRef.current) return;
       setWinBeat(null);
     } else if (payout > visualStake) {
       setPhase("win");
-      playGoldenTigerAudio({
+      playTigerAudio({
         type: "win",
         tier: resolvedTier === "none" ? "small" : resolvedTier,
-      }, soundEnabled);
+      });
       await wait(goldenTigerSettleHoldMs("simple-win", turbo));
     } else if (payout > 0) {
       setPhase("return");
       await wait(goldenTigerSettleHoldMs("return", turbo));
     } else {
-      playGoldenTigerAudio({ type: "lose" }, soundEnabled);
+      playTigerAudio({ type: "lose" });
       await wait(goldenTigerSettleHoldMs("lose", turbo));
     }
-  }, [soundEnabled, turbo, wait]);
+  }, [playTigerAudio, soundEnabled, turbo, wait]);
 
   const resetRoundPresentation = useCallback(() => {
     setWin(0);
@@ -557,7 +586,7 @@ export function GoldenTigerPremium() {
     busyRef.current = true;
     if (!arcadeActions.placeBet(bet)) {
       busyRef.current = false;
-      playGoldenTigerAudio({ type: "lose" }, soundEnabled);
+      playTigerAudio({ type: "lose" });
       return false;
     }
 
@@ -571,13 +600,13 @@ export function GoldenTigerPremium() {
       const featureTriggered = rollFortuneFeatureTrigger(Math.random);
       const featurePlan = featureTriggered ? runFortuneFeature(bet, Math.random) : null;
       setGrid(nextGrid);
-      playGoldenTigerAudio({ type: "spin" }, soundEnabled);
+      playTigerAudio({ type: "spin" });
       await wait(goldenTigerSpinLaunchMs(turbo));
 
       for (let column = 0; column < 3; column += 1) {
         if (column === 2 && (baseResult.winning.size > 0 || featureTriggered)) {
           setAnticipating(true);
-          playGoldenTigerAudio({ type: "anticipation" }, soundEnabled);
+          playTigerAudio({ type: "anticipation" });
           await wait(goldenTigerAnticipationMs(turbo));
         }
 
@@ -586,7 +615,7 @@ export function GoldenTigerPremium() {
         await wait(goldenTigerReelBrakeMs(column, turbo));
         setStoppedColumns(column + 1);
         setBrakingColumn(-1);
-        playGoldenTigerAudio({ type: "reel-land", column, featureHint: featureTriggered }, soundEnabled);
+        playTigerAudio({ type: "reel-land", column, featureHint: featureTriggered });
         await wait(goldenTigerReelLandPauseMs(column, turbo));
       }
 
@@ -595,7 +624,7 @@ export function GoldenTigerPremium() {
       setAnticipating(false);
 
       if (featurePlan) {
-        playGoldenTigerAudio({ type: "feature-open" }, soundEnabled);
+        playTigerAudio({ type: "feature-open" });
         const payout = await animateFeature(featurePlan, false);
         await settle(
           payout,
@@ -610,7 +639,7 @@ export function GoldenTigerPremium() {
       setWinning(baseResult.winning);
       setPhase("reveal");
       if (baseResult.payout > bet) {
-        playGoldenTigerAudio({ type: "reveal", winMultiple: baseResult.payout / bet }, soundEnabled);
+        playTigerAudio({ type: "reveal", winMultiple: baseResult.payout / bet });
       }
       await wait(turbo ? 55 : baseResult.winning.size > 0 ? 180 : 110);
       await settle(
@@ -624,7 +653,7 @@ export function GoldenTigerPremium() {
     } finally {
       finishRoundPresentation();
     }
-  }, [animateFeature, bet, finishRoundPresentation, resetRoundPresentation, settle, soundEnabled, turbo, wait]);
+  }, [animateFeature, bet, finishRoundPresentation, playTigerAudio, resetRoundPresentation, settle, turbo, wait]);
 
   const buyBonus = useCallback(async () => {
     if (busyRef.current || autoLeft > 0 || balance < bonusCost) return;
@@ -669,7 +698,7 @@ export function GoldenTigerPremium() {
     if (busyRef.current || autoLeft > 0) return;
     const current = Math.max(0, BETS.findIndex((value) => value === bet));
     setBet(BETS[Math.max(0, Math.min(BETS.length - 1, current + direction))] ?? bet);
-    playGoldenTigerAudio({ type: "click" }, soundEnabled);
+    playTigerAudio({ type: "click" });
   };
 
   const status =
