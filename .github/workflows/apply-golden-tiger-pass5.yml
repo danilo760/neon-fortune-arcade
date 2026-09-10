@@ -25,7 +25,12 @@ jobs:
 
       - name: Assemble and apply patch
         run: |
-          cat .pass5/patch-00.diff .pass5/patch-01.diff .pass5/patch-02.diff .pass5/patch-03.diff .pass5/patch-04.diff > /tmp/pass5.diff
+          python3 - <<'PY'
+          from pathlib import Path
+          parts = [Path(f'.pass5/patch-0{i}.diff') for i in range(5)]
+          combined = ''.join(part.read_text().rstrip('\n') + '\n' for part in parts)
+          Path('/tmp/pass5.diff').write_text(combined)
+          PY
           git apply --check /tmp/pass5.diff
           git apply /tmp/pass5.diff
 
