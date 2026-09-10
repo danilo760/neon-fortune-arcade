@@ -54,6 +54,10 @@ type AmbienceVoice = {
   root: GainNode;
   sources: AudioScheduledSourceNode[];
   nodes: AudioNode[];
+  toneOscillators: OscillatorNode[];
+  toneFilters: BiquadFilterNode[];
+  noiseFilter: BiquadFilterNode;
+  lfo: OscillatorNode;
 };
 
 let desiredAmbienceTheme: AmbienceTheme | null = null;
@@ -270,6 +274,25 @@ function themeVoiceSpec(theme: AmbienceTheme) {
   }
 }
 
+function retuneAmbienceVoice(voice: AmbienceVoice, energy: number) {
+  const now = voice.root.context.currentTime;
+  const spec = themeVoiceSpec(voice.theme);
+  const normalized = Math.max(0.58, Math.min(1.45, energy));
+  const featureLift = voice.theme === "tiger" ? Math.max(0, normalized - 1) : 0;
+
+  voice.toneOscillators.forEach((osc, index) => {
+    const base = spec.tones[index] ?? spec.tones[0] ?? 110;
+    const target = base * (1 + featureLift * (index === 2 ? 0.045 : 0.022));
+    osc.frequency.setTargetAtTime(target, now, 0.18);
+  });
+  voice.toneFilters.forEach((filter) => {
+    const base = voice.theme === "candy" ? 1800 : voice.theme === "plinko" ? 1450 : 920;
+    filter.frequency.setTargetAtTime(base * (1 + featureLift * 0.42), now, 0.2);
+  });
+  voice.noiseFilter.frequency.setTargetAtTime(spec.noiseCutoff * (1 + featureLift * 0.38), now, 0.2);
+  voice.lfo.frequency.setTargetAtTime(spec.lfoHz * (1 + featureLift * 2.35), now, 0.22);
+}
+
 function ensureAmbience(audio: AudioContext) {
   if (!desiredAmbienceEnabled || !desiredAmbienceTheme) {
     stopAmbience();
@@ -280,6 +303,7 @@ function ensureAmbience(audio: AudioContext) {
     const target = AMBIENCE_GAIN[desiredAmbienceTheme] * ambienceEnergy;
     ambienceVoice.root.gain.cancelScheduledValues(now);
     ambienceVoice.root.gain.setTargetAtTime(target, now, 0.18);
+    retuneAmbienceVoice(ambienceVoice, ambienceEnergy);
     return;
   }
 
@@ -294,6 +318,8 @@ function ensureAmbience(audio: AudioContext) {
 
   const sources: AudioScheduledSourceNode[] = [];
   const nodes: AudioNode[] = [root];
+  const toneOscillators: OscillatorNode[] = [];
+  const toneFilters: BiquadFilterNode[] = [];
 
   spec.tones.forEach((frequency, index) => {
     const osc = audio.createOscillator();
@@ -309,6 +335,8 @@ function ensureAmbience(audio: AudioContext) {
     osc.start();
     sources.push(osc);
     nodes.push(amp, filter);
+    toneOscillators.push(osc);
+    toneFilters.push(filter);
   });
 
   const noiseSource = audio.createBufferSource();
@@ -335,7 +363,8 @@ function ensureAmbience(audio: AudioContext) {
   sources.push(lfo);
   nodes.push(lfoGain);
 
-  ambienceVoice = { theme, root, sources, nodes };
+  ambienceVoice = { theme, root, sources, nodes, toneOscillators, toneFilters, noiseFilter, lfo };
+  retuneAmbienceVoice(ambienceVoice, ambienceEnergy);
 }
 
 export function setGameAmbience(theme: AmbienceTheme, enabled: boolean) {

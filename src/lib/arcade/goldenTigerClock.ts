@@ -15,6 +15,24 @@ export class GoldenTigerClock {
     });
   }
 
+  schedule(ms: number, callback: () => void) {
+    if (this.disposed || typeof window === "undefined") return () => {};
+    let active = true;
+    const id = window.setTimeout(() => {
+      this.pending.delete(id);
+      if (!active || this.disposed) return;
+      active = false;
+      callback();
+    }, Math.max(0, ms));
+    this.pending.set(id, () => { active = false; });
+    return () => {
+      if (!active) return;
+      active = false;
+      window.clearTimeout(id);
+      this.pending.delete(id);
+    };
+  }
+
   dispose() {
     this.disposed = true;
     for (const [id, resolve] of this.pending) {
