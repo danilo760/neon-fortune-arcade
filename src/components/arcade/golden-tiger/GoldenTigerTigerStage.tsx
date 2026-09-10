@@ -1,9 +1,9 @@
 import { memo, useEffect, useState } from "react";
 
 import tigerPoseAtlas from "@/assets/golden-tiger/tiger-pose-atlas.webp";
+import { goldenTigerPose, type TigerReactionState } from "@/lib/arcade/goldenTigerActing";
 
-export type TigerReactionState = "idle" | "watch" | "reveal" | "feature" | "tense" | "win" | "full";
-type TigerPose = TigerReactionState | "blink";
+export type { TigerReactionState } from "@/lib/arcade/goldenTigerActing";
 
 type Props = {
   reaction: TigerReactionState;
@@ -15,23 +15,12 @@ function reducedMotion() {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-function actingPose(reaction: TigerReactionState, beat: number): TigerPose {
-  if (reaction === "watch") return beat % 4 === 3 ? "tense" : "watch";
-  if (reaction === "reveal") return beat % 2 === 0 ? "reveal" : "tense";
-  if (reaction === "tense") return beat % 3 === 1 ? "reveal" : "tense";
-  if (reaction === "feature") return beat % 3 === 2 ? "reveal" : "feature";
-  if (reaction === "win") return beat % 3 === 1 ? "full" : "win";
-  if (reaction === "full") return beat % 2 === 0 ? "full" : "win";
-  return reaction;
-}
-
 /**
  * Presentation-only mascot stage using an original 4×2 pose atlas.
  *
  * Pose order: idle, blink, watch, tense / reveal, feature, win, full.
- * Besides idle blinks, active states now sequence authored poses so the tiger
- * visibly tracks reels, braces for reveals and performs multi-pose feature/win
- * reactions instead of behaving like one translated sticker.
+ * Active poses follow the parent's reel/feature/win timeline. Only idle blinks
+ * have a local timer: an independent acting loop must not invent game events.
  */
 export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
   reaction,
@@ -39,7 +28,6 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
   lockedCount,
 }: Props) {
   const [idleBlink, setIdleBlink] = useState(false);
-  const [actingBeat, setActingBeat] = useState(0);
 
   useEffect(() => {
     if (reaction !== "idle" || reducedMotion()) {
@@ -72,25 +60,7 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
     };
   }, [reaction]);
 
-  useEffect(() => {
-    setActingBeat(0);
-    if (reaction === "idle" || reducedMotion()) return;
-
-    const cadence =
-      reaction === "feature" ? 330 :
-      reaction === "win" || reaction === "full" ? 430 :
-      reaction === "reveal" || reaction === "tense" ? 390 : 560;
-
-    const timer = window.setInterval(() => {
-      setActingBeat((value) => (value + 1) % 12);
-    }, cadence);
-
-    return () => window.clearInterval(timer);
-  }, [reaction, lockedCount]);
-
-  const pose: TigerPose = reaction === "idle" && idleBlink
-    ? "blink"
-    : actingPose(reaction, actingBeat);
+  const pose = goldenTigerPose(reaction, idleBlink);
   const celebrationPose = reaction === "feature" || reaction === "win" || reaction === "full";
 
   return (
@@ -108,7 +78,7 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
       <div
         className="gt-hw-tiger-rig"
         data-pose={pose}
-        data-acting={actingBeat % 2 === 0 ? "primary" : "secondary"}
+        data-acting="primary"
         aria-hidden
       >
         <span
