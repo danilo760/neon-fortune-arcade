@@ -3,10 +3,12 @@ import test from "node:test";
 
 import {
   goldenTigerAnticipationMs,
+  goldenTigerAutoGapMs,
   goldenTigerBrakeEase,
   goldenTigerNominalSpinMs,
   goldenTigerReelBrakeMs,
   goldenTigerReelLandPauseMs,
+  goldenTigerRevealPauseMs,
 } from "./goldenTigerMotion";
 
 test("Golden Tiger reel brakes get slightly longer from left to right", () => {
@@ -15,18 +17,25 @@ test("Golden Tiger reel brakes get slightly longer from left to right", () => {
   assert.ok(goldenTigerReelBrakeMs(0, true) < goldenTigerReelBrakeMs(2, true));
 });
 
-test("Golden Tiger normal spin has deliberate reel weight while Turbo stays quick", () => {
+test("Golden Tiger normal spin has deliberate commercial weight while Turbo preserves choreography", () => {
   const normal = goldenTigerNominalSpinMs(false, true);
   const turbo = goldenTigerNominalSpinMs(true, true);
-  assert.ok(normal >= 1960 && normal <= 2050, `normal=${normal}`);
-  assert.ok(turbo >= 400 && turbo <= 500, `turbo=${turbo}`);
-  assert.ok(normal > turbo * 4, `normal=${normal} turbo=${turbo}`);
+  assert.ok(normal >= 2500 && normal <= 2600, `normal=${normal}`);
+  assert.ok(turbo >= 690 && turbo <= 730, `turbo=${turbo}`);
+  assert.ok(normal > turbo * 3.4, `normal=${normal} turbo=${turbo}`);
 });
 
-test("anticipation is a deliberate beat in normal mode without stalling Turbo", () => {
-  assert.ok(goldenTigerAnticipationMs(false) >= 240);
+test("anticipation is a real hold in normal mode and remains readable in Turbo", () => {
+  assert.ok(goldenTigerAnticipationMs(false) >= 340);
   assert.ok(goldenTigerAnticipationMs(false) > goldenTigerReelLandPauseMs(2, false) * 2);
-  assert.ok(goldenTigerAnticipationMs(true) < 60);
+  assert.ok(goldenTigerAnticipationMs(true) >= 80 && goldenTigerAnticipationMs(true) <= 110);
+});
+
+test("result and Auto gaps preserve breathing room without making Turbo feel instant", () => {
+  assert.ok(goldenTigerRevealPauseMs(false, true) > goldenTigerRevealPauseMs(false, false));
+  assert.ok(goldenTigerRevealPauseMs(true, true) >= 75);
+  assert.ok(goldenTigerAutoGapMs(false) >= 280);
+  assert.ok(goldenTigerAutoGapMs(true) >= 100);
 });
 
 test("Golden Tiger brake easing is clamped, monotonic and ends exactly on the snap target", () => {

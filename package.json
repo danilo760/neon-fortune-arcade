@@ -11,7 +11,9 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "node --import tsx --test src/**/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "typecheck:scripts": "tsc --noEmit -p tsconfig.scripts.json",
+    "simulate:golden-tiger": "node --import tsx scripts/simulate-golden-tiger.ts"
   },
   "overrides": {
     "rolldown": "1.2.1"

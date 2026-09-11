@@ -1,9 +1,14 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
 import tigerPoseAtlas from "@/assets/golden-tiger/tiger-pose-atlas.webp";
+import {
+  goldenTigerPose,
+  goldenTigerPoseTransitionMs,
+  type TigerPose,
+  type TigerReactionState,
+} from "@/lib/arcade/goldenTigerActing";
 
-export type TigerReactionState = "idle" | "watch" | "reveal" | "feature" | "tense" | "win" | "full";
-type TigerPose = TigerReactionState | "blink";
+export type { TigerReactionState } from "@/lib/arcade/goldenTigerActing";
 
 type Props = {
   reaction: TigerReactionState;
@@ -15,23 +20,14 @@ function reducedMotion() {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-function actingPose(reaction: TigerReactionState, beat: number): TigerPose {
-  if (reaction === "watch") return beat % 4 === 3 ? "tense" : "watch";
-  if (reaction === "reveal") return beat % 2 === 0 ? "reveal" : "tense";
-  if (reaction === "tense") return beat % 3 === 1 ? "reveal" : "tense";
-  if (reaction === "feature") return beat % 3 === 2 ? "reveal" : "feature";
-  if (reaction === "win") return beat % 3 === 1 ? "full" : "win";
-  if (reaction === "full") return beat % 2 === 0 ? "full" : "win";
-  return reaction;
-}
-
 /**
  * Presentation-only mascot stage using an original 4×2 pose atlas.
  *
  * Pose order: idle, blink, watch, tense / reveal, feature, win, full.
- * Besides idle blinks, active states now sequence authored poses so the tiger
- * visibly tracks reels, braces for reveals and performs multi-pose feature/win
- * reactions instead of behaving like one translated sticker.
+ * Gameplay owns the acting state. This component only adds a short authored
+ * overlap between adjacent atlas poses so the mascot reads as one performer
+ * rather than an instantaneous sprite replacement. Idle blinking remains the
+ * only locally scheduled action.
  */
 export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
   reaction,
@@ -39,7 +35,11 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
   lockedCount,
 }: Props) {
   const [idleBlink, setIdleBlink] = useState(false);
-  const [actingBeat, setActingBeat] = useState(0);
+  const requestedPose = goldenTigerPose(reaction, idleBlink);
+  const activePoseRef = useRef<TigerPose>(requestedPose);
+  const [activePose, setActivePose] = useState<TigerPose>(requestedPose);
+  const [previousPose, setPreviousPose] = useState<TigerPose | null>(null);
+  const [transitionMs, setTransitionMs] = useState(0);
 
   useEffect(() => {
     if (reaction !== "idle" || reducedMotion()) {
@@ -73,24 +73,28 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
   }, [reaction]);
 
   useEffect(() => {
-    setActingBeat(0);
-    if (reaction === "idle" || reducedMotion()) return;
+    const from = activePoseRef.current;
+    if (from === requestedPose) return;
 
-    const cadence =
-      reaction === "feature" ? 330 :
-      reaction === "win" || reaction === "full" ? 430 :
-      reaction === "reveal" || reaction === "tense" ? 390 : 560;
+    const duration = goldenTigerPoseTransitionMs(from, requestedPose, reducedMotion());
+    activePoseRef.current = requestedPose;
+    setActivePose(requestedPose);
 
-    const timer = window.setInterval(() => {
-      setActingBeat((value) => (value + 1) % 12);
-    }, cadence);
+    if (duration <= 0) {
+      setPreviousPose(null);
+      setTransitionMs(0);
+      return;
+    }
 
-    return () => window.clearInterval(timer);
-  }, [reaction, lockedCount]);
+    setPreviousPose(from);
+    setTransitionMs(duration);
+    const timer = window.setTimeout(() => {
+      setPreviousPose(null);
+      setTransitionMs(0);
+    }, duration + 24);
+    return () => window.clearTimeout(timer);
+  }, [requestedPose]);
 
-  const pose: TigerPose = reaction === "idle" && idleBlink
-    ? "blink"
-    : actingPose(reaction, actingBeat);
   const celebrationPose = reaction === "feature" || reaction === "win" || reaction === "full";
 
   return (
@@ -99,6 +103,7 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
       data-reaction={reaction}
       data-feature={featureActive ? "on" : "off"}
       data-celebration={celebrationPose ? "true" : "false"}
+      data-pose-transition={previousPose ? "active" : "settled"}
     >
       <span className="gt-hw-tiger-stage-halo" aria-hidden />
       <span className="gt-hw-tiger-stage-shadow" aria-hidden />
@@ -107,14 +112,34 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
 
       <div
         className="gt-hw-tiger-rig"
-        data-pose={pose}
-        data-acting={actingBeat % 2 === 0 ? "primary" : "secondary"}
+        data-pose={activePose}
+        data-acting="primary"
         aria-hidden
       >
+        {/* Keep the active actor first in DOM so visual QA and assistive tooling
+            always measure the live pose, even during the short overlap window. */}
         <span
-          className="gt-hw-tiger-sprite"
-          style={{ backgroundImage: `url(${tigerPoseAtlas})` }}
-        />
+          className={`gt-hw-tiger-pose-layer gt-hw-tiger-pose-layer--current${previousPose ? " is-entering" : ""}`}
+          data-pose={activePose}
+          style={previousPose ? { animationDuration: `${transitionMs}ms` } : undefined}
+        >
+          <span
+            className="gt-hw-tiger-sprite"
+            style={{ backgroundImage: `url(${tigerPoseAtlas})` }}
+          />
+        </span>
+        {previousPose && (
+          <span
+            className="gt-hw-tiger-pose-layer gt-hw-tiger-pose-layer--exit"
+            data-pose={previousPose}
+            style={{ animationDuration: `${transitionMs}ms` }}
+          >
+            <span
+              className="gt-hw-tiger-sprite"
+              style={{ backgroundImage: `url(${tigerPoseAtlas})` }}
+            />
+          </span>
+        )}
         <span className="gt-hw-tiger-eye-flare gt-hw-tiger-eye-flare--left" />
         <span className="gt-hw-tiger-eye-flare gt-hw-tiger-eye-flare--right" />
         <span className="gt-hw-tiger-crown-flare" />

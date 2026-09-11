@@ -1,0 +1,57 @@
+name: Golden Tiger Session 3 QA
+
+on:
+  pull_request:
+    paths:
+      - "src/components/arcade/GoldenTiger*.tsx"
+      - "src/components/arcade/GoldenTiger*.css"
+      - "src/components/arcade/golden-tiger/**"
+      - "src/lib/arcade/goldenTiger*.ts"
+      - "src/routes/game/$slug.tsx"
+      - "scripts/simulate-golden-tiger.ts"
+      - "scripts/golden-tiger-env.d.ts"
+      - "tsconfig.scripts.json"
+      - ".github/workflows/golden-tiger-session3-qa.yml"
+  workflow_dispatch:
+
+jobs:
+  full-session3-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Tests
+        run: bun run test
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Typecheck scripts
+        run: bun run typecheck:scripts
+
+      - name: Golden Tiger full statistical simulation
+        env:
+          SPINS: "150000"
+          FEATURE_ENTRIES: "30000"
+        run: bun run simulate:golden-tiger | tee golden-tiger-session3-simulation.json
+
+      - name: Production build
+        run: bun run build
+
+      - name: Upload statistical evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-tiger-session3-statistical-qa
+          path: golden-tiger-session3-simulation.json
+          retention-days: 7

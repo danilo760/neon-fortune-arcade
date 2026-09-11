@@ -1,175 +1,356 @@
 import {
-  GOLDEN_TIGER_FEATURE_BUY_COST_MULTIPLIER,
-  GOLDEN_TIGER_FEATURE_BUY_INITIAL_SPINS,
-  GOLDEN_TIGER_MAX_RETRIGGERS,
+  FORTUNE_FEATURE_TRIGGER_CHANCE,
+  rollFortuneFeatureTrigger,
+  runFortuneFeature,
+} from "../src/lib/arcade/goldenTigerFortuneFeature";
+import {
+  GOLDEN_TIGER_BONUS_BUY_MULTIPLIER,
+  runPurchasedFortuneFeature,
+} from "../src/lib/arcade/goldenTigerBonusBuy";
+import {
+  GOLDEN_TIGER_FULL_GRID_MULTIPLIER,
+  GOLDEN_TIGER_PAYOUT_SCALE,
   evaluateGoldenTiger,
   makeGoldenTigerGrid,
 } from "../src/lib/arcade/goldenTigerMath";
+import { createSeededRng } from "../src/lib/arcade/rng";
 
-const requested = Number(process.env.SPINS ?? 1_000_000);
-const baseSpins = Number.isFinite(requested) && requested >= 1 ? Math.floor(requested) : 1_000_000;
-const requestedFeatures = Number(process.env.FEATURE_ENTRIES ?? 1_000_000);
-const featureEntries = Number.isFinite(requestedFeatures) && requestedFeatures >= 1
-  ? Math.floor(requestedFeatures)
-  : 1_000_000;
+const DEFAULT_SPINS = 150_000;
+const DEFAULT_FEATURE_ENTRIES = 30_000;
+const DEFAULT_SEEDS = [0x09681a11, 20_260_909, 20_260_910] as const;
+const DEFAULT_BETS = [1, 20, 100] as const;
 
-let state = 0x7f4a7c15;
-function rng() {
-  state ^= state << 13;
-  state ^= state >>> 17;
-  state ^= state << 5;
-  return (state >>> 0) / 4_294_967_296;
+function positiveInteger(raw: string | undefined, fallback: number) {
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : fallback;
 }
 
-let scatter3 = 0;
-let scatter4 = 0;
-let scatter5Plus = 0;
-let basePayout = 0;
-let baseHits = 0;
-let bonusPayout = 0;
-let bonusCount = 0;
-let bonusSpinTotal = 0;
-let bonusWithRetrigger = 0;
-let retriggerTotal = 0;
-let maxBonusSpins = 0;
+function numberList(raw: string | undefined, fallback: readonly number[]) {
+  if (!raw) return [...fallback];
+  const values = raw
+    .split(",")
+    .map((value) => Number(value.trim()))
+    .filter((value) => Number.isFinite(value) && value > 0);
+  return values.length > 0 ? values : [...fallback];
+}
 
-function simulateBonus(initialSpins: number) {
-  let spinsLeft = initialSpins;
-  let totalSpins = 0;
-  let retriggers = 0;
-  let payout = 0;
+function seedList(raw: string | undefined, fallback: readonly number[]) {
+  if (!raw) return [...fallback];
+  const values = raw
+    .split(",")
+    .map((value) => Number(value.trim()))
+    .filter((value) => Number.isInteger(value) && value >= 0 && value <= 0xffffffff)
+    .map((value) => value >>> 0);
+  return values.length > 0 ? values : [...fallback];
+}
 
-  while (spinsLeft > 0) {
-    spinsLeft -= 1;
-    totalSpins += 1;
-    const grid = makeGoldenTigerGrid("freeSpins", rng);
-    const result = evaluateGoldenTiger(grid, 1, "freeSpins");
-    payout += result.payout;
+const spins = positiveInteger(process.env.SPINS, DEFAULT_SPINS);
+const featureEntries = positiveInteger(process.env.FEATURE_ENTRIES, DEFAULT_FEATURE_ENTRIES);
+const seeds = seedList(process.env.SEEDS, DEFAULT_SEEDS);
+const bets = numberList(process.env.BETS, DEFAULT_BETS);
+const roundingReferenceBet = Math.max(...bets);
 
-    if (result.bonusAward > 0 && retriggers < GOLDEN_TIGER_MAX_RETRIGGERS) {
-      spinsLeft += result.bonusAward;
-      retriggers += 1;
-    }
+function ratio(numerator: number, denominator: number) {
+  return denominator > 0 ? numerator / denominator : 0;
+}
+
+function round(value: number, digits = 6) {
+  return Number(value.toFixed(digits));
+}
+
+function percent(value: number) {
+  return `${(value * 100).toFixed(4)}%`;
+}
+
+function quantile(sortedValues: readonly number[], position: number) {
+  if (sortedValues.length === 0) return 0;
+  const clamped = Math.max(0, Math.min(1, position));
+  const index = (sortedValues.length - 1) * clamped;
+  const lower = Math.floor(index);
+  const upper = Math.ceil(index);
+  if (lower === upper) return sortedValues[lower] ?? 0;
+  const lowerValue = sortedValues[lower] ?? 0;
+  const upperValue = sortedValues[upper] ?? lowerValue;
+  return lowerValue + (upperValue - lowerValue) * (index - lower);
+}
+
+function summarizeMultiples(values: number[]) {
+  if (values.length === 0) {
+    return { count: 0, mean: 0, p50: 0, p90: 0, p99: 0, max: 0 };
   }
-
-  return { payout, retriggers, totalSpins };
+  values.sort((left, right) => left - right);
+  const total = values.reduce((sum, value) => sum + value, 0);
+  return {
+    count: values.length,
+    mean: round(total / values.length),
+    p50: round(quantile(values, 0.5)),
+    p90: round(quantile(values, 0.9)),
+    p99: round(quantile(values, 0.99)),
+    max: round(values[values.length - 1] ?? 0),
+  };
 }
 
-for (let index = 0; index < baseSpins; index += 1) {
-  const grid = makeGoldenTigerGrid("base", rng);
-  const result = evaluateGoldenTiger(grid, 1, "base");
-  basePayout += result.payout;
-  if (result.payout > 0) baseHits += 1;
-
-  if (result.scatterCount === 3) scatter3 += 1;
-  else if (result.scatterCount === 4) scatter4 += 1;
-  else if (result.scatterCount >= 5) scatter5Plus += 1;
-
-  if (result.bonusAward <= 0) continue;
-  bonusCount += 1;
-  const bonus = simulateBonus(result.bonusAward);
-  bonusPayout += bonus.payout;
-  bonusSpinTotal += bonus.totalSpins;
-  retriggerTotal += bonus.retriggers;
-  if (bonus.retriggers > 0) bonusWithRetrigger += 1;
-  maxBonusSpins = Math.max(maxBonusSpins, bonus.totalSpins);
-}
-
-const featureOutcomes = new Float64Array(featureEntries);
-let featurePayoutTotal = 0;
-let featureSquareTotal = 0;
-let featureSpinTotal = 0;
-let featureRetriggerTotal = 0;
-let featureWithRetrigger = 0;
-let featureMax = 0;
-let featureMaxSpins = 0;
-const featureDistribution = {
-  zero: 0,
-  belowCost: 0,
-  costTo2x: 0,
-  twoTo5x: 0,
-  fiveXPlus: 0,
+type PaidSpinScenario = {
+  seed: number;
+  bet: number;
+  spins: number;
+  settledPayout: number;
+  potentialBasePayout: number;
+  baseHits: number;
+  baseFullGrids: number;
+  featureTriggers: number;
+  featurePayout: number;
+  featurePaying: number;
+  featureFullGrids: number;
+  featureRespins: number;
+  featureMaxRespins: number;
+  featureWinMultiples: number[];
 };
 
-for (let index = 0; index < featureEntries; index += 1) {
-  const feature = simulateBonus(GOLDEN_TIGER_FEATURE_BUY_INITIAL_SPINS);
-  featureOutcomes[index] = feature.payout;
-  featurePayoutTotal += feature.payout;
-  featureSquareTotal += feature.payout * feature.payout;
-  featureSpinTotal += feature.totalSpins;
-  featureRetriggerTotal += feature.retriggers;
-  if (feature.retriggers > 0) featureWithRetrigger += 1;
-  featureMax = Math.max(featureMax, feature.payout);
-  featureMaxSpins = Math.max(featureMaxSpins, feature.totalSpins);
+function simulatePaidSpins(seed: number, bet: number): PaidSpinScenario {
+  const rng = createSeededRng(seed);
+  const scenario: PaidSpinScenario = {
+    seed,
+    bet,
+    spins,
+    settledPayout: 0,
+    potentialBasePayout: 0,
+    baseHits: 0,
+    baseFullGrids: 0,
+    featureTriggers: 0,
+    featurePayout: 0,
+    featurePaying: 0,
+    featureFullGrids: 0,
+    featureRespins: 0,
+    featureMaxRespins: 0,
+    featureWinMultiples: [],
+  };
 
-  if (feature.payout <= 0) featureDistribution.zero += 1;
-  else if (feature.payout < GOLDEN_TIGER_FEATURE_BUY_COST_MULTIPLIER) featureDistribution.belowCost += 1;
-  else if (feature.payout < GOLDEN_TIGER_FEATURE_BUY_COST_MULTIPLIER * 2) featureDistribution.costTo2x += 1;
-  else if (feature.payout < GOLDEN_TIGER_FEATURE_BUY_COST_MULTIPLIER * 5) featureDistribution.twoTo5x += 1;
-  else featureDistribution.fiveXPlus += 1;
+  for (let spin = 0; spin < spins; spin += 1) {
+    const grid = makeGoldenTigerGrid(rng);
+    const base = evaluateGoldenTiger(grid, bet);
+    scenario.potentialBasePayout += base.payout;
+    if (base.payout > 0) scenario.baseHits += 1;
+    if (base.isFullGrid) scenario.baseFullGrids += 1;
+
+    if (!rollFortuneFeatureTrigger(rng)) {
+      scenario.settledPayout += base.payout;
+      continue;
+    }
+
+    scenario.featureTriggers += 1;
+    const feature = runFortuneFeature(bet, rng);
+    scenario.featurePayout += feature.payout;
+    scenario.settledPayout += feature.payout;
+    scenario.featureRespins += feature.respinsUsed;
+    scenario.featureMaxRespins = Math.max(scenario.featureMaxRespins, feature.respinsUsed);
+    scenario.featureWinMultiples.push(feature.payout / bet);
+    if (feature.payout > 0) scenario.featurePaying += 1;
+    if (feature.isFullGrid) scenario.featureFullGrids += 1;
+  }
+
+  return scenario;
 }
 
-featureOutcomes.sort();
-const mid = Math.floor(featureEntries / 2);
-const featureMedian = featureEntries % 2 === 0
-  ? ((featureOutcomes[mid - 1] ?? 0) + (featureOutcomes[mid] ?? 0)) / 2
-  : (featureOutcomes[mid] ?? 0);
-const featureMean = featurePayoutTotal / featureEntries;
-const featureVariance = Math.max(0, featureSquareTotal / featureEntries - featureMean ** 2);
-const featureStdDev = Math.sqrt(featureVariance);
-const featureRtp = featureMean / GOLDEN_TIGER_FEATURE_BUY_COST_MULTIPLIER;
+type PurchasedScenario = {
+  seed: number;
+  bet: number;
+  entries: number;
+  payout: number;
+  paying: number;
+  fullGrids: number;
+  respins: number;
+  maxRespins: number;
+  winMultiples: number[];
+  buckets: {
+    zero: number;
+    belowCost: number;
+    costTo2x: number;
+    twoTo5x: number;
+    fiveXPlus: number;
+  };
+};
 
-const triggerCount = scatter3 + scatter4 + scatter5Plus;
-const percent = (value: number) => `${(value * 100).toFixed(4)}%`;
-const round = (value: number) => Number(value.toFixed(6));
+function simulatePurchasedFeatures(seed: number, bet: number): PurchasedScenario {
+  const rng = createSeededRng(seed ^ 0x9e3779b9);
+  const scenario: PurchasedScenario = {
+    seed,
+    bet,
+    entries: featureEntries,
+    payout: 0,
+    paying: 0,
+    fullGrids: 0,
+    respins: 0,
+    maxRespins: 0,
+    winMultiples: [],
+    buckets: {
+      zero: 0,
+      belowCost: 0,
+      costTo2x: 0,
+      twoTo5x: 0,
+      fiveXPlus: 0,
+    },
+  };
+
+  for (let entry = 0; entry < featureEntries; entry += 1) {
+    const feature = runPurchasedFortuneFeature(bet, rng);
+    const multiple = feature.payout / bet;
+    scenario.payout += feature.payout;
+    scenario.respins += feature.respinsUsed;
+    scenario.maxRespins = Math.max(scenario.maxRespins, feature.respinsUsed);
+    scenario.winMultiples.push(multiple);
+    if (feature.payout > 0) scenario.paying += 1;
+    if (feature.isFullGrid) scenario.fullGrids += 1;
+
+    if (feature.payout <= 0) scenario.buckets.zero += 1;
+    else if (multiple < GOLDEN_TIGER_BONUS_BUY_MULTIPLIER) scenario.buckets.belowCost += 1;
+    else if (multiple < GOLDEN_TIGER_BONUS_BUY_MULTIPLIER * 2) scenario.buckets.costTo2x += 1;
+    else if (multiple < GOLDEN_TIGER_BONUS_BUY_MULTIPLIER * 5) scenario.buckets.twoTo5x += 1;
+    else scenario.buckets.fiveXPlus += 1;
+  }
+
+  return scenario;
+}
+
+const paidScenarios = seeds.flatMap((seed) => bets.map((bet) => simulatePaidSpins(seed, bet)));
+const purchasedScenarios = seeds.flatMap((seed) => bets.map((bet) => simulatePurchasedFeatures(seed, bet)));
+
+function aggregatePaidForBet(bet: number) {
+  const scenarios = paidScenarios.filter((scenario) => scenario.bet === bet);
+  const totalSpins = scenarios.reduce((sum, scenario) => sum + scenario.spins, 0);
+  const settledPayout = scenarios.reduce((sum, scenario) => sum + scenario.settledPayout, 0);
+  const potentialBasePayout = scenarios.reduce((sum, scenario) => sum + scenario.potentialBasePayout, 0);
+  const baseHits = scenarios.reduce((sum, scenario) => sum + scenario.baseHits, 0);
+  const baseFullGrids = scenarios.reduce((sum, scenario) => sum + scenario.baseFullGrids, 0);
+  const featureTriggers = scenarios.reduce((sum, scenario) => sum + scenario.featureTriggers, 0);
+  const featurePayout = scenarios.reduce((sum, scenario) => sum + scenario.featurePayout, 0);
+  const featurePaying = scenarios.reduce((sum, scenario) => sum + scenario.featurePaying, 0);
+  const featureFullGrids = scenarios.reduce((sum, scenario) => sum + scenario.featureFullGrids, 0);
+  const featureRespins = scenarios.reduce((sum, scenario) => sum + scenario.featureRespins, 0);
+  const featureMaxRespins = Math.max(...scenarios.map((scenario) => scenario.featureMaxRespins), 0);
+  const featureMultiples = scenarios.flatMap((scenario) => scenario.featureWinMultiples);
+
+  return {
+    bet,
+    samples: totalSpins,
+    combinedRtp: round(ratio(settledPayout, totalSpins * bet)),
+    combinedRtpPercent: percent(ratio(settledPayout, totalSpins * bet)),
+    potentialBaseOnlyRtp: round(ratio(potentialBasePayout, totalSpins * bet)),
+    baseHitFrequency: percent(ratio(baseHits, totalSpins)),
+    baseFullGridFrequency: percent(ratio(baseFullGrids, totalSpins)),
+    naturalFeature: {
+      configuredTriggerChance: percent(FORTUNE_FEATURE_TRIGGER_CHANCE),
+      observedTriggerFrequency: percent(ratio(featureTriggers, totalSpins)),
+      triggerCount: featureTriggers,
+      payoutContributionToPaidSpinRtp: round(ratio(featurePayout, totalSpins * bet)),
+      payingRate: percent(ratio(featurePaying, featureTriggers)),
+      fullGridRate: percent(ratio(featureFullGrids, featureTriggers)),
+      averageRespins: round(ratio(featureRespins, featureTriggers)),
+      maxRespinsObserved: featureMaxRespins,
+      winMultipleDistribution: summarizeMultiples(featureMultiples),
+    },
+  };
+}
+
+function aggregatePurchasedForBet(bet: number) {
+  const scenarios = purchasedScenarios.filter((scenario) => scenario.bet === bet);
+  const totalEntries = scenarios.reduce((sum, scenario) => sum + scenario.entries, 0);
+  const payout = scenarios.reduce((sum, scenario) => sum + scenario.payout, 0);
+  const paying = scenarios.reduce((sum, scenario) => sum + scenario.paying, 0);
+  const fullGrids = scenarios.reduce((sum, scenario) => sum + scenario.fullGrids, 0);
+  const respins = scenarios.reduce((sum, scenario) => sum + scenario.respins, 0);
+  const maxRespins = Math.max(...scenarios.map((scenario) => scenario.maxRespins), 0);
+  const winMultiples = scenarios.flatMap((scenario) => scenario.winMultiples);
+  const buckets = scenarios.reduce(
+    (accumulator, scenario) => ({
+      zero: accumulator.zero + scenario.buckets.zero,
+      belowCost: accumulator.belowCost + scenario.buckets.belowCost,
+      costTo2x: accumulator.costTo2x + scenario.buckets.costTo2x,
+      twoTo5x: accumulator.twoTo5x + scenario.buckets.twoTo5x,
+      fiveXPlus: accumulator.fiveXPlus + scenario.buckets.fiveXPlus,
+    }),
+    { zero: 0, belowCost: 0, costTo2x: 0, twoTo5x: 0, fiveXPlus: 0 },
+  );
+
+  return {
+    bet,
+    samples: totalEntries,
+    costMultiple: GOLDEN_TIGER_BONUS_BUY_MULTIPLIER,
+    returnRatio: round(ratio(payout, totalEntries * bet * GOLDEN_TIGER_BONUS_BUY_MULTIPLIER)),
+    returnPercent: percent(ratio(payout, totalEntries * bet * GOLDEN_TIGER_BONUS_BUY_MULTIPLIER)),
+    payingRate: percent(ratio(paying, totalEntries)),
+    fullGridRate: percent(ratio(fullGrids, totalEntries)),
+    averageRespins: round(ratio(respins, totalEntries)),
+    maxRespinsObserved: maxRespins,
+    winMultipleDistribution: summarizeMultiples(winMultiples),
+    hitDistribution: {
+      zero: percent(ratio(buckets.zero, totalEntries)),
+      belowCost: percent(ratio(buckets.belowCost, totalEntries)),
+      costTo2x: percent(ratio(buckets.costTo2x, totalEntries)),
+      twoTo5x: percent(ratio(buckets.twoTo5x, totalEntries)),
+      fiveXPlus: percent(ratio(buckets.fiveXPlus, totalEntries)),
+    },
+  };
+}
+
+const paidByBet = bets.map(aggregatePaidForBet);
+const purchasedByBet = bets.map(aggregatePurchasedForBet);
+const paidReference = paidByBet.find((entry) => entry.bet === roundingReferenceBet);
+const purchasedReference = purchasedByBet.find((entry) => entry.bet === roundingReferenceBet);
 
 const report = {
-  baseSpins,
-  scatters: {
-    three: { count: scatter3, frequency: percent(scatter3 / baseSpins) },
-    four: { count: scatter4, frequency: percent(scatter4 / baseSpins) },
-    fivePlus: { count: scatter5Plus, frequency: percent(scatter5Plus / baseSpins) },
-    totalTrigger: {
-      count: triggerCount,
-      frequency: percent(triggerCount / baseSpins),
-      oneIn: triggerCount > 0 ? round(baseSpins / triggerCount) : null,
-    },
+  model: "Neon Golden Tiger — current Fortune Feature model",
+  generatedAt: new Date().toISOString(),
+  reproducibility: {
+    spinsPerSeedAndBet: spins,
+    purchasedFeaturesPerSeedAndBet: featureEntries,
+    seeds,
+    bets,
+    note: "Re-run with the same SPINS, FEATURE_ENTRIES, SEEDS and BETS environment values to reproduce the same RNG streams.",
   },
-  bonus: {
-    count: bonusCount,
-    averageFinalSpins: bonusCount > 0 ? round(bonusSpinTotal / bonusCount) : 0,
-    bonusesWithRetrigger: bonusCount > 0 ? percent(bonusWithRetrigger / bonusCount) : "0%",
-    averageRetriggers: bonusCount > 0 ? round(retriggerTotal / bonusCount) : 0,
-    maxRetriggersAllowed: GOLDEN_TIGER_MAX_RETRIGGERS,
-    maxFinalSpinsFound: maxBonusSpins,
+  calibration: {
+    payoutScale: GOLDEN_TIGER_PAYOUT_SCALE,
+    fullGridMultiplier: GOLDEN_TIGER_FULL_GRID_MULTIPLIER,
+    naturalFeatureTriggerChance: FORTUNE_FEATURE_TRIGGER_CHANCE,
+    purchasedFeatureCostMultiple: GOLDEN_TIGER_BONUS_BUY_MULTIPLIER,
   },
-  payoutRelativeToBet: {
-    baseGame: round(basePayout / baseSpins),
-    freeSpinContribution: round(bonusPayout / baseSpins),
-    combined: round((basePayout + bonusPayout) / baseSpins),
-    baseHitFrequency: percent(baseHits / baseSpins),
+  paidGame: paidByBet.map((entry) => ({
+    ...entry,
+    roundingDeltaVsReferenceBet: paidReference
+      ? round(entry.combinedRtp - paidReference.combinedRtp)
+      : 0,
+  })),
+  purchasedFeature: purchasedByBet.map((entry) => ({
+    ...entry,
+    roundingDeltaVsReferenceBet: purchasedReference
+      ? round(entry.returnRatio - purchasedReference.returnRatio)
+      : 0,
+  })),
+  rounding: {
+    referenceBet: roundingReferenceBet,
+    explanation: "All bets reuse identical seeded RNG streams. Differences in normalized return by bet therefore expose payout-rounding effects rather than different random outcomes.",
   },
-  featureBuy: {
-    name: "Golden Fortune",
-    entries: featureEntries,
-    initialSpins: GOLDEN_TIGER_FEATURE_BUY_INITIAL_SPINS,
-    costMultiple: GOLDEN_TIGER_FEATURE_BUY_COST_MULTIPLIER,
-    featureRtp: percent(featureRtp),
-    averageWinMultiple: round(featureMean),
-    medianWinMultiple: round(featureMedian),
-    standardDeviation: round(featureStdDev),
-    maxObservedWinMultiple: round(featureMax),
-    averageFinalSpins: round(featureSpinTotal / featureEntries),
-    retriggerFrequency: percent(featureWithRetrigger / featureEntries),
-    averageRetriggers: round(featureRetriggerTotal / featureEntries),
-    maxFinalSpinsFound: featureMaxSpins,
-    hitDistribution: {
-      zero: percent(featureDistribution.zero / featureEntries),
-      belowCost: percent(featureDistribution.belowCost / featureEntries),
-      costTo2x: percent(featureDistribution.costTo2x / featureEntries),
-      twoTo5x: percent(featureDistribution.twoTo5x / featureEntries),
-      fiveXPlus: percent(featureDistribution.fiveXPlus / featureEntries),
-    },
+  perSeed: {
+    paidGame: paidScenarios.map((scenario) => ({
+      seed: scenario.seed,
+      bet: scenario.bet,
+      combinedRtp: round(ratio(scenario.settledPayout, scenario.spins * scenario.bet)),
+      triggerFrequency: percent(ratio(scenario.featureTriggers, scenario.spins)),
+      baseFullGridFrequency: percent(ratio(scenario.baseFullGrids, scenario.spins)),
+      featureFullGridRate: percent(ratio(scenario.featureFullGrids, scenario.featureTriggers)),
+    })),
+    purchasedFeature: purchasedScenarios.map((scenario) => ({
+      seed: scenario.seed,
+      bet: scenario.bet,
+      returnRatio: round(
+        ratio(
+          scenario.payout,
+          scenario.entries * scenario.bet * GOLDEN_TIGER_BONUS_BUY_MULTIPLIER,
+        ),
+      ),
+      payingRate: percent(ratio(scenario.paying, scenario.entries)),
+      fullGridRate: percent(ratio(scenario.fullGrids, scenario.entries)),
+    })),
   },
 };
 
