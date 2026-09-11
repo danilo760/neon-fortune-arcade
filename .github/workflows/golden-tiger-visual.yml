@@ -22,6 +22,7 @@ on:
       - "scripts/goldenTigerDesktopSpinQa.mjs"
       - "scripts/goldenTigerSpecialStateQa.mjs"
       - "scripts/goldenTigerPaylineQa.mjs"
+      - "scripts/goldenTigerFrontendPlaytestQa.mjs"
       - "scripts/goldenTigerBonusBuyQa.mjs"
       - "scripts/goldenTigerCompositionGuard.mjs"
       - ".github/workflows/golden-tiger-visual.yml"
@@ -114,6 +115,9 @@ jobs:
 
       - name: Audit sequential paylines
         run: node scripts/goldenTigerPaylineQa.mjs
+
+      - name: Playtest 10 Normal + 10 Turbo + Auto 10
+        run: node scripts/goldenTigerFrontendPlaytestQa.mjs
 
       - name: Audit bonus purchase lifecycle
         run: node scripts/goldenTigerBonusBuyQa.mjs
