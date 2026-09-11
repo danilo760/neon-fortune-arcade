@@ -48,11 +48,10 @@ jobs:
           if references:
               raise SystemExit(f"Refusing to delete GoldenTigerReference.tsx; references found: {references}")
 
-          # Current effective cascade is route Rework/Session3 first, then the symbol
-          # module CSS, then GoldenTigerCommercial. Session3 re-imported the exact
-          # Session2Polish -> Session2 -> MediaRig -> PresentationSafe -> Presentation
-          # chain that Commercial imports later. The earlier copy is therefore
-          # redundant and is intentionally not duplicated in the consolidated file.
+          # Effective cascade: route Rework/Session3 first, symbol module second,
+          # Commercial chain last. Session3 re-imported the exact Session2Polish
+          # base chain that Commercial imports later, so that earlier duplicate copy
+          # is intentionally omitted while preserving all effective local rule order.
           order = [
               base / "GoldenTigerSession3.css",
               base / "GoldenTigerRework.css",
@@ -106,7 +105,6 @@ jobs:
 
           def local_content(path: Path) -> str:
               lines = path.read_text(encoding="utf-8").splitlines()
-              # All imports are expanded explicitly by `order` above.
               lines = [line for line in lines if not line.lstrip().startswith("@import ")]
               return "\n".join(lines).strip() + "\n"
 
@@ -135,17 +133,12 @@ jobs:
 
           route = Path("src/routes/game/$slug.tsx")
           text = route.read_text(encoding="utf-8")
-          text = text.replace('import goldenTigerPresentationCss from "../../components/arcade/GoldenTigerRework.css?url";\n', "", 1)
-          text = text.replace('  "golden-tiger": goldenTigerPresentationCss,\n', "", 1)
+          old_import = 'import goldenTigerPresentationCss from "../../components/arcade/GoldenTigerRework.css?url";\n'
+          old_map = '  "golden-tiger": goldenTigerPresentationCss,\n'
+          if old_import not in text or old_map not in text:
+              raise SystemExit("Golden Tiger route presentation CSS hooks not found")
+          text = text.replace(old_import, "", 1).replace(old_map, "", 1)
           route.write_text(text, encoding="utf-8")
-
-          visual_workflow = Path(".github/workflows/golden-tiger-visual.yml")
-          text = visual_workflow.read_text(encoding="utf-8")
-          legacy_paths = """      - \"src/components/arcade/GoldenTigerReference.tsx\"\n      - \"src/components/arcade/GoldenTigerReference.css\"\n      - \"src/components/arcade/GoldenTigerPremium.tsx\"\n      - \"src/components/arcade/GoldenTigerRework.css\"\n      - \"src/components/arcade/GoldenTigerPremiumArt.css\"\n      - \"src/components/arcade/GoldenTigerPresentation.css\"\n      - \"src/components/arcade/GoldenTigerPresentationSafe.css\"\n      - \"src/components/arcade/GoldenTigerMediaRig.css\"\n      - \"src/components/arcade/GoldenTigerSession2.css\"\n      - \"src/components/arcade/GoldenTigerSession2Polish.css\"\n"""
-          consolidated_paths = """      - \"src/components/arcade/GoldenTigerPremium.tsx\"\n      - \"src/components/arcade/GoldenTigerPremium.css\"\n"""
-          if legacy_paths not in text:
-              raise SystemExit("Golden Tiger workflow legacy path block not found")
-          visual_workflow.write_text(text.replace(legacy_paths, consolidated_paths, 1), encoding="utf-8")
 
           to_delete = [
               ref_tsx,
