@@ -1,31 +1,31 @@
 export const GOLDEN_TIGER_REEL_COUNT = 3;
 
 /**
- * Session 3 pacing deliberately gives a normal spin enough runway to read as
- * three weighted mechanical stops. Turbo keeps the same choreography, only
- * compressed; it never skips launch, braking, landing or reveal beats.
+ * Readable commercial pacing. Normal mode deliberately gives each reel enough
+ * time to accelerate, brake and land as a separate beat. Turbo is compressed,
+ * but still preserves all three stops instead of visually skipping them.
  */
 export function goldenTigerSpinLaunchMs(turbo: boolean) {
-  return turbo ? 145 : 560;
+  return turbo ? 180 : 700;
 }
 
 export function goldenTigerReelBrakeMs(column: number, turbo: boolean) {
   const safeColumn = Math.max(0, Math.min(GOLDEN_TIGER_REEL_COUNT - 1, Math.trunc(column)));
-  return turbo ? 105 + safeColumn * 12 : 360 + safeColumn * 45;
+  return turbo ? 125 + safeColumn * 15 : 450 + safeColumn * 55;
 }
 
 export function goldenTigerReelLandPauseMs(column: number, turbo: boolean) {
   const safeColumn = Math.max(0, Math.min(GOLDEN_TIGER_REEL_COUNT - 1, Math.trunc(column)));
-  return turbo ? 36 + safeColumn * 6 : 120 + safeColumn * 18;
+  return turbo ? 50 + safeColumn * 7 : 165 + safeColumn * 20;
 }
 
 export function goldenTigerAnticipationMs(turbo: boolean) {
-  return turbo ? 90 : 360;
+  return turbo ? 130 : 500;
 }
 
 /** A small upward preload sells inertia before the strip starts moving. */
 export function goldenTigerReelTensionMs(turbo: boolean) {
-  return turbo ? 34 : 80;
+  return turbo ? 42 : 105;
 }
 
 export function goldenTigerReelTensionPx(column: number) {
@@ -41,7 +41,7 @@ export function goldenTigerReelOvershootPx(column: number) {
 
 export function goldenTigerReelReboundMs(column: number, turbo: boolean) {
   const safe = Math.max(0, Math.min(2, Math.trunc(column)));
-  return turbo ? 62 + safe * 4 : 90 + safe * 8;
+  return turbo ? 72 + safe * 5 : 125 + safe * 10;
 }
 
 /**
@@ -68,12 +68,12 @@ export function goldenTigerReboundEase(progress: number) {
 }
 
 export function goldenTigerRevealPauseMs(turbo: boolean, hasWin: boolean) {
-  if (turbo) return hasWin ? 82 : 64;
-  return hasWin ? 245 : 155;
+  if (turbo) return hasWin ? 125 : 90;
+  return hasWin ? 340 : 210;
 }
 
 export function goldenTigerAutoGapMs(turbo: boolean) {
-  return turbo ? 110 : 310;
+  return turbo ? 140 : 380;
 }
 
 export function goldenTigerNominalSpinMs(turbo: boolean, anticipation = false) {
