@@ -9,6 +9,11 @@ import { GoldenTigerTigerStage, type TigerReactionState } from "./golden-tiger/G
 import { GoldenTigerWinStage } from "./golden-tiger/GoldenTigerWinStage";
 import { formatCoins } from "@/lib/arcade/format";
 import {
+  resolveGoldenTigerBasePaylines,
+  resolveGoldenTigerFeaturePaylines,
+  type GoldenTigerPaylinePresentation,
+} from "@/lib/arcade/goldenTigerPaylinePresentation";
+import {
   GOLDEN_TIGER_BONUS_BUY_MULTIPLIER,
   runPurchasedFortuneFeature,
 } from "@/lib/arcade/goldenTigerBonusBuy";
@@ -310,6 +315,7 @@ export function GoldenTigerPremium() {
   const [featureCells, setFeatureCells] = useState<FortuneFeatureCell[]>(EMPTY_FEATURE_GRID);
   const [selectedSymbol, setSelectedSymbol] = useState<GoldenTigerSymbolId | null>(null);
   const [winning, setWinning] = useState<Set<number>>(() => new Set());
+  const [activePayline, setActivePayline] = useState<GoldenTigerPaylinePresentation | null>(null);
   const [freshCells, setFreshCells] = useState<Set<number>>(() => new Set());
   const [rollingCells, setRollingCells] = useState<Set<number>>(() => new Set());
   const [featureAttempt, setFeatureAttempt] = useState(0);
@@ -380,6 +386,19 @@ export function GoldenTigerPremium() {
   const waitForFeatureStagger = useCallback((orderIndex: number) => {
     return clockRef.current?.wait(goldenTigerFeatureCellStaggerMs(orderIndex, turbo)) ?? Promise.resolve();
   }, [turbo]);
+
+  const presentPaylines = useCallback(async (lines: readonly GoldenTigerPaylinePresentation[]) => {
+    if (lines.length === 0) return;
+
+    for (const line of lines) {
+      if (!clockRef.current) return;
+      setActivePayline(line);
+      setWinning(new Set(line.cells));
+      await wait(turbo ? 90 : 300);
+    }
+
+    setActivePayline(null);
+  }, [turbo, wait]);
 
   const tigerReaction: TigerReactionState =
     phase === "full-grid" && winBeat ? (winBeat === "celebrate" ? "full" : winBeat === "impact" ? "reveal" : "tense") :
@@ -484,10 +503,19 @@ export function GoldenTigerPremium() {
     setFeatureCells([...plan.finalGrid]);
     setRollingCells(new Set());
     setWinning(new Set(plan.winning));
+
+    const featurePaylines = resolveGoldenTigerFeaturePaylines(plan.finalGrid, plan.selectedSymbol, bet);
+    if (featurePaylines.length > 0) {
+      setPhase("reveal");
+      await presentPaylines(featurePaylines);
+      setWinning(new Set(plan.winning));
+      await wait(turbo ? 35 : 110);
+    }
+
     setPhase("feature-outro");
     await wait(turbo ? 170 : 560);
     return plan.payout;
-  }, [playTigerAudio, turbo, wait, waitForFeatureStagger]);
+  }, [bet, playTigerAudio, presentPaylines, turbo, wait, waitForFeatureStagger]);
 
   const settle = useCallback(async (
     payout: number,
@@ -564,6 +592,7 @@ export function GoldenTigerPremium() {
     setWinTier("none");
     setWinBeat(null);
     setWinning(new Set());
+    setActivePayline(null);
     setFreshCells(new Set());
     setRollingCells(new Set());
     setFeatureCells([...EMPTY_FEATURE_GRID]);
@@ -581,6 +610,7 @@ export function GoldenTigerPremium() {
     setWinBeat(null);
     setPhase("idle");
     setWinning(new Set());
+    setActivePayline(null);
     setFeatureActive(false);
     setFeaturePurchased(false);
     setFeatureCells([...EMPTY_FEATURE_GRID]);
@@ -611,6 +641,7 @@ export function GoldenTigerPremium() {
 
       const nextGrid = makeGoldenTigerGrid(Math.random);
       const baseResult = evaluateGoldenTiger(nextGrid, bet);
+      const basePaylines = resolveGoldenTigerBasePaylines(nextGrid, bet);
       const featureTriggered = rollFortuneFeatureTrigger(Math.random);
       const featurePlan = featureTriggered ? runFortuneFeature(bet, Math.random) : null;
       setGrid(nextGrid);
@@ -655,7 +686,15 @@ export function GoldenTigerPremium() {
       if (baseResult.payout > bet) {
         playTigerAudio({ type: "reveal", winMultiple: baseResult.payout / bet });
       }
-      await wait(turbo ? 55 : baseResult.winning.size > 0 ? 180 : 110);
+
+      if (basePaylines.length > 0) {
+        await presentPaylines(basePaylines);
+        setWinning(baseResult.winning);
+        await wait(turbo ? 35 : 110);
+      } else {
+        await wait(turbo ? 55 : 110);
+      }
+
       await settle(
         baseResult.payout,
         bet,
@@ -667,7 +706,7 @@ export function GoldenTigerPremium() {
     } finally {
       finishRoundPresentation();
     }
-  }, [animateFeature, bet, finishRoundPresentation, playTigerAudio, resetRoundPresentation, settle, turbo, wait]);
+  }, [animateFeature, bet, finishRoundPresentation, playTigerAudio, presentPaylines, resetRoundPresentation, settle, turbo, wait]);
 
   const buyBonus = useCallback(async () => {
     if (busyRef.current || autoLeft > 0 || balance < bonusCost) return;
@@ -797,6 +836,8 @@ export function GoldenTigerPremium() {
                 className={cn(
                   "gt-hw-cell",
                   winningCell && "is-winning",
+                  activePayline?.cells.includes(index) && "is-payline-focus",
+                  activePayline && !activePayline.cells.includes(index) && "is-payline-muted",
                   locked && "is-locked",
                   freshCells.has(index) && "is-fresh",
                   featureActive && featureSymbol === null && "is-feature-blank",
@@ -831,6 +872,18 @@ export function GoldenTigerPremium() {
                 key={column}
               />
             ))}
+
+          {activePayline && (
+            <div className="gt-rework-payline-stage" aria-hidden>
+              <svg viewBox="0 0 3 3" preserveAspectRatio="none">
+                <polyline points={activePayline.points} pathLength={1} />
+              </svg>
+              <span>
+                LINHA {activePayline.index + 1} · +{formatCoins(activePayline.payout)}
+              </span>
+            </div>
+          )}
+
           <span className="gt-hw-grid-glass" aria-hidden />
         </div>
 
