@@ -1,0 +1,182 @@
+name: Golden Tiger CSS Consolidation Once
+
+on:
+  push:
+    branches:
+      - feature/mx44-tigrinho-integration
+    paths:
+      - ".github/workflows/golden-tiger-consolidate-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  consolidate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/mx44-tigrinho-integration
+          fetch-depth: 0
+
+      - name: Consolidate Golden Tiger presentation CSS
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          base = Path("src/components/arcade")
+          final_css = base / "GoldenTigerPremium.css"
+          legacy_anchor = base / "GoldenTigerCommercial.css"
+
+          # Safe no-op if this one-time workflow is observed again after consolidation.
+          if final_css.exists() and not legacy_anchor.exists():
+              print("Golden Tiger CSS is already consolidated; nothing to do.")
+              raise SystemExit(0)
+
+          # GoldenTigerReference.tsx must really be orphaned before deletion.
+          ref_tsx = base / "GoldenTigerReference.tsx"
+          references = []
+          for path in Path("src").rglob("*.tsx"):
+              if path == ref_tsx:
+                  continue
+              text = path.read_text(encoding="utf-8")
+              if "GoldenTigerReference" in text:
+                  references.append(str(path))
+          if references:
+              raise SystemExit(f"Refusing to delete GoldenTigerReference.tsx; references found: {references}")
+
+          # Current effective cascade is route Rework/Session3 first, then the symbol
+          # module CSS, then GoldenTigerCommercial. Session3 re-imported the exact
+          # Session2Polish -> Session2 -> MediaRig -> PresentationSafe -> Presentation
+          # chain that Commercial imports later. The earlier copy is therefore
+          # redundant and is intentionally not duplicated in the consolidated file.
+          order = [
+              base / "GoldenTigerSession3.css",
+              base / "GoldenTigerRework.css",
+              base / "golden-tiger/GoldenTigerPass6.css",
+              base / "golden-tiger/GoldenTigerPass7.css",
+              base / "golden-tiger/GoldenTigerUxPolish.css",
+              base / "golden-tiger/GoldenTigerSymbols.css",
+              base / "GoldenTigerReference.css",
+              base / "GoldenTigerPremiumArt.css",
+              base / "GoldenTigerPresentation.css",
+              base / "GoldenTigerPresentationSafe.css",
+              base / "GoldenTigerMediaRig.css",
+              base / "GoldenTigerSession2.css",
+              base / "GoldenTigerSession2Polish.css",
+              base / "GoldenTigerCommercial.css",
+          ]
+
+          for path in order:
+              if not path.exists():
+                  raise SystemExit(f"Missing legacy CSS required for consolidation: {path}")
+
+          header = """/* ============================================================================
+             GOLDEN TIGER — CONSOLIDATED PRESENTATION STYLESHEET
+
+             Pure consolidation of the previous Golden Tiger presentation cascade.
+             No math/RNG/RTP/settlement behavior lives in this file.
+
+             Fused legacy files:
+             - GoldenTigerRework.css
+             - GoldenTigerSession3.css
+             - GoldenTigerCommercial.css
+             - GoldenTigerReference.css
+             - GoldenTigerPremiumArt.css
+             - GoldenTigerSession2Polish.css
+             - GoldenTigerSession2.css
+             - GoldenTigerMediaRig.css
+             - GoldenTigerPresentationSafe.css
+             - GoldenTigerPresentation.css
+             - golden-tiger/GoldenTigerSymbols.css
+             - golden-tiger/GoldenTigerPass6.css
+             - golden-tiger/GoldenTigerPass7.css
+             - golden-tiger/GoldenTigerUxPolish.css
+
+             Cascade note:
+             The old route stylesheet re-imported Session2Polish -> Session2 -> MediaRig ->
+             PresentationSafe -> Presentation. That imported base chain was identical
+             to the chain imported later by GoldenTigerCommercial.css, so the earlier
+             copy was redundant and has been removed. Session3/Rework local rules keep
+             their relative position before the symbol layer and final commercial chain.
+             ============================================================================ */\n"""
+
+          def local_content(path: Path) -> str:
+              lines = path.read_text(encoding="utf-8").splitlines()
+              # All imports are expanded explicitly by `order` above.
+              lines = [line for line in lines if not line.lstrip().startswith("@import ")]
+              return "\n".join(lines).strip() + "\n"
+
+          pieces = [header]
+          for path in order:
+              rel = path.relative_to(base)
+              pieces.append(f"\n/* ===== BEGIN FUSED: {rel} ===== */\n")
+              pieces.append(local_content(path))
+              pieces.append(f"/* ===== END FUSED: {rel} ===== */\n")
+          final_css.write_text("".join(pieces), encoding="utf-8")
+
+          premium = base / "GoldenTigerPremium.tsx"
+          text = premium.read_text(encoding="utf-8")
+          old = 'import "./GoldenTigerCommercial.css";'
+          new = 'import "./GoldenTigerPremium.css";'
+          if old not in text:
+              raise SystemExit("GoldenTigerPremium.tsx legacy CSS import not found")
+          premium.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          symbols = base / "golden-tiger/GoldenTigerSymbols.tsx"
+          text = symbols.read_text(encoding="utf-8")
+          old = 'import "./GoldenTigerSymbols.css";\n'
+          if old not in text:
+              raise SystemExit("GoldenTigerSymbols.tsx legacy CSS import not found")
+          symbols.write_text(text.replace(old, "", 1), encoding="utf-8")
+
+          route = Path("src/routes/game/$slug.tsx")
+          text = route.read_text(encoding="utf-8")
+          text = text.replace('import goldenTigerPresentationCss from "../../components/arcade/GoldenTigerRework.css?url";\n', "", 1)
+          text = text.replace('  "golden-tiger": goldenTigerPresentationCss,\n', "", 1)
+          route.write_text(text, encoding="utf-8")
+
+          visual_workflow = Path(".github/workflows/golden-tiger-visual.yml")
+          text = visual_workflow.read_text(encoding="utf-8")
+          legacy_paths = """      - \"src/components/arcade/GoldenTigerReference.tsx\"\n      - \"src/components/arcade/GoldenTigerReference.css\"\n      - \"src/components/arcade/GoldenTigerPremium.tsx\"\n      - \"src/components/arcade/GoldenTigerRework.css\"\n      - \"src/components/arcade/GoldenTigerPremiumArt.css\"\n      - \"src/components/arcade/GoldenTigerPresentation.css\"\n      - \"src/components/arcade/GoldenTigerPresentationSafe.css\"\n      - \"src/components/arcade/GoldenTigerMediaRig.css\"\n      - \"src/components/arcade/GoldenTigerSession2.css\"\n      - \"src/components/arcade/GoldenTigerSession2Polish.css\"\n"""
+          consolidated_paths = """      - \"src/components/arcade/GoldenTigerPremium.tsx\"\n      - \"src/components/arcade/GoldenTigerPremium.css\"\n"""
+          if legacy_paths not in text:
+              raise SystemExit("Golden Tiger workflow legacy path block not found")
+          visual_workflow.write_text(text.replace(legacy_paths, consolidated_paths, 1), encoding="utf-8")
+
+          to_delete = [
+              ref_tsx,
+              base / "GoldenTigerCommercial.css",
+              base / "GoldenTigerMediaRig.css",
+              base / "GoldenTigerPremiumArt.css",
+              base / "GoldenTigerPresentation.css",
+              base / "GoldenTigerPresentationSafe.css",
+              base / "GoldenTigerReference.css",
+              base / "GoldenTigerRework.css",
+              base / "GoldenTigerSession2.css",
+              base / "GoldenTigerSession2Polish.css",
+              base / "GoldenTigerSession3.css",
+              base / "golden-tiger/GoldenTigerPass6.css",
+              base / "golden-tiger/GoldenTigerPass7.css",
+              base / "golden-tiger/GoldenTigerSymbols.css",
+              base / "golden-tiger/GoldenTigerUxPolish.css",
+          ]
+          for path in to_delete:
+              path.unlink()
+
+          if "@import" in final_css.read_text(encoding="utf-8"):
+              raise SystemExit("Consolidated stylesheet still contains @import")
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "refactor(golden-tiger): consolidate presentation CSS"
+          git push origin HEAD:feature/mx44-tigrinho-integration
