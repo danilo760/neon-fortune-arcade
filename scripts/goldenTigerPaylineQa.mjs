@@ -71,7 +71,13 @@ async function waitFor(client, expression, label, timeoutMs = 12_000) {
     if (await evaluate(client, expression)) return;
     await sleep(18);
   }
-  throw new Error(`Timed out waiting for ${label}`);
+  const debug = await evaluate(client, `(() => ({
+    phase: document.querySelector('.gt-hw-machine')?.getAttribute('data-phase') ?? null,
+    observed: window.__gtPaylineObserved ?? [],
+    randomCalls: window.__gtQaRandom?.calls ?? null,
+    randomRemaining: window.__gtQaRandom?.queue?.length ?? null,
+  }))()`);
+  throw new Error(`Timed out waiting for ${label}; debug=${JSON.stringify(debug)}`);
 }
 
 async function screenshot(client, path) {
@@ -96,7 +102,6 @@ async function closeTarget(id) {
 await mkdir(outputDir, { recursive: true });
 const target = await createTarget();
 const client = new CdpClient(target.webSocketDebuggerUrl);
-const observed = [];
 
 try {
   await client.connect();
@@ -119,6 +124,7 @@ try {
         state.calls += 1;
         return state.queue.length ? state.queue.shift() : state.fallback;
       };
+      window.__gtPaylineObserved = [];
     })();`,
   });
 
@@ -127,6 +133,52 @@ try {
   await waitFor(client, `Boolean(document.querySelector('.gt-hw-spin:not(:disabled)'))`, "spin button");
   await sleep(420);
   await waitFor(client, `document.querySelector('.gt-hw-machine')?.getAttribute('data-phase') === 'idle'`, "hydrated idle");
+
+  // Record every React payline commit in-page. Polling from Node can miss a
+  // 300 ms beat when the CI runner is briefly busy taking screenshots or
+  // scheduling CDP calls, so the browser itself is the authoritative observer.
+  await evaluate(client, `(() => {
+    const grid = document.querySelector('.gt-hw-grid');
+    if (!grid) return false;
+    window.__gtPaylineObserved = [];
+    let lastLabel = '';
+    let captureScheduled = false;
+
+    const capture = () => {
+      captureScheduled = false;
+      const stage = document.querySelector('.gt-rework-payline-stage');
+      const label = stage?.querySelector('span')?.textContent?.replace(/\\s+/g, ' ').trim() ?? '';
+      if (!label || label === lastLabel) return;
+      const line = stage?.querySelector('polyline')?.getAttribute('points') ?? '';
+      window.__gtPaylineObserved.push({
+        label,
+        line,
+        focus: document.querySelectorAll('.gt-hw-cell.is-payline-focus').length,
+        muted: document.querySelectorAll('.gt-hw-cell.is-payline-muted').length,
+        phase: document.querySelector('.gt-hw-machine')?.getAttribute('data-phase') ?? null,
+        scrollWidth: document.documentElement.scrollWidth,
+        scrollHeight: document.documentElement.scrollHeight,
+      });
+      lastLabel = label;
+    };
+
+    const scheduleCapture = () => {
+      if (captureScheduled) return;
+      captureScheduled = true;
+      queueMicrotask(capture);
+    };
+
+    const observer = new MutationObserver(scheduleCapture);
+    observer.observe(grid, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ['class', 'points'],
+    });
+    window.__gtPaylineObserver = observer;
+    return true;
+  })()`);
 
   // Nine zeroes force the same base symbol into every cell, which makes all
   // five fixed paylines win. The final value keeps Fortune Feature disabled.
@@ -138,57 +190,33 @@ try {
     return true;
   })()`);
 
-  await waitFor(client, `Boolean(document.querySelector('.gt-rework-payline-stage'))`, "first payline beat", 12_000);
-
-  const deadline = Date.now() + 5_000;
-  let lastLabel = "";
-  while (Date.now() < deadline && observed.length < expectedLabels.length) {
-    const state = await evaluate(client, `(() => {
-      const stage = document.querySelector('.gt-rework-payline-stage');
-      const label = stage?.querySelector('span')?.textContent?.replace(/\\s+/g, ' ').trim() ?? '';
-      const line = stage?.querySelector('polyline')?.getAttribute('points') ?? '';
-      return {
-        label,
-        line,
-        focus: document.querySelectorAll('.gt-hw-cell.is-payline-focus').length,
-        muted: document.querySelectorAll('.gt-hw-cell.is-payline-muted').length,
-        phase: document.querySelector('.gt-hw-machine')?.getAttribute('data-phase') ?? null,
-        scrollWidth: document.documentElement.scrollWidth,
-        scrollHeight: document.documentElement.scrollHeight,
-      };
-    })()`);
-
-    if (state.label && state.label !== lastLabel) {
-      if (state.focus !== 3) throw new Error(`${state.label}: expected 3 focused cells, got ${state.focus}`);
-      if (state.muted !== 6) throw new Error(`${state.label}: expected 6 muted cells, got ${state.muted}`);
-      if (!state.line) throw new Error(`${state.label}: missing SVG payline points`);
-      if (state.phase !== "reveal") throw new Error(`${state.label}: expected reveal phase, got ${state.phase}`);
-      if (state.scrollWidth !== viewport.width || state.scrollHeight !== viewport.height) {
-        throw new Error(`${state.label}: viewport overflow ${state.scrollWidth}x${state.scrollHeight}`);
-      }
-
-      observed.push(state);
-      lastLabel = state.label;
-      await screenshot(client, `${outputDir}/payline-${String(observed.length).padStart(2, "0")}.png`);
-    }
-
-    await sleep(16);
-  }
+  await waitFor(client, `(window.__gtPaylineObserved?.length ?? 0) >= 5`, "five payline beats", 12_000);
+  const observed = await evaluate(client, `window.__gtPaylineObserved.slice(0, 5)`);
 
   if (observed.length !== expectedLabels.length) {
     throw new Error(`Expected 5 sequential paylines, observed ${observed.length}: ${observed.map((item) => item.label).join(" | ")}`);
   }
 
   expectedLabels.forEach((label, index) => {
-    if (!observed[index]?.label.startsWith(label)) {
-      throw new Error(`Expected ${label} at beat ${index + 1}, got ${observed[index]?.label ?? "missing"}`);
+    const state = observed[index];
+    if (!state?.label.startsWith(label)) {
+      throw new Error(`Expected ${label} at beat ${index + 1}, got ${state?.label ?? "missing"}`);
+    }
+    if (state.focus !== 3) throw new Error(`${state.label}: expected 3 focused cells, got ${state.focus}`);
+    if (state.muted !== 6) throw new Error(`${state.label}: expected 6 muted cells, got ${state.muted}`);
+    if (!state.line) throw new Error(`${state.label}: missing SVG payline points`);
+    if (state.phase !== "reveal") throw new Error(`${state.label}: expected reveal phase, got ${state.phase}`);
+    if (state.scrollWidth !== viewport.width || state.scrollHeight !== viewport.height) {
+      throw new Error(`${state.label}: viewport overflow ${state.scrollWidth}x${state.scrollHeight}`);
     }
   });
 
+  await screenshot(client, `${outputDir}/payline-sequence-observed.png`);
   await waitFor(client, `document.querySelector('.gt-hw-machine')?.getAttribute('data-phase') === 'full-grid'`, "full-grid celebration", 12_000);
   await writeFile(`${outputDir}/payline-report.json`, JSON.stringify({ viewport, observed }, null, 2));
   console.log(`✅ Golden Tiger payline QA passed (${observed.length} sequential lines at ${viewport.width}x${viewport.height})`);
 } finally {
+  await evaluate(client, `window.__gtPaylineObserver?.disconnect?.()`).catch(() => undefined);
   client.close();
   await closeTarget(target.id);
 }
