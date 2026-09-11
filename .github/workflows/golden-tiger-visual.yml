@@ -3,16 +3,8 @@ name: Golden Tiger Visual
 on:
   pull_request:
     paths:
-      - "src/components/arcade/GoldenTigerReference.tsx"
-      - "src/components/arcade/GoldenTigerReference.css"
       - "src/components/arcade/GoldenTigerPremium.tsx"
-      - "src/components/arcade/GoldenTigerRework.css"
-      - "src/components/arcade/GoldenTigerPremiumArt.css"
-      - "src/components/arcade/GoldenTigerPresentation.css"
-      - "src/components/arcade/GoldenTigerPresentationSafe.css"
-      - "src/components/arcade/GoldenTigerMediaRig.css"
-      - "src/components/arcade/GoldenTigerSession2.css"
-      - "src/components/arcade/GoldenTigerSession2Polish.css"
+      - "src/components/arcade/GoldenTigerPremium.css"
       - "src/components/arcade/golden-tiger/**"
       - "src/assets/golden-tiger/**"
       - "src/lib/arcade/goldenTiger*.ts"
