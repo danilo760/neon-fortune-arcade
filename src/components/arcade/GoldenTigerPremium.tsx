@@ -99,7 +99,7 @@ function reelFinalSymbols(
   return [grid[column] ?? "orange", grid[column + 3] ?? "jade", grid[column + 6] ?? "ingot"];
 }
 
-type ReelMotionStage = "tension" | "cruise" | "brake" | "rebound" | "landed";
+type ReelMotionStage = "tension" | "accelerate" | "cruise" | "brake" | "rebound" | "landed";
 
 function ReelOverlay({
   column,
@@ -143,6 +143,7 @@ function ReelOverlay({
 
     const tensionMs = goldenTigerReelTensionMs(turbo);
     const tensionPx = goldenTigerReelTensionPx(column);
+    const accelerationMs = turbo ? 72 + column * 8 : 150 + column * 16;
     const totalBrakeMs = goldenTigerReelBrakeMs(column, turbo);
     const reboundMs = goldenTigerReelReboundMs(column, turbo);
     const brakeTravelMs = Math.max(32, totalBrakeMs - reboundMs);
@@ -173,6 +174,7 @@ function ReelOverlay({
       const delta = Math.min(34, Math.max(1, time - lastTime));
       const finalOffset = itemHeight * (symbols.length - 3);
       const overshootOffset = finalOffset + overshootPx;
+      const cruiseVelocity = itemHeight / (turbo ? 40 : 64);
 
       if (reducedMotion()) {
         if (brakingRef.current) {
@@ -198,16 +200,27 @@ function ReelOverlay({
         const nextOffset = baseOffset - recoil;
         renderTrack(nextOffset, Math.abs(nextOffset - offset) / delta);
         if (progress >= 1) {
-          stage = "cruise";
+          stage = "accelerate";
           stageStartedAt = time;
           renderTrack(baseOffset, 0);
         }
-      } else if (stage === "cruise") {
-        const velocity = itemHeight / (turbo ? 40 : 64);
+      } else if (stage === "accelerate") {
+        const progress = Math.min(1, (time - stageStartedAt) / accelerationMs);
+        const eased = 1 - (1 - progress) ** 2.8;
+        const velocity = cruiseVelocity * (0.16 + eased * 0.84);
         let nextOffset = offset + velocity * delta;
         const wrapAt = itemHeight * REEL_STRIP.length * 3;
         if (nextOffset >= wrapAt) nextOffset -= itemHeight * REEL_STRIP.length;
         renderTrack(nextOffset, velocity);
+        if (progress >= 1) {
+          stage = "cruise";
+          stageStartedAt = time;
+        }
+      } else if (stage === "cruise") {
+        let nextOffset = offset + cruiseVelocity * delta;
+        const wrapAt = itemHeight * REEL_STRIP.length * 3;
+        if (nextOffset >= wrapAt) nextOffset -= itemHeight * REEL_STRIP.length;
+        renderTrack(nextOffset, cruiseVelocity);
       } else if (stage === "brake") {
         const progress = Math.min(1, (time - stageStartedAt) / brakeTravelMs);
         const nextOffset = brakeStartOffset + (overshootOffset - brakeStartOffset) * goldenTigerBrakeEase(progress);
