@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, Lock, Play } from "lucide-react";
+import { Gauge, Heart, Lock, Play } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { CATEGORY_LABELS, type GameEntry } from "@/lib/arcade/catalog";
@@ -61,10 +61,15 @@ export function GameCard({ game }: { game: GameEntry }) {
           </Button>
         </div>
 
+        <div className="game-card__meta" aria-label={`Volatilidade ${game.volatility}`}>
+          <span><Gauge className="size-3" aria-hidden /> Volatilidade</span>
+          <strong>{game.volatility}</strong>
+        </div>
+
         {game.playable ? (
           <Button asChild variant="gold" className="game-card__play w-full rounded-xl font-black">
             <Link to="/game/$slug" params={{ slug: game.slug }}>
-              <Play className="size-4" aria-hidden /> Jogar agora
+              <Play className="size-4" aria-hidden /> Jogar
             </Link>
           </Button>
         ) : (
