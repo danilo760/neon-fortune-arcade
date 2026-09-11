@@ -6,26 +6,26 @@ export const GOLDEN_TIGER_REEL_COUNT = 3;
  * but still preserves all three stops instead of visually skipping them.
  */
 export function goldenTigerSpinLaunchMs(turbo: boolean) {
-  return turbo ? 240 : 900;
+  return turbo ? 300 : 1_150;
 }
 
 export function goldenTigerReelBrakeMs(column: number, turbo: boolean) {
   const safeColumn = Math.max(0, Math.min(GOLDEN_TIGER_REEL_COUNT - 1, Math.trunc(column)));
-  return turbo ? 160 + safeColumn * 20 : 570 + safeColumn * 70;
+  return turbo ? 210 + safeColumn * 24 : 720 + safeColumn * 90;
 }
 
 export function goldenTigerReelLandPauseMs(column: number, turbo: boolean) {
   const safeColumn = Math.max(0, Math.min(GOLDEN_TIGER_REEL_COUNT - 1, Math.trunc(column)));
-  return turbo ? 70 + safeColumn * 8 : 210 + safeColumn * 25;
+  return turbo ? 95 + safeColumn * 10 : 270 + safeColumn * 32;
 }
 
 export function goldenTigerAnticipationMs(turbo: boolean) {
-  return turbo ? 170 : 650;
+  return turbo ? 230 : 820;
 }
 
 /** A small upward preload sells inertia before the strip starts moving. */
 export function goldenTigerReelTensionMs(turbo: boolean) {
-  return turbo ? 55 : 150;
+  return turbo ? 85 : 220;
 }
 
 export function goldenTigerReelTensionPx(column: number) {
@@ -41,7 +41,7 @@ export function goldenTigerReelOvershootPx(column: number) {
 
 export function goldenTigerReelReboundMs(column: number, turbo: boolean) {
   const safe = Math.max(0, Math.min(2, Math.trunc(column)));
-  return turbo ? 90 + safe * 7 : 165 + safe * 12;
+  return turbo ? 125 + safe * 9 : 230 + safe * 16;
 }
 
 /**
@@ -68,12 +68,12 @@ export function goldenTigerReboundEase(progress: number) {
 }
 
 export function goldenTigerRevealPauseMs(turbo: boolean, hasWin: boolean) {
-  if (turbo) return hasWin ? 180 : 130;
-  return hasWin ? 520 : 320;
+  if (turbo) return hasWin ? 260 : 190;
+  return hasWin ? 760 : 460;
 }
 
 export function goldenTigerAutoGapMs(turbo: boolean) {
-  return turbo ? 190 : 520;
+  return turbo ? 260 : 680;
 }
 
 export function goldenTigerNominalSpinMs(turbo: boolean, anticipation = false) {
