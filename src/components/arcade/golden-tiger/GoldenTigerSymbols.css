@@ -1,5 +1,6 @@
 @import "./GoldenTigerPass6.css";
 @import "./GoldenTigerPass7.css";
+@import "./GoldenTigerUxPolish.css";
 
 .gt-hw-symbol {
   position: relative;
@@ -24,8 +25,8 @@
   position: absolute;
   left: var(--gt-premium-symbol-x);
   top: var(--gt-premium-symbol-y);
-  width: 400%;
-  height: 200%;
+  width: 200%;
+  height: 400%;
   max-width: none;
   object-fit: fill;
   display: block;
