@@ -62,6 +62,9 @@ function Index() {
   ];
 
   const goldenTiger = GAMES.find((game) => game.slug === "golden-tiger");
+  const playableGames = GAMES.filter((game) => game.playable);
+  const playableSlots = playableGames.filter((game) => game.category === "slots").length;
+  const playableArcade = playableGames.filter((game) => game.category === "arcade").length;
 
   return (
     <div id="top" className="arcade-lobby min-h-screen pb-24 lg:pb-10">
@@ -74,6 +77,7 @@ function Index() {
               <p className="-mt-0.5 hidden text-[0.58rem] font-bold uppercase tracking-[0.32em] text-amber-100/55 sm:block">Private Arcade</p>
             </div>
           </Link>
+          <span className="casino-live-pill">{playableGames.length} jogos ativos</span>
           <SoundToggle />
           <BalanceDisplay compact className="max-w-[13rem]" />
         </div>
@@ -86,10 +90,15 @@ function Index() {
           <div className="fortune-hero__lantern fortune-hero__lantern--left" aria-hidden />
           <div className="fortune-hero__lantern fortune-hero__lantern--right" aria-hidden />
           <div className="fortune-hero__copy">
-            <span className="fortune-kicker"><Sparkles className="size-3.5" /> 5 jogos disponíveis</span>
+            <span className="fortune-kicker"><Sparkles className="size-3.5" /> Em destaque agora</span>
             <p className="fortune-hero__eyebrow">PRIVATE ARCADE</p>
             <h1 id="hero-title" className="fortune-hero__title">GOLDEN <span>TIGER</span></h1>
-            <p className="fortune-hero__subtitle">Um salão privado com slots e arcades originais, efeitos premium e apenas moedas fictícias.</p>
+            <p className="fortune-hero__subtitle">Fortune Feature, símbolos sticky e multiplicador de tela cheia em um slot 3×3 feito para sessões rápidas.</p>
+            <div className="fortune-hero__meta" aria-label="Informações do Golden Tiger">
+              <span>Slot 3×3</span>
+              <span>Volatilidade média</span>
+              <span>Fortune Feature</span>
+            </div>
             <div className="mt-4 flex flex-wrap gap-2">
               <Button asChild size="lg" variant="gold" className="fortune-play min-h-12 rounded-xl px-6 font-black">
                 <Link to="/game/$slug" params={{ slug: "golden-tiger" }}>
@@ -112,6 +121,13 @@ function Index() {
           </div>
         </section>
 
+        <section className="casino-status-rail" aria-label="Resumo do salão">
+          <div className="casino-status-item"><small>Jogáveis</small><strong>{playableGames.length}</strong></div>
+          <div className="casino-status-item"><small>Slots</small><strong>{playableSlots}</strong></div>
+          <div className="casino-status-item"><small>Arcade</small><strong>{playableArcade}</strong></div>
+          <div className="casino-status-item"><small>Favoritos</small><strong>{favorites.length}</strong></div>
+        </section>
+
         <section className="jackpot-strip" aria-label="Jackpots fictícios decorativos">
           <div className="jackpot-strip__grand"><small>GRAND JACKPOT</small><strong>1.250.000</strong></div>
           <div><small>MAJOR</small><strong>125.000</strong></div>
@@ -120,12 +136,12 @@ function Index() {
         </section>
 
         <section id="catalogo" className="scroll-mt-24 pt-6" aria-labelledby="catalog-title">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="casino-catalog-heading mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.25em] text-amber-300/75">Seu salão privado</p>
-              <h2 id="catalog-title" className="font-display text-2xl font-black text-white sm:text-3xl">Escolha seu jogo</h2>
+              <p className="text-xs font-bold uppercase tracking-[0.25em] text-amber-300/75">Jogue agora</p>
+              <h2 id="catalog-title" className="font-display text-2xl font-black text-white sm:text-3xl">Cassino & arcade</h2>
             </div>
-            <div className="relative w-full sm:max-w-xs">
+            <div className="casino-search relative w-full sm:max-w-xs">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-amber-100/50" aria-hidden />
               <Input
                 value={search}
@@ -137,7 +153,7 @@ function Index() {
             </div>
           </div>
 
-          <div className="scroll-hide mb-4 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Categorias de jogos">
+          <div className="casino-filter-rail scroll-hide mb-4 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Categorias de jogos">
             {filters.map((item) => (
               <Button
                 key={item.id}
@@ -168,7 +184,7 @@ function Index() {
           )}
 
           {visibleGames.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="casino-game-grid grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
               {visibleGames.map((game) => <GameCard key={game.slug} game={game} />)}
             </div>
           ) : (
@@ -181,7 +197,7 @@ function Index() {
           )}
         </section>
 
-        <section id="historico" className="scroll-mt-24 pt-9" aria-labelledby="history-title">
+        <section id="historico" className="casino-secondary-section scroll-mt-24 pt-9" aria-labelledby="history-title">
           <div className="mb-4 flex items-end justify-between gap-3">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary/75">Somente neste navegador</p>
@@ -215,7 +231,7 @@ function Index() {
           </div>
         </section>
 
-        <section id="perfil" className="scroll-mt-24 pt-9" aria-labelledby="profile-title">
+        <section id="perfil" className="casino-secondary-section scroll-mt-24 pt-9" aria-labelledby="profile-title">
           <div className="mb-4">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary/75">Progresso local</p>
             <h2 id="profile-title" className="font-display text-2xl font-black">Meu perfil arcade</h2>
