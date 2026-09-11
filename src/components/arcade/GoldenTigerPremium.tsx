@@ -61,7 +61,7 @@ import { goldenTigerSettleHoldMs, goldenTigerWinTimeline, type GoldenTigerWinBea
 import { setAmbienceEnergy, setGameAmbience } from "@/lib/arcade/sound";
 import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store";
 import { cn } from "@/lib/utils";
-import "./GoldenTigerCommercial.css";
+import "./GoldenTigerPremium.css";
 
 const BETS = [10, 20, 50, 100, 200, 500, 1_000] as const;
 const INITIAL_GRID: GoldenTigerSymbolId[] = ["fortuneBag", "ingot", "jade", "orange", "wild", "firecracker", "lion", "lantern", "fortuneBag"];
