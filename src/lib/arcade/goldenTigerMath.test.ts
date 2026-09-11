@@ -48,8 +48,8 @@ test("blocked presentation cells prevent paylines and full-grid multiplication",
   assert.equal(result.isFullGrid, false);
 });
 
-test("payout scale is explicitly Neon-original calibration", () => {
-  assert.equal(GOLDEN_TIGER_PAYOUT_SCALE, 1.195);
+test("base payout scale reserves return budget for the natural feature", () => {
+  assert.equal(GOLDEN_TIGER_PAYOUT_SCALE, 0.8);
 });
 
 test("win tiers follow small, nice, big, mega and super presentation bands", () => {

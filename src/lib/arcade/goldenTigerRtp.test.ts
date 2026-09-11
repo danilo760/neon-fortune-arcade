@@ -26,6 +26,8 @@ test("Neon Golden Tiger calibration stays near the published 96.81% RTP referenc
   const spins = 150_000;
   const bet = 100;
   let totalPayout = 0;
+  let baseSettledPayout = 0;
+  let featurePayout = 0;
   let featureTriggers = 0;
 
   for (let spin = 0; spin < spins; spin += 1) {
@@ -37,19 +39,26 @@ test("Neon Golden Tiger calibration stays near the published 96.81% RTP referenc
       // The verified wording describes the randomly triggered feature as the
       // spin resolution: when it ends, its wins are paid. Do not stack a hidden
       // base-grid payout on top of the feature outcome.
-      totalPayout += runFortuneFeature(bet, rng).payout;
+      const payout = runFortuneFeature(bet, rng).payout;
+      featurePayout += payout;
+      totalPayout += payout;
     } else {
+      baseSettledPayout += basePayout;
       totalPayout += basePayout;
     }
   }
 
   const simulatedRtp = totalPayout / (spins * bet);
   const observedFeatureRate = featureTriggers / spins;
+  const baseContribution = baseSettledPayout / (spins * bet);
+  const featureContribution = featurePayout / (spins * bet);
 
-  // This is a Neon-original calibration guard around the public 96.81% target,
-  // not a claim that our undisclosed reel weights reproduce PG SOFT internals.
+  // Public Fortune Tiger material reports 64.96% main-game + 31.85% feature.
+  // We target the same broad distribution with original Neon weights/strips.
   assert.ok(simulatedRtp >= 0.95, `combined RTP too low: ${simulatedRtp}`);
   assert.ok(simulatedRtp <= 0.99, `combined RTP too high: ${simulatedRtp}`);
+  assert.ok(baseContribution >= 0.61 && baseContribution <= 0.69, `base contribution out of band: ${baseContribution}`);
+  assert.ok(featureContribution >= 0.27 && featureContribution <= 0.37, `feature contribution out of band: ${featureContribution}`);
   assert.ok(observedFeatureRate >= 0.0085, `feature rate too low: ${observedFeatureRate}`);
   assert.ok(observedFeatureRate <= 0.0115, `feature rate too high: ${observedFeatureRate}`);
 });

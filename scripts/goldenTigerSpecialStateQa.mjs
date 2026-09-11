@@ -1,12 +1,9 @@
 import { mkdir, writeFile } from "node:fs/promises";
-
 const appUrl = process.env.GOLDEN_TIGER_URL ?? "http://127.0.0.1:3000/game/golden-tiger";
 const cdpUrl = process.env.CHROME_CDP_URL ?? "http://127.0.0.1:9222";
 const outputDir = process.env.GOLDEN_TIGER_QA_DIR ?? "artifacts/golden-tiger";
 const viewport = { width: 390, height: 844 };
-
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
 class CdpClient {
   constructor(url) {
     this.url = url;
@@ -14,7 +11,6 @@ class CdpClient {
     this.pending = new Map();
     this.socket = null;
   }
-
   async connect() {
     this.socket = new WebSocket(this.url);
     await new Promise((resolve, reject) => {
@@ -28,7 +24,6 @@ class CdpClient {
         reject(new Error(`CDP websocket error: ${String(event?.message ?? "unknown")}`));
       }, { once: true });
     });
-
     this.socket.addEventListener("message", (event) => {
       const message = JSON.parse(String(event.data));
       if (!message.id) return;
@@ -39,7 +34,6 @@ class CdpClient {
       else pending.resolve(message.result);
     });
   }
-
   send(method, params = {}) {
     if (!this.socket) throw new Error("CDP socket not connected");
     const id = ++this.id;
@@ -48,22 +42,18 @@ class CdpClient {
       this.socket.send(JSON.stringify({ id, method, params }));
     });
   }
-
   close() {
     this.socket?.close();
   }
 }
-
 async function createTarget() {
   const response = await fetch(`${cdpUrl}/json/new?${encodeURIComponent("about:blank")}`, { method: "PUT" });
   if (!response.ok) throw new Error(`Could not create Chrome target: ${response.status}`);
   return response.json();
 }
-
 async function closeTarget(id) {
   await fetch(`${cdpUrl}/json/close/${id}`).catch(() => undefined);
 }
-
 async function evaluate(client, expression) {
   const result = await client.send("Runtime.evaluate", {
     expression,
@@ -73,7 +63,6 @@ async function evaluate(client, expression) {
   if (result.exceptionDetails) throw new Error(`Browser evaluation failed: ${JSON.stringify(result.exceptionDetails)}`);
   return result.result?.value;
 }
-
 async function screenshot(client, path) {
   const result = await client.send("Page.captureScreenshot", {
     format: "png",
@@ -82,7 +71,6 @@ async function screenshot(client, path) {
   });
   await writeFile(path, Buffer.from(result.data, "base64"));
 }
-
 async function waitFor(client, expression, label, timeoutMs = 12_000) {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
@@ -96,7 +84,6 @@ async function waitFor(client, expression, label, timeoutMs = 12_000) {
   }))()`);
   throw new Error(`Timed out waiting for ${label}; debug=${JSON.stringify(debug)}`);
 }
-
 async function waitForPhase(client, phase, timeoutMs) {
   await waitFor(
     client,
@@ -105,7 +92,6 @@ async function waitForPhase(client, phase, timeoutMs) {
     timeoutMs,
   );
 }
-
 async function snapshotState(client) {
   return evaluate(client, `(() => {
     const machine = document.querySelector('.gt-hw-machine');
@@ -129,7 +115,6 @@ async function snapshotState(client) {
     };
   })()`);
 }
-
 async function openScenario(name, values, fallback = 0.9) {
   const target = await createTarget();
   const client = new CdpClient(target.webSocketDebuggerUrl);
@@ -144,10 +129,6 @@ async function openScenario(name, values, fallback = 0.9) {
     screenWidth: viewport.width,
     screenHeight: viewport.height,
   });
-
-  // Install the wrapper before application modules load. Production bundling
-  // may capture Math.random while evaluating a module; capturing this wrapper
-  // is fine because the wrapper reads a mutable queue populated only at click.
   await client.send("Page.addScriptToEvaluateOnNewDocument", {
     source: `(() => {
       const state = { queue: [], fallback: 0.9, calls: 0 };
@@ -158,17 +139,11 @@ async function openScenario(name, values, fallback = 0.9) {
       };
     })();`,
   });
-
   await client.send("Page.navigate", { url: appUrl });
   await waitFor(client, `document.readyState === 'complete'`, `${name} document load`);
   await waitFor(client, `Boolean(document.querySelector('.gt-hw-spin:not(:disabled)'))`, `${name} idle mount`);
-
-  // SSR can expose the enabled button before React attaches delegated event
-  // handlers. Give the client bundle one short, deterministic hydration window
-  // before dispatching the programmatic QA click.
   await sleep(420);
   await waitFor(client, `document.querySelector('.gt-hw-machine')?.getAttribute('data-phase') === 'idle'`, `${name} hydrated idle`);
-
   await evaluate(client, `(() => {
     window.__gtQaRandom.queue = ${JSON.stringify(values)}.slice();
     window.__gtQaRandom.fallback = ${fallback};
@@ -176,20 +151,16 @@ async function openScenario(name, values, fallback = 0.9) {
     document.querySelector('.gt-hw-spin')?.click();
     return true;
   })()`);
-
   await waitFor(client, `document.querySelector('.gt-hw-machine')?.getAttribute('data-phase') !== 'idle'`, `${name} spin handler`);
   return { target, client };
 }
-
 async function closeScenario({ target, client }) {
   client.close();
   await closeTarget(target.id);
 }
-
 function requireState(condition, message) {
   if (!condition) throw new Error(message);
 }
-
 async function capturePhase(client, scenario, phase, validate, timeoutMs = 12_000, winBeat = null) {
   await waitForPhase(client, phase, timeoutMs);
   if (winBeat) {
@@ -201,10 +172,8 @@ async function capturePhase(client, scenario, phase, validate, timeoutMs = 12_00
   await screenshot(client, `${outputDir}/special-${scenario}-${phase}${winBeat ? `-${winBeat}` : ""}.png`);
   return state;
 }
-
 await mkdir(outputDir, { recursive: true });
 const report = [];
-
 const featureProgressValues = [
   ...Array(9).fill(0.5),
   0,
@@ -213,7 +182,6 @@ const featureProgressValues = [
   ...Array(6).fill(0.9),
   ...Array(6).fill(0.9),
 ];
-
 {
   const scenario = await openScenario("feature-progress", featureProgressValues);
   try {
@@ -227,7 +195,6 @@ const featureProgressValues = [
         requireState(state.blanks === 9, `feature intro should show 9 intentional blanks, got ${state.blanks}`);
       },
     ) });
-
     report.push({ scenario: "feature-progress", state: "spin", data: await capturePhase(
       scenario.client,
       "feature-progress",
@@ -237,7 +204,6 @@ const featureProgressValues = [
         requireState(state.rolling === 9, `first feature respin should animate 9 cells, got ${state.rolling}`);
       },
     ) });
-
     report.push({ scenario: "feature-progress", state: "lock", data: await capturePhase(
       scenario.client,
       "feature-progress",
@@ -247,7 +213,6 @@ const featureProgressValues = [
         requireState(state.fresh === 3, `feature lock expected 3 fresh cells, got ${state.fresh}`);
       },
     ) });
-
     report.push({ scenario: "feature-progress", state: "miss", data: await capturePhase(
       scenario.client,
       "feature-progress",
@@ -261,14 +226,12 @@ const featureProgressValues = [
     await closeScenario(scenario);
   }
 }
-
 const bigWinValues = [
   0, 0, 0,
-  0.05, 0.05, 0.05,
-  0.5, 0.9, 0.15,
+  0, 0, 0,
+  0.9, 0.7, 0.9,
   0.5,
 ];
-
 {
   const scenario = await openScenario("big-win", bigWinValues);
   try {
@@ -290,15 +253,15 @@ const bigWinValues = [
     await closeScenario(scenario);
   }
 }
-
-
 const megaWinValues = [
-  0, 0, 0,
-  0, 0, 0,
-  0.5, 0.9, 0.15,
-  0.5,
+  ...Array(9).fill(0.5),
+  0,
+  0.9,
+  0.1, 0.1, 0.1,
+  0.1, 0.1, 0.1,
+  0.9, 0.9, 0.1,
+  0.9, 0.9,
 ];
-
 {
   const scenario = await openScenario("mega-win", megaWinValues);
   try {
@@ -312,19 +275,17 @@ const megaWinValues = [
         requireState(!state.overlayFull, "mega win incorrectly marked full-grid");
         requireState(state.winBeat === "reveal", `mega win expected reveal beat, got ${state.winBeat}`);
       },
-      12_000,
+      20_000,
       "reveal",
     ) });
   } finally {
     await closeScenario(scenario);
   }
 }
-
 const baseFullGridValues = [
   ...Array(9).fill(0),
   0.5,
 ];
-
 {
   const scenario = await openScenario("base-full-grid", baseFullGridValues);
   try {
@@ -346,14 +307,12 @@ const baseFullGridValues = [
     await closeScenario(scenario);
   }
 }
-
 const featureFullGridValues = [
   ...Array(9).fill(0.5),
   0,
   0.5,
   ...Array(9).fill(0),
 ];
-
 {
   const scenario = await openScenario("feature-full-grid", featureFullGridValues, 0);
   try {
@@ -366,7 +325,6 @@ const featureFullGridValues = [
         requireState(state.fresh === 9, `feature full-grid expected 9 fresh cells, got ${state.fresh}`);
       },
     ) });
-
     report.push({ scenario: "feature-full-grid", state: "full-grid", data: await capturePhase(
       scenario.client,
       "feature-full-grid",
@@ -385,6 +343,5 @@ const featureFullGridValues = [
     await closeScenario(scenario);
   }
 }
-
 await writeFile(`${outputDir}/special-states-report.json`, JSON.stringify(report, null, 2));
 console.log(`✅ Golden Tiger special-state QA passed (${report.length} captured states)`);

@@ -4,12 +4,15 @@ import test from "node:test";
 import {
   FORTUNE_FEATURE_FULL_GRID_MULTIPLIER,
   FORTUNE_FEATURE_TRIGGER_CHANCE,
+  GOLDEN_TIGER_NATURAL_FEATURE_PAYOUT_SCALE,
+  NEON_FORTUNE_SELECTED_LAND_CHANCE,
+  NEON_FORTUNE_WILD_LAND_CHANCE,
   evaluateFortuneFeatureGrid,
   pickFortuneFeatureSymbol,
   rollFortuneFeatureTrigger,
   runFortuneFeature,
 } from "./goldenTigerFortuneFeature";
-import { GOLDEN_TIGER_PAYOUT_SCALE } from "./goldenTigerMath";
+import { GOLDEN_TIGER_MAX_WIN_MULTIPLIER } from "./goldenTigerMath";
 
 function seededRng(seed: number) {
   let state = seed >>> 0;
@@ -69,7 +72,7 @@ test("full 3x3 participation applies the verified x10 rule", () => {
   assert.equal(
     result.payout,
     Math.round(
-      5 * 2.1 * 100 * FORTUNE_FEATURE_FULL_GRID_MULTIPLIER * GOLDEN_TIGER_PAYOUT_SCALE,
+      5 * 2.1 * 100 * FORTUNE_FEATURE_FULL_GRID_MULTIPLIER * GOLDEN_TIGER_NATURAL_FEATURE_PAYOUT_SCALE,
     ),
   );
 });
@@ -88,8 +91,21 @@ test("feature calibration stays bounded and full grids remain uncommon", () => {
 
   const averageRespins = totalRespins / samples;
   const fullGridRate = fullGrids / samples;
-  assert.ok(averageRespins > 1.5 && averageRespins < 3.5, `unexpected average respins: ${averageRespins}`);
-  assert.ok(fullGridRate < 0.005, `full grid too frequent: ${fullGridRate}`);
+  assert.ok(averageRespins > 2.5 && averageRespins < 3.8, `unexpected average respins: ${averageRespins}`);
+  assert.ok(fullGridRate > 0.005 && fullGridRate < 0.03, `unexpected full grid rate: ${fullGridRate}`);
+});
+
+
+test("natural feature calibration is richer but still original Neon math", () => {
+  assert.equal(NEON_FORTUNE_SELECTED_LAND_CHANCE, 0.159);
+  assert.equal(NEON_FORTUNE_WILD_LAND_CHANCE, 0.0159);
+  assert.equal(GOLDEN_TIGER_NATURAL_FEATURE_PAYOUT_SCALE, 6.25);
+});
+
+test("natural feature payout never exceeds the public 2500x ceiling", () => {
+  const fullGrid = Array.from({ length: 9 }, () => "lion" as const);
+  const result = evaluateFortuneFeatureGrid(fullGrid, "lion", 100);
+  assert.ok(result.payout <= 100 * GOLDEN_TIGER_MAX_WIN_MULTIPLIER);
 });
 
 test("injected RNG keeps the feature deterministic", () => {
