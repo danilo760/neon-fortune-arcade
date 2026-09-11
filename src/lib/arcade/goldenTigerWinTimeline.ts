@@ -9,16 +9,16 @@ export type GoldenTigerWinTimeline = {
 export function goldenTigerWinTimeline(turbo: boolean, fullGrid: boolean): GoldenTigerWinTimeline {
   if (turbo) {
     return {
-      impactMs: 180,
-      revealMs: fullGrid ? 820 : 680,
-      celebrateMs: fullGrid ? 560 : 430,
+      impactMs: 260,
+      revealMs: fullGrid ? 1_180 : 980,
+      celebrateMs: fullGrid ? 760 : 620,
     };
   }
 
   return {
-    impactMs: 380,
-    revealMs: fullGrid ? 2700 : 2300,
-    celebrateMs: fullGrid ? 1450 : 1150,
+    impactMs: 560,
+    revealMs: fullGrid ? 3_250 : 2_850,
+    celebrateMs: fullGrid ? 1_850 : 1_550,
   };
 }
 
@@ -31,12 +31,12 @@ export type GoldenTigerSettlePresentation = "simple-win" | "return" | "lose";
  */
 export function goldenTigerSettleHoldMs(kind: GoldenTigerSettlePresentation, turbo: boolean) {
   if (turbo) {
-    if (kind === "simple-win") return 900;
-    if (kind === "return") return 720;
-    return 130;
+    if (kind === "simple-win") return 1_200;
+    if (kind === "return") return 980;
+    return 180;
   }
 
-  if (kind === "simple-win") return 1900;
-  if (kind === "return") return 1700;
-  return 320;
+  if (kind === "simple-win") return 2_400;
+  if (kind === "return") return 2_100;
+  return 420;
 }
