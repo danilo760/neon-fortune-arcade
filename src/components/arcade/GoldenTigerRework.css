@@ -1,0 +1,359 @@
+@import "./GoldenTigerSession3.css";
+
+/* Golden Tiger frontend rework — presentation only.
+   Keep all math/RNG/settlement in the existing engine. */
+
+.gt-premium-machine {
+  --gt-rework-gold: #ffd66b;
+  --gt-rework-hot: #ffb72f;
+  --gt-rework-red: #8f170c;
+  --gt-rework-deep: #120101;
+}
+
+.gt-premium-machine::before {
+  content: "";
+  position: absolute;
+  z-index: 8;
+  inset: 15% 4% 20%;
+  pointer-events: none;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255, 217, 111, .08), transparent 48%),
+    linear-gradient(90deg, transparent, rgba(255, 190, 52, .04) 48%, transparent 52%);
+  opacity: .82;
+  mix-blend-mode: screen;
+}
+
+.gt-premium-grid {
+  transform-origin: 50% 52%;
+  box-shadow:
+    0 0 0 2px rgba(92, 13, 7, .96),
+    0 10px 30px rgba(0, 0, 0, .76),
+    0 0 26px rgba(255, 184, 43, .22),
+    inset 0 0 24px rgba(27, 0, 0, .95);
+}
+
+.gt-premium-grid::before {
+  content: "";
+  position: absolute;
+  z-index: 26;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: .18;
+  background:
+    linear-gradient(90deg, transparent 32.9%, rgba(255, 224, 139, .42) 33.2%, transparent 33.7%, transparent 66.2%, rgba(255, 224, 139, .42) 66.6%, transparent 67%),
+    linear-gradient(180deg, rgba(255,255,255,.13), transparent 12%, transparent 86%, rgba(92, 8, 4, .34));
+  mix-blend-mode: screen;
+}
+
+/* Speed cue: the strip already moves through rAF. This layer adds a fast launch
+   ramp without filtering the moving symbol surface itself. */
+.gt-premium-grid .gt-hw-reel-overlay::before {
+  content: "";
+  position: absolute;
+  z-index: 24;
+  inset: -12% 6%;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    180deg,
+    transparent 0 10px,
+    rgba(255, 244, 210, .06) 11px 13px,
+    transparent 14px 22px,
+    rgba(105, 21, 9, .12) 23px 26px
+  );
+  opacity: 0;
+  transform: translate3d(0, -5%, 0) scaleY(.78);
+  animation: gt-rework-launch-streaks 220ms cubic-bezier(.18,.76,.28,1) forwards;
+  mix-blend-mode: multiply;
+}
+
+.gt-premium-grid .gt-hw-reel-overlay::after {
+  content: "";
+  position: absolute;
+  z-index: 25;
+  inset: 0;
+  pointer-events: none;
+  opacity: .45;
+  background:
+    linear-gradient(180deg, rgba(74, 8, 5, .32), transparent 18%, transparent 80%, rgba(74, 8, 5, .42)),
+    linear-gradient(90deg, rgba(255,255,255,.05), transparent 18%, transparent 82%, rgba(98,25,8,.08));
+  transition: opacity 130ms ease, box-shadow 130ms ease;
+}
+
+.gt-premium-grid .gt-hw-reel-overlay.is-braking::before {
+  opacity: .17;
+  animation: gt-rework-brake-streaks 190ms ease-out forwards;
+}
+
+.gt-premium-grid .gt-hw-reel-overlay.is-braking::after {
+  opacity: .72;
+  box-shadow: inset 0 18px 22px rgba(80, 9, 5, .18), inset 0 -20px 24px rgba(80, 9, 5, .24);
+}
+
+/* Independent mechanical stop feedback. data-landing-column is already driven
+   by the presentation controller; no result is generated here. */
+.gt-premium-grid[data-landing-column="0"] {
+  animation: gt-rework-land-left 180ms cubic-bezier(.18,.78,.25,1.2);
+}
+
+.gt-premium-grid[data-landing-column="1"] {
+  animation: gt-rework-land-center 190ms cubic-bezier(.18,.78,.25,1.2);
+}
+
+.gt-premium-grid[data-landing-column="2"] {
+  animation: gt-rework-land-right 205ms cubic-bezier(.18,.78,.25,1.2);
+}
+
+.gt-premium-grid[data-landing-column="0"]::after,
+.gt-premium-grid[data-landing-column="1"]::after,
+.gt-premium-grid[data-landing-column="2"]::after {
+  content: "";
+  position: absolute;
+  z-index: 27;
+  top: 0;
+  bottom: 0;
+  width: 33.333%;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 241, 169, .44), rgba(255, 187, 46, .08) 38%, transparent 66%);
+  opacity: 0;
+  animation: gt-rework-stop-flash 220ms ease-out;
+  mix-blend-mode: screen;
+}
+
+.gt-premium-grid[data-landing-column="0"]::after { left: 0; }
+.gt-premium-grid[data-landing-column="1"]::after { left: 33.333%; }
+.gt-premium-grid[data-landing-column="2"]::after { left: 66.666%; }
+
+/* Anticipation is driven only by the already-computed engine outcome. */
+.gt-premium-machine[data-anticipating="true"] .gt-premium-grid {
+  animation: gt-rework-anticipation-grid 540ms ease-in-out infinite alternate;
+  border-color: #ffe27b;
+  box-shadow:
+    0 0 0 2px #7a1209,
+    0 12px 34px rgba(0,0,0,.78),
+    0 0 20px rgba(255, 204, 72, .48),
+    0 0 46px rgba(255, 118, 24, .18),
+    inset 0 0 28px rgba(255, 189, 48, .12);
+}
+
+.gt-premium-machine[data-anticipating="true"] .gt-hw-reel-overlay {
+  box-shadow: inset 0 0 22px rgba(255, 197, 59, .18);
+}
+
+.gt-premium-machine[data-anticipating="true"] .gt-hw-status {
+  color: #fff0ae;
+  text-shadow: 0 0 10px rgba(255, 193, 57, .55), 0 2px 3px #000;
+}
+
+.gt-premium-machine[data-anticipating="true"] .gt-hw-tiger-aura {
+  opacity: 1;
+  filter: blur(6px) brightness(1.36) saturate(1.16);
+}
+
+.gt-premium-machine[data-anticipating="true"] .gt-hw-tiger-rig {
+  filter: drop-shadow(0 8px 10px rgba(0,0,0,.72)) drop-shadow(0 0 14px rgba(255,191,47,.48));
+}
+
+/* Fortune Feature: sticky cells should read as physically locked to the board. */
+.gt-premium-machine[data-feature-mode="active"] .gt-hw-cell.is-locked {
+  isolation: isolate;
+  box-shadow:
+    inset 0 0 0 2px #f5c94f,
+    inset 0 0 20px rgba(255, 192, 43, .24),
+    0 0 9px rgba(255, 191, 45, .42);
+}
+
+.gt-premium-machine[data-feature-mode="active"] .gt-hw-cell.is-locked::before {
+  content: "";
+  position: absolute;
+  z-index: 14;
+  inset: 4px;
+  pointer-events: none;
+  border: 1px solid rgba(255, 229, 139, .72);
+  border-radius: 10px;
+  box-shadow: inset 0 0 13px rgba(255, 196, 52, .18);
+}
+
+.gt-premium-machine[data-feature-mode="active"] .gt-hw-cell.is-fresh::after {
+  content: "";
+  position: absolute;
+  z-index: 18;
+  inset: -12%;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,249,205,.86) 0 8%, rgba(255,204,69,.30) 24%, transparent 62%);
+  opacity: 0;
+  animation: gt-rework-sticky-burst 520ms cubic-bezier(.16,.82,.24,1) forwards;
+  mix-blend-mode: screen;
+}
+
+.gt-premium-machine[data-phase="feature-intro"] .gt-premium-grid {
+  animation: gt-rework-feature-enter 520ms cubic-bezier(.16,.82,.2,1.12) both;
+}
+
+.gt-premium-machine[data-phase="feature-miss"] .gt-premium-grid {
+  filter: saturate(.84) brightness(.88);
+  transition: filter 150ms ease;
+}
+
+/* Character staging: strengthen intent without swapping poses independently. */
+.gt-premium-machine[data-anticipating="true"] .gt-hw-tiger-layer--head {
+  transform: translate3d(3px, 1px, 0) rotate(1.1deg) scale(1.015);
+  transition: transform 170ms ease-out;
+}
+
+.gt-premium-machine[data-phase="feature-lock"] .gt-hw-tiger-rig {
+  animation: gt-rework-tiger-lock 360ms cubic-bezier(.18,.82,.22,1.18) both;
+}
+
+.gt-premium-machine[data-phase="full-grid"] .gt-hw-tiger-aura {
+  opacity: 1;
+  transform: translate(-50%,-50%) scale(1.28);
+  filter: blur(5px) brightness(1.55) saturate(1.24);
+}
+
+/* Controls: emphasize a physical mobile console rather than web buttons. */
+.gt-premium-controls .gt-hw-spin {
+  transform: translateZ(0);
+  box-shadow:
+    inset 0 0 0 3px rgba(255,241,164,.42),
+    inset 0 -10px 14px rgba(0,57,33,.58),
+    0 0 0 3px #8d4609,
+    0 6px 14px rgba(0,0,0,.48),
+    0 0 21px rgba(255,206,80,.55);
+  transition: transform 90ms ease, filter 100ms ease, box-shadow 120ms ease;
+}
+
+.gt-premium-controls .gt-hw-spin:active:not(:disabled) {
+  transform: translateY(2px) scale(.9);
+  filter: brightness(1.16);
+}
+
+.gt-premium-controls .gt-hw-main-controls > button:not(.gt-hw-spin):active:not(:disabled),
+.gt-premium-controls .gt-hw-secondary-controls button:active:not(:disabled) {
+  transform: translateY(1px) scale(.94);
+  filter: brightness(1.12);
+}
+
+.gt-premium-machine[data-phase="base-spin"] .gt-hw-spin,
+.gt-premium-machine[data-phase="feature-spin"] .gt-hw-spin {
+  box-shadow:
+    inset 0 0 0 3px rgba(255,241,164,.48),
+    inset 0 -10px 14px rgba(0,57,33,.62),
+    0 0 0 3px #8d4609,
+    0 0 18px rgba(48, 221, 141, .42),
+    0 0 30px rgba(255,206,80,.36);
+}
+
+@media (max-width: 430px) {
+  .gt-premium-machine {
+    width: 100vw;
+    max-width: 430px;
+  }
+
+  .gt-premium-grid {
+    max-width: calc(100vw - 18px);
+  }
+
+  .gt-premium-controls .gt-hw-spin {
+    touch-action: manipulation;
+  }
+}
+
+@media (max-width: 390px) and (max-height: 850px) {
+  .gt-premium-machine::before {
+    inset: 14% 3% 19%;
+  }
+
+  .gt-premium-grid .gt-hw-reel-overlay::before {
+    inset-inline: 4%;
+  }
+}
+
+@media (max-width: 360px) and (max-height: 810px) {
+  .gt-premium-grid {
+    border-width: 2px;
+    border-radius: 11px;
+  }
+
+  .gt-premium-machine[data-anticipating="true"] .gt-premium-grid {
+    box-shadow:
+      0 0 0 1px #7a1209,
+      0 8px 22px rgba(0,0,0,.78),
+      0 0 18px rgba(255,204,72,.42);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gt-premium-grid,
+  .gt-premium-grid::after,
+  .gt-premium-grid .gt-hw-reel-overlay::before,
+  .gt-premium-machine .gt-hw-cell.is-fresh::after,
+  .gt-premium-machine[data-phase="feature-lock"] .gt-hw-tiger-rig {
+    animation: none !important;
+  }
+
+  .gt-premium-grid .gt-hw-reel-overlay::before {
+    opacity: .08;
+  }
+}
+
+@keyframes gt-rework-launch-streaks {
+  0% { opacity: 0; transform: translate3d(0,-3%,0) scaleY(.7); }
+  38% { opacity: .12; transform: translate3d(0,0,0) scaleY(.9); }
+  100% { opacity: .34; transform: translate3d(0,5%,0) scaleY(1.1); }
+}
+
+@keyframes gt-rework-brake-streaks {
+  from { opacity: .34; transform: translate3d(0,5%,0) scaleY(1.1); }
+  to { opacity: .07; transform: translate3d(0,0,0) scaleY(.82); }
+}
+
+@keyframes gt-rework-land-left {
+  0% { transform: translate3d(0,0,0) rotate(0deg); }
+  38% { transform: translate3d(-1.4px,2px,0) rotate(-.14deg); }
+  100% { transform: translate3d(0,0,0) rotate(0deg); }
+}
+
+@keyframes gt-rework-land-center {
+  0% { transform: translate3d(0,0,0) scale(1); }
+  40% { transform: translate3d(0,2.2px,0) scale(.997); }
+  100% { transform: translate3d(0,0,0) scale(1); }
+}
+
+@keyframes gt-rework-land-right {
+  0% { transform: translate3d(0,0,0) rotate(0deg); }
+  42% { transform: translate3d(1.5px,2.4px,0) rotate(.15deg); }
+  100% { transform: translate3d(0,0,0) rotate(0deg); }
+}
+
+@keyframes gt-rework-stop-flash {
+  0% { opacity: 0; }
+  26% { opacity: .72; }
+  100% { opacity: 0; }
+}
+
+@keyframes gt-rework-anticipation-grid {
+  from { filter: brightness(1) saturate(1); transform: scale(1); }
+  to { filter: brightness(1.08) saturate(1.1); transform: scale(1.006); }
+}
+
+@keyframes gt-rework-sticky-burst {
+  0% { opacity: 0; transform: scale(.56); }
+  28% { opacity: .92; }
+  100% { opacity: 0; transform: scale(1.34); }
+}
+
+@keyframes gt-rework-feature-enter {
+  0% { filter: brightness(.72) saturate(.84); transform: scale(.985); }
+  48% { filter: brightness(1.15) saturate(1.12); transform: scale(1.008); }
+  100% { filter: none; transform: scale(1); }
+}
+
+@keyframes gt-rework-tiger-lock {
+  0% { transform: translate3d(0,0,0) scale(1); }
+  36% { transform: translate3d(0,-2px,0) scale(1.025,.985); }
+  72% { transform: translate3d(0,1px,0) scale(.992,1.018); }
+  100% { transform: translate3d(0,0,0) scale(1); }
+}
