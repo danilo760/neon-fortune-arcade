@@ -105,6 +105,8 @@ const report = [];
   const scenario = await openSpinScenario([0,0,0, 0.05,0.05,0.05, 0.5,0.9,0.15, 0.5]);
   try {
     await waitFor(scenario.client, `document.querySelector('.gt-hw-machine')?.getAttribute('data-anticipating') === 'true'`, "anticipation takeover");
+    // The presentation intentionally eases HUD/scene opacity over 150ms. Wait
+    // for the authored transition to land instead of sampling an intermediate frame.
     await waitFor(
       scenario.client,
       `(() => {
