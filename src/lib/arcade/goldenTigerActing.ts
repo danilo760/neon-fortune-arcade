@@ -8,12 +8,12 @@ export function goldenTigerPose(reaction: TigerReactionState, idleBlink: boolean
 
 /**
  * Pose artwork is discrete, but the actor should not visibly pop between atlas
- * cells. These short overlaps are presentation-only and remain quicker than
- * the game events that select each pose, while avoiding flash-like swaps.
+ * cells. Active reactions overlap more slowly; the natural eye blink remains
+ * quick so it does not read like a frozen expression.
  */
 export function goldenTigerPoseTransitionMs(from: TigerPose, to: TigerPose, reduceMotion = false) {
   if (reduceMotion || from === to) return 0;
-  if (from === "blink" || to === "blink") return 130;
+  if (from === "blink" || to === "blink") return 95;
   if (to === "full") return 360;
   if (to === "win" || to === "feature") return 320;
   if (to === "tense" || to === "reveal") return 285;
