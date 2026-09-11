@@ -1,7 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect } from "react";
 
-import goldenTigerPresentationCss from "../../components/arcade/GoldenTigerSession3.css?url";
+import goldenTigerPresentationCss from "../../components/arcade/GoldenTigerRework.css?url";
 import olympusStormPresentationCss from "../../components/arcade/OlympusStormPremiumStage.css?url";
 import candyCascadePresentationCss from "../../components/arcade/CandyCascadeMediaRig.css?url";
 import minesPresentationCss from "../../components/arcade/MinesFinalPolish.css?url";
