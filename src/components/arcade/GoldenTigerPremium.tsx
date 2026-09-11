@@ -61,7 +61,7 @@ import { goldenTigerSettleHoldMs, goldenTigerWinTimeline, type GoldenTigerWinBea
 import { setAmbienceEnergy, setGameAmbience } from "@/lib/arcade/sound";
 import { arcadeActions, hydrateFromStorage, useArcade } from "@/lib/arcade/store";
 import { cn } from "@/lib/utils";
-import "./GoldenTigerCommercial.css";
+import "./GoldenTigerPremium.css";
 
 const BETS = [10, 20, 50, 100, 200, 500, 1_000] as const;
 const INITIAL_GRID: GoldenTigerSymbolId[] = ["fortuneBag", "ingot", "jade", "orange", "wild", "firecracker", "lion", "lantern", "fortuneBag"];
@@ -124,8 +124,6 @@ function ReelOverlay({
     ...REEL_STRIP,
     ...REEL_STRIP,
     ...REEL_STRIP,
-    ...REEL_STRIP,
-    ...REEL_STRIP,
     ...finalSymbols,
   ];
 
@@ -148,7 +146,7 @@ function ReelOverlay({
 
     const tensionMs = goldenTigerReelTensionMs(turbo);
     const tensionPx = goldenTigerReelTensionPx(column);
-    const accelerationMs = turbo ? 72 + column * 8 : 150 + column * 16;
+    const accelerationMs = turbo ? 145 + column * 12 : 430 + column * 34;
     const totalBrakeMs = goldenTigerReelBrakeMs(column, turbo);
     const reboundMs = goldenTigerReelReboundMs(column, turbo);
     const brakeTravelMs = Math.max(32, totalBrakeMs - reboundMs);
@@ -179,7 +177,7 @@ function ReelOverlay({
       const delta = Math.min(34, Math.max(1, time - lastTime));
       const finalOffset = itemHeight * (symbols.length - 3);
       const overshootOffset = finalOffset + overshootPx;
-      const cruiseVelocity = itemHeight / (turbo ? 40 : 64);
+      const cruiseVelocity = itemHeight / (turbo ? 105 : 195);
 
       if (reducedMotion()) {
         if (brakingRef.current) {
@@ -195,7 +193,17 @@ function ReelOverlay({
       if (brakingRef.current && stage !== "brake" && stage !== "rebound" && stage !== "landed") {
         stage = "brake";
         stageStartedAt = time;
-        brakeStartOffset = offset;
+
+        // The strip repeats every eight symbols. Move by whole-strip spans only,
+        // which is visually identical, so braking starts close to the authored
+        // final symbols instead of racing through 15–30 cells in a few frames.
+        const stripSpan = itemHeight * REEL_STRIP.length;
+        const desiredLead = itemHeight * (turbo ? 4 + column : 7 + column);
+        let normalized = offset;
+        while (normalized > finalOffset - desiredLead) normalized -= stripSpan;
+        while (normalized + stripSpan <= finalOffset - desiredLead) normalized += stripSpan;
+        brakeStartOffset = normalized;
+        renderTrack(normalized, 0);
       }
 
       if (stage === "tension") {
@@ -211,8 +219,8 @@ function ReelOverlay({
         }
       } else if (stage === "accelerate") {
         const progress = Math.min(1, (time - stageStartedAt) / accelerationMs);
-        const eased = 1 - (1 - progress) ** 2.8;
-        const velocity = cruiseVelocity * (0.16 + eased * 0.84);
+        const eased = 1 - (1 - progress) ** 2.5;
+        const velocity = cruiseVelocity * (0.12 + eased * 0.88);
         let nextOffset = offset + velocity * delta;
         const wrapAt = itemHeight * REEL_STRIP.length * 3;
         if (nextOffset >= wrapAt) nextOffset -= itemHeight * REEL_STRIP.length;
@@ -394,7 +402,7 @@ export function GoldenTigerPremium() {
       if (!clockRef.current) return;
       setActivePayline(line);
       setWinning(new Set(line.cells));
-      await wait(turbo ? 90 : 300);
+      await wait(turbo ? 140 : 480);
     }
 
     setActivePayline(null);
@@ -428,11 +436,11 @@ export function GoldenTigerPremium() {
     if (purchased) {
       setPhase("bonus-intro");
       playTigerAudio({ type: "feature-open" });
-      await wait(turbo ? 260 : 900);
+      await wait(turbo ? 340 : 1_150);
     }
 
     setPhase("feature-intro");
-    await wait(turbo ? 190 : 620);
+    await wait(turbo ? 260 : 820);
 
     for (const step of plan.steps) {
       setFeatureAttempt(step.respin);
@@ -445,7 +453,7 @@ export function GoldenTigerPremium() {
         attempt: step.respin,
         lockedCount: lockedBeforeSpin,
       });
-      await wait(turbo ? 170 : 470);
+      await wait(turbo ? 240 : 650);
 
       const staggeredGrid = [...visibleGrid];
       const staggeredFresh = new Set<number>();
@@ -489,11 +497,11 @@ export function GoldenTigerPremium() {
       if (step.addedIndices.length > 0) {
         setPhase("feature-lock");
         const addedWild = step.addedIndices.some((index) => step.grid[index] === "wild");
-        await wait(turbo ? 170 : step.isFullGrid ? 700 : addedWild ? 540 : 380);
+        await wait(turbo ? 240 : step.isFullGrid ? 920 : addedWild ? 720 : 560);
       } else {
         setPhase("feature-miss");
         playTigerAudio({ type: "feature-miss" });
-        await wait(turbo ? 110 : 330);
+        await wait(turbo ? 170 : 450);
       }
 
       setFreshCells(new Set());
@@ -509,11 +517,11 @@ export function GoldenTigerPremium() {
       setPhase("reveal");
       await presentPaylines(featurePaylines);
       setWinning(new Set(plan.winning));
-      await wait(turbo ? 35 : 110);
+      await wait(turbo ? 80 : 220);
     }
 
     setPhase("feature-outro");
-    await wait(turbo ? 170 : 560);
+    await wait(turbo ? 260 : 760);
     return plan.payout;
   }, [bet, playTigerAudio, presentPaylines, turbo, wait, waitForFeatureStagger]);
 
@@ -690,9 +698,9 @@ export function GoldenTigerPremium() {
       if (basePaylines.length > 0) {
         await presentPaylines(basePaylines);
         setWinning(baseResult.winning);
-        await wait(turbo ? 35 : 110);
+        await wait(turbo ? 80 : 220);
       } else {
-        await wait(turbo ? 55 : 110);
+        await wait(turbo ? 95 : 220);
       }
 
       await settle(
@@ -742,7 +750,7 @@ export function GoldenTigerPremium() {
       if (autoStopRef.current) break;
       setAutoLeft(left);
       if (!(await runSpin())) break;
-      await wait(turbo ? 90 : 250);
+      await wait(turbo ? 150 : 420);
     }
     setAutoLeft(0);
   }, [autoLeft, autoRounds, runSpin, turbo, wait]);
@@ -755,16 +763,16 @@ export function GoldenTigerPremium() {
   };
 
   const status =
-    phase === "bonus-intro" ? "FORTUNE FEATURE COMPRADA · O TIGRE DESPERTA" :
-    phase === "feature-intro" ? `FORTUNE FEATURE · ${selectedLabel}` :
+    phase === "bonus-intro" ? "BÔNUS COMPRADO · PREPARANDO RODADA" :
+    phase === "feature-intro" ? `BÔNUS · ${selectedLabel}` :
     phase === "feature-spin" ? `RESPIN ${featureAttempt} · ${selectedLabel} + WILD` :
-    phase === "feature-lock" ? "NOVO SÍMBOLO FIXO · FORTUNA CRESCE" :
+    phase === "feature-lock" ? "NOVO SÍMBOLO FIXO · CONTINUA" :
     phase === "feature-miss" ? "RESPIN ENCERRADO" :
-    phase === "feature-outro" ? `${lockedCount}/9 SÍMBOLOS · CONTANDO FORTUNA` :
-    phase === "reveal" ? (winning.size > 0 ? "LINHA FORMADA" : "RESULTADO") :
-    phase === "return" ? `RETORNO ${formatCoins(win)}` :
+    phase === "feature-outro" ? `${lockedCount}/9 SÍMBOLOS · CONTANDO GANHO` :
+    phase === "reveal" ? (winning.size > 0 ? "LINHA PREMIADA" : "RESULTADO") :
+    phase === "return" ? `GANHOU ${formatCoins(win)}` :
     phase === "full-grid" ? `TELA CHEIA · ×${GOLDEN_TIGER_FULL_GRID_MULTIPLIER}` :
-    phase === "win" ? `GANHO ${formatCoins(win)}` :
+    phase === "win" ? `GANHOU ${formatCoins(win)}` :
     phase === "base-spin" ? "GIRANDO" :
     "BOA SORTE";
 
@@ -811,7 +819,7 @@ export function GoldenTigerPremium() {
 
         {featureActive && (
           <div className={cn("gt-hw-respin-panel is-active", phase === "feature-lock" && "is-reset")}>
-            <span>FORTUNE</span>
+            <span>BÔNUS</span>
             <strong>{selectedLabel}</strong>
             <small>{lockedCount}/9 · R{featureAttempt}</small>
           </div>
@@ -920,7 +928,7 @@ export function GoldenTigerPremium() {
               onClick={() => setBonusOpen(true)}
               disabled={isBusy || autoLeft > 0 || balance < bonusCost}
             >
-              <Gift /><span>BÔNUS</span>
+              <Gift /><span>COMPRAR BÔNUS</span>
             </button>
             {autoLeft > 0 ? (
               <button type="button" className="is-active" onClick={() => { autoStopRef.current = true; }}>
@@ -938,16 +946,16 @@ export function GoldenTigerPremium() {
 
         {(phase === "bonus-intro" || phase === "feature-intro") && featureActive && (
           <div className="gt-premium-feature-title" aria-live="polite">
-            <small>{featurePurchased ? "FEATURE COMPRADA" : "FEATURE ATIVADA"}</small>
-            <strong>FORTUNE FEATURE</strong>
+            <small>{featurePurchased ? "BÔNUS COMPRADO" : "BÔNUS ATIVADO"}</small>
+            <strong>RODADA BÔNUS</strong>
             <span>{selectedLabel} + WILD</span>
           </div>
         )}
 
-        {phase === "win" && win > 0 && (winTier === "small" || winTier === "nice") && (
-          <div className={cn("gt-hw-win-ribbon", `is-${winTier}`)} aria-live="polite">
-            <span>{winTier === "nice" ? "BOM GANHO" : "GANHO"}</span>
-            <AnimatedWinCounter value={win} duration={reducedMotion() ? 0 : 620} />
+        {win > 0 && (phase === "return" || (phase === "win" && (winTier === "small" || winTier === "nice"))) && (
+          <div className={cn("gt-hw-win-ribbon", phase === "return" ? "is-return" : `is-${winTier}`)} aria-live="polite">
+            <span>{phase === "return" ? "GANHOU" : winTier === "nice" ? "BOM GANHO" : "GANHOU"}</span>
+            <AnimatedWinCounter value={win} duration={reducedMotion() ? 0 : turbo ? 700 : 1_150} />
           </div>
         )}
 
@@ -963,20 +971,19 @@ export function GoldenTigerPremium() {
         )}
 
         {bonusOpen && (
-          <div className="gt-hw-modal gt-premium-bonus-modal" role="dialog" aria-modal="true" aria-label="Comprar Fortune Feature">
+          <div className="gt-hw-modal gt-premium-bonus-modal" role="dialog" aria-modal="true" aria-label="Comprar bônus">
             <div>
-              <span>FORTUNE FEATURE</span>
-              <h2>COMPRAR O BÔNUS?</h2>
-              <div className="gt-premium-bonus-medallion" aria-hidden>福</div>
-              <p>Entre diretamente em uma Fortune Feature reforçada. O símbolo escolhido e os WILDs ficam fixos, com maior chance de novos símbolos em cada respin.</p>
+              <span>BÔNUS</span>
+              <h2>COMPRAR BÔNUS</h2>
+              <div className="gt-premium-bonus-medallion" aria-hidden><Gift /></div>
+              <p>Entre direto na rodada bônus. O símbolo escolhido e os WILDs ficam fixos enquanto novos símbolos podem entrar nos respins.</p>
               <dl>
-                <div><dt>APOSTA BASE</dt><dd>{formatCoins(bet)}</dd></div>
-                <div><dt>CUSTO</dt><dd>{formatCoins(bonusCost)} · {GOLDEN_TIGER_BONUS_BUY_MULTIPLIER}×</dd></div>
-                <div><dt>TELA CHEIA</dt><dd>GANHOS ×{FORTUNE_FEATURE_FULL_GRID_MULTIPLIER}</dd></div>
+                <div className="gt-bonus-cost"><dt>CUSTO</dt><dd>{formatCoins(bonusCost)}</dd></div>
               </dl>
+              <small className="gt-bonus-start-note">Ao confirmar, o bônus começa imediatamente.</small>
               <footer>
                 <button type="button" onClick={() => setBonusOpen(false)}>CANCELAR</button>
-                <button type="button" className="is-buy" onClick={() => void buyBonus()} disabled={balance < bonusCost}>ATIVAR FEATURE</button>
+                <button type="button" className="is-buy" onClick={() => void buyBonus()} disabled={balance < bonusCost}>COMPRAR BÔNUS</button>
               </footer>
             </div>
           </div>

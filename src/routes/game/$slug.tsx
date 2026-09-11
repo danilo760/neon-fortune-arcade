@@ -1,7 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect } from "react";
 
-import goldenTigerPresentationCss from "../../components/arcade/GoldenTigerRework.css?url";
 import olympusStormPresentationCss from "../../components/arcade/OlympusStormPremiumStage.css?url";
 import candyCascadePresentationCss from "../../components/arcade/CandyCascadeMediaRig.css?url";
 import minesPresentationCss from "../../components/arcade/MinesFinalPolish.css?url";
@@ -12,7 +11,6 @@ import { getGame } from "@/lib/arcade/catalog";
 import { useArcade } from "@/lib/arcade/store";
 
 const PRESENTATION_CSS: Partial<Record<string, string>> = {
-  "golden-tiger": goldenTigerPresentationCss,
   "olympus-storm": olympusStormPresentationCss,
   "candy-cascade": candyCascadePresentationCss,
   "neon-mines": minesPresentationCss,

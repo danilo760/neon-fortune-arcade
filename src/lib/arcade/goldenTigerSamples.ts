@@ -4,9 +4,11 @@ export type GoldenTigerSampleEvent =
   | { type: "spin" }
   | { type: "reel-land"; column: number }
   | { type: "anticipation" }
+  | { type: "feature-open" }
   | { type: "feature-lock" }
   | { type: "win"; tier: string }
-  | { type: "full-grid" };
+  | { type: "full-grid" }
+  | { type: "click" };
 
 /**
  * Session 3 keeps this compatibility boundary because the higher-level audio
@@ -30,23 +32,54 @@ export function playGoldenTigerSample(event: GoldenTigerSampleEvent, enabled: bo
     }
     case "reel-land": {
       const column = Math.max(0, Math.min(2, Math.trunc(event.column)));
-      return playGoldenTigerAuthoredCue("reel-stop", enabled, {
+      const pan = column === 0 ? -.42 : column === 2 ? .42 : 0;
+      const primary = playGoldenTigerAuthoredCue("reel-stop", enabled, {
         column,
-        intensity: .93 + column * .055,
-        pan: column === 0 ? -.38 : column === 2 ? .38 : 0,
+        intensity: .9 + column * .05,
+        pan,
       });
+      playGoldenTigerAuthoredCue("symbol-land", enabled, {
+        column,
+        intensity: .42 + column * .025,
+        pan: pan * .72,
+      });
+      return primary;
     }
-    case "anticipation":
-      return playGoldenTigerAuthoredCue("anticipation", enabled, { intensity: .94 });
-    case "feature-lock":
-      return playGoldenTigerAuthoredCue("sticky-land", enabled, { intensity: .98 });
-    case "win":
-      if (event.tier === "small") return playGoldenTigerAuthoredCue("small-win", enabled, { intensity: .9 });
-      if (event.tier === "nice") return playGoldenTigerAuthoredCue("win", enabled, { intensity: .96 });
-      return playGoldenTigerAuthoredCue("big-win", enabled, {
-        intensity: event.tier === "super" ? 1.18 : event.tier === "mega" ? 1.1 : 1.04,
+    case "anticipation": {
+      const primary = playGoldenTigerAuthoredCue("anticipation", enabled, { intensity: .92 });
+      playGoldenTigerAuthoredCue("reel-loop", enabled, { intensity: .28 });
+      return primary;
+    }
+    case "feature-open":
+      return playGoldenTigerAuthoredCue("feature-trigger", enabled, { intensity: 1.05 });
+    case "feature-lock": {
+      const primary = playGoldenTigerAuthoredCue("sticky-land", enabled, { intensity: .96 });
+      playGoldenTigerAuthoredCue("symbol-land", enabled, { intensity: .5 });
+      return primary;
+    }
+    case "win": {
+      if (event.tier === "small") {
+        const primary = playGoldenTigerAuthoredCue("small-win", enabled, { intensity: .86 });
+        playGoldenTigerAuthoredCue("symbol-land", enabled, { intensity: .28 });
+        return primary;
+      }
+      if (event.tier === "nice") {
+        const primary = playGoldenTigerAuthoredCue("win", enabled, { intensity: .94 });
+        playGoldenTigerAuthoredCue("small-win", enabled, { intensity: .34 });
+        return primary;
+      }
+      const primary = playGoldenTigerAuthoredCue("big-win", enabled, {
+        intensity: event.tier === "super" ? 1.16 : event.tier === "mega" ? 1.09 : 1.02,
       });
-    case "full-grid":
-      return playGoldenTigerAuthoredCue("full-grid", enabled, { intensity: 1.18 });
+      playGoldenTigerAuthoredCue("win", enabled, { intensity: event.tier === "super" ? .58 : .46 });
+      return primary;
+    }
+    case "full-grid": {
+      const primary = playGoldenTigerAuthoredCue("full-grid", enabled, { intensity: 1.16 });
+      playGoldenTigerAuthoredCue("big-win", enabled, { intensity: .64 });
+      return primary;
+    }
+    case "click":
+      return playGoldenTigerAuthoredCue("button", enabled, { intensity: .82 });
   }
 }

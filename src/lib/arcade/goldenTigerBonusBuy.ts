@@ -16,6 +16,7 @@ import { resolveGoldenTigerVisualQaRng } from "./goldenTigerVisualQaRng";
 export const GOLDEN_TIGER_BONUS_BUY_MULTIPLIER = 31;
 export const GOLDEN_TIGER_BUY_SELECTED_LAND_CHANCE = 0.25;
 export const GOLDEN_TIGER_BUY_WILD_LAND_CHANCE = 0.025;
+export const GOLDEN_TIGER_PURCHASED_FEATURE_PAYOUT_SCALE = 1.195;
 const PURCHASED_FEATURE_SAFETY_RESPIN_CAP = 64;
 
 function unitRoll(rng: () => number) {
@@ -65,7 +66,12 @@ export function runPurchasedFortuneFeature(
     if (ended) break;
   }
 
-  const evaluated = evaluateFortuneFeatureGrid(grid, selectedSymbol, bet);
+  const evaluated = evaluateFortuneFeatureGrid(
+    grid,
+    selectedSymbol,
+    bet,
+    GOLDEN_TIGER_PURCHASED_FEATURE_PAYOUT_SCALE,
+  );
   return {
     selectedSymbol,
     finalGrid: [...grid],

@@ -1,7 +1,7 @@
 import {
   GOLDEN_TIGER_FULL_GRID_MULTIPLIER,
   GOLDEN_TIGER_PAYLINES,
-  GOLDEN_TIGER_PAYOUT_SCALE,
+  GOLDEN_TIGER_MAX_WIN_MULTIPLIER,
   goldenTigerSymbolPay,
   pickGoldenTigerSymbol,
   type GoldenTigerSymbolId,
@@ -16,8 +16,15 @@ export const FORTUNE_FEATURE_FULL_GRID_MULTIPLIER = GOLDEN_TIGER_FULL_GRID_MULTI
  * Public Fortune Tiger material describes the selected-symbol/Wild/blank mechanic,
  * but does not publish the internal feature strip probabilities.
  */
-export const NEON_FORTUNE_SELECTED_LAND_CHANCE = 0.1;
-export const NEON_FORTUNE_WILD_LAND_CHANCE = 0.01;
+/**
+ * Natural-feature calibration. The 0.99% trigger is kept intact; these values
+ * make the feature carry roughly one third of total paid-spin return while the
+ * base game carries roughly two thirds, matching the public Fortune Tiger
+ * return split in broad terms without copying unpublished reel strips.
+ */
+export const NEON_FORTUNE_SELECTED_LAND_CHANCE = 0.159;
+export const NEON_FORTUNE_WILD_LAND_CHANCE = 0.0159;
+export const GOLDEN_TIGER_NATURAL_FEATURE_PAYOUT_SCALE = 6.25;
 const FEATURE_SAFETY_RESPIN_CAP = 64;
 
 export type FortuneFeatureCell = GoldenTigerSymbolId | null;
@@ -64,6 +71,7 @@ export function evaluateFortuneFeatureGrid(
   grid: readonly FortuneFeatureCell[],
   selectedSymbol: GoldenTigerSymbolId,
   bet: number,
+  payoutScale = GOLDEN_TIGER_NATURAL_FEATURE_PAYOUT_SCALE,
 ) {
   if (grid.length !== 9 || selectedSymbol === "wild" || !Number.isFinite(bet) || bet <= 0) {
     return { payout: 0, winning: new Set<number>(), lines: 0, isFullGrid: false };
@@ -86,7 +94,8 @@ export function evaluateFortuneFeatureGrid(
 
   const isFullGrid = grid.every((symbol) => symbol !== null);
   const fullGridMultiplier = isFullGrid ? FORTUNE_FEATURE_FULL_GRID_MULTIPLIER : 1;
-  const payout = Math.round(rawPayout * fullGridMultiplier * GOLDEN_TIGER_PAYOUT_SCALE);
+  const uncappedPayout = Math.round(rawPayout * fullGridMultiplier * payoutScale);
+  const payout = Math.min(uncappedPayout, Math.round(bet * GOLDEN_TIGER_MAX_WIN_MULTIPLIER));
 
   return { payout, winning, lines, isFullGrid };
 }

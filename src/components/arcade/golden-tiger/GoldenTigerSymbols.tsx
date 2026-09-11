@@ -3,7 +3,6 @@ import type { CSSProperties } from "react";
 import type { GoldenTigerSymbolId } from "@/lib/arcade/goldenTigerMath";
 
 import premiumAtlas from "@/assets/golden-tiger/premium-symbol-atlas.webp";
-import "./GoldenTigerSymbols.css";
 
 type Props = {
   id: GoldenTigerSymbolId;
