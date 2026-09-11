@@ -8,6 +8,7 @@ import {
   goldenTigerNominalSpinMs,
   goldenTigerReelBrakeMs,
   goldenTigerReelLandPauseMs,
+  goldenTigerReboundEase,
   goldenTigerRevealPauseMs,
 } from "./goldenTigerMotion";
 
@@ -45,4 +46,13 @@ test("Golden Tiger brake easing is clamped, monotonic and ends exactly on the sn
   for (let index = 1; index < samples.length; index += 1) {
     assert.ok((samples[index] ?? 0) >= (samples[index - 1] ?? 0));
   }
+});
+
+
+test("rebound snap crosses center subtly before settling exactly on target", () => {
+  assert.equal(goldenTigerReboundEase(0), 0);
+  assert.equal(goldenTigerReboundEase(1), 1);
+  const samples = [0.2, 0.4, 0.55, 0.7, 0.85].map(goldenTigerReboundEase);
+  assert.ok(samples.some((value) => value > 1 && value < 1.1), `samples=${samples.join(",")}`);
+  assert.ok(Math.abs((samples.at(-1) ?? 0) - 1) < 0.02);
 });

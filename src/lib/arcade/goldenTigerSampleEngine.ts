@@ -1,3 +1,4 @@
+import { stopGoldenTigerAnticipationRiser } from "./goldenTigerAnticipationRiser";
 import { stopGoldenTigerAuthoredScore } from "./goldenTigerScore";
 
 export type GoldenTigerSampleBus = "game" | "impact" | "reward";
@@ -23,5 +24,6 @@ export function playGoldenTigerSampleUrl(_url: string, _options: GoldenTigerSamp
 }
 
 export function disposeGoldenTigerSampleEngine() {
+  stopGoldenTigerAnticipationRiser(false, false);
   stopGoldenTigerAuthoredScore();
 }

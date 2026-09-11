@@ -13,9 +13,9 @@ export function goldenTigerPose(reaction: TigerReactionState, idleBlink: boolean
  */
 export function goldenTigerPoseTransitionMs(from: TigerPose, to: TigerPose, reduceMotion = false) {
   if (reduceMotion || from === to) return 0;
-  if (from === "blink" || to === "blink") return 92;
-  if (to === "full") return 220;
-  if (to === "win" || to === "feature") return 185;
-  if (to === "tense" || to === "reveal") return 165;
-  return 150;
+  if (from === "blink" || to === "blink") return 105;
+  if (to === "full") return 180;
+  if (to === "win" || to === "feature") return 176;
+  if (to === "tense" || to === "reveal") return 155;
+  return 140;
 }

@@ -1,0 +1,153 @@
+@import "./GoldenTigerRework.css";
+
+/* Golden Tiger polish pass — presentation/audio feel only.
+   No math, RNG, paytable, paylines or settlement rules live here. */
+
+.gt-premium-machine .gt-commercial-scene,
+.gt-premium-machine .gt-hw-topbar,
+.gt-premium-machine .gt-hw-hud,
+.gt-premium-machine .gt-commercial-console {
+  transition: filter 150ms ease, opacity 150ms ease;
+}
+
+.gt-premium-machine[data-anticipating="true"]::before {
+  opacity: .22;
+}
+
+.gt-premium-machine[data-anticipating="true"] .gt-commercial-scene {
+  filter: brightness(.52) saturate(.76);
+}
+
+.gt-premium-machine[data-anticipating="true"] .gt-scene-vignette {
+  opacity: .9 !important;
+  background: radial-gradient(
+    ellipse at 72% 48%,
+    transparent 18%,
+    rgba(5,0,1,.34) 44%,
+    rgba(0,0,0,.82) 78%,
+    rgba(0,0,0,.96) 100%
+  ) !important;
+}
+
+.gt-premium-machine[data-anticipating="true"] .gt-hw-topbar,
+.gt-premium-machine[data-anticipating="true"] .gt-hw-hud,
+.gt-premium-machine[data-anticipating="true"] .gt-commercial-console {
+  filter: brightness(.58) saturate(.72);
+  opacity: .76;
+}
+
+.gt-premium-machine[data-anticipating="true"] .gt-hw-status {
+  filter: none;
+  opacity: 1;
+}
+
+/* At the anticipation hold, columns 1/2 are already stopped, so the only
+   remaining reel overlay is the final reel. Keep the severe blur short-lived. */
+.gt-premium-machine[data-anticipating="true"] .gt-hw-reel-overlay:not(.is-braking) .gt-hw-reel-track {
+  filter: blur(2.35px) saturate(.9) brightness(.92) !important;
+}
+
+.gt-premium-machine[data-anticipating="true"] .gt-hw-reel-overlay.is-braking .gt-hw-reel-track {
+  filter: blur(.78px) saturate(.96) brightness(.98) !important;
+}
+
+.gt-premium-machine[data-anticipating="true"] .gt-hw-reel-overlay::before {
+  opacity: .82 !important;
+  transform: scaleY(1.14);
+  background: repeating-linear-gradient(
+    180deg,
+    transparent 0 4px,
+    rgba(255,239,184,.14) 5px 8px,
+    transparent 9px 14px,
+    rgba(97,12,7,.18) 15px 19px
+  );
+  animation: gt-polish-anticipation-streaks 180ms linear infinite !important;
+}
+
+.gt-premium-machine[data-anticipating="true"] .gt-premium-grid::after {
+  left: 0;
+  width: 100%;
+  top: 0;
+  bottom: 0;
+  opacity: 1;
+  transform: none;
+  animation: none;
+  background: linear-gradient(
+    90deg,
+    rgba(7,0,1,.43) 0 65.8%,
+    rgba(7,0,1,.16) 66.8% 100%
+  );
+  mix-blend-mode: multiply;
+}
+
+/* Idle-break look: pose crossfade is handled by TigerStage; this tiny body cue
+   redirects attention toward the control area without looking like a new state. */
+.gt-hw-tiger-stage[data-idle-break="look"] .gt-hw-tiger-rig {
+  transform: translate3d(0,2px,0) rotateZ(.75deg) scale(1.01) !important;
+  transition: transform 150ms cubic-bezier(.18,.78,.2,1);
+}
+
+.gt-hw-tiger-stage[data-idle-break="look"] .gt-hw-tiger-stage-halo {
+  transform: translate(-50%,-50%) scale(1.035);
+  opacity: .74;
+}
+
+/* Mega/full-grid particles now originate by the Spin control and travel through
+   an apex before falling outward, approximating a ballistic coin shower. */
+.gt-commercial-win.is-mega .gt-commercial-win__particles,
+.gt-commercial-win.is-full .gt-commercial-win__particles {
+  top: auto;
+  bottom: 56px;
+}
+
+.gt-commercial-win.is-mega[data-win-beat="reveal"] .gt-commercial-win__particles img,
+.gt-commercial-win.is-full[data-win-beat="reveal"] .gt-commercial-win__particles img {
+  animation: none;
+  opacity: 0;
+}
+
+.gt-commercial-win.is-mega[data-win-beat="celebrate"] .gt-commercial-win__particles img,
+.gt-commercial-win.is-full[data-win-beat="celebrate"] .gt-commercial-win__particles img {
+  animation: gt-polish-coin-parabola 1.18s cubic-bezier(.18,.72,.22,1) var(--gt-p-delay) both;
+}
+
+@keyframes gt-polish-anticipation-streaks {
+  from { background-position-y: 0; }
+  to { background-position-y: 38px; }
+}
+
+@keyframes gt-polish-coin-parabola {
+  0% {
+    opacity: 0;
+    transform: translate3d(0,10px,0) rotate(0deg) scale(.2);
+  }
+  12% {
+    opacity: .98;
+  }
+  52% {
+    opacity: 1;
+    transform:
+      translate3d(var(--gt-p-x-apex), var(--gt-p-y-apex), 0)
+      rotate(var(--gt-p-rotate-apex))
+      scale(var(--gt-p-scale));
+  }
+  100% {
+    opacity: 0;
+    transform:
+      translate3d(var(--gt-p-x-end), var(--gt-p-y-end), 0)
+      rotate(var(--gt-p-rotate))
+      scale(var(--gt-p-scale-end));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gt-premium-machine[data-anticipating="true"] .gt-hw-reel-overlay .gt-hw-reel-track {
+    filter: none !important;
+  }
+
+  .gt-premium-machine[data-anticipating="true"] .gt-hw-reel-overlay::before,
+  .gt-commercial-win.is-mega[data-win-beat="celebrate"] .gt-commercial-win__particles img,
+  .gt-commercial-win.is-full[data-win-beat="celebrate"] .gt-commercial-win__particles img {
+    animation: none !important;
+  }
+}

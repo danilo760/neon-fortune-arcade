@@ -1,3 +1,7 @@
+import {
+  startGoldenTigerAnticipationRiser,
+  stopGoldenTigerAnticipationRiser,
+} from "./goldenTigerAnticipationRiser";
 import { playGoldenTigerAuthoredCue, startGoldenTigerAuthoredScore } from "./goldenTigerScore";
 
 export type GoldenTigerSampleEvent =
@@ -30,6 +34,7 @@ export function playGoldenTigerSample(event: GoldenTigerSampleEvent, enabled: bo
     }
     case "reel-land": {
       const column = Math.max(0, Math.min(2, Math.trunc(event.column)));
+      if (column === 2) stopGoldenTigerAnticipationRiser(enabled);
       return playGoldenTigerAuthoredCue("reel-stop", enabled, {
         column,
         intensity: .93 + column * .055,
@@ -37,7 +42,7 @@ export function playGoldenTigerSample(event: GoldenTigerSampleEvent, enabled: bo
       });
     }
     case "anticipation":
-      return playGoldenTigerAuthoredCue("anticipation", enabled, { intensity: .94 });
+      return startGoldenTigerAnticipationRiser(enabled);
     case "feature-lock":
       return playGoldenTigerAuthoredCue("sticky-land", enabled, { intensity: .98 });
     case "win":
