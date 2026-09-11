@@ -7,6 +7,7 @@ on:
       - "src/components/arcade/GoldenTigerReference.css"
       - "src/components/arcade/GoldenTigerPremium.tsx"
       - "src/components/arcade/GoldenTigerRework.css"
+      - "src/components/arcade/GoldenTigerPolish.css"
       - "src/components/arcade/GoldenTigerPremiumArt.css"
       - "src/components/arcade/GoldenTigerPresentation.css"
       - "src/components/arcade/GoldenTigerPresentationSafe.css"
@@ -21,6 +22,7 @@ on:
       - "scripts/goldenTigerVisualQa.mjs"
       - "scripts/goldenTigerDesktopSpinQa.mjs"
       - "scripts/goldenTigerSpecialStateQa.mjs"
+      - "scripts/goldenTigerPolishQa.mjs"
       - "scripts/goldenTigerPaylineQa.mjs"
       - "scripts/goldenTigerFrontendPlaytestQa.mjs"
       - "scripts/goldenTigerBonusBuyQa.mjs"
@@ -112,6 +114,9 @@ jobs:
 
       - name: Audit special states
         run: node scripts/goldenTigerSpecialStateQa.mjs
+
+      - name: Audit polish states
+        run: node scripts/goldenTigerPolishQa.mjs
 
       - name: Audit sequential paylines
         run: node scripts/goldenTigerPaylineQa.mjs

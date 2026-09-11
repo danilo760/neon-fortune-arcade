@@ -36,12 +36,12 @@ export function goldenTigerReelTensionPx(column: number) {
 /** Slightly larger late-reel overshoot gives columns 2/3 more perceived mass. */
 export function goldenTigerReelOvershootPx(column: number) {
   const safe = Math.max(0, Math.min(2, Math.trunc(column)));
-  return 5.5 + safe * 1.5;
+  return 6.25 + safe * 1.25;
 }
 
 export function goldenTigerReelReboundMs(column: number, turbo: boolean) {
   const safe = Math.max(0, Math.min(2, Math.trunc(column)));
-  return turbo ? 62 + safe * 4 : 90 + safe * 8;
+  return turbo ? 58 + safe * 4 : 82 + safe * 6;
 }
 
 /**
@@ -61,10 +61,11 @@ export function goldenTigerBrakeEase(progress: number) {
   return 1 - (1 - t) ** 3.35;
 }
 
-/** Small critically-damped-looking curve for the overshoot return. */
+/** A short under-damped snap: the reel crosses center by <1px, then settles. */
 export function goldenTigerReboundEase(progress: number) {
   const t = Math.max(0, Math.min(1, Number.isFinite(progress) ? progress : 0));
-  return 1 - Math.cos((t * Math.PI) / 2);
+  if (t === 0 || t === 1) return t;
+  return 1 - Math.exp(-5.2 * t) * Math.cos(5.8 * t);
 }
 
 export function goldenTigerRevealPauseMs(turbo: boolean, hasWin: boolean) {

@@ -24,18 +24,20 @@ function reducedMotion() {
  * Presentation-only mascot stage using an original 4×2 pose atlas.
  *
  * Pose order: idle, blink, watch, tense / reveal, feature, win, full.
- * Gameplay owns the acting state. This component only adds a short authored
- * overlap between adjacent atlas poses so the mascot reads as one performer
- * rather than an instantaneous sprite replacement. Idle blinking remains the
- * only locally scheduled action.
+ * Gameplay owns the major acting state. This component adds a short authored
+ * overlap between adjacent atlas poses plus restrained idle breaks (blink/look)
+ * so the mascot keeps breathing and occasionally redirects attention while the
+ * player is waiting. Idle breaks never run during gameplay states.
  */
 export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
   reaction,
   featureActive,
   lockedCount,
 }: Props) {
-  const [idleBlink, setIdleBlink] = useState(false);
-  const requestedPose = goldenTigerPose(reaction, idleBlink);
+  const [idleBreak, setIdleBreak] = useState<"none" | "blink" | "look">("none");
+  const requestedPose = reaction === "idle" && idleBreak === "look"
+    ? "watch"
+    : goldenTigerPose(reaction, idleBreak === "blink");
   const activePoseRef = useRef<TigerPose>(requestedPose);
   const [activePose, setActivePose] = useState<TigerPose>(requestedPose);
   const [previousPose, setPreviousPose] = useState<TigerPose | null>(null);
@@ -43,31 +45,32 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
 
   useEffect(() => {
     if (reaction !== "idle" || reducedMotion()) {
-      setIdleBlink(false);
+      setIdleBreak("none");
       return;
     }
 
     let cancelled = false;
-    let blinkTimer = 0;
+    let breakTimer = 0;
     let releaseTimer = 0;
 
-    const scheduleBlink = () => {
-      const delay = 2_600 + Math.round(Math.random() * 1_800);
-      blinkTimer = window.setTimeout(() => {
+    const scheduleIdleBreak = () => {
+      const delay = 4_000 + Math.round(Math.random() * 3_000);
+      breakTimer = window.setTimeout(() => {
         if (cancelled) return;
-        setIdleBlink(true);
+        const nextBreak = Math.random() < 0.62 ? "blink" : "look";
+        setIdleBreak(nextBreak);
         releaseTimer = window.setTimeout(() => {
           if (cancelled) return;
-          setIdleBlink(false);
-          scheduleBlink();
-        }, 145);
+          setIdleBreak("none");
+          scheduleIdleBreak();
+        }, nextBreak === "blink" ? 155 : 720);
       }, delay);
     };
 
-    scheduleBlink();
+    scheduleIdleBreak();
     return () => {
       cancelled = true;
-      window.clearTimeout(blinkTimer);
+      window.clearTimeout(breakTimer);
       window.clearTimeout(releaseTimer);
     };
   }, [reaction]);
@@ -104,6 +107,7 @@ export const GoldenTigerTigerStage = memo(function GoldenTigerTigerStage({
       data-feature={featureActive ? "on" : "off"}
       data-celebration={celebrationPose ? "true" : "false"}
       data-pose-transition={previousPose ? "active" : "settled"}
+      data-idle-break={reaction === "idle" ? idleBreak : "none"}
     >
       <span className="gt-hw-tiger-stage-halo" aria-hidden />
       <span className="gt-hw-tiger-stage-shadow" aria-hidden />
