@@ -105,7 +105,16 @@ const report = [];
   const scenario = await openSpinScenario([0,0,0, 0.05,0.05,0.05, 0.5,0.9,0.15, 0.5]);
   try {
     await waitFor(scenario.client, `document.querySelector('.gt-hw-machine')?.getAttribute('data-anticipating') === 'true'`, "anticipation takeover");
-    await sleep(48);
+    await waitFor(
+      scenario.client,
+      `(() => {
+        const hud = document.querySelector('.gt-hw-hud');
+        return hud && Number.parseFloat(getComputedStyle(hud).opacity) <= 0.82;
+      })()`,
+      "anticipation HUD transition",
+      1_000,
+    );
+    await sleep(24);
     const state = await evaluate(scenario.client, `(() => {
       const scene = document.querySelector('.gt-commercial-scene');
       const track = document.querySelector('.gt-hw-reel-overlay:not(.is-braking) .gt-hw-reel-track') ?? document.querySelector('.gt-hw-reel-overlay .gt-hw-reel-track');
