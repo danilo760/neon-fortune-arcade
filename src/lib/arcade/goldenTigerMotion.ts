@@ -6,26 +6,26 @@ export const GOLDEN_TIGER_REEL_COUNT = 3;
  * but still preserves all three stops instead of visually skipping them.
  */
 export function goldenTigerSpinLaunchMs(turbo: boolean) {
-  return turbo ? 180 : 700;
+  return turbo ? 240 : 900;
 }
 
 export function goldenTigerReelBrakeMs(column: number, turbo: boolean) {
   const safeColumn = Math.max(0, Math.min(GOLDEN_TIGER_REEL_COUNT - 1, Math.trunc(column)));
-  return turbo ? 125 + safeColumn * 15 : 450 + safeColumn * 55;
+  return turbo ? 160 + safeColumn * 20 : 570 + safeColumn * 70;
 }
 
 export function goldenTigerReelLandPauseMs(column: number, turbo: boolean) {
   const safeColumn = Math.max(0, Math.min(GOLDEN_TIGER_REEL_COUNT - 1, Math.trunc(column)));
-  return turbo ? 50 + safeColumn * 7 : 165 + safeColumn * 20;
+  return turbo ? 70 + safeColumn * 8 : 210 + safeColumn * 25;
 }
 
 export function goldenTigerAnticipationMs(turbo: boolean) {
-  return turbo ? 130 : 500;
+  return turbo ? 170 : 650;
 }
 
 /** A small upward preload sells inertia before the strip starts moving. */
 export function goldenTigerReelTensionMs(turbo: boolean) {
-  return turbo ? 42 : 105;
+  return turbo ? 55 : 150;
 }
 
 export function goldenTigerReelTensionPx(column: number) {
@@ -41,7 +41,7 @@ export function goldenTigerReelOvershootPx(column: number) {
 
 export function goldenTigerReelReboundMs(column: number, turbo: boolean) {
   const safe = Math.max(0, Math.min(2, Math.trunc(column)));
-  return turbo ? 72 + safe * 5 : 125 + safe * 10;
+  return turbo ? 90 + safe * 7 : 165 + safe * 12;
 }
 
 /**
@@ -68,12 +68,12 @@ export function goldenTigerReboundEase(progress: number) {
 }
 
 export function goldenTigerRevealPauseMs(turbo: boolean, hasWin: boolean) {
-  if (turbo) return hasWin ? 125 : 90;
-  return hasWin ? 340 : 210;
+  if (turbo) return hasWin ? 180 : 130;
+  return hasWin ? 520 : 320;
 }
 
 export function goldenTigerAutoGapMs(turbo: boolean) {
-  return turbo ? 140 : 380;
+  return turbo ? 190 : 520;
 }
 
 export function goldenTigerNominalSpinMs(turbo: boolean, anticipation = false) {

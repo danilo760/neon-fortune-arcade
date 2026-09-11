@@ -148,7 +148,7 @@ function ReelOverlay({
 
     const tensionMs = goldenTigerReelTensionMs(turbo);
     const tensionPx = goldenTigerReelTensionPx(column);
-    const accelerationMs = turbo ? 72 + column * 8 : 150 + column * 16;
+    const accelerationMs = turbo ? 90 + column * 10 : 260 + column * 24;
     const totalBrakeMs = goldenTigerReelBrakeMs(column, turbo);
     const reboundMs = goldenTigerReelReboundMs(column, turbo);
     const brakeTravelMs = Math.max(32, totalBrakeMs - reboundMs);
@@ -179,7 +179,7 @@ function ReelOverlay({
       const delta = Math.min(34, Math.max(1, time - lastTime));
       const finalOffset = itemHeight * (symbols.length - 3);
       const overshootOffset = finalOffset + overshootPx;
-      const cruiseVelocity = itemHeight / (turbo ? 40 : 64);
+      const cruiseVelocity = itemHeight / (turbo ? 58 : 105);
 
       if (reducedMotion()) {
         if (brakingRef.current) {
@@ -947,7 +947,7 @@ export function GoldenTigerPremium() {
         {phase === "win" && win > 0 && (winTier === "small" || winTier === "nice") && (
           <div className={cn("gt-hw-win-ribbon", `is-${winTier}`)} aria-live="polite">
             <span>{winTier === "nice" ? "BOM GANHO" : "GANHO"}</span>
-            <AnimatedWinCounter value={win} duration={reducedMotion() ? 0 : 620} />
+            <AnimatedWinCounter value={win} duration={reducedMotion() ? 0 : turbo ? 520 : 900} />
           </div>
         )}
 
