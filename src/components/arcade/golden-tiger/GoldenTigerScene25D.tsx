@@ -12,69 +12,53 @@ const SCENE_PARTICLES = Array.from({ length: 12 }, (_, index) => ({
 }));
 
 /**
- * Final approved polish lives with the existing scene instead of creating a
- * second Golden Tiger version or another stylesheet chain. Presentation only:
- * no outcome, RNG, RTP, bet, payout or settlement logic is changed here.
+ * Final presentation polish stays inside the existing Golden Tiger scene.
+ * It does not alter outcomes, RNG, RTP, payout or settlement.
  */
 const FINAL_POLISH = String.raw`
-/* --------------------------------------------------------------------------
-   REEL LANDING — symbols visibly fall, hit the stop and settle with weight.
-   data-landing-column is set before the deterministic brake; the delays align
-   the static symbol impact with the moment the moving reel overlay disappears.
-   -------------------------------------------------------------------------- */
+/* ========================================================================== */
+/* REEL WEIGHT — slow visible fall, then impact + settle                       */
+/* ========================================================================== */
 .gt-hw-page .gt-premium-machine .gt-premium-grid[data-landing-column="0"] .gt-hw-cell:nth-child(3n+1) {
-  animation: gt-final-symbol-land .38s cubic-bezier(.12,.78,.18,1.16) .65s both !important;
+  animation: gt-final-heavy-land .58s cubic-bezier(.12,.72,.15,1.14) 1.02s both !important;
 }
 .gt-hw-page .gt-premium-machine .gt-premium-grid[data-landing-column="1"] .gt-hw-cell:nth-child(3n+2) {
-  animation: gt-final-symbol-land .39s cubic-bezier(.12,.78,.18,1.16) .76s both !important;
+  animation: gt-final-heavy-land .60s cubic-bezier(.12,.72,.15,1.14) 1.14s both !important;
 }
 .gt-hw-page .gt-premium-machine .gt-premium-grid[data-landing-column="2"] .gt-hw-cell:nth-child(3n+3) {
-  animation: gt-final-symbol-land .40s cubic-bezier(.12,.78,.18,1.16) .88s both !important;
-}
-.gt-hw-page .gt-premium-machine .gt-premium-grid[data-landing-column="0"] .gt-commercial-reel-cylinder.is-0 {
-  animation: gt-final-cylinder-hit .38s cubic-bezier(.14,.76,.2,1.14) .65s both !important;
-}
-.gt-hw-page .gt-premium-machine .gt-premium-grid[data-landing-column="1"] .gt-commercial-reel-cylinder.is-1 {
-  animation: gt-final-cylinder-hit .39s cubic-bezier(.14,.76,.2,1.14) .76s both !important;
-}
-.gt-hw-page .gt-premium-machine .gt-premium-grid[data-landing-column="2"] .gt-commercial-reel-cylinder.is-2 {
-  animation: gt-final-cylinder-hit .40s cubic-bezier(.14,.76,.2,1.14) .88s both !important;
+  animation: gt-final-heavy-land .62s cubic-bezier(.12,.72,.15,1.14) 1.27s both !important;
 }
 
-/* Turbo stays fast, but still has a visible hit instead of snapping instantly. */
-.gt-hw-page .gt-premium-machine:has(.gt-premium-secondary > button:first-child.is-active) .gt-premium-grid[data-landing-column="0"] .gt-hw-cell:nth-child(3n+1),
-.gt-hw-page .gt-premium-machine:has(.gt-premium-secondary > button:first-child.is-active) .gt-premium-grid[data-landing-column="0"] .gt-commercial-reel-cylinder.is-0 {
-  animation-delay: .14s !important;
-  animation-duration: .13s !important;
+.gt-hw-page .gt-premium-machine:has(.gt-premium-secondary > button:first-child.is-active) .gt-premium-grid[data-landing-column="0"] .gt-hw-cell:nth-child(3n+1) {
+  animation-delay: .24s !important;
+  animation-duration: .26s !important;
 }
-.gt-hw-page .gt-premium-machine:has(.gt-premium-secondary > button:first-child.is-active) .gt-premium-grid[data-landing-column="1"] .gt-hw-cell:nth-child(3n+2),
-.gt-hw-page .gt-premium-machine:has(.gt-premium-secondary > button:first-child.is-active) .gt-premium-grid[data-landing-column="1"] .gt-commercial-reel-cylinder.is-1 {
-  animation-delay: .17s !important;
-  animation-duration: .13s !important;
+.gt-hw-page .gt-premium-machine:has(.gt-premium-secondary > button:first-child.is-active) .gt-premium-grid[data-landing-column="1"] .gt-hw-cell:nth-child(3n+2) {
+  animation-delay: .28s !important;
+  animation-duration: .27s !important;
 }
-.gt-hw-page .gt-premium-machine:has(.gt-premium-secondary > button:first-child.is-active) .gt-premium-grid[data-landing-column="2"] .gt-hw-cell:nth-child(3n+3),
-.gt-hw-page .gt-premium-machine:has(.gt-premium-secondary > button:first-child.is-active) .gt-premium-grid[data-landing-column="2"] .gt-commercial-reel-cylinder.is-2 {
-  animation-delay: .20s !important;
-  animation-duration: .14s !important;
+.gt-hw-page .gt-premium-machine:has(.gt-premium-secondary > button:first-child.is-active) .gt-premium-grid[data-landing-column="2"] .gt-hw-cell:nth-child(3n+3) {
+  animation-delay: .32s !important;
+  animation-duration: .28s !important;
 }
 
-@keyframes gt-final-symbol-land {
+@keyframes gt-final-heavy-land {
   0% {
-    opacity: .70;
-    transform: translate3d(0,-18px,0) scaleY(1.045) scaleX(.99);
-    filter: brightness(.92) saturate(.96);
+    opacity: .82;
+    transform: translate3d(0,-28px,0) scaleY(1.06) scaleX(.985);
+    filter: brightness(.92) saturate(.92);
   }
-  44% {
+  48% {
     opacity: 1;
-    transform: translate3d(0,5px,0) scaleY(.955) scaleX(1.012);
-    filter: brightness(1.18) saturate(1.06);
+    transform: translate3d(0,7px,0) scaleY(.94) scaleX(1.018);
+    filter: brightness(1.18) saturate(1.08);
   }
   68% {
-    transform: translate3d(0,-3px,0) scaleY(1.022) scaleX(.997);
-    filter: brightness(1.07);
+    transform: translate3d(0,-4px,0) scaleY(1.026) scaleX(.995);
+    filter: brightness(1.08);
   }
   84% {
-    transform: translate3d(0,1px,0) scaleY(.992);
+    transform: translate3d(0,2px,0) scaleY(.988);
   }
   100% {
     opacity: 1;
@@ -83,290 +67,422 @@ const FINAL_POLISH = String.raw`
   }
 }
 
-@keyframes gt-final-cylinder-hit {
-  0%,100% { transform: translateY(0) scaleY(1); filter: brightness(1); }
-  44% { transform: translateY(3px) scaleY(.985); filter: brightness(1.10); }
-  70% { transform: translateY(-1px) scaleY(1.008); filter: brightness(1.04); }
+/* Make reel movement readable instead of a bright blur. */
+.gt-hw-page .gt-premium-machine .gt-hw-reel-track {
+  filter: none !important;
+}
+.gt-hw-page .gt-premium-machine .gt-hw-reel-overlay::before {
+  opacity: .16 !important;
+}
+.gt-hw-page .gt-premium-machine .gt-hw-reel-overlay.is-braking::before {
+  opacity: .06 !important;
 }
 
-/* --------------------------------------------------------------------------
-   PAYOUT READABILITY — every positive result has a readable amount window.
-   Small/nice wins use the existing ribbon; large wins keep their existing
-   cinematic stage. Returns get a compact central result plaque instead of a
-   tiny HUD message.
-   -------------------------------------------------------------------------- */
+/* ========================================================================== */
+/* WIN AMOUNT — every positive hit owns the center long enough to be read      */
+/* ========================================================================== */
 .gt-hw-page .gt-premium-machine .gt-hw-win-ribbon {
-  top: 58% !important;
-  width: min(86%, 360px) !important;
-  min-height: 96px !important;
-  padding: 13px 20px 15px !important;
-  border: 2px solid rgba(255,232,139,.96) !important;
-  border-radius: 22px !important;
+  top: 57% !important;
+  width: min(88%, 366px) !important;
+  min-height: 106px !important;
+  padding: 15px 20px 17px !important;
+  border: 2px solid #ffe08a !important;
+  border-radius: 23px !important;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(255,235,151,.28), transparent 48%),
-    linear-gradient(180deg, rgba(111,16,9,.985), rgba(39,3,4,.985)) !important;
+    radial-gradient(ellipse at 50% -10%, rgba(255,236,163,.34), transparent 52%),
+    linear-gradient(180deg, rgba(132,24,12,.99), rgba(50,4,4,.99)) !important;
   box-shadow:
-    0 16px 34px rgba(0,0,0,.68),
-    0 0 0 2px rgba(112,31,7,.82),
-    0 0 30px rgba(255,196,61,.30),
-    inset 0 1px 0 rgba(255,248,207,.30) !important;
-  animation:
-    gt-final-payout-enter .38s cubic-bezier(.16,.84,.2,1.12) both,
-    gt-final-payout-glow 1.15s ease-in-out .40s infinite alternate !important;
+    0 18px 38px rgba(0,0,0,.72),
+    0 0 0 2px rgba(105,24,6,.92),
+    0 0 34px rgba(255,187,43,.34),
+    inset 0 1px 0 rgba(255,250,218,.34),
+    inset 0 -10px 18px rgba(46,3,2,.28) !important;
+  animation: gt-final-win-in .42s cubic-bezier(.15,.82,.18,1.14) both !important;
 }
 .gt-hw-page .gt-premium-machine .gt-hw-win-ribbon > span:first-child {
   font-size: 13px !important;
-  letter-spacing: .18em !important;
-  color: #ffd971 !important;
+  font-weight: 950 !important;
+  letter-spacing: .20em !important;
+  color: #ffd86c !important;
 }
 .gt-hw-page .gt-premium-machine .gt-hw-win-ribbon > span + span {
-  margin-top: 5px !important;
-  font-size: clamp(32px, 10vw, 45px) !important;
-  line-height: 1 !important;
-  color: #fff4bf !important;
-  text-shadow: 0 3px 0 #721006, 0 0 16px rgba(255,218,101,.58) !important;
+  margin-top: 7px !important;
+  font-size: clamp(34px,10.5vw,48px) !important;
+  line-height: .96 !important;
+  color: #fff5c3 !important;
+  text-shadow: 0 3px 0 #741007, 0 0 18px rgba(255,222,111,.62) !important;
 }
-
-.gt-hw-page .gt-premium-machine[data-phase="return"] .gt-hw-status {
-  position: absolute !important;
-  z-index: 73 !important;
-  left: 50% !important;
-  top: 59% !important;
-  transform: translate(-50%,-50%) !important;
-  width: min(82%, 340px) !important;
-  min-height: 62px !important;
-  padding: 8px 15px !important;
-  border: 2px solid rgba(255,221,117,.88) !important;
-  border-radius: 18px !important;
+.gt-hw-page .gt-premium-machine .gt-hw-win-ribbon.is-return {
+  min-height: 92px !important;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(255,220,116,.20), transparent 55%),
-    linear-gradient(180deg, rgba(88,12,8,.97), rgba(35,3,4,.98)) !important;
-  box-shadow:
-    0 14px 30px rgba(0,0,0,.60),
-    0 0 22px rgba(255,184,48,.24),
-    inset 0 1px 0 rgba(255,239,177,.22) !important;
-  pointer-events: none;
-  animation: gt-final-payout-enter .34s cubic-bezier(.16,.84,.2,1.12) both !important;
-}
-.gt-hw-page .gt-premium-machine[data-phase="return"] .gt-hw-status span {
-  font-size: clamp(14px,4.4vw,19px) !important;
-  font-weight: 950 !important;
-  letter-spacing: .09em !important;
-  color: #fff1a8 !important;
+    radial-gradient(ellipse at 50% -15%, rgba(255,221,116,.24), transparent 52%),
+    linear-gradient(180deg, rgba(102,16,9,.985), rgba(39,3,4,.99)) !important;
 }
 
-@keyframes gt-final-payout-enter {
-  0% { opacity: 0; transform: translate(-50%,-43%) scale(.82); }
-  58% { opacity: 1; transform: translate(-50%,-51%) scale(1.035); }
+@keyframes gt-final-win-in {
+  0% { opacity: 0; transform: translate(-50%,-43%) scale(.80); }
+  58% { opacity: 1; transform: translate(-50%,-51%) scale(1.04); }
   100% { opacity: 1; transform: translate(-50%,-50%) scale(1); }
 }
-@keyframes gt-final-payout-glow {
-  from { filter: brightness(1); }
-  to { filter: brightness(1.06) saturate(1.05); }
-}
 
-/* --------------------------------------------------------------------------
-   FUTURE-PREMIUM CONTROL DECK — same approved layout, richer materials only.
-   -------------------------------------------------------------------------- */
+/* ========================================================================== */
+/* CONTROL DECK — physical premium slot console, not generic web buttons       */
+/* ========================================================================== */
 .gt-hw-page .gt-premium-machine .gt-hw-controls.gt-commercial-console {
-  border-top-color: rgba(240,197,99,.70) !important;
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: 56px 52px 94px 52px 56px !important;
+  grid-template-rows: 78px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  padding: 7px 8px 10px !important;
+  border: 1px solid rgba(213,159,58,.68) !important;
+  border-radius: 18px 18px 24px 24px !important;
   background:
-    linear-gradient(90deg, rgba(31,8,10,.98), rgba(16,13,17,.995) 23% 77%, rgba(31,8,10,.98)),
-    radial-gradient(ellipse at 50% -18%, rgba(54,228,186,.13), transparent 48%) !important;
+    radial-gradient(ellipse at 50% -22%, rgba(255,210,91,.12), transparent 48%),
+    linear-gradient(180deg, #3d0909 0%, #1e0507 38%, #09090d 100%) !important;
   box-shadow:
-    inset 0 2px 0 rgba(255,232,159,.10),
-    inset 0 -12px 19px rgba(0,0,0,.42),
-    0 9px 17px rgba(0,0,0,.36),
-    0 -1px 12px rgba(45,208,171,.06) !important;
+    inset 0 2px 0 rgba(255,230,150,.12),
+    inset 0 -14px 22px rgba(0,0,0,.46),
+    0 10px 18px rgba(0,0,0,.42),
+    0 0 0 2px rgba(63,8,5,.72) !important;
+}
+.gt-hw-page .gt-premium-machine .gt-hw-main-controls,
+.gt-hw-page .gt-premium-machine .gt-premium-secondary {
+  display: contents !important;
 }
 
+/* − / + */
 .gt-hw-page .gt-premium-machine .gt-hw-main-controls > button:not(.gt-hw-spin) {
-  border: 2px solid #b98739 !important;
+  position: relative !important;
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  min-height: 52px !important;
+  padding: 0 !important;
+  border: 2px solid #d7a43f !important;
+  border-radius: 50% !important;
   background:
-    radial-gradient(circle at 36% 24%, rgba(121,226,207,.15), transparent 28%),
-    linear-gradient(180deg, #302d31 0%, #19171c 54%, #09090c 100%) !important;
-  color: #f5d781 !important;
-  text-shadow: 0 0 7px rgba(69,225,190,.16) !important;
+    radial-gradient(circle at 36% 27%, rgba(255,173,116,.16), transparent 28%),
+    radial-gradient(circle at 50% 48%, #66140f 0%, #3c0808 56%, #160306 100%) !important;
+  color: #ffe18a !important;
+  font-size: 29px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  text-shadow: 0 2px 0 #4a0704, 0 0 7px rgba(255,201,70,.26) !important;
   box-shadow:
-    inset 0 2px 0 rgba(255,240,192,.14),
-    inset 0 -7px 9px rgba(0,0,0,.48),
-    0 0 0 2px #4e1708,
-    0 4px 0 #1a0707,
-    0 7px 12px rgba(0,0,0,.44),
-    0 0 9px rgba(48,209,175,.08) !important;
+    inset 0 2px 0 rgba(255,235,171,.18),
+    inset 0 -8px 10px rgba(0,0,0,.38),
+    0 0 0 3px #54150a,
+    0 0 0 5px rgba(227,174,65,.32),
+    0 5px 0 #210406,
+    0 9px 14px rgba(0,0,0,.44) !important;
 }
-.gt-hw-page .gt-premium-machine .gt-hw-main-controls > button:not(.gt-hw-spin)::after {
-  content: "";
-  position: absolute;
-  inset: 5px;
-  border-radius: 50%;
-  border: 1px solid rgba(80,222,192,.12);
-  pointer-events: none;
+.gt-hw-page .gt-premium-machine .gt-hw-main-controls > button:first-child { grid-column: 2 !important; grid-row: 1 !important; }
+.gt-hw-page .gt-premium-machine .gt-hw-main-controls > button:last-child { grid-column: 4 !important; grid-row: 1 !important; }
+.gt-hw-page .gt-premium-machine .gt-hw-main-controls > button:not(.gt-hw-spin)::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 5px !important;
+  border: 1px solid rgba(255,223,137,.20) !important;
+  border-radius: 50% !important;
+  pointer-events: none !important;
 }
 
+/* Main Spin */
 .gt-hw-page .gt-premium-machine .gt-hw-spin {
-  border-color: #f2d063 !important;
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  width: 94px !important;
+  height: 94px !important;
+  max-width: none !important;
+  justify-self: center !important;
+  border: 4px solid #f0cb55 !important;
+  border-radius: 50% !important;
   background:
-    radial-gradient(circle at 34% 24%, rgba(236,255,244,.92) 0 3%, rgba(123,255,220,.24) 5% 10%, transparent 12%),
-    radial-gradient(circle at 50% 43%, #4af0ba 0 28%, #12b98b 48%, #06745f 69%, #022f32 100%) !important;
+    radial-gradient(circle at 34% 24%, rgba(244,255,244,.95) 0 3%, rgba(153,255,218,.27) 5% 10%, transparent 12%),
+    radial-gradient(circle at 50% 43%, #41dda0 0 30%, #10a972 51%, #08704e 72%, #023829 100%) !important;
   box-shadow:
-    inset 0 3px 0 rgba(224,255,242,.56),
-    inset 0 -10px 14px rgba(0,37,39,.58),
-    0 0 0 4px #6c2b09,
-    0 0 0 6px rgba(33,225,184,.13),
-    0 5px 0 #2b0c08,
-    0 10px 18px rgba(0,0,0,.48),
-    0 0 24px rgba(37,231,185,.28),
-    0 0 38px rgba(255,203,76,.13) !important;
+    inset 0 3px 0 rgba(228,255,232,.54),
+    inset 0 -11px 15px rgba(0,44,28,.56),
+    0 0 0 4px #7b290b,
+    0 0 0 7px #d39e35,
+    0 0 0 9px rgba(87,24,7,.80),
+    0 5px 0 #3b0b08,
+    0 11px 18px rgba(0,0,0,.48),
+    0 0 23px rgba(43,216,155,.27) !important;
 }
 .gt-hw-page .gt-premium-machine .gt-hw-spin::before {
-  inset: 7px !important;
-  border-color: rgba(242,255,224,.30) !important;
-  box-shadow: inset 0 0 14px rgba(114,255,217,.18), 0 0 8px rgba(71,234,190,.14) !important;
+  content: "" !important;
+  position: absolute !important;
+  inset: 9px !important;
+  border: 1px solid rgba(238,255,224,.36) !important;
+  border-radius: 50% !important;
+  box-shadow: inset 0 0 13px rgba(138,255,207,.16) !important;
 }
-.gt-hw-page .gt-premium-machine .gt-hw-spin:not(:disabled):hover {
-  filter: brightness(1.08) saturate(1.08) !important;
+.gt-hw-page .gt-premium-machine .gt-hw-spin > span {
+  width: 46% !important;
+  border-width: 5px !important;
+  border-color: #ffe17b !important;
+  border-left-color: transparent !important;
+  filter: drop-shadow(0 2px 1px rgba(64,23,1,.56)) !important;
+}
+.gt-hw-page .gt-premium-machine .gt-hw-spin > span::after {
+  border-top-width: 5px !important;
+  border-right-width: 5px !important;
+  border-top-color: #ffe17b !important;
+  border-right-color: #ffe17b !important;
 }
 
+/* Turbo / Auto */
 .gt-hw-page .gt-premium-machine .gt-premium-secondary > button:not(.gt-premium-bonus-button) {
-  border: 2px solid rgba(178,135,59,.80) !important;
+  position: relative !important;
+  width: 56px !important;
+  height: 56px !important;
+  min-width: 56px !important;
+  min-height: 56px !important;
+  padding: 0 !important;
+  border: 2px solid #bc8934 !important;
+  border-radius: 50% !important;
   background:
-    radial-gradient(circle at 40% 25%, rgba(71,214,190,.13), transparent 30%),
-    linear-gradient(180deg, #29262d, #100f14 72%) !important;
-  color: #e7cd83 !important;
+    radial-gradient(circle at 36% 24%, rgba(255,185,122,.12), transparent 28%),
+    radial-gradient(circle at 50% 48%, #4b0d0c 0%, #260507 62%, #0c0609 100%) !important;
+  color: #eacb75 !important;
   box-shadow:
-    inset 0 2px 0 rgba(255,236,180,.10),
-    inset 0 -7px 10px rgba(0,0,0,.42),
-    0 0 0 2px #421306,
-    0 4px 0 #180606,
-    0 7px 11px rgba(0,0,0,.40) !important;
+    inset 0 2px 0 rgba(255,233,169,.12),
+    inset 0 -8px 10px rgba(0,0,0,.40),
+    0 0 0 3px #481107,
+    0 0 0 5px rgba(190,139,48,.25),
+    0 5px 0 #1b0305,
+    0 9px 13px rgba(0,0,0,.42) !important;
+}
+.gt-hw-page .gt-premium-machine .gt-premium-secondary > button:nth-child(1) { grid-column: 1 !important; grid-row: 1 !important; }
+.gt-hw-page .gt-premium-machine .gt-premium-secondary > button:nth-child(3) { grid-column: 5 !important; grid-row: 1 !important; }
+.gt-hw-page .gt-premium-machine .gt-premium-secondary > button:not(.gt-premium-bonus-button) > span {
+  display: none !important;
+}
+.gt-hw-page .gt-premium-machine .gt-premium-secondary > button:not(.gt-premium-bonus-button) > svg {
+  width: 22px !important;
+  height: 22px !important;
+}
+.gt-hw-page .gt-premium-machine .gt-premium-secondary > button:nth-child(3) > strong {
+  display: grid !important;
+  place-items: center !important;
+  min-width: 25px !important;
+  height: 25px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(255,220,126,.28) !important;
+  border-radius: 50% !important;
+  background: rgba(255,216,104,.08) !important;
+  color: #efd27b !important;
+  font-size: 13px !important;
 }
 .gt-hw-page .gt-premium-machine .gt-premium-secondary > button:first-child.is-active {
-  border-color: rgba(98,245,211,.90) !important;
-  color: #baffea !important;
-  background: radial-gradient(circle at 50% 40%, #176f62, #0a2a2c 72%) !important;
+  border-color: #f2d26c !important;
+  color: #fff1a4 !important;
+  background:
+    radial-gradient(circle at 50% 40%, #146f5a 0%, #0a493e 48%, #08241f 100%) !important;
   box-shadow:
-    inset 0 1px 0 rgba(219,255,246,.25),
-    0 0 0 2px rgba(224,180,72,.46),
-    0 0 15px rgba(54,235,195,.35),
-    0 4px 0 #151005 !important;
+    inset 0 2px 0 rgba(221,255,241,.20),
+    0 0 0 3px #6d2b09,
+    0 0 0 5px #d3a13e,
+    0 0 16px rgba(49,221,169,.30),
+    0 5px 0 #1d0805 !important;
 }
 
-/* Bonus is intentionally distinct and readable instead of a mystery icon. */
+/* Physical press */
+.gt-hw-page .gt-premium-machine .gt-hw-main-controls > button:not(.gt-hw-spin):not(:disabled):active,
+.gt-hw-page .gt-premium-machine .gt-premium-secondary > button:not(.gt-premium-bonus-button):not(:disabled):active {
+  transform: translateY(4px) scale(.96) !important;
+  box-shadow:
+    inset 0 6px 10px rgba(0,0,0,.42),
+    0 0 0 3px #481107,
+    0 1px 0 #1b0305,
+    0 4px 7px rgba(0,0,0,.30) !important;
+}
+.gt-hw-page .gt-premium-machine .gt-hw-spin:not(:disabled):active {
+  transform: translateY(4px) scale(.95) !important;
+  box-shadow:
+    inset 0 7px 12px rgba(0,55,37,.52),
+    0 0 0 4px #7b290b,
+    0 0 0 7px #d39e35,
+    0 1px 0 #3b0b08,
+    0 5px 9px rgba(0,0,0,.38) !important;
+}
+
+/* ========================================================================== */
+/* BONUS — one obvious purchase button + simple modal                          */
+/* ========================================================================== */
 .gt-hw-page .gt-premium-machine .gt-premium-secondary > button.gt-premium-bonus-button {
-  top: -42px !important;
-  width: 86px !important;
-  height: 32px !important;
-  min-width: 86px !important;
-  min-height: 32px !important;
-  padding: 0 9px !important;
+  position: absolute !important;
+  z-index: 9 !important;
+  left: 50% !important;
+  top: -41px !important;
+  transform: translateX(-50%) !important;
+  width: 146px !important;
+  height: 34px !important;
+  min-width: 146px !important;
+  min-height: 34px !important;
+  padding: 0 12px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 5px !important;
-  border: 1px solid rgba(255,217,111,.88) !important;
-  border-radius: 10px !important;
+  gap: 7px !important;
+  border: 1px solid #f1cb62 !important;
+  border-radius: 999px !important;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(255,239,171,.26), transparent 52%),
-    linear-gradient(180deg, #8e4212, #4d1608 72%) !important;
-  color: #fff0ad !important;
+    radial-gradient(ellipse at 50% -10%, rgba(255,244,188,.28), transparent 52%),
+    linear-gradient(180deg, #a52c17 0%, #671009 58%, #380506 100%) !important;
+  color: #fff0a1 !important;
   box-shadow:
-    inset 0 1px 0 rgba(255,247,205,.30),
-    inset 0 -5px 7px rgba(76,15,3,.36),
-    0 2px 0 #421006,
-    0 5px 10px rgba(0,0,0,.36),
-    0 0 10px rgba(255,193,60,.16) !important;
+    inset 0 1px 0 rgba(255,247,210,.28),
+    inset 0 -5px 8px rgba(53,3,2,.30),
+    0 2px 0 #4a0b06,
+    0 6px 11px rgba(0,0,0,.38),
+    0 0 13px rgba(255,183,41,.18) !important;
 }
 .gt-hw-page .gt-premium-machine .gt-premium-secondary > button.gt-premium-bonus-button > span {
   display: inline !important;
-  font-size: 7px !important;
+  font-size: 8.5px !important;
   font-weight: 950 !important;
-  letter-spacing: .08em !important;
+  letter-spacing: .075em !important;
   line-height: 1 !important;
+  white-space: nowrap !important;
 }
 .gt-hw-page .gt-premium-machine .gt-premium-secondary > button.gt-premium-bonus-button > svg {
-  width: 15px !important;
-  height: 15px !important;
-  color: #ffe080 !important;
+  width: 16px !important;
+  height: 16px !important;
+  color: #ffe07a !important;
+}
+.gt-hw-page .gt-premium-machine .gt-premium-secondary > button.gt-premium-bonus-button:not(:disabled):active {
+  transform: translateX(-50%) translateY(2px) scale(.98) !important;
 }
 
-/* --------------------------------------------------------------------------
-   BONUS MODAL — clear cost, clear mechanic, clear action.
-   -------------------------------------------------------------------------- */
 .gt-hw-page .gt-premium-machine .gt-premium-bonus-modal > div {
-  border-color: rgba(255,215,107,.90) !important;
+  padding: 20px 18px 18px !important;
+  border: 2px solid #e9bc55 !important;
+  border-radius: 22px !important;
   background:
-    radial-gradient(ellipse at 50% -5%, rgba(255,209,94,.24), transparent 44%),
-    linear-gradient(180deg, #391013 0%, #151017 52%, #09080c 100%) !important;
+    radial-gradient(ellipse at 50% -8%, rgba(255,206,79,.20), transparent 46%),
+    linear-gradient(180deg, #4a0b0b 0%, #190408 50%, #09080b 100%) !important;
   box-shadow:
-    0 0 0 2px rgba(98,28,8,.82),
-    0 22px 60px rgba(0,0,0,.78),
-    0 0 36px rgba(255,181,43,.18),
-    inset 0 1px 0 rgba(255,243,192,.18) !important;
+    0 0 0 2px #5d1308,
+    0 24px 64px rgba(0,0,0,.82),
+    0 0 34px rgba(255,176,37,.16),
+    inset 0 1px 0 rgba(255,240,188,.16) !important;
 }
 .gt-hw-page .gt-premium-machine .gt-premium-bonus-modal > div > span {
-  color: #6af0cf !important;
-  letter-spacing: .18em !important;
+  font-size: 8px !important;
+  color: #f5ca68 !important;
+  letter-spacing: .22em !important;
 }
 .gt-hw-page .gt-premium-machine .gt-premium-bonus-modal h2 {
-  margin-top: 7px !important;
-  font-size: 19px !important;
-  color: #fff1b1 !important;
+  margin: 6px 0 0 !important;
+  font: 900 21px/1.05 Georgia, serif !important;
+  color: #fff0a7 !important;
+  text-shadow: 0 2px 0 #681006 !important;
+}
+.gt-hw-page .gt-premium-machine .gt-premium-bonus-medallion {
+  width: 62px !important;
+  height: 62px !important;
+  margin: 10px auto 9px !important;
+  border: 3px solid #f0c75c !important;
+  background: radial-gradient(circle at 35% 27%, #fff5ba 0 6%, #e7aa37 8%, #a72a13 58%, #471009 100%) !important;
+  color: #fff0a1 !important;
+  box-shadow: 0 0 0 3px #5e1908, 0 0 18px rgba(255,184,48,.26) !important;
+}
+.gt-hw-page .gt-premium-machine .gt-premium-bonus-medallion svg {
+  width: 27px !important;
+  height: 27px !important;
 }
 .gt-hw-page .gt-premium-machine .gt-premium-bonus-modal p {
-  max-width: 320px !important;
-  color: rgba(255,238,199,.90) !important;
+  margin-top: 6px !important;
+  max-width: 310px !important;
   font-size: 10.5px !important;
-  line-height: 1.5 !important;
+  line-height: 1.45 !important;
+  color: rgba(255,235,194,.88) !important;
 }
-.gt-hw-page .gt-premium-machine .gt-premium-bonus-modal dl > div {
-  border-color: rgba(191,151,74,.30) !important;
-  background: rgba(8,9,12,.62) !important;
+.gt-hw-page .gt-premium-machine .gt-premium-bonus-modal dl {
+  margin: 12px 0 7px !important;
 }
-.gt-hw-page .gt-premium-machine .gt-premium-bonus-modal dl > div:nth-child(2) {
-  border-color: rgba(255,211,97,.76) !important;
+.gt-hw-page .gt-premium-machine .gt-premium-bonus-modal .gt-bonus-cost {
+  padding: 11px 13px !important;
+  border: 1px solid rgba(241,199,87,.72) !important;
+  border-radius: 12px !important;
   background:
-    radial-gradient(ellipse at 80% 50%, rgba(255,198,58,.13), transparent 52%),
-    linear-gradient(90deg, rgba(71,30,8,.78), rgba(25,15,14,.84)) !important;
-  box-shadow: inset 0 0 12px rgba(255,190,48,.08), 0 0 10px rgba(255,183,40,.06) !important;
+    radial-gradient(ellipse at 80% 50%, rgba(255,201,66,.14), transparent 52%),
+    rgba(23,7,7,.88) !important;
 }
-.gt-hw-page .gt-premium-machine .gt-premium-bonus-modal dl > div:nth-child(2) dd {
-  font-size: 13px !important;
-  color: #ffe183 !important;
+.gt-hw-page .gt-premium-machine .gt-premium-bonus-modal .gt-bonus-cost dt {
+  font-size: 8px !important;
+  color: #d9ad5d !important;
+}
+.gt-hw-page .gt-premium-machine .gt-premium-bonus-modal .gt-bonus-cost dd {
+  font-size: 16px !important;
+  color: #ffe17a !important;
+}
+.gt-hw-page .gt-premium-machine .gt-bonus-start-note {
+  display: block !important;
+  margin-top: 7px !important;
+  color: rgba(255,225,170,.72) !important;
+  font-size: 8px !important;
 }
 .gt-hw-page .gt-premium-machine .gt-premium-bonus-modal .is-buy {
-  position: relative !important;
-  border-color: rgba(255,222,121,.92) !important;
-  background: linear-gradient(180deg, #25a981, #0b6658) !important;
-  color: #effff7 !important;
-  box-shadow: inset 0 1px 0 rgba(227,255,246,.28), 0 0 14px rgba(54,226,190,.18) !important;
-  font-size: 0 !important;
-}
-.gt-hw-page .gt-premium-machine .gt-premium-bonus-modal .is-buy::after {
-  content: "COMPRAR BÔNUS";
-  font-size: 11px;
-  font-weight: 950;
-  letter-spacing: .05em;
+  border-color: #f2cf6b !important;
+  background: linear-gradient(180deg, #15976d, #075f4b) !important;
+  color: #f4fff9 !important;
+  box-shadow: inset 0 1px 0 rgba(232,255,244,.24), 0 0 13px rgba(40,213,157,.14) !important;
 }
 
 @media (max-width: 390px) {
-  .gt-hw-page .gt-premium-machine .gt-premium-secondary > button.gt-premium-bonus-button {
-    width: 76px !important;
-    min-width: 76px !important;
-    height: 29px !important;
-    min-height: 29px !important;
-    top: -39px !important;
-    padding-inline: 6px !important;
+  .gt-hw-page .gt-premium-machine .gt-hw-controls.gt-commercial-console {
+    grid-template-columns: 48px 45px 82px 45px 48px !important;
+    grid-template-rows: 70px !important;
+    gap: 6px !important;
+    padding-inline: 5px !important;
   }
-  .gt-hw-page .gt-premium-machine .gt-hw-win-ribbon { top: 57% !important; }
-  .gt-hw-page .gt-premium-machine[data-phase="return"] .gt-hw-status { top: 57% !important; }
+  .gt-hw-page .gt-premium-machine .gt-hw-main-controls > button:not(.gt-hw-spin) {
+    width: 45px !important;
+    height: 45px !important;
+    min-width: 45px !important;
+    min-height: 45px !important;
+    font-size: 26px !important;
+  }
+  .gt-hw-page .gt-premium-machine .gt-hw-spin {
+    width: 82px !important;
+    height: 82px !important;
+  }
+  .gt-hw-page .gt-premium-machine .gt-premium-secondary > button:not(.gt-premium-bonus-button) {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+  }
+  .gt-hw-page .gt-premium-machine .gt-premium-secondary > button.gt-premium-bonus-button {
+    width: 136px !important;
+    min-width: 136px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    top: -38px !important;
+  }
+  .gt-hw-page .gt-premium-machine .gt-hw-win-ribbon { top: 56% !important; }
+}
+
+@media (max-height: 780px) {
+  .gt-hw-page .gt-premium-machine .gt-hw-controls.gt-commercial-console {
+    grid-template-rows: 62px !important;
+    padding-block: 5px 7px !important;
+  }
+  .gt-hw-page .gt-premium-machine .gt-hw-spin { width: 72px !important; height: 72px !important; }
+  .gt-hw-page .gt-premium-machine .gt-hw-main-controls > button:not(.gt-hw-spin) { width: 40px !important; height: 40px !important; min-width: 40px !important; min-height: 40px !important; }
+  .gt-hw-page .gt-premium-machine .gt-premium-secondary > button:not(.gt-premium-bonus-button) { width: 43px !important; height: 43px !important; min-width: 43px !important; min-height: 43px !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .gt-hw-page .gt-premium-machine .gt-premium-grid[data-landing-column] .gt-hw-cell,
-  .gt-hw-page .gt-premium-machine .gt-premium-grid[data-landing-column] .gt-commercial-reel-cylinder,
-  .gt-hw-page .gt-premium-machine .gt-hw-win-ribbon,
-  .gt-hw-page .gt-premium-machine[data-phase="return"] .gt-hw-status {
+  .gt-hw-page .gt-premium-machine .gt-hw-win-ribbon {
     animation: none !important;
   }
 }
