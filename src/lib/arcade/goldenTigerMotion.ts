@@ -4,51 +4,53 @@ export const GOLDEN_TIGER_REEL_COUNT = 3;
  * Readable commercial pacing. Normal mode deliberately gives each reel enough
  * time to accelerate, brake and land as a separate beat. Turbo is compressed,
  * but still preserves all three stops instead of visually skipping them.
+ *
+ * Keep the tested total duration stable, but spend more of that budget on the
+ * visible brake itself instead of dead launch/landing waits.
  */
 export function goldenTigerSpinLaunchMs(turbo: boolean) {
-  return turbo ? 360 : 1_000;
+  return turbo ? 250 : 600;
 }
 
 export function goldenTigerReelBrakeMs(column: number, turbo: boolean) {
   const safeColumn = Math.max(0, Math.min(GOLDEN_TIGER_REEL_COUNT - 1, Math.trunc(column)));
-  return turbo ? 360 + safeColumn * 42 : 1_180 + safeColumn * 145;
+  return turbo ? 250 + safeColumn * 30 : 1_000 + safeColumn * 80;
 }
 
 export function goldenTigerReelLandPauseMs(column: number, turbo: boolean) {
   const safeColumn = Math.max(0, Math.min(GOLDEN_TIGER_REEL_COUNT - 1, Math.trunc(column)));
-  return turbo ? 145 + safeColumn * 14 : 330 + safeColumn * 42;
+  return turbo ? 70 + safeColumn * 10 : 180 + safeColumn * 20;
 }
 
 export function goldenTigerAnticipationMs(turbo: boolean) {
-  return turbo ? 320 : 920;
+  return turbo ? 230 : 820;
 }
 
 /** A small upward preload sells inertia before the strip starts moving. */
 export function goldenTigerReelTensionMs(turbo: boolean) {
-  return turbo ? 120 : 280;
+  return turbo ? 90 : 240;
 }
 
 export function goldenTigerReelTensionPx(column: number) {
   const safe = Math.max(0, Math.min(2, Math.trunc(column)));
-  return 3.1 + safe * .5;
+  return 3 + safe * .45;
 }
 
 /** Slightly larger late-reel overshoot gives columns 2/3 more perceived mass. */
 export function goldenTigerReelOvershootPx(column: number) {
   const safe = Math.max(0, Math.min(2, Math.trunc(column)));
-  return 6.5 + safe * 1.7;
+  return 6 + safe * 1.5;
 }
 
 export function goldenTigerReelReboundMs(column: number, turbo: boolean) {
   const safe = Math.max(0, Math.min(2, Math.trunc(column)));
-  return turbo ? 165 + safe * 12 : 310 + safe * 22;
+  return turbo ? 125 + safe * 9 : 260 + safe * 18;
 }
 
 /**
  * Kept for deterministic tests and optional non-compositor consumers. The live
- * reel track no longer mutates CSS filter every animation frame: the static
- * reel shade/streak layers supply motion depth without forcing filtered moving
- * surfaces on mobile GPUs.
+ * reel track uses only a restrained velocity blur so individual symbols remain
+ * readable while falling.
  */
 export function goldenTigerReelBlurPx(velocityPxPerMs: number) {
   const velocity = Math.max(0, Number.isFinite(velocityPxPerMs) ? velocityPxPerMs : 0);
@@ -68,12 +70,12 @@ export function goldenTigerReboundEase(progress: number) {
 }
 
 export function goldenTigerRevealPauseMs(turbo: boolean, hasWin: boolean) {
-  if (turbo) return hasWin ? 340 : 240;
-  return hasWin ? 980 : 560;
+  if (turbo) return hasWin ? 300 : 220;
+  return hasWin ? 900 : 520;
 }
 
 export function goldenTigerAutoGapMs(turbo: boolean) {
-  return turbo ? 340 : 820;
+  return turbo ? 280 : 720;
 }
 
 export function goldenTigerNominalSpinMs(turbo: boolean, anticipation = false) {
