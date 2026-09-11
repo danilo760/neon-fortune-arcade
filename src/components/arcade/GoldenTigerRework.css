@@ -397,7 +397,7 @@
 .gt-rework-payline-stage polyline {
   fill: none;
   stroke: #ffe986;
-  stroke-width: .07;
+  stroke-width: 3.2px;
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
